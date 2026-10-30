@@ -2,11 +2,11 @@
  * 通过标准与星级判定（纯函数；唯一权威）。
  *
  * 口径（docs/ARCHITECTURE.md §6）：
- * - 普通课（accuracy 模式）：用户点击「完成本课」即通过，星级按正确率（★★≥95%、★★★≥98% 未揭示）；
+ * - 普通课（accuracy 模式）：完成即通过；星级按正确率（★★≥90%、★★★≥95% 未揭示）；若配置 minCpm，低于速度底线不通过；
  * - 严格阶段（speed / accuracy-speed）：通过 = 正确率 ≥ criteria.accuracy 且 cpm ≥ minCpm
  *   （工具条门槛由 stageGate 保证只在达标后可完成）；
- * - speed 模式星级按 starCpm；accuracy-speed 模式 2★ ≥95%+starCpm[1]，
- *   3★ ≥98%+starCpm[2] 且未揭示答案；
+ * - speed 模式星级按 starCpm；accuracy-speed 模式 2★ ≥90%+starCpm[1]，
+ *   3★ ≥95%+starCpm[2] 且未揭示答案；
  * - 入门课（intro）完成即通过，统一 ★★★。
  */
 import type {
@@ -36,7 +36,15 @@ export function evaluateLesson(lesson: LessonDef, metrics: LessonMetrics): Lesso
   }
   const mode = criteria.mode ?? 'accuracy'
   if (mode === 'accuracy') {
-    // 普通课：完成即通过，星级按当前阶段正确率
+    // 普通课 / 带速度底线的复习课：星级按正确率，速度底线不达标则不通过
+    const minCpm = criteria.minCpm ?? 0
+    if (minCpm > 0 && metrics.cpm < minCpm) {
+      return {
+        passed: false,
+        stars: 0,
+        reasons: [`速度 ${metrics.cpm} < ${minCpm} WPM`],
+      }
+    }
     let accuracyStars: 1 | 2 | 3 = 1
     if (metrics.accuracy >= STAR2_ACCURACY) accuracyStars = 2
     if (metrics.accuracy >= STAR3_ACCURACY && !metrics.revealed) accuracyStars = 3
@@ -49,7 +57,7 @@ export function evaluateLesson(lesson: LessonDef, metrics: LessonMetrics): Lesso
   if (!accuracyOk || !speedOk) {
     const reasons: string[] = []
     if (!accuracyOk) reasons.push(`正确率 ${pct(metrics.accuracy)} < ${pct(criteria.accuracy)}`)
-    if (!speedOk) reasons.push(`速度 ${metrics.cpm} < ${minCpm} 字/分`)
+    if (!speedOk) reasons.push(`速度 ${metrics.cpm} < ${minCpm} WPM`)
     return { passed: false, stars: 0, reasons }
   }
 
@@ -83,25 +91,26 @@ export function describePassCriteria(criteria: PassCriteria): PassCriteriaLine[]
   const mode = criteria.mode ?? 'accuracy'
   const minCpm = criteria.minCpm ?? 0
   const accuracy = pct(criteria.accuracy)
+  const speedFloor = minCpm > 0 ? `，速度 ≥${minCpm} WPM` : ''
   if (mode === 'speed') {
     const thresholds = criteria.starCpm ?? [minCpm, 45, 60]
     return [
-      { label: '★', text: `正确率 ≥${accuracy}，速度 ≥${thresholds[0]} 字/分。` },
-      { label: '★★', text: `正确率 ≥${accuracy}，速度 ≥${thresholds[1]} 字/分。` },
-      { label: '★★★', text: `正确率 ≥${accuracy}，速度 ≥${thresholds[2]} 字/分。` },
+      { label: '★', text: `正确率 ≥${accuracy}，速度 ≥${thresholds[0]} WPM。` },
+      { label: '★★', text: `正确率 ≥${accuracy}，速度 ≥${thresholds[1]} WPM。` },
+      { label: '★★★', text: `正确率 ≥${accuracy}，速度 ≥${thresholds[2]} WPM。` },
     ]
   }
   if (mode === 'accuracy-speed') {
     const thresholds = criteria.starCpm ?? [minCpm, 40, 50]
     return [
-      { label: '★', text: `正确率 ≥${accuracy} 且 ≥${thresholds[0]} 字/分。` },
-      { label: '★★', text: `正确率 ≥95% 且 ≥${thresholds[1]} 字/分。` },
-      { label: '★★★', text: `正确率 ≥98%、≥${thresholds[2]} 字/分且未揭示答案。` },
+      { label: '★', text: `正确率 ≥${accuracy} 且 ≥${thresholds[0]} WPM。` },
+      { label: '★★', text: `正确率 ≥90% 且 ≥${thresholds[1]} WPM。` },
+      { label: '★★★', text: `正确率 ≥95%、≥${thresholds[2]} WPM 且未揭示答案。` },
     ]
   }
   return [
-    { label: '★', text: `正确率 ≥${accuracy}。` },
-    { label: '★★', text: '正确率 ≥90%。' },
-    { label: '★★★', text: '正确率 ≥95% 且未揭示答案。' },
+    { label: '★', text: `正确率 ≥${accuracy}${speedFloor}。` },
+    { label: '★★', text: `正确率 ≥90%${speedFloor}。` },
+    { label: '★★★', text: `正确率 ≥95%${speedFloor} 且未揭示答案。` },
   ]
 }

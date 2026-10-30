@@ -476,4 +476,6 @@ export interface LessonProgress {
   bestAccuracy: number
   attempts: number
   updatedAt: number
+  /** 已完成过目标的非考核阶段（single/word）；再次进入可直接继续 */
+  clearedStages?: PracticeStage[]
 }

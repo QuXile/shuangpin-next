@@ -43,6 +43,24 @@ describe('evaluateLesson · 普通准确率课（完成即通过）', () => {
   })
 })
 
+describe('evaluateLesson · 带速度底线的复习准确率课', () => {
+  const lesson = lessonWith({ accuracy: 0.85, mode: 'accuracy', minCpm: 20 })
+
+  it('速度低于 20 WPM时不通过', () => {
+    const result = evaluateLesson(lesson, { accuracy: 1, cpm: 19, revealed: false })
+    expect(result.passed).toBe(false)
+    expect(result.stars).toBe(0)
+    expect(result.reasons.join()).toMatch(/速度/)
+    expect(evaluateLesson(lesson, { accuracy: 1, cpm: 20, revealed: false }).passed).toBe(true)
+  })
+
+  it('达到速度底线后，星级仍按正确率', () => {
+    expect(evaluateLesson(lesson, { accuracy: 0.86, cpm: 25, revealed: false }).stars).toBe(1)
+    expect(evaluateLesson(lesson, { accuracy: 0.9, cpm: 25, revealed: false }).stars).toBe(2)
+    expect(evaluateLesson(lesson, { accuracy: 0.95, cpm: 25, revealed: false }).stars).toBe(3)
+  })
+})
+
 describe('evaluateLesson · 速度训练', () => {
   const lesson = lessonWith({ accuracy: 0.85, mode: 'speed', minCpm: 30, starCpm: [30, 45, 60] })
 
@@ -101,6 +119,13 @@ describe('describePassCriteria', () => {
     expect(lines[1]?.text).toContain('90%')
     expect(lines[2]?.text).toContain('95%')
     expect(lines.some((line) => line.label === '通过')).toBe(false)
+  })
+
+  it('accuracy 模式带速度底线时，每档都会显示速度要求', () => {
+    const lines = describePassCriteria({ accuracy: 0.85, mode: 'accuracy', minCpm: 20 })
+    expect(lines[0]?.text).toContain('速度 ≥20 WPM')
+    expect(lines[1]?.text).toContain('速度 ≥20 WPM')
+    expect(lines[2]?.text).toContain('速度 ≥20 WPM')
   })
 
   it('speed 模式：1–3 星三档', () => {

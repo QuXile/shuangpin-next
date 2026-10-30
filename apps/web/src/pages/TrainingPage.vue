@@ -6,7 +6,7 @@
  * 判题、错误锁定、退格、清空、按下高亮复用 useTrainingSession（内部共享 lib/sessionInput），
  * 不写课程进度/星级。
  */
-import { computed, onMounted, onScopeDispose, ref, shallowRef, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, onScopeDispose, ref, shallowRef, watch } from 'vue'
 import {
   createSchemeEngine,
   filterTrainingEntries,
@@ -18,12 +18,14 @@ import {
   type WordEntry,
 } from '@shuangpin/core'
 import PracticeStream from '@/components/practice/PracticeStream.vue'
+import SessionBar from '@/components/layout/SessionBar.vue'
 import StageSummaryCard from '@/components/practice/StageSummaryCard.vue'
 import KeyboardDock from '@/components/keyboard/KeyboardDock.vue'
 import ArticleGrid from '@/components/training/ArticleGrid.vue'
 import SetupCard from '@/components/training/SetupCard.vue'
 import SetupGroup from '@/components/training/SetupGroup.vue'
 import { useCourseStore } from '@/stores/course'
+import { useLayoutStore } from '@/stores/layout'
 import { useGlobalKeys, type KeyBinding } from '@/composables/useGlobalKeys'
 import { useTrainingSession } from '@/composables/useTrainingSession'
 import { loadTrainingBank, type TrainingBank } from '@/lib/data'
@@ -40,6 +42,7 @@ type DrillMode = 'char' | 'word'
 type SessionKind = 'drill' | 'article' | null
 
 const course = useCourseStore()
+const layout = useLayoutStore()
 const trainer = useTrainingSession()
 const {
   session,
@@ -392,6 +395,12 @@ const keyMapRows = computed(() => (engine.value ? engine.value.keyMap() : []))
 const sessionTitle = computed(() =>
   kind.value === 'article' ? '文章练习' : `专项练习 · ${drillMode.value === 'char' ? '单字' : '词语'}`,
 )
+watch(
+  [playing, sessionTitle],
+  () => layout.setStageLabel(playing.value ? sessionTitle.value : ''),
+  { immediate: true },
+)
+onBeforeUnmount(() => layout.clearStageLabel())
 const countUnit = computed(() =>
   kind.value === 'article' || (kind.value === 'drill' && drillMode.value === 'char') ? '字' : '词',
 )
@@ -953,33 +962,29 @@ onScopeDispose(() => {
     <!-- 练习会话 -->
     <template v-else>
       <div class="training-session">
-        <div class="training-toolbar">
-          <div class="toolbar-left">
-            <button class="training-exit" type="button" @click="exitSession">
-              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <SessionBar>
+          <template #left>
+            <button class="session-btn" type="button" @click="exitSession">
+              <svg class="icon session-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M19.5 12h-15" /><path d="m10.5 6-6 6 6 6" />
               </svg>
               退出
               <kbd>Esc</kbd>
             </button>
-            <span class="toolbar-divider" aria-hidden="true" />
-            <strong class="training-title">{{ sessionTitle }}</strong>
-            <span class="training-stat is-primary">已练 {{ completedWords }} {{ countUnit }}</span>
-            <span class="training-stat">正确率 {{ accuracyPercent }}%</span>
-          </div>
-          <div class="toolbar-right">
-            <span
-              v-if="sessionHiddenCount"
-              class="training-stat is-hidden-stat"
-              :title="sessionHiddenTitle"
-              role="status"
-            >隐藏 {{ sessionHiddenCount }} 项</span>
-            <span class="speed-readout is-primary">
-              <span class="speed-dot" aria-hidden="true" />
-              {{ liveSpeed }} 字/分
+          </template>
+
+          <span class="session-item">已练 {{ completedWords }} {{ countUnit }}</span>
+          <span class="session-sep" aria-hidden="true">·</span>
+          <span class="session-item">正确率 {{ accuracyPercent }}%</span>
+          <template v-if="sessionHiddenCount">
+            <span class="session-sep" aria-hidden="true">·</span>
+            <span class="session-item session-danger" :title="sessionHiddenTitle" role="status">
+              隐藏 {{ sessionHiddenCount }} 项
             </span>
-          </div>
-        </div>
+          </template>
+          <span class="session-sep" aria-hidden="true">·</span>
+          <span class="session-item session-speed">速度 {{ liveSpeed }} WPM</span>
+        </SessionBar>
 
         <template v-if="kind === 'drill' && session">
           <PracticeStream
@@ -1002,7 +1007,7 @@ onScopeDispose(() => {
               :stats="[
                 { value: articleSummary.words, unit: '字', label: '字数' },
                 { value: articleSummary.accuracy, unit: '%', label: '正确率' },
-                { value: Math.round(articleSummary.cpm), unit: '字/分', label: '速度' },
+                { value: Math.round(articleSummary.cpm), unit: 'WPM', label: '速度' },
                 { value: articleSummary.errors, label: '错误次数' },
                 { value: articleSummary.durationSec, unit: '秒', label: '用时' },
               ]"
@@ -1241,21 +1246,6 @@ onScopeDispose(() => {
   color: var(--danger);
   font-size: 11px;
 }
-.training-state {
-  padding: 14px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  background: var(--surface);
-  color: var(--ink-3);
-  font-size: 12px;
-}
-.training-state.is-error {
-  border-color: var(--danger-line);
-  color: var(--danger);
-}
-.training-state p {
-  margin: 4px 0 0;
-}
 .article-input {
   width: 100%;
   min-height: 168px;
@@ -1343,100 +1333,6 @@ onScopeDispose(() => {
   display: flex;
   flex-direction: column;
 }
-.training-toolbar {
-  flex: none;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  max-width: 860px;
-  width: 100%;
-  height: 48px;
-  margin: 0 auto 8px;
-  padding: 7px 10px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  background: var(--surface);
-  box-shadow: var(--shadow-sm);
-}
-.toolbar-left,
-.toolbar-right {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-}
-.toolbar-left {
-  flex: 1;
-}
-.toolbar-right {
-  flex: none;
-}
-.toolbar-divider {
-  width: 1px;
-  height: 16px;
-  margin: 0 4px;
-  flex: none;
-  background: var(--line);
-}
-.training-exit {
-  flex: none;
-  height: 30px;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 0 8px 0 5px;
-  border-radius: var(--r-sm);
-  color: var(--ink-3);
-  font-size: 11px;
-  font-weight: 600;
-}
-.training-exit .icon {
-  width: 14px;
-  height: 14px;
-}
-.training-exit:hover {
-  color: var(--ink);
-  background: var(--surface-2);
-}
-.training-title {
-  font-size: 12px;
-  font-weight: 650;
-  color: var(--ink-2);
-  white-space: nowrap;
-}
-.training-stat {
-  flex: none;
-  color: var(--ink-3);
-  font-size: 10px;
-  font-weight: 650;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-.speed-readout {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  flex: none;
-  color: var(--ink-3);
-  font-size: 10px;
-  font-weight: 650;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-.speed-dot {
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: var(--success);
-}
-.training-stat.is-primary,
-.speed-readout.is-primary {
-  color: var(--ink);
-  font-size: 13px;
-  font-weight: 780;
-  letter-spacing: -0.01em;
-}
 .article-summary-wrap {
   flex: 1;
   min-height: 0;
@@ -1465,23 +1361,6 @@ onScopeDispose(() => {
   }
   .training-session {
     padding: 8px 10px 0;
-  }
-  .training-toolbar {
-    height: 44px;
-    gap: 6px;
-    padding: 5px 7px;
-  }
-  .training-title {
-    display: none;
-  }
-  .training-stat,
-  .speed-readout {
-    font-size: 9.5px;
-  }
-  .training-stat.is-primary,
-  .speed-readout.is-primary {
-    font-size: 11.5px;
-    font-weight: 720;
   }
   .training-tab {
     padding: 0 12px;
@@ -1964,36 +1843,6 @@ onScopeDispose(() => {
   }
   .article-summary-wrap {
     padding: 12px 2px calc(18px + env(safe-area-inset-bottom));
-  }
-  .training-toolbar {
-    height: auto;
-    flex-wrap: wrap;
-    row-gap: 5px;
-    padding: 7px 8px;
-    gap: 4px 8px;
-  }
-  .training-toolbar .toolbar-left {
-    flex: 1 1 100%;
-    gap: 6px;
-  }
-  .training-toolbar .toolbar-right {
-    flex: 1 1 100%;
-    justify-content: flex-end;
-    gap: 10px;
-  }
-  .training-toolbar .toolbar-divider {
-    display: none;
-  }
-  .training-stat {
-    font-size: 11px;
-  }
-  .training-stat.is-primary,
-  .speed-readout.is-primary {
-    font-size: 13px;
-  }
-  .training-exit {
-    padding: 0 4px;
-    font-size: 11px;
   }
 }
 </style>

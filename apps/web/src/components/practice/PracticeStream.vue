@@ -64,7 +64,7 @@ const summaryStats = computed(() => {
   if (!prompt) return []
   return [
     { value: prompt.stats.accuracy, unit: '%', label: '正确率' },
-    { value: prompt.stats.cpm, unit: '字/分', label: '速度' },
+    { value: prompt.stats.cpm, unit: 'WPM', label: '速度' },
     { value: prompt.stats.errors, label: '错误次数' },
     { value: prompt.stats.durationSec, unit: '秒', label: '用时' },
   ]

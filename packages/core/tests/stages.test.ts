@@ -69,18 +69,21 @@ describe('lessonStages / lessonStageMinWords（三阶段词口径）', () => {
 
     const review = findLesson(curriculum, 'L2.5')
     expect(
-      stageGate(review, 'exam', { accuracy: 0.9, cpm: 0, completedWords: 40 }).met,
+      stageGate(review, 'exam', { accuracy: 0.85, cpm: 20, completedWords: 40 }).met,
     ).toBe(true)
     expect(
-      stageGate(review, 'exam', { accuracy: 0.9, cpm: 0, completedWords: 39 }).met,
+      stageGate(review, 'exam', { accuracy: 0.85, cpm: 19, completedWords: 40 }).met,
+    ).toBe(false)
+    expect(
+      stageGate(review, 'exam', { accuracy: 0.85, cpm: 20, completedWords: 39 }).met,
     ).toBe(false)
 
     const midSpeed = findLesson(curriculum, 'L5.2')
     expect(
-      stageGate(midSpeed, 'exam', { accuracy: 0.9, cpm: 15, completedWords: 40 }).met,
+      stageGate(midSpeed, 'exam', { accuracy: 0.85, cpm: 30, completedWords: 40 }).met,
     ).toBe(true)
     expect(
-      stageGate(midSpeed, 'exam', { accuracy: 0.9, cpm: 14, completedWords: 40 }),
+      stageGate(midSpeed, 'exam', { accuracy: 0.85, cpm: 29, completedWords: 40 }),
     ).toMatchObject({ strict: true, met: false })
 
     const exam = findLesson(curriculum, 'L10.1')

@@ -111,7 +111,7 @@ const TEMPLATE = [
     desc: '检验：前四章混合练习，准确率优先' },
   { id: 'L5.2', chapterId: 'ch-mid', kind: 'review', title: '期中 · 速度练习', estimatedMinutes: 14,
     cumulative: true, checkpoint: true, speed: 'mid',
-    desc: '检验：前四章速度练习，目标 ≥15 字/分' },
+    desc: '检验：前四章速度练习，与综合速度同标准，目标 ≥30 WPM' },
 
   // ── 6 e 家族 ─────────────────────────────────────────────
   { id: 'L6.1', chapterId: 'ch-e', kind: 'drill', title: '韵母 · ei', estimatedMinutes: 6, focusFinal: ['ei'], desc: '新键：韵母 ei' },
@@ -140,7 +140,7 @@ const TEMPLATE = [
   { id: 'L9.1', chapterId: 'ch-sprint', kind: 'review', title: '综合 · 混合练习', estimatedMinutes: 11,
     cumulative: true, checkpoint: true, desc: '综合：全量混合练习' },
   { id: 'L9.2', chapterId: 'ch-sprint', kind: 'review', title: '综合 · 速度练习', estimatedMinutes: 12,
-    cumulative: true, checkpoint: true, speed: 'full', desc: '速度：全量速度冲刺，目标 ≥30 字/分' },
+    cumulative: true, checkpoint: true, speed: 'full', desc: '速度：全量速度冲刺，目标 ≥30 WPM' },
 
   // ── 10 通关考核 ───────────────────────────────────────────
   { id: 'L10.1', chapterId: 'ch-exam', kind: 'exam', title: '通关 · 最终考核', estimatedMinutes: 14,
@@ -252,9 +252,12 @@ function wordPlanFor(t) {
 
 function passCriteriaFor(t) {
   if (t.kind === 'intro') return undefined
-  if (t.speed === 'mid') return { accuracy: 0.85, mode: 'speed', minCpm: 15, starCpm: [15, 25, 35] }
+  // 期中/综合速度使用相同速度专题标准；通关考核另用准确率+速度双门槛
+  if (t.speed === 'mid') return { accuracy: 0.85, mode: 'speed', minCpm: 30, starCpm: [30, 45, 60] }
   if (t.speed === 'full') return { accuracy: 0.85, mode: 'speed', minCpm: 30, starCpm: [30, 45, 60] }
   if (t.kind === 'exam') return { accuracy: 0.85, mode: 'accuracy-speed', minCpm: 30, starCpm: [30, 40, 50] }
+  // 普通复习课：正确率之外，速度至少 20 WPM
+  if (t.kind === 'review') return { accuracy: 0.85, mode: 'accuracy', minCpm: 20 }
   return { accuracy: 0.85, mode: 'accuracy' }
 }
 

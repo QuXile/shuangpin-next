@@ -3,12 +3,14 @@
 import { computed } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useCourseStore } from '@/stores/course'
+import { useLayoutStore } from '@/stores/layout'
 import { useSettingsStore } from '@/stores/settings'
 
 const route = useRoute()
 const router = useRouter()
 const course = useCourseStore()
 const settings = useSettingsStore()
+const layout = useLayoutStore()
 
 const isPractice = computed(() => route.path.startsWith('/practice'))
 const courseActive = computed(() => route.path === '/' || isPractice.value)
@@ -21,7 +23,7 @@ const practiceTitle = computed(() => {
 </script>
 
 <template>
-  <header class="topbar">
+  <header class="topbar" :class="{ 'is-practice': isPractice, 'has-stage': Boolean(layout.stageLabel) }">
     <div class="topbar-inner">
       <div class="topbar-left">
         <template v-if="isPractice">
@@ -34,6 +36,7 @@ const practiceTitle = computed(() => {
           </button>
           <span class="topbar-divider" aria-hidden="true" />
           <span class="topbar-course">{{ practiceTitle }}</span>
+          <span v-if="layout.stageLabel" class="topbar-stage">{{ layout.stageLabel }}</span>
         </template>
         <RouterLink v-else to="/" class="brand" aria-label="双拼 NEXT 学习路线">
           <span class="brand-mark" aria-hidden="true">
@@ -56,6 +59,7 @@ const practiceTitle = computed(() => {
           <span class="brand-name">双拼</span>
           <span class="brand-tag">NEXT</span>
         </RouterLink>
+        <span v-if="!isPractice && layout.stageLabel" class="topbar-stage">{{ layout.stageLabel }}</span>
       </div>
 
       <nav class="topbar-nav" aria-label="主导航">
@@ -111,6 +115,7 @@ const practiceTitle = computed(() => {
 }
 .brand {
   display: inline-flex;
+  flex: none;
   align-items: center;
   gap: 8px;
   font-weight: 700;
@@ -128,6 +133,7 @@ const practiceTitle = computed(() => {
 }
 .brand-name {
   letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 .brand-tag {
   font-size: 10px;
@@ -203,6 +209,19 @@ const practiceTitle = computed(() => {
   flex: none;
   background: var(--line);
 }
+.topbar-stage {
+  flex: none;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 2px 9px;
+  border-radius: var(--r-pill);
+  background: var(--brand-soft);
+  color: var(--brand-ink);
+  font-size: 11px;
+  font-weight: 700;
+}
 .topbar-course {
   min-width: 0;
   overflow: hidden;
@@ -267,6 +286,11 @@ const practiceTitle = computed(() => {
   .topbar-course {
     font-size: 13px;
   }
+  .topbar-stage {
+    max-width: 84px;
+    padding: 1px 7px;
+    font-size: 10px;
+  }
   .topbar-inner {
     padding: 0 12px;
     gap: 8px;
@@ -294,6 +318,16 @@ const practiceTitle = computed(() => {
     height: 26px;
     padding: 0 11px;
     font-size: 11px;
+  }
+  /* 练习页移动端优先展示课名和阶段标签；桌面保留课程/练习切换 */
+  .topbar.has-stage .topbar-inner {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .topbar.has-stage .topbar-nav {
+    display: none;
+  }
+  .topbar.has-stage .top-actions {
+    grid-column: 2;
   }
 }
 </style>

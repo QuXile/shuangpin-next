@@ -26,6 +26,8 @@ const SCROLL_KEY = 'shuangpin-next:map-scroll'
 const scrollKey = (): string => `${SCROLL_KEY}:${course.schemeId || 'default'}`
 let scrollRestored = false
 let scrollFrame: number | undefined
+/** 首次渲染先隐藏地图，等滚动位置恢复后再显示，避免先闪到顶部再跳 */
+const restorePending = ref(true)
 /** 最后一次已知的地图滚动位置：路由切换时旧页面可能已被新布局重置为 0，不能直接读 window.scrollY */
 let lastScrollY = 0
 /** 路由离开中：新页面切换布局可能把 window.scrollY 重置为 0，不能再覆盖已保存的位置 */
@@ -115,10 +117,14 @@ watch(
     if (scrollRestored || status.value !== 'ready' || chapters.value.length === 0) return
     scrollRestored = true
     await nextTick()
-    window.requestAnimationFrame(() => {
-      lastScrollY = readSavedScroll()
-      window.scrollTo(0, lastScrollY)
-    })
+    lastScrollY = readSavedScroll()
+    // 全局 CSS 是 smooth 滚动：恢复记忆位置时必须临时关闭，直接落到目标位置
+    const root = document.documentElement
+    const previousBehavior = root.style.scrollBehavior
+    root.style.scrollBehavior = 'auto'
+    window.scrollTo(0, lastScrollY)
+    root.style.scrollBehavior = previousBehavior
+    restorePending.value = false
   },
   { immediate: true, flush: 'post' },
 )
@@ -205,7 +211,7 @@ useGlobalKeys(bindings)
       <button class="btn btn--primary" type="button" @click="retry()">重试</button>
     </StateCard>
 
-    <div v-else class="course-board">
+    <div v-else class="course-board" :class="{ 'is-restoring': restorePending }">
       <HeroPanel
         :current-title="currentTitle"
         :scheme-options="course.schemeOptions"
@@ -238,6 +244,9 @@ useGlobalKeys(bindings)
 </template>
 
 <style scoped>
+.course-board.is-restoring {
+  visibility: hidden;
+}
 .course-board {
   background: var(--surface);
   border: 1px solid var(--line);

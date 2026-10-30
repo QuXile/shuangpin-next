@@ -19,6 +19,7 @@ import {
   type WordEntry,
 } from '@shuangpin/core'
 import CharacterCard from '@/components/practice/CharacterCard.vue'
+import SessionBar from '@/components/layout/SessionBar.vue'
 import { useGlobalKeys, type KeyBinding } from '@/composables/useGlobalKeys'
 
 const props = defineProps<{
@@ -258,12 +259,25 @@ const bindings = computed<KeyBinding[]>(() => {
     },
     { key: 'ArrowLeft', alt: true, run: () => previous() },
   ]
+  // 从第 3 页开始键位图常驻：即使还没进入试打，也始终显示按键反馈
+  list.push(
+    {
+      letter: true,
+      run: (event) => {
+        if (step.value === 'try') handleKey(event.key)
+        else emit('key-pressed', event.key)
+      },
+    },
+    {
+      key: 'Backspace',
+      run: () => {
+        if (step.value === 'try') handleBackspace()
+        else emit('key-pressed', 'backspace')
+      },
+    },
+  )
   if (step.value === 'try') {
-    list.push(
-      { letter: true, run: (event) => handleKey(event.key) },
-      { key: 'Backspace', run: () => handleBackspace() },
-      { key: ' ', when: () => hasInputError.value, run: () => clearCurrentInput() },
-    )
+    list.push({ key: ' ', when: () => hasInputError.value, run: () => clearCurrentInput() })
   }
   return list
 })
@@ -274,27 +288,26 @@ defineExpose({ pressKey: handleKey, backspace: handleBackspace })
 
 <template>
   <div class="intro-page">
-    <div class="intro-toolbar" :class="{ 'is-complete': completed && step === 'try' }">
-      <div class="intro-toolbar-left">
-        <button class="intro-tool-btn" type="button" :disabled="!canPrevious" @click="previous">
-          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <SessionBar :success="completed && step === 'try'">
+      <template #left>
+        <button class="session-btn" type="button" :disabled="!canPrevious" @click="previous">
+          <svg class="icon session-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M19.5 12h-15" /><path d="m10.5 6-6 6 6 6" />
           </svg>
           上一页
           <kbd>Alt+←</kbd>
         </button>
-        <span class="intro-tool-divider" aria-hidden="true" />
-        <strong class="intro-step-title">
-          {{ completed && step === 'try' ? '认识双拼完成' : `认识双拼 · ${String(stepIndex).padStart(2, '0')} / 05` }}
-        </strong>
-      </div>
-      <div class="intro-toolbar-actions">
-        <button class="intro-tool-btn" type="button" @click="emit('exit')">
+      </template>
+
+      <span class="session-item">第 {{ String(stepIndex).padStart(2, '0') }} / {{ String(stepOrder.length).padStart(2, '0') }} 页</span>
+
+      <template #right>
+        <button class="session-btn" type="button" @click="emit('exit')">
           返回路线
           <kbd>Esc</kbd>
         </button>
         <button
-          class="btn btn--primary intro-next-btn"
+          class="btn btn--primary session-primary"
           type="button"
           :disabled="nextDisabled"
           @click="primaryAction"
@@ -302,8 +315,8 @@ defineExpose({ pressKey: handleKey, backspace: handleBackspace })
           {{ nextLabel }}
           <kbd>Enter</kbd>
         </button>
-      </div>
-    </div>
+      </template>
+    </SessionBar>
 
     <section v-if="step === 'concept'" class="intro-card">
       <div class="intro-kicker">01 · 全拼</div>
@@ -438,100 +451,6 @@ defineExpose({ pressKey: handleKey, backspace: handleBackspace })
   display: flex;
   flex-direction: column;
   gap: 14px;
-}
-.intro-toolbar {
-  width: 100%;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 7px 10px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  background: var(--surface);
-  box-shadow: var(--shadow-sm);
-}
-.intro-toolbar-left,
-.intro-toolbar-actions {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  min-width: 0;
-}
-.intro-toolbar-actions {
-  flex: none;
-}
-.intro-toolbar.is-complete {
-  background: var(--state-success-bg);
-  border-color: var(--state-success-line);
-}
-.intro-toolbar.is-complete .intro-step-title {
-  color: var(--state-success-ink);
-}
-.intro-toolbar.is-complete .intro-next-btn {
-  background: var(--state-success-fill);
-  border-color: var(--state-success-fill);
-  box-shadow: 0 2px 0 var(--state-success-fill-hover);
-}
-.intro-tool-btn {
-  height: 30px;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 0 8px 0 5px;
-  border-radius: var(--r-sm);
-  color: var(--ink-3);
-  font-size: 11px;
-  font-weight: 600;
-}
-.intro-tool-btn:hover:not(:disabled) {
-  color: var(--ink);
-  background: var(--surface-2);
-}
-.intro-tool-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-.intro-tool-btn .icon {
-  width: 14px;
-  height: 14px;
-}
-.intro-tool-btn kbd {
-  color: var(--ink-4);
-}
-.intro-tool-divider {
-  width: 1px;
-  height: 16px;
-  margin: 0 4px;
-  flex: none;
-  background: var(--line);
-}
-.intro-step-title {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 12px;
-  font-weight: 650;
-  color: var(--ink-2);
-}
-.intro-next-btn {
-  height: 32px;
-  margin-left: 5px;
-  padding: 0 12px;
-  font-size: 12px;
-}
-.intro-next-btn:disabled {
-  color: var(--ink-4);
-  background: var(--surface-3);
-  border-color: var(--line);
-  box-shadow: none;
-  cursor: not-allowed;
-}
-.intro-next-btn:disabled kbd {
-  color: var(--ink-4);
-  border-color: var(--line);
-  background: var(--surface-2);
 }
 .intro-card {
   width: 100%;
@@ -755,33 +674,7 @@ defineExpose({ pressKey: handleKey, backspace: handleBackspace })
   .intro-card {
     padding: 18px 16px;
   }
-  .intro-toolbar {
-    padding: 0 5px;
-    gap: 4px;
-  }
-  .intro-step-title {
-    display: none;
-  }
-  .intro-tool-divider {
-    display: none;
-  }
-  .intro-tool-btn {
-    padding: 0 4px;
-    font-size: 10px;
-  }
-  .intro-tool-btn kbd,
-  .intro-next-btn kbd {
-    display: none;
-  }
-  .intro-next-btn {
-    max-width: 180px;
-    padding: 0 8px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-size: 11px;
-  }
-  .try-cards :deep(.char-card) {
+    .try-cards :deep(.char-card) {
     width: 120px;
   }
 }

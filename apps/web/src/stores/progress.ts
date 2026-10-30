@@ -4,7 +4,7 @@
  */
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
-import type { LessonProgress, LessonResult } from '@shuangpin/core'
+import type { LessonProgress, LessonResult, PracticeStage } from '@shuangpin/core'
 
 const progressKey = (schemeId: string): string => `shuangpin-next:progress:${schemeId}`
 
@@ -13,6 +13,16 @@ function isFiniteNumber(value: unknown): value is number {
 }
 
 /** 逐条校验 localStorage 内容；损坏的条目直接丢弃，不阻塞启动。 */
+const STAGE_VALUES = new Set(['single', 'word', 'exam'])
+
+function sanitizeClearedStages(value: unknown): PracticeStage[] | undefined {
+  if (!Array.isArray(value)) return undefined
+  const stages = value.filter(
+    (stage): stage is PracticeStage => typeof stage === 'string' && STAGE_VALUES.has(stage),
+  )
+  return stages.length > 0 ? [...new Set(stages)] : undefined
+}
+
 function sanitizeProgress(raw: unknown): Record<string, LessonProgress> {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {}
   const result: Record<string, LessonProgress> = {}
@@ -22,12 +32,14 @@ function sanitizeProgress(raw: unknown): Record<string, LessonProgress> {
     if (typeof entry.passed !== 'boolean') continue
     if (!isFiniteNumber(entry.stars) || !isFiniteNumber(entry.bestAccuracy)) continue
     if (!isFiniteNumber(entry.attempts) || !isFiniteNumber(entry.updatedAt)) continue
+    const clearedStages = sanitizeClearedStages(entry.clearedStages)
     result[lessonId] = {
       passed: entry.passed,
       stars: Math.max(0, Math.min(3, Math.floor(entry.stars))),
       bestAccuracy: Math.max(0, Math.min(1, entry.bestAccuracy)),
       attempts: Math.max(0, Math.floor(entry.attempts)),
       updatedAt: entry.updatedAt,
+      ...(clearedStages ? { clearedStages } : {}),
     }
   }
   return result
@@ -71,10 +83,30 @@ export const useProgressStore = defineStore('progress', () => {
       bestAccuracy: Math.max(previous?.bestAccuracy ?? 0, accuracy),
       attempts: (previous?.attempts ?? 0) + 1,
       updatedAt: Date.now(),
+      ...(previous?.clearedStages ? { clearedStages: previous.clearedStages } : {}),
     }
     records.value = { ...records.value, [lessonId]: next }
     persist()
     return next
+  }
+
+  /** 记录某个非考核阶段已完成，之后重进可直接继续 */
+  function markStageCleared(lessonId: string, stage: PracticeStage): void {
+    const previous = records.value[lessonId]
+    const cleared = new Set(previous?.clearedStages ?? [])
+    cleared.add(stage)
+    const next: LessonProgress = previous
+      ? { ...previous, clearedStages: [...cleared], updatedAt: Date.now() }
+      : {
+          passed: false,
+          stars: 0,
+          bestAccuracy: 0,
+          attempts: 0,
+          updatedAt: Date.now(),
+          clearedStages: [...cleared],
+        }
+    records.value = { ...records.value, [lessonId]: next }
+    persist()
   }
 
   function clear(): void {
@@ -82,5 +114,5 @@ export const useProgressStore = defineStore('progress', () => {
     persist()
   }
 
-  return { schemeId, records, load, record, clear }
+  return { schemeId, records, load, record, markStageCleared, clear }
 })

@@ -184,12 +184,6 @@ export function usePractice() {
   })
   const stageCleared = computed(() => Boolean(currentRuntime.value?.cleared || alreadyPassed.value))
   const gateReady = computed(() => Boolean(gate.value?.met || stageCleared.value))
-  const gateHint = computed(() => {
-    if (!gate.value || gate.value.met || stageCleared.value) return ''
-    // 「再练 N 词」已由顶栏进度「已练 X/Y 词」表达，不再重复显示；
-    // 正确率/速度等未达标原因保留为大字提示。
-    return gate.value.reasons.filter((reason) => !reason.startsWith('再练 ')).join('；')
-  })
 
   /** 进度「已练 X/Y 词」：Y=阶段目标词数，X 封顶为 Y；无目标回退「已练 X 词」 */
   const progressLabel = computed(() => {
@@ -199,6 +193,10 @@ export function usePractice() {
     if (target <= 0) return `已练 ${value.completedWords} 词`
     return `已练 ${Math.min(value.completedWords, target)}/${target} 词`
   })
+  const accuracyPercent = computed(() => Math.round((metrics.value?.accuracy ?? 0) * 100))
+  const accuracyTarget = computed(() =>
+    lesson.value?.passCriteria ? Math.round(lesson.value.passCriteria.accuracy * 100) : null,
+  )
 
   /** 有限目标完成后的总结卡：统计、错误分布、评分规则；最后一场考核额外显示本次星级 */
   const endPrompt = computed<EndPromptView | null>(() => {
@@ -377,6 +375,12 @@ export function usePractice() {
     runtimes.value = next
   }
 
+  /** 逐字 / 半遮挡词阶段曾完成过：重进时直接允许继续；全遮挡考核不跳过 */
+  function stageWasCleared(target: PracticeStage): boolean {
+    if (target === 'exam') return false
+    return Boolean(course.progress[lessonId.value]?.clearedStages?.includes(target))
+  }
+
   /** 首次进入创建会话；再次进入用 resumeSession 恢复计时，不重做也不丢进度 */
   function activateStage(target: PracticeStage): void {
     const existing = runtimes.value.get(target)
@@ -400,7 +404,7 @@ export function usePractice() {
       wrongInputs: new Map(),
       cellErrors: new Map(),
       keyErrors: new Map(),
-      cleared: alreadyPassed.value,
+      cleared: alreadyPassed.value || stageWasCleared(target),
       infinite: false,
     })
     liveCpm.reset()
@@ -477,6 +481,9 @@ export function usePractice() {
       currentStage,
       sessionMetrics(nextState, performance.now()),
     )
+    if (nextGate.met && currentStage !== 'exam') {
+      course.markStageCleared(currentLesson.id, currentStage)
+    }
     setRuntime(currentStage, {
       session: nextState,
       revealed: tracker.revealed,
@@ -699,10 +706,11 @@ export function usePractice() {
     tier,
     conceal,
     stageTitleText,
-    gateHint,
     endPrompt,
     liveMessage,
     progressLabel,
+    accuracyPercent,
+    accuracyTarget,
     cpm: liveCpm.cpm,
     keyMapRows,
     highlightAtomIds,

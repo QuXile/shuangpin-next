@@ -2,17 +2,19 @@
 /**
  * 练习页（容器）：只做状态分支与子组件编排；阶段状态机在 usePractice，规则全部在 core。
  */
-import { ref } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import IntroLesson from '@/components/intro/IntroLesson.vue'
 import StateCard from '@/components/common/StateCard.vue'
 import KeyboardDock from '@/components/keyboard/KeyboardDock.vue'
-import PracticeToolbar from '@/components/practice/PracticeToolbar.vue'
 import PracticeStream from '@/components/practice/PracticeStream.vue'
+import SessionBar from '@/components/layout/SessionBar.vue'
 import TutorialStage from '@/components/practice/TutorialStage.vue'
 import { usePractice } from '@/composables/usePractice'
+import { useLayoutStore } from '@/stores/layout'
 const router = useRouter()
 const practice = usePractice()
+const layout = useLayoutStore()
 const {
   status,
   errorMessage,
@@ -33,11 +35,12 @@ const {
   tier,
   conceal,
   stageTitleText,
-  gateHint,
   endPrompt,
   liveMessage,
   progressLabel,
   cpm,
+  accuracyPercent,
+  accuracyTarget,
   keyMapRows,
   highlightAtomIds,
   specialInitials,
@@ -53,6 +56,17 @@ const {
   onIntroHideKeymap,
 } = practice
 const { goNext, handleKey, startFirstStage, showPressed } = practice
+
+watch(
+  [stageTitleText, isIntro],
+  () => layout.setStageLabel(isIntro.value ? '入门课' : stageTitleText.value),
+  { immediate: true },
+)
+onBeforeUnmount(() => layout.clearStageLabel())
+
+const accuracyBelowTarget = computed(
+  () => accuracyTarget.value !== null && accuracyPercent.value < accuracyTarget.value,
+)
 
 const introRef = ref<InstanceType<typeof IntroLesson> | null>(null)
 function onKeymapKey(letter: string): void {
@@ -124,17 +138,41 @@ function onDockBackspace(): void {
       </div>
 
       <div v-else class="practice-stage">
-        <PracticeToolbar
-          :title="stageTitleText"
-          :progress-label="progressLabel"
-          :gate-hint="gateHint"
-          :cpm="cpm"
-          :primary-label="primary?.label ?? '下一阶段'"
-          :primary-enabled="primary?.enabled ?? false"
-          @previous="previousStage"
-          @retry="retryStage"
-          @primary="primary?.run()"
-        />
+        <SessionBar :success="primary?.enabled ?? false">
+          <template #left>
+            <button class="session-btn" type="button" @click="previousStage">
+              <svg class="icon session-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19.5 12h-15" /><path d="m10.5 6-6 6 6 6" />
+              </svg>
+              上一阶段
+              <kbd>Alt+←</kbd>
+            </button>
+          </template>
+
+          <span class="session-item">{{ progressLabel }}</span>
+          <span class="session-sep" aria-hidden="true">·</span>
+          <span class="session-item" :class="{ 'session-danger': accuracyBelowTarget }">
+            正确率 {{ accuracyPercent }}%<template v-if="accuracyBelowTarget"> &lt; {{ accuracyTarget }}%</template>
+          </span>
+          <span class="session-sep" aria-hidden="true">·</span>
+          <span class="session-item session-speed">速度 {{ cpm }} WPM</span>
+
+          <template #right>
+            <button class="session-btn" type="button" @click="retryStage">
+              重新开始
+              <kbd>Alt+R</kbd>
+            </button>
+            <button
+              class="btn btn--primary session-primary"
+              type="button"
+              :disabled="!(primary?.enabled ?? false)"
+              @click="primary?.run()"
+            >
+              {{ primary?.label ?? '下一阶段' }}
+              <kbd>Enter</kbd>
+            </button>
+          </template>
+        </SessionBar>
 
         <PracticeStream
           v-if="session"

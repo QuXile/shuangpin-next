@@ -187,6 +187,10 @@ export const useCourseStore = defineStore('course', () => {
     progressStore.record(lessonId, result, accuracy)
   }
 
+  function markStageCleared(lessonId: string, stage: 'single' | 'word' | 'exam'): void {
+    progressStore.markStageCleared(lessonId, stage)
+  }
+
   return {
     status,
     error,
@@ -209,5 +213,6 @@ export const useCourseStore = defineStore('course', () => {
     nextLesson,
     currentLesson,
     recordResult,
+    markStageCleared,
   }
 })

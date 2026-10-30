@@ -4,9 +4,9 @@
   "schemeType": "compositional",
   "version": "1.0.0",
   "templateVersion": "1.0.0",
-  "generatedAt": "2026-10-30T09:23:43.711Z",
+  "generatedAt": "2026-10-30T12:55:25.816Z",
   "supportLevel": "full",
-  "dataVersion": "curriculum-0c54d3fdf373",
+  "dataVersion": "curriculum-480cbf692392",
   "chapters": [
     {
       "id": "ch-intro",
@@ -796,7 +796,8 @@
       ],
       "passCriteria": {
         "accuracy": 0.85,
-        "mode": "accuracy"
+        "mode": "accuracy",
+        "minCpm": 20
       },
       "stageMinWords": {
         "exam": 40
@@ -1279,7 +1280,8 @@
       ],
       "passCriteria": {
         "accuracy": 0.85,
-        "mode": "accuracy"
+        "mode": "accuracy",
+        "minCpm": 20
       },
       "stageMinWords": {
         "exam": 40
@@ -2146,7 +2148,8 @@
       ],
       "passCriteria": {
         "accuracy": 0.85,
-        "mode": "accuracy"
+        "mode": "accuracy",
+        "minCpm": 20
       },
       "stageMinWords": {
         "exam": 40
@@ -2603,7 +2606,8 @@
       ],
       "passCriteria": {
         "accuracy": 0.85,
-        "mode": "accuracy"
+        "mode": "accuracy",
+        "minCpm": 20
       },
       "stageMinWords": {
         "exam": 40
@@ -3212,7 +3216,8 @@
       ],
       "passCriteria": {
         "accuracy": 0.85,
-        "mode": "accuracy"
+        "mode": "accuracy",
+        "minCpm": 20
       },
       "stageMinWords": {
         "exam": 40
@@ -3223,7 +3228,7 @@
       "chapterId": "ch-mid",
       "kind": "review",
       "title": "期中 · 速度练习",
-      "desc": "检验：前四章速度练习，目标 ≥15 字/分",
+      "desc": "检验：前四章速度练习，与综合速度同标准，目标 ≥30 WPM",
       "estimatedMinutes": 14,
       "focusAtoms": [
         "initial:zh",
@@ -3822,11 +3827,11 @@
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "speed",
-        "minCpm": 15,
+        "minCpm": 30,
         "starCpm": [
-          15,
-          25,
-          35
+          30,
+          45,
+          60
         ]
       },
       "stageMinWords": {
@@ -4278,7 +4283,8 @@
       ],
       "passCriteria": {
         "accuracy": 0.85,
-        "mode": "accuracy"
+        "mode": "accuracy",
+        "minCpm": 20
       },
       "stageMinWords": {
         "exam": 40
@@ -4798,7 +4804,8 @@
       ],
       "passCriteria": {
         "accuracy": 0.85,
-        "mode": "accuracy"
+        "mode": "accuracy",
+        "minCpm": 20
       },
       "stageMinWords": {
         "exam": 40
@@ -5278,7 +5285,8 @@
       ],
       "passCriteria": {
         "accuracy": 0.85,
-        "mode": "accuracy"
+        "mode": "accuracy",
+        "minCpm": 20
       },
       "stageMinWords": {
         "exam": 40
@@ -6114,7 +6122,8 @@
       ],
       "passCriteria": {
         "accuracy": 0.85,
-        "mode": "accuracy"
+        "mode": "accuracy",
+        "minCpm": 20
       },
       "stageMinWords": {
         "exam": 40
@@ -6125,7 +6134,7 @@
       "chapterId": "ch-sprint",
       "kind": "review",
       "title": "综合 · 速度练习",
-      "desc": "速度：全量速度冲刺，目标 ≥30 字/分",
+      "desc": "速度：全量速度冲刺，目标 ≥30 WPM",
       "estimatedMinutes": 12,
       "focusAtoms": [
         "initial:zh",
@@ -7787,7 +7796,7 @@
       "tips": [
         "本课零声母：a = OA、ai = OL、an = OJ、ang = OH、ao = OK、e = OE 等（没有声母的音节也要按满两键）。",
         "全遮挡时按音节整组出键：先声母键、再韵母键，不要逐字母找。",
-        "速度目标 30 字/分起；稳定比冲快更重要。",
+        "速度目标 30 WPM起；稳定比冲快更重要。",
         "第三颗星要求全程不揭示答案：不确定时宁可放慢。"
       ],
       "passCriteria": {

@@ -82,18 +82,15 @@ export function stageGate(
       criteriaOk = false
       reasons.push('缺少考核标准')
     } else {
-      const mode = criteria.mode ?? 'accuracy'
       const accuracyOk = metrics.accuracy >= criteria.accuracy
       if (!accuracyOk) {
         criteriaOk = false
         reasons.push(`正确率 ${Math.round(metrics.accuracy * 100)}% < ${Math.round(criteria.accuracy * 100)}%`)
       }
-      if (mode === 'speed' || mode === 'accuracy-speed') {
-        const minCpm = criteria.minCpm ?? 0
-        if (metrics.cpm < minCpm) {
-          criteriaOk = false
-          reasons.push(`速度 ${metrics.cpm} < ${minCpm} 字/分`)
-        }
+      const minCpm = criteria.minCpm ?? 0
+      if (minCpm > 0 && metrics.cpm < minCpm) {
+        criteriaOk = false
+        reasons.push(`速度 ${metrics.cpm} < ${minCpm} WPM`)
       }
     }
   }

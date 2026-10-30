@@ -1,8 +1,8 @@
 {
   "dataVersion": "pools-bd34aa65678b",
-  "generatedAt": "2026-10-30T09:23:54.750Z",
+  "generatedAt": "2026-10-30T12:55:37.288Z",
   "sources": {
-    "curriculum": "curriculum-4169e3a92a4b",
+    "curriculum": "curriculum-ccbddb388b0a",
     "dict": "7197c3211ddd"
   },
   "targetWordsPerLesson": 500,
