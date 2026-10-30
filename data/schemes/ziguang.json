@@ -1,0 +1,271 @@
+{
+  "id": "ziguang",
+  "name": "紫光双拼",
+  "type": "compositional",
+  "initials": {
+    "b": [
+      "b"
+    ],
+    "p": [
+      "p"
+    ],
+    "m": [
+      "m"
+    ],
+    "f": [
+      "f"
+    ],
+    "d": [
+      "d"
+    ],
+    "t": [
+      "t"
+    ],
+    "n": [
+      "n"
+    ],
+    "l": [
+      "l"
+    ],
+    "g": [
+      "g"
+    ],
+    "k": [
+      "k"
+    ],
+    "h": [
+      "h"
+    ],
+    "j": [
+      "j"
+    ],
+    "q": [
+      "q"
+    ],
+    "x": [
+      "x"
+    ],
+    "zh": [
+      "u"
+    ],
+    "ch": [
+      "a"
+    ],
+    "sh": [
+      "i"
+    ],
+    "r": [
+      "r"
+    ],
+    "z": [
+      "z"
+    ],
+    "c": [
+      "c"
+    ],
+    "s": [
+      "s"
+    ],
+    "y": [
+      "y"
+    ],
+    "w": [
+      "w"
+    ]
+  },
+  "finals": {
+    "a": [
+      "a"
+    ],
+    "o": [
+      "o"
+    ],
+    "e": [
+      "e"
+    ],
+    "i": [
+      "i"
+    ],
+    "u": [
+      "u"
+    ],
+    "v": [
+      "v"
+    ],
+    "ai": [
+      "p"
+    ],
+    "ei": [
+      "k"
+    ],
+    "ui": [
+      "n"
+    ],
+    "ao": [
+      "q"
+    ],
+    "ou": [
+      "z"
+    ],
+    "iu": [
+      "j"
+    ],
+    "ie": [
+      "d"
+    ],
+    "ve": [
+      "n"
+    ],
+    "an": [
+      "r"
+    ],
+    "en": [
+      "w"
+    ],
+    "in": [
+      "y"
+    ],
+    "un": [
+      "m"
+    ],
+    "ang": [
+      "s"
+    ],
+    "eng": [
+      "t"
+    ],
+    "ing": [
+      ";"
+    ],
+    "ong": [
+      "h"
+    ],
+    "ia": [
+      "x"
+    ],
+    "iao": [
+      "b"
+    ],
+    "ian": [
+      "f"
+    ],
+    "iang": [
+      "g"
+    ],
+    "iong": [
+      "h"
+    ],
+    "ua": [
+      "x"
+    ],
+    "uo": [
+      "o"
+    ],
+    "uai": [
+      "y"
+    ],
+    "uan": [
+      "l"
+    ],
+    "uang": [
+      "g"
+    ],
+    "ue": [
+      "n"
+    ]
+  },
+  "zeroInitial": {
+    "a": [
+      "oa"
+    ],
+    "ai": [
+      "op"
+    ],
+    "an": [
+      "or"
+    ],
+    "ang": [
+      "os"
+    ],
+    "ao": [
+      "oq"
+    ],
+    "e": [
+      "oe"
+    ],
+    "ei": [
+      "ok"
+    ],
+    "en": [
+      "ow"
+    ],
+    "eng": [
+      "ot"
+    ],
+    "er": [
+      "oj"
+    ],
+    "o": [
+      "oo"
+    ],
+    "ou": [
+      "oz"
+    ]
+  },
+  "overrides": {},
+  "umlautNote": "j/q/x/y 与 ü 相拼时：除 initials[声母]×finals[u] 的组合外，另接受 initials[声母]×finals[v] 的组合（对应参考实现 core.js 的 jqxy+ü 补充规则）；数据结构上仍把音节记为 u/ue/un/uan 归属，ü 语义由 UI 标注。",
+  "sameKeyGroups": [
+    {
+      "key": "g",
+      "finals": [
+        "iang",
+        "uang"
+      ]
+    },
+    {
+      "key": "h",
+      "finals": [
+        "ong",
+        "iong"
+      ]
+    },
+    {
+      "key": "n",
+      "finals": [
+        "ui",
+        "ve",
+        "ue"
+      ]
+    },
+    {
+      "key": "o",
+      "finals": [
+        "o",
+        "uo"
+      ]
+    },
+    {
+      "key": "x",
+      "finals": [
+        "ia",
+        "ua"
+      ]
+    },
+    {
+      "key": "y",
+      "finals": [
+        "in",
+        "uai"
+      ]
+    }
+  ],
+  "source": {
+    "repo": "BlueSky-07/Shuang",
+    "file": "src/scheme/ziguang.js",
+    "note": "从 https://github.com/BlueSky-07/Shuang（v6.0.0，commit 5a5e71e）提取键位事实；仅做数据比对与规范化，未复制其实现代码（原项目 GPL-3.0）。"
+  },
+  "notes": [
+    "声母改造：ch→a、sh→i、zh→u。",
+    "ing 键为分号「;」；零声母为「o+键」式。"
+  ]
+}

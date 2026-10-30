@@ -1,0 +1,46 @@
+{
+  "generatedAt": "2026-10-30T08:11:19.179Z",
+  "templateVersion": "1.0.0",
+  "schemes": [
+    {
+      "schemeId": "xiaohe",
+      "schemeName": "小鹤双拼",
+      "supportLevel": "full",
+      "lessonCount": 40,
+      "totalMinutes": 326,
+      "file": "xiaohe.curriculum.json"
+    },
+    {
+      "schemeId": "ziranma",
+      "schemeName": "自然码",
+      "supportLevel": "full",
+      "lessonCount": 40,
+      "totalMinutes": 326,
+      "file": "ziranma.curriculum.json"
+    },
+    {
+      "schemeId": "weiruan",
+      "schemeName": "微软双拼",
+      "supportLevel": "full",
+      "lessonCount": 40,
+      "totalMinutes": 326,
+      "file": "weiruan.curriculum.json"
+    },
+    {
+      "schemeId": "sougou",
+      "schemeName": "搜狗双拼",
+      "supportLevel": "full",
+      "lessonCount": 40,
+      "totalMinutes": 326,
+      "file": "sougou.curriculum.json"
+    },
+    {
+      "schemeId": "zhinengabc",
+      "schemeName": "智能ABC",
+      "supportLevel": "full",
+      "lessonCount": 40,
+      "totalMinutes": 326,
+      "file": "zhinengabc.curriculum.json"
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+# 依赖
+node_modules/
+.pnpm-store/
+
+# 数据管线原始下载文件（可由脚本重新下载）
+data/raw/*.txt
+data/raw/*.json
+
+# 构建 / 同步 / 测试产物
+dist/
+apps/web/public/data/
+.vite/
+coverage/
+playwright-report/
+test-results/
+.playwright-cli/
+*.tsbuildinfo
+
+# 临时文件与协作目录
+tmp/
+*.tmp
+.refactor/
+
+# 本地缓存与日志
+*.local
+*.log
+
+# 编辑器 / 系统
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

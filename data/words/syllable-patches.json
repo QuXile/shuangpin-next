@@ -1,0 +1,18 @@
+{
+  "description": "音节字符补丁：jieba 单字词表未收录、但教学示例/记忆锚点需要的合法音节代表字。手写逻辑审计（CONTRACT-V7 §3）要求这类特判从代码移入显式数据文件；仅在此处维护，build.mjs 读取生成 anchors，build-curriculum 读取生成零声母示例。",
+  "source": ".refactor/CONTRACT-V7.md §3 / T17 手写逻辑审计",
+  "patches": [
+    {
+      "syllable": "zhei",
+      "char": "这",
+      "tone": 4,
+      "reason": "口语/词典未单列的 zhei 音节；用于 L2.1（zh 声母）全量示例覆盖。"
+    },
+    {
+      "syllable": "eng",
+      "char": "鞥",
+      "tone": 1,
+      "reason": "零声母 eng 无常用整词，但 L2.4 必须展示 12 音全表；鞥 为标准代表字。"
+    }
+  ]
+}

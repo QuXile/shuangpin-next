@@ -1,0 +1,20 @@
+{
+  "name": "@shuangpin/core",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "双拼领域层：拼音拆分、方案引擎、选词、练习会话状态机（纯 TS，无框架/DOM 依赖）",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}

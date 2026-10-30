@@ -1,0 +1,173 @@
+/* 双拼 NEXT · 设计令牌（语义化）。组件只引用 token，不写死 hex。 */
+:root {
+  color-scheme: light;
+
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+  --font-mono: "SFMono-Regular", "Cascadia Code", Consolas, "Liberation Mono", Menlo, monospace;
+
+  /* 表面与线条 */
+  --bg: #f3f5f8;
+  --surface: #ffffff;
+  --surface-2: #f6f7fa;
+  --surface-3: #eceff4;
+  --line: #e3e7ed;
+  --line-strong: #c9d0da;
+  --line-faint: #edf0f4;
+
+  /* 文字 */
+  --ink: #161a21;
+  --ink-2: #4b5361;
+  --ink-3: #68717f;
+  --ink-4: #98a0ac;
+
+  /* 品牌 */
+  --brand: #4f46e5;
+  --brand-fill: #4f46e5;
+  --brand-fill-hover: #4338ca;
+  --brand-soft: #eef0ff;
+  --brand-soft-2: #e3e6ff;
+  --brand-ink: #3730a3;
+  --brand-ring: rgba(79, 70, 229, 0.26);
+
+  /* 状态 */
+  --success: #15803d;
+  --success-soft: #eaf7ef;
+  --success-strong: #16a34a;
+  --danger: #dc2626;
+  --danger-soft: #fdecec;
+
+  /* 拼音分色：声母 / 韵母 */
+  --ini: #4338ca;
+  --fin: #b45309;
+
+  /* 键盘图强调色（本课 focus / 按下） */
+  --focus-initial: #2563eb;
+  --focus-final: #b45309;
+  --focus-final-strong: #c2740b;
+  --focus-initial-soft: rgba(37, 99, 235, 0.18);
+  --focus-final-soft: rgba(245, 158, 11, 0.18);
+  --pressed-bg: #ecfdf5;
+  --pressed-line: #16a34a;
+  --pressed-ring: rgba(22, 163, 74, 0.2);
+  --danger-line: rgba(220, 38, 38, 0.45);
+
+  /* 通过 / 完成态（教学顶栏、练习工具栏、地图已通过课） */
+  --state-success-bg: linear-gradient(100deg, #e8f8ee, #f8fdf9);
+  --state-success-bg-strong: linear-gradient(135deg, #eefbf2 0%, #ffffff 72%);
+  --state-success-bg-strong-hover: linear-gradient(135deg, #e4f8eb 0%, #ffffff 75%);
+  --state-success-line: #a7e3bc;
+  --state-success-line-strong: #bfe8ce;
+  --state-success-line-hover: #9eddb7;
+  --state-success-ink: #166534;
+  --state-success-fill: #15803d;
+  --state-success-fill-hover: #166534;
+
+  /* 键帽 */
+  --cap-ini-bg: linear-gradient(180deg, #f3f4ff 0%, #e3e6ff 100%);
+  --cap-ini-border: #d9ddff;
+  --cap-ini-edge: #c2c8f3;
+  --cap-ini-ink: #3b36a6;
+  --cap-fin-bg: linear-gradient(180deg, #fffaf0 0%, #fbedd3 100%);
+  --cap-fin-border: #f7e3be;
+  --cap-fin-edge: #e8c98c;
+  --cap-fin-ink: #8a5310;
+  --cap-hidden-bg: #f2f4f7;
+  --cap-hidden-border: #d5dbe3;
+  --cap-hidden-ink: #98a0ac;
+
+  /* 字号 */
+  --text-xs: 11px;
+  --text-sm: 12.5px;
+  --text-base: 13.5px;
+  --text-md: 15px;
+  --text-lg: 17px;
+  --text-xl: 21px;
+
+  /* 圆角 */
+  --r-xs: 7px;
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 18px;
+  --r-xl: 24px;
+  --r-pill: 999px;
+
+  /* 阴影 */
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
+  --shadow-md: 0 10px 30px -12px rgba(16, 24, 40, 0.18), 0 2px 6px rgba(16, 24, 40, 0.04);
+
+  /* 动效 */
+  --dur-fast: 120ms;
+  --dur-mid: 220ms;
+  --dur-slow: 380ms;
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+html[data-theme='dark'] {
+  color-scheme: dark;
+
+  --bg: #0f1218;
+  --surface: #171b23;
+  --surface-2: #1c2029;
+  --surface-3: #232833;
+  --line: #2a303c;
+  --line-strong: #3a4252;
+  --line-faint: #222733;
+
+  --ink: #eef1f6;
+  --ink-2: #b9c1cd;
+  --ink-3: #8d97a6;
+  --ink-4: #6c7686;
+
+  --brand: #8b87ff;
+  --brand-fill: #6366f1;
+  --brand-fill-hover: #7c7ff5;
+  --brand-soft: #23224a;
+  --brand-soft-2: #2b2a55;
+  --brand-ink: #c7c5ff;
+  --brand-ring: rgba(139, 135, 255, 0.35);
+
+  --success: #4ade80;
+  --success-soft: #132b1c;
+  --success-strong: #22c55e;
+  --danger: #f87171;
+  --danger-soft: #2e1717;
+
+  --ini: #a5b4fc;
+  --fin: #fbbf24;
+
+  --focus-initial: #93c5fd;
+  --focus-final: #fbbf24;
+  --focus-final-strong: #fbbf24;
+  --focus-initial-soft: rgba(147, 197, 253, 0.2);
+  --focus-final-soft: rgba(251, 191, 36, 0.2);
+  --pressed-bg: #052e1b;
+  --pressed-line: #4ade80;
+  --pressed-ring: rgba(74, 222, 128, 0.24);
+  --danger-line: rgba(248, 113, 113, 0.5);
+
+  --state-success-bg: linear-gradient(100deg, #173f2b, #1d4d34);
+  --state-success-bg-strong: linear-gradient(135deg, #062f1d 0%, var(--surface) 72%);
+  --state-success-bg-strong-hover: linear-gradient(135deg, #083b24 0%, var(--surface) 75%);
+  --state-success-line: #4ade80;
+  --state-success-line-strong: #166534;
+  --state-success-line-hover: #22c55e;
+  --state-success-ink: #d1fae5;
+  --state-success-fill: #22c55e;
+  --state-success-fill-hover: #4ade80;
+
+  --cap-ini-bg: linear-gradient(180deg, #2a2c52 0%, #222446 100%);
+  --cap-ini-border: #363a6b;
+  --cap-ini-edge: #1d1f3d;
+  --cap-ini-ink: #c7c5ff;
+  --cap-fin-bg: linear-gradient(180deg, #3a3020 0%, #2f2718 100%);
+  --cap-fin-border: #57462a;
+  --cap-fin-edge: #241e12;
+  --cap-fin-ink: #fcd34d;
+  --cap-hidden-bg: #20242e;
+  --cap-hidden-border: #343b49;
+  --cap-hidden-ink: #6c7686;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 12px 32px -14px rgba(0, 0, 0, 0.7), 0 2px 6px rgba(0, 0, 0, 0.35);
+}

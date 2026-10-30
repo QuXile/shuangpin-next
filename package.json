@@ -1,0 +1,28 @@
+{
+  "name": "shuangpin-next",
+  "version": "1.0.0",
+  "private": true,
+  "description": "双拼 NEXT：面向全拼熟练者的结构化双拼学习应用",
+  "packageManager": "pnpm@11.28.5",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @shuangpin/web dev",
+    "build": "pnpm --filter @shuangpin/web build",
+    "preview": "pnpm --filter @shuangpin/web preview",
+    "test": "pnpm --filter @shuangpin/core test",
+    "test:watch": "pnpm --filter @shuangpin/core test:watch",
+    "typecheck": "pnpm --filter @shuangpin/core typecheck && pnpm --filter @shuangpin/web typecheck",
+    "verify": "pnpm typecheck && pnpm test && pnpm build && pnpm validate",
+    "validate": "node scripts/validate-all.mjs",
+    "data:words": "node scripts/word-pipeline/build.mjs",
+    "data:curriculum": "node scripts/curriculum/build-curriculum.mjs",
+    "data:pools": "node scripts/word-pipeline/build-pools.mjs",
+    "data:sync": "node scripts/sync-data.mjs"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}
