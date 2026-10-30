@@ -59,7 +59,10 @@ const emit = defineEmits<{
 }
 @media (max-width: 640px) {
   .keymap-dock {
-    padding: 6px 8px 8px;
+    padding: 6px 8px calc(8px + env(safe-area-inset-bottom));
+  }
+  .keymap-dock :deep(.kbd-legend) {
+    display: none;
   }
 }
 </style>

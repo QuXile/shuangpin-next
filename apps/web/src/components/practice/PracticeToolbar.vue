@@ -208,31 +208,54 @@ const emit = defineEmits<{
 }
 @media (max-width: 640px) {
   .practice-toolbar {
-    padding: 0 5px;
-    gap: 4px;
+    height: auto;
+    padding: 7px 8px;
+    flex-wrap: wrap;
+    row-gap: 5px;
+    gap: 4px 8px;
+  }
+  .toolbar-left {
+    flex: 1 1 100%;
+    gap: 3px;
   }
   .toolbar-title,
-  .gate-hint,
-  .stage-back kbd {
+  .stage-back kbd,
+  .toolbar-actions .toolbar-divider {
     display: none;
   }
-  .toolbar-progress-label,
-  .speed-readout {
-    font-size: 11.5px;
-    font-weight: 720;
+  .toolbar-progress-label {
+    font-size: 13px;
+    font-weight: 780;
+  }
+  .gate-hint {
+    flex: 1;
+    min-width: 0;
+    font-size: 12px;
+    font-weight: 750;
   }
   .stage-back {
-    padding: 0 3px;
-    font-size: 10px;
+    padding: 0 4px;
+    font-size: 11px;
     gap: 3px;
   }
   .toolbar-actions {
-    gap: 0;
+    flex: 1 1 100%;
+    gap: 6px;
+  }
+  .speed-readout {
+    order: 3;
+    margin-left: auto;
+    font-size: 13px;
+    font-weight: 780;
+  }
+  .toolbar-actions .stage-back {
+    order: 1;
   }
   .toolbar-primary {
-    margin-left: 3px;
-    padding: 0 8px;
-    font-size: 11px;
+    order: 2;
+    margin-left: 0;
+    padding: 0 10px;
+    font-size: 11.5px;
   }
   .toolbar-primary kbd {
     display: none;

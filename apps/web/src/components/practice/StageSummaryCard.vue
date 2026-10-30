@@ -334,8 +334,15 @@ withDefaults(
     align-items: flex-start;
     width: 100%;
   }
+  .summary-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
   .summary-details {
     grid-template-columns: 1fr;
+  }
+  .summary-actions :slotted(.btn) {
+    flex: 1;
+    justify-content: center;
   }
 }
 </style>

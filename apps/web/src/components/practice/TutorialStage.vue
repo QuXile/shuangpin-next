@@ -418,18 +418,53 @@ const ratingLines = computed<PassCriteriaLine[]>(() => {
   }
 }
 @media (max-width: 640px) {
+  .tutorial-single {
+    flex: none;
+    min-height: 0;
+  }
+  .tutorial-top {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    min-height: 0;
+    max-width: none;
+    gap: 10px;
+  }
   .tutorial-card {
+    flex: none;
     padding: 12px 14px;
+    overflow: visible;
+  }
+  .tutorial-range {
+    flex: none;
+    overflow: visible;
+  }
+  .focus-block {
+    flex: none;
+    overflow: visible;
+  }
+  .tutorial-bottom {
+    max-height: none;
   }
   .tutorial-side {
-    gap: 8px;
+    flex: none;
+    overflow: visible;
+    gap: 10px;
   }
   .tutorial-examples {
+    flex: none;
+    height: 300px;
+    min-height: 300px;
     padding: 12px 12px 8px;
   }
   .tutorial-rating {
+    flex: none;
+    max-height: none;
     padding: 12px 12px 8px;
-    max-height: 40%;
+  }
+  .tutorial-actions .btn {
+    width: 100%;
+    justify-content: center;
   }
   .tutorial-rating .tutorial-side-head {
     margin-bottom: 5px;

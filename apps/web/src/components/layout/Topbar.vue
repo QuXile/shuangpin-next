@@ -265,10 +265,27 @@ const practiceTitle = computed(() => {
     display: none;
   }
   .topbar-course {
-    font-size: 14px;
+    font-size: 13px;
   }
   .topbar-inner {
+    padding: 0 12px;
     gap: 8px;
+  }
+  .brand-tag {
+    display: none;
+  }
+  .brand-name {
+    font-size: 14px;
+  }
+  .brand-mark {
+    width: 26px;
+    height: 26px;
+  }
+  .theme-btn {
+    padding: 0;
+  }
+  .theme-btn kbd {
+    display: none;
   }
   .topbar-nav {
     padding: 2px;

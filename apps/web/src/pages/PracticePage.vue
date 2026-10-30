@@ -208,8 +208,17 @@ function onDockBackspace(): void {
   flex-direction: column;
 }
 @media (max-width: 640px) {
-  .practice-scroll { padding: 10px 12px 18px; }
-  .intro-scroll { padding: 10px 12px 16px; }
-  .practice-stage { padding: 10px 12px 0; }
+  .practice-scroll { padding: 10px 12px 20px; }
+  .intro-scroll { padding: 10px 12px 18px; }
+  .practice-stage { padding: 8px 10px 0; }
+  /* 教学页在移动端改为自然滚动，避免固定高度把示例/评分裁切 */
+  .practice-page.is-tutorial .practice-scroll {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .practice-page.is-tutorial .practice-inner {
+    height: auto;
+    display: block;
+  }
 }
 </style>

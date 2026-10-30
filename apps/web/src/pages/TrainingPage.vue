@@ -1923,4 +1923,77 @@ onScopeDispose(() => {
     overflow: visible;
   }
 }
+
+/* ── 移动端：单滚动容器 + 清晰两行会话栏，消除嵌套滚动与遮挡 ── */
+@media (max-width: 640px) {
+  .training-config {
+    padding: 12px 10px 10px;
+    gap: 10px;
+  }
+  .training-hero {
+    gap: 6px;
+  }
+  .training-hero h1 {
+    font-size: 24px;
+  }
+  .training-sub {
+    font-size: 11.5px;
+    line-height: 1.55;
+  }
+  .training-controls {
+    gap: 7px;
+  }
+  .setup-grid {
+    gap: 12px;
+    padding-bottom: 4px;
+  }
+  .setup-grid :deep(.setup-card) {
+    height: auto;
+    flex: none;
+    overflow: visible;
+    padding: 14px;
+  }
+  .setup-grid :deep(.setup-card-scroll) {
+    flex: none;
+    min-height: 0;
+    overflow: visible;
+    padding-right: 0;
+  }
+  .setup-actions {
+    padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  }
+  .article-summary-wrap {
+    padding: 12px 2px calc(18px + env(safe-area-inset-bottom));
+  }
+  .training-toolbar {
+    height: auto;
+    flex-wrap: wrap;
+    row-gap: 5px;
+    padding: 7px 8px;
+    gap: 4px 8px;
+  }
+  .training-toolbar .toolbar-left {
+    flex: 1 1 100%;
+    gap: 6px;
+  }
+  .training-toolbar .toolbar-right {
+    flex: 1 1 100%;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+  .training-toolbar .toolbar-divider {
+    display: none;
+  }
+  .training-stat {
+    font-size: 11px;
+  }
+  .training-stat.is-primary,
+  .speed-readout.is-primary {
+    font-size: 13px;
+  }
+  .training-exit {
+    padding: 0 4px;
+    font-size: 11px;
+  }
+}
 </style>
