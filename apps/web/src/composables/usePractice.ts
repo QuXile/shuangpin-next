@@ -72,19 +72,16 @@ interface StageRuntime {
   revealed: ReadonlySet<string>
   wrongInputs: ReadonlyMap<string, string[]>
   cellErrors: ReadonlyMap<string, number>
+  keyErrors: ReadonlyMap<string, number>
   /** 达标粘滞：一旦 gate.met 过就不再撤销（含 alreadyPassed 课程） */
   cleared: boolean
   /** 是否已选择「继续练习」进入无尽滚动（每阶段独立，重练重置） */
   infinite: boolean
 }
 
-export interface EndPromptErrorGroup {
-  label: string
-  count: number
-}
-
-export interface EndPromptDistribution {
-  label: string
+export interface EndPromptKeyError {
+  expected: string
+  typed: string
   count: number
 }
 
@@ -103,8 +100,7 @@ export interface EndPromptView {
     errors: number
     durationSec: number
   }
-  errorDistribution: EndPromptDistribution[]
-  errorGroups: EndPromptErrorGroup[]
+  keyErrors: EndPromptKeyError[]
   rules: PassCriteriaLine[]
   /** 仅最后一场全遮挡考核显示：本次尝试的星级评分 */
   rating: EndPromptRating | null
@@ -216,27 +212,13 @@ export function usePractice() {
     const met = gateReady.value
     const rawStats = runtime.session.stats
 
-    // 按「出错的字/词」聚合错误次数；cell key 为「词下标:字下标」
-    const errorCounts = new Map<string, number>()
-    for (const [cellKey, count] of runtime.cellErrors) {
-      const wordIndex = Number(cellKey.split(':')[0])
-      const label = runtime.session.words[wordIndex]?.word.text ?? '未知'
-      errorCounts.set(label, (errorCounts.get(label) ?? 0) + count)
-    }
-    const errorGroups = [...errorCounts.entries()]
-      .map(([label, count]) => ({ label, count }))
-      .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
-      .slice(0, 5)
-
-    const distribution = new Map<number, number>()
-    for (const count of runtime.cellErrors.values()) {
-      const bucket = Math.min(count, 3)
-      distribution.set(bucket, (distribution.get(bucket) ?? 0) + 1)
-    }
-    const errorDistribution = [1, 2, 3].map((bucket) => ({
-      label: bucket === 3 ? '3 次及以上' : `${bucket} 次`,
-      count: distribution.get(bucket) ?? 0,
-    }))
+    // 错误键位统计：应敲的键 vs 实际按下的键
+    const keyErrors = [...runtime.keyErrors.entries()]
+      .map(([pair, count]) => {
+        const [typed = '?', expected = '?'] = pair.split('|')
+        return { expected: expected.toUpperCase(), typed: typed.toUpperCase(), count }
+      })
+      .sort((a, b) => b.count - a.count || a.expected.localeCompare(b.expected))
 
     const finishedAt = rawStats.finishedAt ?? performance.now()
     const durationSec = Math.max(1, Math.round((finishedAt - rawStats.startedAt) / 1000))
@@ -246,7 +228,10 @@ export function usePractice() {
     const isFinalExam = isLastStage.value && stage.value === 'exam'
     let rating: EndPromptRating | null = null
     if (isFinalExam) {
-      if (!met) {
+      // 已通过课程重练时 gate 会继承“已达标”，本次评分仍必须满足本课最低正确率
+      const minAccuracy = currentLesson.passCriteria?.accuracy ?? 0
+      const passedAttempt = met && value.accuracy >= minAccuracy
+      if (!passedAttempt) {
         rating = { passed: false, stars: 0 }
       } else {
         const result = evaluateLesson(currentLesson, {
@@ -272,8 +257,7 @@ export function usePractice() {
         title: `已练满 ${words} 词。`,
         enterLabel,
         stats,
-        errorDistribution,
-        errorGroups,
+        keyErrors,
         rules,
         rating,
       }
@@ -284,8 +268,7 @@ export function usePractice() {
       title: `已练满 ${words} 词，还没达标。`,
       enterLabel: null,
       stats,
-      errorDistribution,
-      errorGroups,
+      keyErrors,
       rules,
       rating,
     }
@@ -384,6 +367,7 @@ export function usePractice() {
       revealed: runtime.revealed,
       wrongInputs: runtime.wrongInputs,
       cellErrors: runtime.cellErrors,
+      keyErrors: runtime.keyErrors,
     }
   }
 
@@ -415,6 +399,7 @@ export function usePractice() {
       revealed: new Set(),
       wrongInputs: new Map(),
       cellErrors: new Map(),
+      keyErrors: new Map(),
       cleared: alreadyPassed.value,
       infinite: false,
     })
@@ -497,6 +482,7 @@ export function usePractice() {
       revealed: tracker.revealed,
       wrongInputs: tracker.wrongInputs,
       cellErrors: tracker.cellErrors,
+      keyErrors: tracker.keyErrors,
       cleared: runtime.cleared || nextGate.met,
       infinite: runtime.infinite,
     })
@@ -513,6 +499,7 @@ export function usePractice() {
       revealed: tracker.revealed,
       wrongInputs: tracker.wrongInputs,
       cellErrors: tracker.cellErrors,
+      keyErrors: tracker.keyErrors,
     })
   }
 
@@ -529,6 +516,7 @@ export function usePractice() {
       revealed: tracker.revealed,
       wrongInputs: tracker.wrongInputs,
       cellErrors: tracker.cellErrors,
+      keyErrors: tracker.keyErrors,
     })
   }
 

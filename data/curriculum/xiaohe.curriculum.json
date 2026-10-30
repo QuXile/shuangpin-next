@@ -4,9 +4,9 @@
   "schemeType": "compositional",
   "version": "1.0.0",
   "templateVersion": "1.0.0",
-  "generatedAt": "2026-10-30T08:11:19.149Z",
+  "generatedAt": "2026-10-30T09:23:43.691Z",
   "supportLevel": "full",
-  "dataVersion": "curriculum-96003d933bfe",
+  "dataVersion": "curriculum-4169e3a92a4b",
   "chapters": [
     {
       "id": "ch-intro",
@@ -140,7 +140,7 @@
         "把键位和字绑在一起记（字组结合），比背字母表牢固。"
       ],
       "passCriteria": {
-        "accuracy": 0.9,
+        "accuracy": 0.85,
         "mode": "accuracy"
       },
       "stageMinWords": {
@@ -199,7 +199,7 @@
         "把键位和字绑在一起记（字组结合），比背字母表牢固。"
       ],
       "passCriteria": {
-        "accuracy": 0.9,
+        "accuracy": 0.85,
         "mode": "accuracy"
       },
       "stageMinWords": {
@@ -259,7 +259,7 @@
         "把键位和字绑在一起记（字组结合），比背字母表牢固。"
       ],
       "passCriteria": {
-        "accuracy": 0.9,
+        "accuracy": 0.85,
         "mode": "accuracy"
       },
       "stageMinWords": {
@@ -494,7 +494,7 @@
         "把键位和字绑在一起记（字组结合），比背字母表牢固。"
       ],
       "passCriteria": {
-        "accuracy": 0.9,
+        "accuracy": 0.85,
         "mode": "accuracy"
       },
       "stageMinWords": {
@@ -795,7 +795,7 @@
         "卡壳时先回忆 5 秒再看提示，把卡住的拼音记进“漏洞表”。"
       ],
       "passCriteria": {
-        "accuracy": 0.9,
+        "accuracy": 0.85,
         "mode": "accuracy"
       },
       "stageMinWords": {
@@ -866,7 +866,7 @@
         "把键位和字绑在一起记（字组结合），比背字母表牢固。"
       ],
       "passCriteria": {
-        "accuracy": 0.9,
+        "accuracy": 0.85,
         "mode": "accuracy"
       },
       "stageMinWords": {
@@ -940,7 +940,7 @@
         "把键位和字绑在一起记（字组结合），比背字母表牢固。"
       ],
       "passCriteria": {
-        "accuracy": 0.9,
+        "accuracy": 0.85,
         "mode": "accuracy"
       },
       "stageMinWords": {
@@ -1015,7 +1015,7 @@
         "把键位和字绑在一起记（字组结合），比背字母表牢固。"
       ],
       "passCriteria": {
-        "accuracy": 0.9,
+        "accuracy": 0.85,
         "mode": "accuracy"
       },
       "stageMinWords": {
@@ -1088,7 +1088,7 @@
         "把键位和字绑在一起记（字组结合），比背字母表牢固。"
       ],
       "passCriteria": {
-        "accuracy": 0.9,
+        "accuracy": 0.85,
         "mode": "accuracy"
       },
       "stageMinWords": {
@@ -1286,7 +1286,7 @@
         "错得多的音节单独慢打 3 遍，比整段重刷更有效。"
       ],
       "passCriteria": {
-        "accuracy": 0.9,
+        "accuracy": 0.85,
         "mode": "accuracy"
       },
       "stageMinWords": {
@@ -1381,7 +1381,7 @@
         "忘记键位时先想 5 秒，再看键位图，然后把这一键慢打 3 遍。"
       ],
       "passCriteria": {
-        "accuracy": 0.9,
+        "accuracy": 0.85,
         "mode": "accuracy"
       },
       "stageMinWords": {
@@ -1456,7 +1456,7 @@
         "把键位和字绑在一起记（字组结合），比背字母表牢固。"
       ],
       "passCriteria": {
-        "accuracy": 0.9,
+        "accuracy": 0.85,
         "mode": "accuracy"
       },
       "stageMinWords": {
@@ -1536,7 +1536,7 @@
         "把键位和字绑在一起记（字组结合），比背字母表牢固。"
       ],
       "passCriteria": {
-        "accuracy": 0.9,
+        "accuracy": 0.85,
         "mode": "accuracy"
       },
       "stageMinWords": {
@@ -1636,7 +1636,7 @@
         "忘记键位时先想 5 秒，再看键位图，然后把这一键慢打 3 遍。"
       ],
       "passCriteria": {
-        "accuracy": 0.9,
+        "accuracy": 0.85,
         "mode": "accuracy"
       },
       "stageMinWords": {
@@ -1717,7 +1717,7 @@
         "把键位和字绑在一起记（字组结合），比背字母表牢固。"
       ],
       "passCriteria": {
-        "accuracy": 0.9,
+        "accuracy": 0.85,
         "mode": "accuracy"
       },
       "stageMinWords": {
@@ -1797,7 +1797,7 @@
         "把键位和字绑在一起记（字组结合），比背字母表牢固。"
       ],
       "passCriteria": {
-        "accuracy": 0.9,
+        "accuracy": 0.85,
         "mode": "accuracy"
       },
       "stageMinWords": {
@@ -2145,7 +2145,7 @@
         "错得多的音节单独慢打 3 遍，比整段重刷更有效。"
       ],
       "passCriteria": {
-        "accuracy": 0.9,
+        "accuracy": 0.85,
         "mode": "accuracy"
       },
       "stageMinWords": {
@@ -2229,7 +2229,7 @@
         "把键位和字绑在一起记（字组结合），比背字母表牢固。"
       ],
       "passCriteria": {
-        "accuracy": 0.9,
+        "accuracy": 0.85,
         "mode": "accuracy"
       },
       "stageMinWords": {
@@ -2312,7 +2312,7 @@
         "把键位和字绑在一起记（字组结合），比背字母表牢固。"
       ],
       "passCriteria": {
-        "accuracy": 0.9,
+        "accuracy": 0.85,
         "mode": "accuracy"
       },
       "stageMinWords": {
@@ -2418,7 +2418,7 @@
         "忘记键位时先想 5 秒，再看键位图，然后把这一键慢打 3 遍。"
       ],
       "passCriteria": {
-        "accuracy": 0.9,
+        "accuracy": 0.85,
         "mode": "accuracy"
       },
       "stageMinWords": {
@@ -2596,7 +2596,7 @@
         "错得多的音节单独慢打 3 遍，比整段重刷更有效。"
       ],
       "passCriteria": {
-        "accuracy": 0.9,
+        "accuracy": 0.85,
         "mode": "accuracy"
       },
       "stageMinWords": {
@@ -3200,7 +3200,7 @@
         "卡壳时先回忆 5 秒再看提示，把卡住的拼音记进“漏洞表”。"
       ],
       "passCriteria": {
-        "accuracy": 0.9,
+        "accuracy": 0.85,
         "mode": "accuracy"
       },
       "stageMinWords": {
@@ -3804,7 +3804,7 @@
         "每天 10–15 分钟短练，再把双拼带进真实聊天/写笔记。"
       ],
       "passCriteria": {
-        "accuracy": 0.9,
+        "accuracy": 0.85,
         "mode": "speed",
         "minCpm": 15,
         "starCpm": [
@@ -3897,7 +3897,7 @@
         "把键位和字绑在一起记（字组结合），比背字母表牢固。"
       ],
       "passCriteria": {
-        "accuracy": 0.9,
+        "accuracy": 0.85,
         "mode": "accuracy"
       },
       "stageMinWords": {
@@ -3987,7 +3987,7 @@
         "把键位和字绑在一起记（字组结合），比背字母表牢固。"
       ],
       "passCriteria": {
-        "accuracy": 0.9,
+        "accuracy": 0.85,
         "mode": "accuracy"
       },
       "stageMinWords": {
@@ -4075,7 +4075,7 @@
         "把键位和字绑在一起记（字组结合），比背字母表牢固。"
       ],
       "passCriteria": {
-        "accuracy": 0.9,
+        "accuracy": 0.85,
         "mode": "accuracy"
       },
       "stageMinWords": {
@@ -4269,7 +4269,7 @@
         "错得多的音节单独慢打 3 遍，比整段重刷更有效。"
       ],
       "passCriteria": {
-        "accuracy": 0.9,
+        "accuracy": 0.85,
         "mode": "accuracy"
       },
       "stageMinWords": {
@@ -4357,7 +4357,7 @@
         "把键位和字绑在一起记（字组结合），比背字母表牢固。"
       ],
       "passCriteria": {
-        "accuracy": 0.9,
+        "accuracy": 0.85,
         "mode": "accuracy"
       },
       "stageMinWords": {
@@ -4450,7 +4450,7 @@
         "把键位和字绑在一起记（字组结合），比背字母表牢固。"
       ],
       "passCriteria": {
-        "accuracy": 0.9,
+        "accuracy": 0.85,
         "mode": "accuracy"
       },
       "stageMinWords": {
@@ -4544,7 +4544,7 @@
         "忘记键位时先想 5 秒，再看键位图，然后把这一键慢打 3 遍。"
       ],
       "passCriteria": {
-        "accuracy": 0.9,
+        "accuracy": 0.85,
         "mode": "accuracy"
       },
       "stageMinWords": {
@@ -4638,7 +4638,7 @@
         "忘记键位时先想 5 秒，再看键位图，然后把这一键慢打 3 遍。"
       ],
       "passCriteria": {
-        "accuracy": 0.9,
+        "accuracy": 0.85,
         "mode": "accuracy"
       },
       "stageMinWords": {
@@ -4787,7 +4787,7 @@
         "错得多的音节单独慢打 3 遍，比整段重刷更有效。"
       ],
       "passCriteria": {
-        "accuracy": 0.9,
+        "accuracy": 0.85,
         "mode": "accuracy"
       },
       "stageMinWords": {
@@ -4882,7 +4882,7 @@
         "把键位和字绑在一起记（字组结合），比背字母表牢固。"
       ],
       "passCriteria": {
-        "accuracy": 0.9,
+        "accuracy": 0.85,
         "mode": "accuracy"
       },
       "stageMinWords": {
@@ -4979,7 +4979,7 @@
         "把键位和字绑在一起记（字组结合），比背字母表牢固。"
       ],
       "passCriteria": {
-        "accuracy": 0.9,
+        "accuracy": 0.85,
         "mode": "accuracy"
       },
       "stageMinWords": {
@@ -5112,7 +5112,7 @@
         "忘记键位时先想 5 秒，再看键位图，然后把这一键慢打 3 遍。"
       ],
       "passCriteria": {
-        "accuracy": 0.9,
+        "accuracy": 0.85,
         "mode": "accuracy"
       },
       "stageMinWords": {
@@ -5267,7 +5267,7 @@
         "错得多的音节单独慢打 3 遍，比整段重刷更有效。"
       ],
       "passCriteria": {
-        "accuracy": 0.9,
+        "accuracy": 0.85,
         "mode": "accuracy"
       },
       "stageMinWords": {
@@ -6101,7 +6101,7 @@
         "卡壳时先回忆 5 秒再看提示，把卡住的拼音记进“漏洞表”。"
       ],
       "passCriteria": {
-        "accuracy": 0.9,
+        "accuracy": 0.85,
         "mode": "accuracy"
       },
       "stageMinWords": {
@@ -6935,7 +6935,7 @@
         "每天 10–15 分钟短练，再把双拼带进真实聊天/写笔记。"
       ],
       "passCriteria": {
-        "accuracy": 0.9,
+        "accuracy": 0.85,
         "mode": "speed",
         "minCpm": 30,
         "starCpm": [
@@ -7775,7 +7775,7 @@
         "第三颗星要求全程不揭示答案：不确定时宁可放慢。"
       ],
       "passCriteria": {
-        "accuracy": 0.9,
+        "accuracy": 0.85,
         "mode": "accuracy-speed",
         "minCpm": 30,
         "starCpm": [

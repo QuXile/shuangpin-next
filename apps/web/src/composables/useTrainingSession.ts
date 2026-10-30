@@ -89,6 +89,7 @@ export function useTrainingSession() {
     session,
     revealed: computed(() => tracker.value.revealed),
     wrongInputs: computed(() => tracker.value.wrongInputs),
+    keyErrors: computed(() => tracker.value.keyErrors),
     metrics,
     completedWords,
     accuracy,

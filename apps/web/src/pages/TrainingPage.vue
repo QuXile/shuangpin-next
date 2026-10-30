@@ -18,6 +18,7 @@ import {
   type WordEntry,
 } from '@shuangpin/core'
 import PracticeStream from '@/components/practice/PracticeStream.vue'
+import StageSummaryCard from '@/components/practice/StageSummaryCard.vue'
 import KeyboardDock from '@/components/keyboard/KeyboardDock.vue'
 import ArticleGrid from '@/components/training/ArticleGrid.vue'
 import SetupCard from '@/components/training/SetupCard.vue'
@@ -44,6 +45,7 @@ const {
   session,
   revealed,
   wrongInputs,
+  keyErrors: sessionKeyErrors,
   completedWords,
   accuracy,
   inError,
@@ -452,10 +454,20 @@ const articleSummary = computed(() => {
   const state = session.value
   if (kind.value !== 'article' || !state) return null
   const metrics = sessionMetrics(state, performance.now())
+  const finishedAt = state.stats.finishedAt ?? performance.now()
+  const keyErrors = [...sessionKeyErrors.value.entries()]
+    .map(([pair, count]) => {
+      const [typed = '?', expected = '?'] = pair.split('|')
+      return { expected: expected.toUpperCase(), typed: typed.toUpperCase(), count }
+    })
+    .sort((a, b) => b.count - a.count || a.expected.localeCompare(b.expected))
   return {
     words: metrics.completedWords,
     accuracy: Math.round(metrics.accuracy * 100),
     cpm: metrics.cpm,
+    errors: state.stats.errors,
+    durationSec: Math.max(1, Math.round((finishedAt - state.stats.startedAt) / 1000)),
+    keyErrors,
   }
 })
 
@@ -982,20 +994,25 @@ onScopeDispose(() => {
         </template>
 
         <template v-else-if="kind === 'article' && session">
-          <div v-if="articleDone && articleSummary" class="article-done">
-            <div class="article-done-head">
-              <strong>练习完成</strong>
-              <span>{{ sessionTitle }}</span>
-            </div>
-            <div class="article-done-stats">
-              <div><b>{{ articleSummary.words }}</b><span>字数</span></div>
-              <div><b>{{ articleSummary.accuracy }}%</b><span>正确率</span></div>
-              <div><b>{{ Math.round(articleSummary.cpm) }}</b><span>字/分</span></div>
-            </div>
-            <div class="article-done-actions">
-              <button class="btn btn--primary" type="button" @click="replayArticle">再来一遍</button>
-              <button class="btn" type="button" @click="changeArticle">换文章</button>
-            </div>
+          <div v-if="articleDone && articleSummary" class="article-summary-wrap">
+            <StageSummaryCard
+              kicker="文章练习"
+              :title="`完成 ${articleSummary.words} 字`"
+              tone="success"
+              :stats="[
+                { value: articleSummary.words, unit: '字', label: '字数' },
+                { value: articleSummary.accuracy, unit: '%', label: '正确率' },
+                { value: Math.round(articleSummary.cpm), unit: '字/分', label: '速度' },
+                { value: articleSummary.errors, label: '错误次数' },
+                { value: articleSummary.durationSec, unit: '秒', label: '用时' },
+              ]"
+              :key-errors="articleSummary.keyErrors"
+            >
+              <template #actions>
+                <button class="btn btn--primary" type="button" @click="replayArticle">再来一遍</button>
+                <button class="btn" type="button" @click="changeArticle">换文章</button>
+              </template>
+            </StageSummaryCard>
           </div>
           <ArticleGrid
             v-else-if="articlePlan"
@@ -1420,49 +1437,20 @@ onScopeDispose(() => {
   font-weight: 780;
   letter-spacing: -0.01em;
 }
-.article-done {
+.article-summary-wrap {
   flex: 1;
   min-height: 0;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+  overflow-y: auto;
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  gap: 18px;
-  padding: 24px;
 }
-.article-done-head {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-}
-.article-done-head strong {
-  font-size: 20px;
-}
-.article-done-head span {
-  color: var(--ink-3);
-  font-size: 12px;
-}
-.article-done-stats {
-  display: flex;
-  gap: 28px;
-}
-.article-done-stats div {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-.article-done-stats b {
-  font-size: 26px;
-  font-variant-numeric: tabular-nums;
-}
-.article-done-stats span {
-  color: var(--ink-3);
-  font-size: 10.5px;
-}
-.article-done-actions {
-  display: flex;
-  gap: 10px;
+.article-summary-wrap > * {
+  max-width: 860px;
 }
 .stream-shell {
   flex: 1;

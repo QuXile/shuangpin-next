@@ -170,7 +170,7 @@ dataVersion = "words-"      + sha256(dictSha | pinyin-pro 版本 | 过滤参数 
 
 - `data/pools/index.json` 的 `sources = { curriculum: <xiaohe 课程版本>, dict: <词典 sha256 前 12 位> }`；
 - `manifest.json` 记录 `versions{curriculum,pools,words}`、`defaultScheme`、`courses` 与文件清单；
-- 当前版本：`curriculum-96003d933bfe`（xiaohe）、`pools-bd34aa65678b`、`words-fed4e16a8e5b`、`training-f914efc941c2`；音节补丁：`data/words/syllable-patches.json`，词库策略：`data/words/word-policy.json`，训练库：`data/training/bank.json`。
+- 当前版本：`curriculum-4169e3a92a4b`（xiaohe）、`pools-bd34aa65678b`、`words-fed4e16a8e5b`、`training-f914efc941c2`；音节补丁：`data/words/syllable-patches.json`，词库策略：`data/words/word-policy.json`，训练库：`data/training/bank.json`。
 
 ### 4.6 手写逻辑审计
 
@@ -228,7 +228,7 @@ dataVersion = "words-"      + sha256(dictSha | pinyin-pro 版本 | 过滤参数 
 **阶段门槛 `stageGate(lesson, stage, metrics)`**：
 
 - 单字 / 半遮挡词阶段：完成词数达到 `stageMinWords` 即可继续（只作最低量要求，不卡正确率）；
-- 全遮挡考核阶段：除词数门槛外，还必须达到本课 `passCriteria`（正确率 ≥90%；速度课再加最低字/分）。达标后可自由选择继续练习或完成本课。
+- 全遮挡考核阶段：除词数门槛外，还必须达到本课 `passCriteria`（正确率 ≥85%；速度课再加最低字/分）。达标后可自由选择继续练习或完成本课。
 - 工具条展示「已练 X/Y 词」（Y 为当前阶段目标词数，X 封顶 Y）与未达标原因；「已练 X/Y 词」和绿点实时速度是顶栏最醒目的信息（13px/780/主文字色，标题 12px 次要）；右侧按钮组前有同款竖分隔线。
 
 **阶段切换与按钮语义**：
@@ -274,10 +274,10 @@ dataVersion = "words-"      + sha256(dictSha | pinyin-pro 版本 | 过滤参数 
 | 课程 | ★ | ★★ | ★★★ |
 |---|---|---|---|
 | 入门 | 完成试打 | 同 ★ | 完成试打即记 ★★★ |
-| 新课 drill（20 词全遮挡考核） | 正确率 ≥90% | 正确率 ≥95% | 正确率 ≥98% 且未揭示答案 |
-| 复习 review（40 词全遮挡；家族/混合） | 正确率 ≥90% | 正确率 ≥95% | 正确率 ≥98% 且未揭示答案 |
-| 复习 · 速度（期中/综合，40 词） | 正确率 ≥90% 且速度 ≥15 或 ≥30 字/分 | 25 或 45 字/分 | 35 或 60 字/分 |
-| 通关考核（80 词全遮挡） | 正确率 ≥90% 且 ≥30 字/分 | 正确率 ≥95% 且 ≥40 字/分 | 正确率 ≥98%、≥50 字/分且未揭示答案 |
+| 新课 drill（20 词全遮挡考核） | 正确率 ≥85% | 正确率 ≥90% | 正确率 ≥95% 且未揭示答案 |
+| 复习 review（40 词全遮挡；家族/混合） | 正确率 ≥85% | 正确率 ≥90% | 正确率 ≥95% 且未揭示答案 |
+| 复习 · 速度（期中/综合，40 词） | 正确率 ≥85% 且速度 ≥15 或 ≥30 字/分 | 25 或 45 字/分 | 35 或 60 字/分 |
+| 通关考核（80 词全遮挡） | 正确率 ≥85% 且 ≥30 字/分 | 正确率 ≥90% 且 ≥40 字/分 | 正确率 ≥95%、≥50 字/分且未揭示答案 |
 
 - 全遮挡阶段：1★ 门槛未达标时「完成本课」不可点；达标后可继续无限练习或完成；
 - 已通过课程重练：仍记录 attempts / bestAccuracy，星级取历史最优；

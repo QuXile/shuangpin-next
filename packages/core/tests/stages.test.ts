@@ -61,10 +61,10 @@ describe('lessonStages / lessonStageMinWords（三阶段词口径）', () => {
       stageGate(drill, 'word', { accuracy: 0.5, cpm: 0, completedWords: 10 }).met,
     ).toBe(true)
     expect(
-      stageGate(drill, 'exam', { accuracy: 0.9, cpm: 0, completedWords: 20 }).met,
+      stageGate(drill, 'exam', { accuracy: 0.85, cpm: 0, completedWords: 20 }).met,
     ).toBe(true)
     expect(
-      stageGate(drill, 'exam', { accuracy: 0.89, cpm: 0, completedWords: 20 }).met,
+      stageGate(drill, 'exam', { accuracy: 0.84, cpm: 0, completedWords: 20 }).met,
     ).toBe(false)
 
     const review = findLesson(curriculum, 'L2.5')

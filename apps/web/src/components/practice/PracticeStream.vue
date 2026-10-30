@@ -6,6 +6,7 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import type { AtomId, SessionState } from '@shuangpin/core'
 import CharacterCard from './CharacterCard.vue'
+import StageSummaryCard from './StageSummaryCard.vue'
 import type { EndPromptView } from '@/composables/usePractice'
 
 const props = withDefaults(
@@ -57,6 +58,17 @@ const rowEls = ref<HTMLElement[]>([])
 const promptEl = ref<HTMLElement | null>(null)
 
 const currentWordIndex = computed(() => props.session.index)
+
+const summaryStats = computed(() => {
+  const prompt = props.prompt
+  if (!prompt) return []
+  return [
+    { value: prompt.stats.accuracy, unit: '%', label: '正确率' },
+    { value: prompt.stats.cpm, unit: '字/分', label: '速度' },
+    { value: prompt.stats.errors, label: '错误次数' },
+    { value: prompt.stats.durationSec, unit: '秒', label: '用时' },
+  ]
+})
 
 function setRowEl(el: Element | null, index: number): void {
   if (el instanceof HTMLElement) rowEls.value[index] = el
@@ -171,96 +183,36 @@ watch(
           </div>
         </div>
       </div>
-      <div v-if="prompt" ref="promptEl" class="end-prompt" :class="{ 'is-met': prompt.met }" role="status">
-        <div class="end-prompt-head">
-          <div class="end-prompt-copy">
-            <span class="end-prompt-kicker">{{ prompt.met ? '阶段完成' : '暂未达标' }}</span>
-            <p class="end-prompt-text">
-              <strong>{{ prompt.title }}</strong>
-            </p>
-          </div>
-          <div
-            v-if="prompt.rating"
-            class="end-rating"
-            :class="{ 'is-passed': prompt.rating.passed }"
-            aria-label="本次考核评分"
-          >
-            <span class="end-rating-label">本次评分</span>
-            <strong class="end-rating-stars">
-              {{ prompt.rating.passed ? '★'.repeat(prompt.rating.stars) + '☆'.repeat(3 - prompt.rating.stars) : '未通过' }}
-            </strong>
-            <span v-if="prompt.rating.passed" class="end-rating-note">{{ prompt.rating.stars }} 星</span>
-          </div>
-        </div>
-
-        <div class="end-stats">
-          <div class="end-stat">
-            <b>{{ prompt.stats.accuracy }}<small>%</small></b>
-            <span>正确率</span>
-          </div>
-          <div class="end-stat">
-            <b>{{ prompt.stats.cpm }}<small>字/分</small></b>
-            <span>速度</span>
-          </div>
-          <div class="end-stat">
-            <b>{{ prompt.stats.errors }}</b>
-            <span>错误次数</span>
-          </div>
-          <div class="end-stat">
-            <b>{{ prompt.stats.durationSec }}<small>秒</small></b>
-            <span>用时</span>
-          </div>
-        </div>
-
-        <div class="end-details" :class="{ 'is-single': prompt.stats.errors === 0 }">
-          <section v-if="prompt.stats.errors > 0" class="end-block">
-            <header>错误分布</header>
-            <div class="end-error-dist">
-              <span v-for="item in prompt.errorDistribution" :key="item.label">
-                {{ item.label }}<b>{{ item.count }}</b> 处
-              </span>
-            </div>
-            <div v-if="prompt.errorGroups.length" class="end-error-top">
-              <span>最常出错</span>
-              <ul>
-                <li v-for="group in prompt.errorGroups" :key="group.label">
-                  <b>{{ group.label }}</b> ×{{ group.count }}
-                </li>
-              </ul>
-            </div>
-          </section>
-
-          <section v-if="prompt.rules.length" class="end-block">
-            <header>本课评分规则</header>
-            <p v-for="line in prompt.rules" :key="line.label" class="end-rule">
-              <b>{{ line.label }}</b>
-              <span>{{ line.text }}</span>
-            </p>
-            <p v-if="prompt.rating && !prompt.rating.passed" class="end-rule-note">
-              达到最低标准后即可完成本课。
-            </p>
-          </section>
-        </div>
-
-        <div class="end-prompt-actions">
-          <button
-            v-if="prompt.enterLabel"
-            class="btn btn--primary end-prompt-btn"
-            type="button"
-            @click="emit('primary')"
-          >
-            {{ prompt.enterLabel }}
-            <kbd>Enter</kbd>
-          </button>
-          <button class="btn end-prompt-btn" type="button" @click="emit('restart')">
-            重新开始
-            <kbd>Alt+R</kbd>
-          </button>
-          <button class="btn end-prompt-btn" type="button" @click="emit('continue')">
-            继续练习
-            <kbd>Alt+Enter</kbd>
-          </button>
-        </div>
+      <div v-if="prompt" ref="promptEl" class="end-summary-wrap" role="status">
+        <StageSummaryCard
+          :kicker="prompt.met ? '阶段完成' : '暂未达标'"
+          :title="prompt.title"
+          :tone="prompt.met ? 'success' : 'neutral'"
+          :stats="summaryStats"
+          :key-errors="prompt.keyErrors"
+          :rules="prompt.rules"
+          :rating="prompt.rating"
+        >
+          <template #actions>
+            <button
+              v-if="prompt.enterLabel"
+              class="btn btn--primary"
+              type="button"
+              @click="emit('primary')"
+            >
+              {{ prompt.enterLabel }}
+              <kbd>Enter</kbd>
+            </button>
+            <button class="btn" type="button" @click="emit('restart')">
+              重新开始
+              <kbd>Alt+R</kbd>
+            </button>
+            <button class="btn" type="button" @click="emit('continue')">
+              继续练习
+              <kbd>Alt+Enter</kbd>
+            </button>
+          </template>
+        </StageSummaryCard>
       </div>
     </div>
     <div class="fade fade--top" aria-hidden="true" />
@@ -347,247 +299,12 @@ watch(
   bottom: 0;
   background: linear-gradient(transparent, color-mix(in srgb, var(--bg) 72%, transparent));
 }
-.end-prompt {
+.end-summary-wrap {
   margin: 10px 4px 18px;
-  padding: 16px 18px;
-  border-radius: var(--r-lg);
-  border: 1px solid var(--line);
-  background: var(--surface);
-  box-shadow: var(--shadow-md);
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-.end-prompt.is-met {
-  border-color: var(--state-success-line);
-  background: linear-gradient(180deg, var(--state-success-bg), var(--surface) 58%);
-}
-.end-prompt-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-}
-.end-prompt-copy {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-.end-prompt-kicker {
-  width: fit-content;
-  padding: 2px 8px;
-  border-radius: var(--r-pill);
-  color: var(--ink-3);
-  background: var(--surface-3);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-}
-.end-prompt.is-met .end-prompt-kicker {
-  color: var(--state-success-ink);
-  background: var(--surface);
-}
-.end-prompt-text {
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  color: var(--ink-3);
-  font-size: 12px;
-  line-height: 1.6;
-}
-.end-prompt-text strong {
-  color: var(--ink);
-  font-size: 14px;
-  font-weight: 700;
-}
-.end-prompt.is-met .end-prompt-text strong {
-  color: var(--state-success-ink);
-}
-.end-rating {
-  flex: none;
-  min-width: 148px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 10px 14px 9px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-md);
-  background: var(--surface);
-}
-.end-rating.is-passed {
-  border-color: var(--state-success-line);
-  background: var(--surface);
-}
-.end-rating-label {
-  color: var(--ink-4);
-  font-size: 10px;
-  font-weight: 650;
-  letter-spacing: 0.06em;
-}
-.end-rating-stars {
-  color: var(--danger);
-  font-size: 21px;
-  font-weight: 800;
-  letter-spacing: 2px;
-  line-height: 1.25;
-}
-.end-rating.is-passed .end-rating-stars {
-  color: #d69e2e;
-}
-.end-rating-note {
-  color: var(--ink-3);
-  font-size: 10px;
-  font-weight: 650;
-}
-.end-stats {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
-}
-.end-stat {
-  min-width: 0;
-  padding: 9px 10px;
-  border: 1px solid var(--line-faint);
-  border-radius: var(--r-md);
-  background: var(--surface);
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.end-stat b {
-  color: var(--ink);
-  font-size: 18px;
-  font-weight: 780;
-  font-variant-numeric: tabular-nums;
-  line-height: 1.2;
-}
-.end-stat b small {
-  margin-left: 2px;
-  color: var(--ink-3);
-  font-size: 9px;
-  font-weight: 600;
-}
-.end-stat > span {
-  color: var(--ink-3);
-  font-size: 10px;
-  font-weight: 600;
-}
-.end-details {
-  display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-  gap: 10px;
-}
-.end-details.is-single {
-  grid-template-columns: 1fr;
-}
-.end-block {
-  min-width: 0;
-  padding: 11px 12px;
-  border: 1px solid var(--line-faint);
-  border-radius: var(--r-md);
-  background: var(--surface);
-}
-.end-block > header {
-  margin-bottom: 7px;
-  color: var(--ink-2);
-  font-size: 11px;
-  font-weight: 700;
-}
-.end-error-dist {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-}
-.end-error-dist span {
-  padding: 3px 7px;
-  border-radius: var(--r-pill);
-  background: var(--surface-2);
-  color: var(--ink-3);
-  font-size: 10px;
-  font-variant-numeric: tabular-nums;
-}
-.end-error-dist b {
-  margin: 0 2px 0 4px;
-  color: var(--ink);
-}
-.end-error-top {
-  margin-top: 8px;
-  display: flex;
-  align-items: flex-start;
-  gap: 7px;
-  color: var(--ink-4);
-  font-size: 10px;
-}
-.end-error-top ul {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 10px;
-}
-.end-error-top li {
-  color: var(--ink-3);
-}
-.end-error-top b {
-  color: var(--danger);
-  font-weight: 700;
-}
-.end-rule {
-  margin: 0;
-  display: grid;
-  grid-template-columns: 2.6em minmax(0, 1fr);
-  column-gap: 7px;
-  color: var(--ink-3);
-  font-size: 10px;
-  line-height: 1.55;
-}
-.end-rule + .end-rule {
-  margin-top: 3px;
-}
-.end-rule b {
-  color: var(--brand-ink);
-  font-weight: 800;
-  letter-spacing: 0.04em;
-}
-.end-rule-note {
-  margin: 6px 0 0;
-  color: var(--ink-4);
-  font-size: 10px;
-}
-.end-prompt-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.end-prompt-btn {
-  height: 32px;
-  padding: 0 12px;
-  font-size: 12px;
-}
-.end-prompt-btn kbd {
-  margin-left: 2px;
 }
 @media (max-width: 700px) {
-  .end-prompt {
-    padding: 12px;
-  }
-  .end-prompt-head {
-    flex-direction: column;
-    gap: 10px;
-  }
-  .end-rating {
-    align-items: flex-start;
-    width: 100%;
-  }
-  .end-stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .end-details {
-    grid-template-columns: 1fr;
+  .end-summary-wrap {
+    margin: 8px 2px 14px;
   }
 }
 </style>

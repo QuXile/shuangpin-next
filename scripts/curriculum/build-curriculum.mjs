@@ -252,10 +252,10 @@ function wordPlanFor(t) {
 
 function passCriteriaFor(t) {
   if (t.kind === 'intro') return undefined
-  if (t.speed === 'mid') return { accuracy: 0.9, mode: 'speed', minCpm: 15, starCpm: [15, 25, 35] }
-  if (t.speed === 'full') return { accuracy: 0.9, mode: 'speed', minCpm: 30, starCpm: [30, 45, 60] }
-  if (t.kind === 'exam') return { accuracy: 0.9, mode: 'accuracy-speed', minCpm: 30, starCpm: [30, 40, 50] }
-  return { accuracy: 0.9, mode: 'accuracy' }
+  if (t.speed === 'mid') return { accuracy: 0.85, mode: 'speed', minCpm: 15, starCpm: [15, 25, 35] }
+  if (t.speed === 'full') return { accuracy: 0.85, mode: 'speed', minCpm: 30, starCpm: [30, 45, 60] }
+  if (t.kind === 'exam') return { accuracy: 0.85, mode: 'accuracy-speed', minCpm: 30, starCpm: [30, 40, 50] }
+  return { accuracy: 0.85, mode: 'accuracy' }
 }
 
 /**

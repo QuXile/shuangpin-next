@@ -14,11 +14,14 @@ import {
 export interface InputTracker {
   revealed: ReadonlySet<string>
   wrongInputs: ReadonlyMap<string, string[]>
+  /** 每个字/位置累计错误次数（用于第 3 次错误揭示） */
   cellErrors: ReadonlyMap<string, number>
+  /** 错误键位统计：key 为「实际按下的键|应该按的键」，value 为次数 */
+  keyErrors: ReadonlyMap<string, number>
 }
 
 export function createInputTracker(): InputTracker {
-  return { revealed: new Set(), wrongInputs: new Map(), cellErrors: new Map() }
+  return { revealed: new Set(), wrongInputs: new Map(), cellErrors: new Map(), keyErrors: new Map() }
 }
 
 /** 当前字在会话中的稳定 key（词下标:字下标） */
@@ -48,7 +51,7 @@ export function applySessionKey(
 ): ApplySessionKeyResult {
   const cellKey = currentCellKey(state)
   const result = applyKey(state, raw, options?.at, options?.extendWords ? { extendWords: options.extendWords } : undefined)
-  let { revealed, wrongInputs, cellErrors } = tracker
+  let { revealed, wrongInputs, cellErrors, keyErrors } = tracker
   if (result.feedback.kind === 'wrong' && cellKey) {
     const wrong = new Map(wrongInputs)
     wrong.set(cellKey, result.feedback.input ?? [])
@@ -57,6 +60,18 @@ export function applySessionKey(
     const count = (errors.get(cellKey) ?? 0) + 1
     errors.set(cellKey, count)
     cellErrors = errors
+
+    // 记录具体错误键位：找到第一个「实际输入 ≠ 期望键位」的位置
+    const expected = result.feedback.expected ?? []
+    const typed = result.feedback.input ?? []
+    const mismatch = expected.findIndex((key, index) => typed[index] !== key)
+    if (mismatch >= 0) {
+      const nextKeyErrors = new Map(keyErrors)
+      const pair = `${typed[mismatch] ?? '?'}|${expected[mismatch] ?? '?'}`
+      nextKeyErrors.set(pair, (nextKeyErrors.get(pair) ?? 0) + 1)
+      keyErrors = nextKeyErrors
+    }
+
     if (count >= 3 && !revealed.has(cellKey)) {
       const next = new Set(revealed)
       next.add(cellKey)
@@ -71,7 +86,7 @@ export function applySessionKey(
     wrong.delete(cellKey)
     wrongInputs = wrong
   }
-  return { state: result.state, feedback: result.feedback, tracker: { revealed, wrongInputs, cellErrors } }
+  return { state: result.state, feedback: result.feedback, tracker: { revealed, wrongInputs, cellErrors, keyErrors } }
 }
 
 /** 退格：删一键并取消当前字红色错误态 */

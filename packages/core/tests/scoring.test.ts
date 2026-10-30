@@ -35,20 +35,21 @@ describe('evaluateLesson · 普通准确率课（完成即通过）', () => {
     })
   })
 
-  it('星级：95% → 2 星；98% 且未揭示 → 3 星；揭示过 → 最多 2 星', () => {
-    expect(evaluateLesson(lesson, { accuracy: 0.95, cpm: 0, revealed: false }).stars).toBe(2)
-    expect(evaluateLesson(lesson, { accuracy: 0.98, cpm: 0, revealed: false }).stars).toBe(3)
+  it('星级：85% → 1 星；90% → 2 星；95% 且未揭示 → 3 星；揭示过 → 最多 2 星', () => {
+    expect(evaluateLesson(lesson, { accuracy: 0.85, cpm: 0, revealed: false }).stars).toBe(1)
+    expect(evaluateLesson(lesson, { accuracy: 0.9, cpm: 0, revealed: false }).stars).toBe(2)
+    expect(evaluateLesson(lesson, { accuracy: 0.95, cpm: 0, revealed: false }).stars).toBe(3)
     expect(evaluateLesson(lesson, { accuracy: 0.99, cpm: 0, revealed: true }).stars).toBe(2)
   })
 })
 
 describe('evaluateLesson · 速度训练', () => {
-  const lesson = lessonWith({ accuracy: 0.9, mode: 'speed', minCpm: 30, starCpm: [30, 45, 60] })
+  const lesson = lessonWith({ accuracy: 0.85, mode: 'speed', minCpm: 30, starCpm: [30, 45, 60] })
 
-  it('通过需正确率与速度双达标', () => {
-    expect(evaluateLesson(lesson, { accuracy: 0.9, cpm: 30, revealed: false }).passed).toBe(true)
-    expect(evaluateLesson(lesson, { accuracy: 0.9, cpm: 29, revealed: false }).passed).toBe(false)
-    expect(evaluateLesson(lesson, { accuracy: 0.89, cpm: 60, revealed: false }).passed).toBe(false)
+  it('通过需正确率与速度双达标（最低正确率 85%）', () => {
+    expect(evaluateLesson(lesson, { accuracy: 0.85, cpm: 30, revealed: false }).passed).toBe(true)
+    expect(evaluateLesson(lesson, { accuracy: 0.85, cpm: 29, revealed: false }).passed).toBe(false)
+    expect(evaluateLesson(lesson, { accuracy: 0.84, cpm: 60, revealed: false }).passed).toBe(false)
   })
 
   it('星级按 starCpm：30/45/60', () => {
@@ -60,14 +61,14 @@ describe('evaluateLesson · 速度训练', () => {
 
 describe('evaluateLesson · 通关考核（准确率+速度）', () => {
   const lesson = lessonWith(
-    { accuracy: 0.9, mode: 'accuracy-speed', minCpm: 30, starCpm: [30, 40, 50] },
+    { accuracy: 0.85, mode: 'accuracy-speed', minCpm: 30, starCpm: [30, 40, 50] },
     'exam',
   )
 
-  it('1/2/3 星规则', () => {
-    expect(evaluateLesson(lesson, { accuracy: 0.9, cpm: 30, revealed: false }).stars).toBe(1)
-    expect(evaluateLesson(lesson, { accuracy: 0.95, cpm: 40, revealed: false }).stars).toBe(2)
-    expect(evaluateLesson(lesson, { accuracy: 0.98, cpm: 50, revealed: false }).stars).toBe(3)
+  it('1/2/3 星规则（正确率底线 85 / 90 / 95）', () => {
+    expect(evaluateLesson(lesson, { accuracy: 0.85, cpm: 30, revealed: false }).stars).toBe(1)
+    expect(evaluateLesson(lesson, { accuracy: 0.9, cpm: 40, revealed: false }).stars).toBe(2)
+    expect(evaluateLesson(lesson, { accuracy: 0.95, cpm: 50, revealed: false }).stars).toBe(3)
   })
 
   it('3 星要求未揭示答案', () => {
@@ -94,9 +95,11 @@ describe('evaluateLesson · 入门课', () => {
 
 describe('describePassCriteria', () => {
   it('accuracy 模式：只展示 1–3 星三档', () => {
-    const lines = describePassCriteria({ accuracy: 0.9, mode: 'accuracy' })
+    const lines = describePassCriteria({ accuracy: 0.85, mode: 'accuracy' })
     expect(lines.map((line) => line.label)).toEqual(['★', '★★', '★★★'])
-    expect(lines[0]?.text).toContain('正确率')
+    expect(lines[0]?.text).toContain('85%')
+    expect(lines[1]?.text).toContain('90%')
+    expect(lines[2]?.text).toContain('95%')
     expect(lines.some((line) => line.label === '通过')).toBe(false)
   })
 

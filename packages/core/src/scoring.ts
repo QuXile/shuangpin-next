@@ -17,8 +17,8 @@ import type {
   PassCriteriaLine,
 } from './types.ts'
 
-const STAR2_ACCURACY = 0.95
-const STAR3_ACCURACY = 0.98
+const STAR2_ACCURACY = 0.9
+const STAR3_ACCURACY = 0.95
 
 function pct(value: number): string {
   return `${Math.round(value * 100)}%`
@@ -101,7 +101,7 @@ export function describePassCriteria(criteria: PassCriteria): PassCriteriaLine[]
   }
   return [
     { label: '★', text: `正确率 ≥${accuracy}。` },
-    { label: '★★', text: '正确率 ≥95%。' },
-    { label: '★★★', text: '正确率 ≥98% 且未揭示答案。' },
+    { label: '★★', text: '正确率 ≥90%。' },
+    { label: '★★★', text: '正确率 ≥95% 且未揭示答案。' },
   ]
 }
