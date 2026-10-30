@@ -20,6 +20,7 @@ import {
   buildWordStageWords,
   createSchemeEngine,
   createSession,
+  describePassCriteria,
   evaluateLesson,
   hintTierFor,
   lessonStageMinWords,
@@ -29,6 +30,7 @@ import {
   stageGate,
   type LessonDef,
   type LessonPool,
+  type PassCriteriaLine,
   type PracticeStage,
   type PracticeWord,
   type SchemeEngine,
@@ -76,11 +78,36 @@ interface StageRuntime {
   infinite: boolean
 }
 
+export interface EndPromptErrorGroup {
+  label: string
+  count: number
+}
+
+export interface EndPromptDistribution {
+  label: string
+  count: number
+}
+
+export interface EndPromptRating {
+  passed: boolean
+  stars: 0 | 1 | 2 | 3
+}
+
 export interface EndPromptView {
   met: boolean
   title: string
-  hint: string
   enterLabel: string | null
+  stats: {
+    accuracy: number
+    cpm: number
+    errors: number
+    durationSec: number
+  }
+  errorDistribution: EndPromptDistribution[]
+  errorGroups: EndPromptErrorGroup[]
+  rules: PassCriteriaLine[]
+  /** 仅最后一场全遮挡考核显示：本次尝试的星级评分 */
+  rating: EndPromptRating | null
 }
 
 const EMPTY_SET: ReadonlySet<string> = new Set()
@@ -163,7 +190,9 @@ export function usePractice() {
   const gateReady = computed(() => Boolean(gate.value?.met || stageCleared.value))
   const gateHint = computed(() => {
     if (!gate.value || gate.value.met || stageCleared.value) return ''
-    return gate.value.reasons.join('；')
+    // 「再练 N 词」已由顶栏进度「已练 X/Y 词」表达，不再重复显示；
+    // 正确率/速度等未达标原因保留为大字提示。
+    return gate.value.reasons.filter((reason) => !reason.startsWith('再练 ')).join('；')
   })
 
   /** 进度「已练 X/Y 词」：Y=阶段目标词数，X 封顶为 Y；无目标回退「已练 X 词」 */
@@ -175,29 +204,90 @@ export function usePractice() {
     return `已练 ${Math.min(value.completedWords, target)}/${target} 词`
   })
 
-  /** 有限目标完成后的提示行：可 Enter 进入下一步 / Alt+Enter 继续练习 */
+  /** 有限目标完成后的总结卡：统计、错误分布、评分规则；最后一场考核额外显示本次星级 */
   const endPrompt = computed<EndPromptView | null>(() => {
     const runtime = currentRuntime.value
     const value = metrics.value
-    if (!runtime || stage.value === 'tutorial' || runtime.infinite) return null
+    const currentLesson = lesson.value
+    if (!runtime || stage.value === 'tutorial' || runtime.infinite || !currentLesson) return null
     if (runtime.session.phase !== 'finished' || !value) return null
+
     const words = value.completedWords
     const met = gateReady.value
+    const rawStats = runtime.session.stats
+
+    // 按「出错的字/词」聚合错误次数；cell key 为「词下标:字下标」
+    const errorCounts = new Map<string, number>()
+    for (const [cellKey, count] of runtime.cellErrors) {
+      const wordIndex = Number(cellKey.split(':')[0])
+      const label = runtime.session.words[wordIndex]?.word.text ?? '未知'
+      errorCounts.set(label, (errorCounts.get(label) ?? 0) + count)
+    }
+    const errorGroups = [...errorCounts.entries()]
+      .map(([label, count]) => ({ label, count }))
+      .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
+      .slice(0, 5)
+
+    const distribution = new Map<number, number>()
+    for (const count of runtime.cellErrors.values()) {
+      const bucket = Math.min(count, 3)
+      distribution.set(bucket, (distribution.get(bucket) ?? 0) + 1)
+    }
+    const errorDistribution = [1, 2, 3].map((bucket) => ({
+      label: bucket === 3 ? '3 次及以上' : `${bucket} 次`,
+      count: distribution.get(bucket) ?? 0,
+    }))
+
+    const finishedAt = rawStats.finishedAt ?? performance.now()
+    const durationSec = Math.max(1, Math.round((finishedAt - rawStats.startedAt) / 1000))
+    const rules = currentLesson.passCriteria ? describePassCriteria(currentLesson.passCriteria) : []
+
+    // 最后一场全遮挡考核：显示本次评分（未达标则记未通过）
+    const isFinalExam = isLastStage.value && stage.value === 'exam'
+    let rating: EndPromptRating | null = null
+    if (isFinalExam) {
+      if (!met) {
+        rating = { passed: false, stars: 0 }
+      } else {
+        const result = evaluateLesson(currentLesson, {
+          accuracy: value.accuracy,
+          cpm: value.cpm,
+          revealed: runtime.revealed.size > 0,
+        })
+        rating = { passed: result.passed, stars: result.stars }
+      }
+    }
+
+    const stats = {
+      accuracy: Math.round(value.accuracy * 100),
+      cpm: value.cpm,
+      errors: rawStats.errors,
+      durationSec,
+    }
+
     if (met) {
       const enterLabel = isLastStage.value ? '完成本课' : '进入下一阶段'
       return {
         met,
         title: `已练满 ${words} 词。`,
-        hint: `按 Enter ${enterLabel}，或按 Alt+Enter 继续练习。`,
         enterLabel,
+        stats,
+        errorDistribution,
+        errorGroups,
+        rules,
+        rating,
       }
     }
-    const reasons = gate.value && gate.value.reasons.length > 0 ? gate.value.reasons.join('；') : gateHint.value
+    // 未达标原因已在顶栏以大号文字展示，这里不重复；按钮本身已说明操作方式
     return {
       met,
-      title: `已练满 ${words} 词，还没达标：${reasons}。`,
-      hint: '按 Alt+Enter 继续练习，达标后可完成。',
+      title: `已练满 ${words} 词，还没达标。`,
       enterLabel: null,
+      stats,
+      errorDistribution,
+      errorGroups,
+      rules,
+      rating,
     }
   })
 

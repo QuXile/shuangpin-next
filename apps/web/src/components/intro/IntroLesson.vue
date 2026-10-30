@@ -420,7 +420,7 @@ defineExpose({ pressKey: handleKey, backspace: handleBackspace })
           <p>打完一个字会自动进入下一个字；输入框会一直显示，即使打完了也不会消失。</p>
           <p class="try-tip">打错了不会自动清空：继续按键没反应；按退格逐键撤销并恢复；按空格或 Enter 一次清空重来。</p>
           <p v-if="wrongInputs.size > 0 && !completed" class="try-bad">
-            {{ revealed.size > 0 ? '已显示答案，照着键位图完成这个字。' : '键位不对：继续按键没反应；按退格逐键撤销，或按空格 / Enter 清空重来；同一个字第 3 次错误会显示答案。' }}
+            {{ revealed.size > 0 ? '已显示答案，照着键位图完成这个字。' : '键位不对，同一个字第 3 次错误会显示答案。' }}
           </p>
           <p v-else-if="completed" class="try-ok">「{{ trialWord?.text ?? '双拼' }}」完成。</p>
         </div>

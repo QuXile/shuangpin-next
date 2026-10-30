@@ -39,7 +39,7 @@ const emit = defineEmits<{
       <span class="toolbar-divider" aria-hidden="true" />
       <strong class="toolbar-title">{{ title }}</strong>
       <span class="toolbar-progress-label">{{ progressLabel }}</span>
-      <span v-if="gateHint" class="gate-hint" role="status">{{ gateHint }}</span>
+      <span v-if="gateHint" class="gate-hint" role="status" :title="gateHint">{{ gateHint }}</span>
     </div>
     <div class="toolbar-actions">
       <span class="speed-readout">
@@ -48,7 +48,7 @@ const emit = defineEmits<{
       </span>
       <span class="toolbar-divider" aria-hidden="true" />
       <button class="stage-back" type="button" @click="emit('retry')">
-        重练
+        重新开始
         <kbd>Alt+R</kbd>
       </button>
       <button
@@ -180,12 +180,15 @@ const emit = defineEmits<{
 }
 .gate-hint {
   min-width: 0;
+  flex: 0 1 auto;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--ink-3);
-  font-size: 10px;
-  font-weight: 650;
+  color: var(--danger);
+  font-size: 13px;
+  font-weight: 780;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
 }
 .practice-toolbar.is-target-reached {
   background: var(--state-success-bg);

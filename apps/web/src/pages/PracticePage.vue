@@ -149,6 +149,7 @@ function onDockBackspace(): void {
           :prompt="endPrompt"
           @primary="primary?.run()"
           @continue="continuePractice"
+          @restart="retryStage"
         />
       </div>
     </template>

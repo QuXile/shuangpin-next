@@ -860,9 +860,6 @@ onScopeDispose(() => {
                 <ul class="article-notes">
                   <li>多音字按常用读音处理，不结合上下文消歧。</li>
                   <li>标点、引号、括号、字母、数字与空白都不显示，并作为断行；每行最多 5 个汉字。</li>
-                  <li v-if="parsed">
-                    其中 {{ articleSkippedCount }} 个字不在训练字库，将被跳过（不参与练习）。
-                  </li>
                 </ul>
               </template>
             </SetupCard>
@@ -926,7 +923,6 @@ onScopeDispose(() => {
             <div class="setup-bar-info">
               <strong v-if="parsed">将练习 {{ articleMappedCount }} 字 · 跳过 {{ articleSkippedCount }} 字</strong>
               <strong v-else>等待输入文章…</strong>
-              <span class="setup-bar-sub">多音字按常用读音；标点、引号、括号等不显示并断行，每行最多 5 字。</span>
             </div>
             <button
               class="btn btn--primary setup-start"
