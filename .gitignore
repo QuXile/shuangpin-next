@@ -9,6 +9,7 @@ data/raw/*.json
 # 构建 / 同步 / 测试产物
 dist/
 apps/web/public/data/
+release/
 .vite/
 coverage/
 playwright-report/

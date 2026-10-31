@@ -1,0 +1,102 @@
+name: release-static
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.28.5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Fetch build-time jieba dictionary
+        run: |
+          mkdir -p data/raw
+          curl -fsSL https://raw.githubusercontent.com/fxsjy/jieba/master/jieba/dict.txt -o data/raw/jieba-dict.txt
+
+      - run: pnpm verify
+
+      - name: Resolve package version
+        run: |
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="dev-${GITHUB_SHA::7}"
+          fi
+          echo "VERSION=${VERSION}" >> "$GITHUB_ENV"
+          echo "ARTIFACT=shuangpin-next-${VERSION}-static.zip" >> "$GITHUB_ENV"
+
+      - name: Build portable static package
+        run: VITE_BASE=./ VITE_ROUTER_MODE=hash pnpm build
+
+      - name: Attach license and usage notes
+        run: |
+          cp LICENSE apps/web/dist/LICENSE
+          cat > apps/web/dist/使用说明.txt <<'EOF'
+          双拼 NEXT · 静态包
+
+          启动方式：
+          在解压后的目录执行任意静态文件服务器，例如：
+            python -m http.server 8080
+          然后打开 http://localhost:8080/
+
+          也可以使用 npx serve . 或其它静态服务器。
+          不要直接双击 index.html：浏览器会阻止本地 JSON 数据请求。
+          本包使用 hash 路由，不依赖服务器的 SPA 重写规则。
+
+          许可证：GPL-3.0-only
+          完整许可证见同目录 LICENSE。
+          源码：https://github.com/QuXile/shuangpin-next
+          EOF
+
+      - name: Create zip
+        run: |
+          mkdir -p release
+          (cd apps/web/dist && zip -qr "../../release/${ARTIFACT}" .)
+          (cd release && sha256sum "${ARTIFACT}" > SHA256SUMS)
+
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT }}
+          path: |
+            release/${{ env.ARTIFACT }}
+            release/SHA256SUMS
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: 双拼 NEXT ${{ env.VERSION }}
+          files: |
+            release/${{ env.ARTIFACT }}
+            release/SHA256SUMS
+          generate_release_notes: true
+          append_body: true
+          body: |
+            ## 静态包使用
+
+            下载 ZIP 后解压，用任意静态文件服务器启动，然后访问对应地址：
+
+            ```bash
+            python -m http.server 8080
+            ```
+
+            包含 `LICENSE`、`使用说明.txt` 和校验文件 `SHA256SUMS`。源码见本仓库。

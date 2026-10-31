@@ -46,6 +46,40 @@
 
 ![练习场：词语半遮挡练习与实时键位提示](docs/assets/impl/word-practice.png)
 
+## 使用方法
+
+### 在线使用
+
+直接访问 https://quxile.github.io/shuangpin-next/ 即可，无需安装任何依赖。
+
+支持现代 Chrome、Edge、Firefox、Safari。学习进度、主题和课程解锁状态都保存在浏览器本地。
+
+### 下载静态包
+
+在 [GitHub Releases](https://github.com/QuXile/shuangpin-next/releases) 下载 `shuangpin-next-<版本>-static.zip`，解压后选择一个静态文件服务器启动即可：
+
+**Python 3 方式**（只要安装了 Python 3，无需 Node.js）：
+
+```bash
+cd shuangpin-next-*-static
+python -m http.server 8080
+```
+
+然后打开 http://localhost:8080/。
+
+**Node.js 方式**（已安装 Node.js 18+）：
+
+```bash
+cd shuangpin-next-*-static
+npx serve .
+```
+
+静态包启动后不依赖网络，也不依赖 Node.js / Python 运行时；只需要一个能够把目录作为静态网站提供的服务器。
+
+> 请不要直接双击 `index.html`。浏览器的 `file://` 安全策略会阻止应用读取同目录下的 JSON 数据，这是浏览器限制，不是包损坏。
+
+静态包使用 hash 路由（地址栏会出现 `#/training` 等），因此不需要服务器配置 SPA 重写规则，直接放在任意静态目录下即可访问。
+
 ## 学习路线
 
 40 课，分 10 章，大约 5 个半小时的正式课程：
@@ -86,6 +120,81 @@
 - 想找一个能每天练十分钟、有明确进度和反馈的练习工具的人。
 
 不需要注册账号。学习进度、主题和课程解锁状态都保存在你自己的浏览器里。
+
+## 开发指南
+
+### 环境依赖
+
+| 用途 | 依赖 |
+|---|---|
+| 安装、运行、构建源码 | **Node.js >= 24**、**pnpm 11.28.5** |
+| 启动下载后的静态包 | Python 3，或任意静态文件服务器；不需要 Node.js |
+| 打包 ZIP | GitHub Actions 已内置 `zip`；本地打包需系统 `zip` / 7-Zip |
+| 重新生成词库 | 可选，需要 `data/raw/jieba-dict.txt`（CI 会自动下载） |
+
+项目根 `package.json` 已声明 `engines.node >= 24` 和 `packageManager: pnpm@11.28.5`。推荐通过 Corepack 启用对应 pnpm：
+
+```bash
+corepack enable
+pnpm --version   # 11.28.5
+```
+
+### 安装与开发
+
+```bash
+pnpm install --frozen-lockfile
+pnpm dev          # http://127.0.0.1:5199
+```
+
+首次启动会自动执行 `pnpm data:sync`，把根目录 `data/` 同步到 `apps/web/public/data/`（生成物已加入 .gitignore）。
+
+常用命令：
+
+```bash
+pnpm build        # 生产构建（默认 history 路由，用于 GitHub Pages）
+pnpm preview      # 预览构建结果
+pnpm test         # core + web 测试
+pnpm typecheck    # TypeScript / Vue 类型检查
+pnpm lint:ui      # UI 约定检查
+pnpm verify       # 完整校验：typecheck + UI + 数据同步 + 测试 + 构建 + validate
+```
+
+### 构建可下载静态包
+
+静态包使用相对资源路径和 hash 路由，因此可以放到任意静态目录：
+
+```bash
+VITE_BASE=./ VITE_ROUTER_MODE=hash pnpm build
+```
+
+把 `apps/web/dist/` 打包，并保留 `LICENSE` 与使用说明。Windows PowerShell 下设置环境变量的写法：
+
+```powershell
+$env:VITE_BASE = './'
+$env:VITE_ROUTER_MODE = 'hash'
+pnpm build
+```
+
+推送形如 `v1.0.0` 的 tag 会触发 [release-static.yml](.github/workflows/release-static.yml)：
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+工作流会先运行 `pnpm verify`，再生成 `shuangpin-next-<版本>-static.zip`、`SHA256SUMS`，上传到 GitHub Release。发布包内包含 `LICENSE` 和 `使用说明.txt`。
+
+### 项目结构
+
+```text
+apps/web/          Vue 3 + Vite 前端
+packages/core/     双拼领域逻辑、出题/判分/会话状态机
+data/              课程、方案、词库源数据
+scripts/           数据构建、同步和校验脚本
+docs/             架构说明与界面截图
+```
+
+更多实现细节见 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)，词库生成流程见 [docs/WORDS.md](docs/WORDS.md)。
 
 ## 更多
 

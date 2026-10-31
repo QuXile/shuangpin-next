@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHashHistory, createWebHistory } from 'vue-router'
 
 declare module 'vue-router' {
   interface RouteMeta {
@@ -6,8 +6,15 @@ declare module 'vue-router' {
   }
 }
 
+// 常规部署使用 history 路径；可下载静态包使用 hash 路径，避免依赖服务器做
+// SPA fallback，也允许静态包被放到任意目录下访问。
+const history =
+  import.meta.env.VITE_ROUTER_MODE === 'hash'
+    ? createWebHashHistory()
+    : createWebHistory(import.meta.env.BASE_URL)
+
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history,
   routes: [
     {
       path: '/',
