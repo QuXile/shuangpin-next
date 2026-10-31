@@ -22,23 +22,24 @@ import type {
   WordEntry,
 } from './types.ts'
 import { atomMatchesWord, focusHitsOf } from './atoms.ts'
+import { sampleBalancedTargets } from './balancedSampling.ts'
 import { parseAtomId } from './pinyin.ts'
 import { buildPracticeWord, buildPracticeWordFromSyllable } from './practice.ts'
 import { shuffleSeeded } from './random.ts'
-import { selectWords } from './selector.ts'
+import { selectWords, targetCountsOf } from './selector.ts'
 
 /**
  * 各课程类型的阶段最低词数：
- * - drill：字 10 → 半遮挡词 10 → 全遮挡考核 20；
- * - review：全遮挡 40；
- * - exam：全遮挡 80。
+ * - drill：字 15 → 半遮挡词 15 → 全遮挡考核 25；
+ * - review：全遮挡 50；
+ * - exam：全遮挡 100。
  * 数据里的 stageMinWords 覆盖优先。
  */
 export const KIND_STAGE_MIN_WORDS: Record<LessonKind, Partial<Record<PracticeStage, number>>> = {
   intro: {},
-  drill: { single: 10, word: 10, exam: 20 },
-  review: { exam: 40 },
-  exam: { exam: 80 },
+  drill: { single: 15, word: 15, exam: 25 },
+  review: { exam: 50 },
+  exam: { exam: 100 },
 }
 
 const STAGE_ORDER: Record<LessonDef['kind'], PracticeStage[]> = {
@@ -239,35 +240,73 @@ export function buildSingleCharWords(input: StageInput): PracticeWord[] {
     }
   }
 
-  // 稀有韵母课单字可能不足：先用同键位字补齐，再用其余已学字兜底（不改变阶段目标字数）
+  // 目标音概率均衡：单字池中的 focus 字按音校准后抽样；不足部分用同键/已学字补齐。
   const seed = input.seed ?? 1
-  const ordered = [
-    ...shuffleSeeded(primary, seed),
-    ...shuffleSeeded(sameKey, seed),
-    ...shuffleSeeded(known, seed + 1),
-  ]
-  return ordered.slice(0, Math.max(1, input.count)).map((word) => buildPracticeWord(engine, word))
+  const target = Math.max(1, input.count)
+  const balanced = primary
+    .map((word) => ({
+      item: word,
+      counts: targetCountsOf(word, focusAtoms),
+      quality: 0.5 + Math.log1p(Math.max(0, word.freq)) / 10,
+    }))
+    .filter((candidate) => candidate.counts.size > 0)
+  const sampled = sampleBalancedTargets(balanced, Math.min(target, balanced.length), seed)
+  const sampledTexts = new Set(sampled.map((word) => word.text))
+  const rest = [
+    ...shuffleSeeded(primary.filter((word) => !sampledTexts.has(word.text)), seed),
+    ...shuffleSeeded(sameKey, seed + 1),
+    ...shuffleSeeded(known, seed + 2),
+  ].filter((word) => !sampledTexts.has(word.text))
+  return [...sampled, ...rest].slice(0, target).map((word) => buildPracticeWord(engine, word))
 }
 
-/** 词语/考核阶段：抽词直到总字数 ≥ targetChars（不足则返回词池能提供的全部） */
+/** 词语/考核阶段：概率均衡抽词；词池不足的目标音用单字候选补足。 */
 export function buildWordStageWords(input: WordStageInput): PracticeWord[] {
   const target = Math.max(1, input.targetWords)
   const seed = input.seed ?? 1
-  let count = target
-  let words: WordEntry[] = []
-  for (let attempt = 0; attempt < 6; attempt++) {
-    words = selectWords({
-      words: input.pool.words,
-      engine: input.engine,
-      lesson: input.lesson,
-      learnedAtoms: input.learnedAtoms,
-      count,
-      seed: seed + attempt * 7919,
-    })
-    if (words.length >= target || words.length < count) break
-    count += 2
-  }
+  const extraWords = fallbackCharsForSparseFocus(input.lesson, input.pool, target)
+  const words = selectWords({
+    words: input.pool.words,
+    engine: input.engine,
+    lesson: input.lesson,
+    learnedAtoms: input.learnedAtoms,
+    count: target,
+    seed,
+    extraWords,
+  })
   return words.map((word) => buildPracticeWord(input.engine, word))
+}
+
+/**
+ * 「以字代词」候选：某个 focus 在词池里的合法词太少，连按目标词数均分后的
+ * 期望候选都不够时，把该音的单字加入候选。不做替换、不设特殊标记。
+ */
+function fallbackCharsForSparseFocus(
+  lesson: LessonDef,
+  pool: LessonPool,
+  target: number,
+): WordEntry[] {
+  const focus = lesson.focusAtoms
+  if (focus.length === 0) return []
+  const expected = Math.ceil(target / focus.length)
+  const support = new Map<AtomId, number>(focus.map((atom) => [atom, 0]))
+  for (const word of pool.words) {
+    for (const atom of targetCountsOf(word, focus).keys()) {
+      support.set(atom, (support.get(atom) ?? 0) + 1)
+    }
+  }
+  const extra: WordEntry[] = []
+  const seen = new Set<string>()
+  for (const atom of focus) {
+    if ((support.get(atom) ?? 0) >= expected) continue
+    for (const word of pool.chars) {
+      if (seen.has(word.text)) continue
+      if (!targetCountsOf(word, [atom]).has(atom)) continue
+      seen.add(word.text)
+      extra.push(word)
+    }
+  }
+  return extra
 }
 
 /**

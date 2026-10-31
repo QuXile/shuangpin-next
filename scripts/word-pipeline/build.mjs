@@ -6,7 +6,8 @@
  * 输出：data/words/words.sample.json
  *
  * 生成规则：
- *   - 2–4 字纯汉字词，儿化词丢弃（保留少量独立“儿”音节词）；
+ *   - 2–5 字纯汉字词，儿化词丢弃（保留少量独立“儿”音节词）；
+ *   - 公共词库 = 8000 高频基础词 + 3 字/4 字成语/5 字补充词（默认共 10000）；
  *   - 词上下文拼音；pinyin = initial + final（ü→v）；tone ∈ 1..5（0 → 5）；
  *   - polyphone 保留；freqRank 为全量词表全局排名；
  *   - dataVersion = words-<12hex>（与 validate-all 共用 scripts/lib/data-contract.mjs）。
@@ -39,9 +40,17 @@ const SOURCE = {
 const SCHEMA_VERSION = '1.0.0'
 const WORD_COUNT = (() => {
   const hit = process.argv.slice(2).find((arg) => arg.startsWith('--words='))
-  const value = hit ? Number(hit.split('=')[1]) : WORD_POLICY.wordBank?.wordCount ?? 8000
-  return Number.isFinite(value) && value > 0 ? Math.floor(value) : 8000
+  const value = hit ? Number(hit.split('=')[1]) : WORD_POLICY.wordBank?.wordCount ?? 10000
+  return Number.isFinite(value) && value > 0 ? Math.floor(value) : 10000
 })()
+const BASE_WORD_COUNT = WORD_POLICY.wordBank?.baseWordCount ?? 8000
+const SUPPLEMENT = WORD_POLICY.wordBank?.supplements ?? {
+  threeChar: 700,
+  fourCharIdioms: 800,
+  fiveChar: 500,
+}
+const QUALITY_MAX_CHAR_RANK = WORD_POLICY.pools?.qualityMaxCharRank ?? 4000
+const BLOCKED_POS = new Set(WORD_POLICY.pools?.blockedPosTags ?? [])
 const FORCE_DOWNLOAD = process.argv.slice(2).includes('--download')
 
 async function ensureRawDict() {
@@ -141,18 +150,43 @@ async function main() {
   const startedAt = Date.now()
   const dictBuf = fs.readFileSync(RAW_DICT_FILE)
   const sourceSha = sha256(dictBuf)
-  const dictionary = loadDictionary({ limit: WORD_COUNT })
-  const { entries } = dictionary
+  const dictionary = loadDictionary()
+  const allEntries = dictionary.entries
+  const baseEntries = allEntries.slice(0, BASE_WORD_COUNT)
+  const selectedTexts = new Set(baseEntries.map((entry) => entry.text))
+  const supplements = []
+
+  const pickSupplement = (length, count, pos) => {
+    const start = supplements.length
+    for (const entry of allEntries) {
+      if (supplements.length - start >= count) break
+      if (entry.length !== length) continue
+      if (selectedTexts.has(entry.text)) continue
+      if (pos && dictionary.posByText.get(entry.text) !== pos) continue
+      if (BLOCKED_POS.has(dictionary.posByText.get(entry.text))) continue
+      if ((entry.minCharRank ?? Infinity) > QUALITY_MAX_CHAR_RANK) continue
+      selectedTexts.add(entry.text)
+      supplements.push(entry)
+    }
+  }
+  pickSupplement(3, SUPPLEMENT.threeChar)
+  pickSupplement(4, SUPPLEMENT.fourCharIdioms, 'i')
+  pickSupplement(5, SUPPLEMENT.fiveChar)
+  // 按全局词频排名追加，保持 freqRank 单调；不足时按实际数量产出。
+  supplements.sort((a, b) => (a.freqRank ?? Infinity) - (b.freqRank ?? Infinity))
+  const entries = [...baseEntries, ...supplements]
   if (entries.length < WORD_COUNT) {
-    throw new Error(`可用词条不足：${entries.length} < ${WORD_COUNT}`)
+    throw new Error(`公共词库不足：${entries.length} < ${WORD_COUNT}`)
   }
   for (const entry of entries) markPolyphone(entry)
 
   const filters = {
-    lengthRange: [2, 4],
+    lengthRange: WORD_POLICY.wordBank?.lengthRange ?? [2, 5],
     cjkOnly: true,
     dropErhua: true,
     wordCountTarget: WORD_COUNT,
+    baseWordCount: BASE_WORD_COUNT,
+    supplements: SUPPLEMENT,
   }
   const contentSha256 = wordsContentSha256(entries)
   const dataVersion = wordsVersionOf({
@@ -167,7 +201,7 @@ async function main() {
     dataVersion,
     contentSha256,
     generatedAt: new Date().toISOString(),
-    description: '双拼课程词库：2–4 字常用词，词上下文拼音 + 规范音节拆分',
+    description: '双拼公共词库：2–5 字常用词、三四五字补充词，词上下文拼音 + 规范音节拆分',
     source: {
       dict: SOURCE.dict,
       url: SOURCE.url,

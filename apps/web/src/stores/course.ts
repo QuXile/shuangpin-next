@@ -78,7 +78,7 @@ export const useCourseStore = defineStore('course', () => {
   let bootPromise: Promise<void> | null = null
 
   const lessons = computed<LessonDef[]>(() => curriculum.value?.lessons ?? [])
-  const wordCount = computed<number>(() => poolIndex.value?.totalEntries ?? 0)
+  const wordCount = computed<number>(() => poolIndex.value?.uniqueWords ?? 0)
   const ready = computed<boolean>(() => status.value === 'ready')
   const progress = computed(() => progressStore.records)
   const passedCount = computed(() => passedLessonCount(lessons.value, progress.value))

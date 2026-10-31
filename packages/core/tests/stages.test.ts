@@ -29,68 +29,68 @@ describe('lessonStages / lessonStageMinWords（三阶段词口径）', () => {
     expect(lessonStages(findLesson(curriculum, 'L10.1'))).toEqual(['exam'])
   })
 
-  it('按课程类型给出阶段最低词数（10/10/20、40、80）', () => {
-    expect(KIND_STAGE_MIN_WORDS.drill).toEqual({ single: 10, word: 10, exam: 20 })
-    expect(KIND_STAGE_MIN_WORDS.review).toEqual({ exam: 40 })
-    expect(KIND_STAGE_MIN_WORDS.exam).toEqual({ exam: 80 })
+  it('按课程类型给出阶段最低词数（15/15/25、50、100）', () => {
+    expect(KIND_STAGE_MIN_WORDS.drill).toEqual({ single: 15, word: 15, exam: 25 })
+    expect(KIND_STAGE_MIN_WORDS.review).toEqual({ exam: 50 })
+    expect(KIND_STAGE_MIN_WORDS.exam).toEqual({ exam: 100 })
     expect(lessonStageMinWords(findLesson(curriculum, 'L2.1'))).toEqual({
-      single: 10,
-      word: 10,
-      exam: 20,
+      single: 15,
+      word: 15,
+      exam: 25,
     })
     expect(lessonStageMinWords(findLesson(curriculum, 'L2.4'))).toEqual({
-      single: 10,
-      word: 10,
-      exam: 20,
+      single: 15,
+      word: 15,
+      exam: 25,
     })
-    expect(lessonStageMinWords(findLesson(curriculum, 'L2.5'))).toEqual({ exam: 40 })
-    expect(lessonStageMinWords(findLesson(curriculum, 'L5.2'))).toEqual({ exam: 40 })
-    expect(lessonStageMinWords(findLesson(curriculum, 'L9.1'))).toEqual({ exam: 40 })
-    expect(lessonStageMinWords(findLesson(curriculum, 'L10.1'))).toEqual({ exam: 80 })
+    expect(lessonStageMinWords(findLesson(curriculum, 'L2.5'))).toEqual({ exam: 50 })
+    expect(lessonStageMinWords(findLesson(curriculum, 'L5.2'))).toEqual({ exam: 50 })
+    expect(lessonStageMinWords(findLesson(curriculum, 'L9.1'))).toEqual({ exam: 50 })
+    expect(lessonStageMinWords(findLesson(curriculum, 'L10.1'))).toEqual({ exam: 100 })
   })
 
   it('阶段门槛：字/半遮挡词只看词数，全遮挡考核还要达到考核标准', () => {
     const drill = findLesson(curriculum, 'L2.1')
     expect(
-      stageGate(drill, 'single', { accuracy: 1, cpm: 0, completedWords: 9 }),
+      stageGate(drill, 'single', { accuracy: 1, cpm: 0, completedWords: 14 }),
     ).toMatchObject({ strict: false, met: false })
     expect(
-      stageGate(drill, 'single', { accuracy: 0.5, cpm: 0, completedWords: 10 }),
+      stageGate(drill, 'single', { accuracy: 0.5, cpm: 0, completedWords: 15 }),
     ).toMatchObject({ strict: false, met: true })
     expect(
-      stageGate(drill, 'word', { accuracy: 0.5, cpm: 0, completedWords: 10 }).met,
+      stageGate(drill, 'word', { accuracy: 0.5, cpm: 0, completedWords: 15 }).met,
     ).toBe(true)
     expect(
-      stageGate(drill, 'exam', { accuracy: 0.85, cpm: 0, completedWords: 20 }).met,
+      stageGate(drill, 'exam', { accuracy: 0.85, cpm: 0, completedWords: 25 }).met,
     ).toBe(true)
     expect(
-      stageGate(drill, 'exam', { accuracy: 0.84, cpm: 0, completedWords: 20 }).met,
+      stageGate(drill, 'exam', { accuracy: 0.84, cpm: 0, completedWords: 25 }).met,
     ).toBe(false)
 
     const review = findLesson(curriculum, 'L2.5')
     expect(
-      stageGate(review, 'exam', { accuracy: 0.85, cpm: 20, completedWords: 40 }).met,
+      stageGate(review, 'exam', { accuracy: 0.85, cpm: 20, completedWords: 50 }).met,
     ).toBe(true)
     expect(
-      stageGate(review, 'exam', { accuracy: 0.85, cpm: 19, completedWords: 40 }).met,
+      stageGate(review, 'exam', { accuracy: 0.85, cpm: 19, completedWords: 50 }).met,
     ).toBe(false)
     expect(
-      stageGate(review, 'exam', { accuracy: 0.85, cpm: 20, completedWords: 39 }).met,
+      stageGate(review, 'exam', { accuracy: 0.85, cpm: 20, completedWords: 49 }).met,
     ).toBe(false)
 
     const midSpeed = findLesson(curriculum, 'L5.2')
     expect(
-      stageGate(midSpeed, 'exam', { accuracy: 0.85, cpm: 30, completedWords: 40 }).met,
+      stageGate(midSpeed, 'exam', { accuracy: 0.85, cpm: 30, completedWords: 50 }).met,
     ).toBe(true)
     expect(
-      stageGate(midSpeed, 'exam', { accuracy: 0.85, cpm: 29, completedWords: 40 }),
+      stageGate(midSpeed, 'exam', { accuracy: 0.85, cpm: 29, completedWords: 50 }),
     ).toMatchObject({ strict: true, met: false })
 
     const exam = findLesson(curriculum, 'L10.1')
     expect(
-      stageGate(exam, 'exam', { accuracy: 0.9, cpm: 30, completedWords: 80 }).met,
+      stageGate(exam, 'exam', { accuracy: 0.9, cpm: 30, completedWords: 100 }).met,
     ).toBe(true)
-    const failed = stageGate(exam, 'exam', { accuracy: 0.9, cpm: 29, completedWords: 80 })
+    const failed = stageGate(exam, 'exam', { accuracy: 0.9, cpm: 29, completedWords: 100 })
     expect(failed.met).toBe(false)
     expect(failed.reasons.join()).toMatch(/速度/)
   })

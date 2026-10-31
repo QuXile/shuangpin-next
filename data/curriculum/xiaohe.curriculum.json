@@ -4,9 +4,9 @@
   "schemeType": "compositional",
   "version": "1.0.0",
   "templateVersion": "1.0.0",
-  "generatedAt": "2026-10-30T12:55:25.797Z",
+  "generatedAt": "2026-10-31T05:19:45.821Z",
   "supportLevel": "full",
-  "dataVersion": "curriculum-ccbddb388b0a",
+  "dataVersion": "curriculum-e70cc76ade4c",
   "chapters": [
     {
       "id": "ch-intro",
@@ -115,7 +115,7 @@
         "maxUnfamiliar": 0,
         "lengthRange": [
           2,
-          3
+          5
         ]
       },
       "atomMeta": {
@@ -128,7 +128,9 @@
           ],
           "free": false,
           "anchors": [
-            "追"
+            "追",
+            "锥",
+            "坠"
           ],
           "mnemonic": "ZH + UI = ZHUI（同在 V 键）"
         }
@@ -144,9 +146,9 @@
         "mode": "accuracy"
       },
       "stageMinWords": {
-        "single": 10,
-        "word": 10,
-        "exam": 20
+        "single": 15,
+        "word": 15,
+        "exam": 25
       }
     },
     {
@@ -170,7 +172,7 @@
         "maxUnfamiliar": 0,
         "lengthRange": [
           2,
-          3
+          5
         ]
       },
       "atomMeta": {
@@ -203,9 +205,9 @@
         "mode": "accuracy"
       },
       "stageMinWords": {
-        "single": 10,
-        "word": 10,
-        "exam": 20
+        "single": 15,
+        "word": 15,
+        "exam": 25
       }
     },
     {
@@ -230,7 +232,7 @@
         "maxUnfamiliar": 0,
         "lengthRange": [
           2,
-          3
+          5
         ]
       },
       "atomMeta": {
@@ -263,9 +265,9 @@
         "mode": "accuracy"
       },
       "stageMinWords": {
-        "single": 10,
-        "word": 10,
-        "exam": 20
+        "single": 15,
+        "word": 15,
+        "exam": 25
       }
     },
     {
@@ -312,8 +314,8 @@
       "wordPlan": {
         "maxUnfamiliar": 0,
         "lengthRange": [
-          1,
-          2
+          2,
+          5
         ]
       },
       "atomMeta": {
@@ -498,9 +500,9 @@
         "mode": "accuracy"
       },
       "stageMinWords": {
-        "single": 10,
-        "word": 10,
-        "exam": 20
+        "single": 15,
+        "word": 15,
+        "exam": 25
       }
     },
     {
@@ -567,7 +569,7 @@
         "maxUnfamiliar": 0,
         "lengthRange": [
           2,
-          4
+          5
         ]
       },
       "atomMeta": {
@@ -580,7 +582,9 @@
           ],
           "free": false,
           "anchors": [
-            "追"
+            "追",
+            "锥",
+            "坠"
           ],
           "mnemonic": "ZH + UI = ZHUI（同在 V 键）"
         },
@@ -800,7 +804,7 @@
         "minCpm": 20
       },
       "stageMinWords": {
-        "exam": 40
+        "exam": 50
       }
     },
     {
@@ -838,7 +842,7 @@
         "maxUnfamiliar": 0,
         "lengthRange": [
           2,
-          3
+          5
         ]
       },
       "atomMeta": {
@@ -854,8 +858,8 @@
             "带",
             "待",
             "代",
-            "袋",
-            "贷"
+            "戴",
+            "呆"
           ],
           "mnemonic": "D + AI = DAI"
         }
@@ -871,9 +875,9 @@
         "mode": "accuracy"
       },
       "stageMinWords": {
-        "single": 10,
-        "word": 10,
-        "exam": 20
+        "single": 15,
+        "word": 15,
+        "exam": 25
       }
     },
     {
@@ -912,7 +916,7 @@
         "maxUnfamiliar": 0,
         "lengthRange": [
           2,
-          3
+          5
         ]
       },
       "atomMeta": {
@@ -945,9 +949,9 @@
         "mode": "accuracy"
       },
       "stageMinWords": {
-        "single": 10,
-        "word": 10,
-        "exam": 20
+        "single": 15,
+        "word": 15,
+        "exam": 25
       }
     },
     {
@@ -987,7 +991,7 @@
         "maxUnfamiliar": 0,
         "lengthRange": [
           2,
-          3
+          5
         ]
       },
       "atomMeta": {
@@ -1020,9 +1024,9 @@
         "mode": "accuracy"
       },
       "stageMinWords": {
-        "single": 10,
-        "word": 10,
-        "exam": 20
+        "single": 15,
+        "word": 15,
+        "exam": 25
       }
     },
     {
@@ -1063,7 +1067,7 @@
         "maxUnfamiliar": 0,
         "lengthRange": [
           2,
-          3
+          5
         ]
       },
       "atomMeta": {
@@ -1093,9 +1097,9 @@
         "mode": "accuracy"
       },
       "stageMinWords": {
-        "single": 10,
-        "word": 10,
-        "exam": 20
+        "single": 15,
+        "word": 15,
+        "exam": 25
       }
     },
     {
@@ -1152,7 +1156,7 @@
         "maxUnfamiliar": 0,
         "lengthRange": [
           2,
-          4
+          5
         ]
       },
       "atomMeta": {
@@ -1168,8 +1172,8 @@
             "带",
             "待",
             "代",
-            "袋",
-            "贷"
+            "戴",
+            "呆"
           ],
           "mnemonic": "D + AI = DAI"
         },
@@ -1292,7 +1296,7 @@
         "minCpm": 20
       },
       "stageMinWords": {
-        "exam": 40
+        "exam": 50
       },
       "reviewFamily": "a-open"
     },
@@ -1337,7 +1341,7 @@
         "maxUnfamiliar": 0,
         "lengthRange": [
           2,
-          3
+          5
         ]
       },
       "atomMeta": {
@@ -1387,9 +1391,9 @@
         "mode": "accuracy"
       },
       "stageMinWords": {
-        "single": 10,
-        "word": 10,
-        "exam": 20
+        "single": 15,
+        "word": 15,
+        "exam": 25
       }
     },
     {
@@ -1433,7 +1437,7 @@
         "maxUnfamiliar": 0,
         "lengthRange": [
           2,
-          3
+          5
         ]
       },
       "atomMeta": {
@@ -1446,7 +1450,8 @@
           ],
           "free": false,
           "anchors": [
-            "鸟"
+            "鸟",
+            "尿"
           ],
           "mnemonic": "N + IAO = NIAO"
         }
@@ -1462,9 +1467,9 @@
         "mode": "accuracy"
       },
       "stageMinWords": {
-        "single": 10,
-        "word": 10,
-        "exam": 20
+        "single": 15,
+        "word": 15,
+        "exam": 25
       }
     },
     {
@@ -1509,7 +1514,7 @@
         "maxUnfamiliar": 0,
         "lengthRange": [
           2,
-          3
+          5
         ]
       },
       "atomMeta": {
@@ -1542,9 +1547,9 @@
         "mode": "accuracy"
       },
       "stageMinWords": {
-        "single": 10,
-        "word": 10,
-        "exam": 20
+        "single": 15,
+        "word": 15,
+        "exam": 25
       }
     },
     {
@@ -1592,7 +1597,7 @@
         "maxUnfamiliar": 0,
         "lengthRange": [
           2,
-          3
+          5
         ]
       },
       "atomMeta": {
@@ -1642,9 +1647,9 @@
         "mode": "accuracy"
       },
       "stageMinWords": {
-        "single": 10,
-        "word": 10,
-        "exam": 20
+        "single": 15,
+        "word": 15,
+        "exam": 25
       }
     },
     {
@@ -1692,7 +1697,7 @@
         "maxUnfamiliar": 0,
         "lengthRange": [
           2,
-          3
+          5
         ]
       },
       "atomMeta": {
@@ -1723,9 +1728,9 @@
         "mode": "accuracy"
       },
       "stageMinWords": {
-        "single": 10,
-        "word": 10,
-        "exam": 20
+        "single": 15,
+        "word": 15,
+        "exam": 25
       }
     },
     {
@@ -1774,7 +1779,7 @@
         "maxUnfamiliar": 0,
         "lengthRange": [
           2,
-          3
+          5
         ]
       },
       "atomMeta": {
@@ -1803,9 +1808,9 @@
         "mode": "accuracy"
       },
       "stageMinWords": {
-        "single": 10,
-        "word": 10,
-        "exam": 20
+        "single": 15,
+        "word": 15,
+        "exam": 25
       }
     },
     {
@@ -1886,7 +1891,7 @@
         "maxUnfamiliar": 0,
         "lengthRange": [
           2,
-          4
+          5
         ]
       },
       "atomMeta": {
@@ -1902,8 +1907,8 @@
             "带",
             "待",
             "代",
-            "袋",
-            "贷"
+            "戴",
+            "呆"
           ],
           "mnemonic": "D + AI = DAI"
         },
@@ -1981,7 +1986,8 @@
           ],
           "free": false,
           "anchors": [
-            "鸟"
+            "鸟",
+            "尿"
           ],
           "mnemonic": "N + IAO = NIAO"
         },
@@ -2152,7 +2158,7 @@
         "minCpm": 20
       },
       "stageMinWords": {
-        "exam": 40
+        "exam": 50
       },
       "reviewFamily": "a"
     },
@@ -2203,7 +2209,7 @@
         "maxUnfamiliar": 0,
         "lengthRange": [
           2,
-          3
+          5
         ]
       },
       "atomMeta": {
@@ -2236,9 +2242,9 @@
         "mode": "accuracy"
       },
       "stageMinWords": {
-        "single": 10,
-        "word": 10,
-        "exam": 20
+        "single": 15,
+        "word": 15,
+        "exam": 25
       }
     },
     {
@@ -2289,7 +2295,7 @@
         "maxUnfamiliar": 0,
         "lengthRange": [
           2,
-          3
+          5
         ]
       },
       "atomMeta": {
@@ -2319,9 +2325,9 @@
         "mode": "accuracy"
       },
       "stageMinWords": {
-        "single": 10,
-        "word": 10,
-        "exam": 20
+        "single": 15,
+        "word": 15,
+        "exam": 25
       }
     },
     {
@@ -2375,7 +2381,7 @@
         "maxUnfamiliar": 0,
         "lengthRange": [
           2,
-          3
+          5
         ]
       },
       "atomMeta": {
@@ -2391,8 +2397,8 @@
             "送",
             "宋",
             "松",
-            "讼",
-            "嵩"
+            "颂",
+            "耸"
           ],
           "mnemonic": "S + ONG = SONG"
         },
@@ -2425,9 +2431,9 @@
         "mode": "accuracy"
       },
       "stageMinWords": {
-        "single": 10,
-        "word": 10,
-        "exam": 20
+        "single": 15,
+        "word": 15,
+        "exam": 25
       }
     },
     {
@@ -2492,7 +2498,7 @@
         "maxUnfamiliar": 0,
         "lengthRange": [
           2,
-          4
+          5
         ]
       },
       "atomMeta": {
@@ -2539,8 +2545,8 @@
             "送",
             "宋",
             "松",
-            "讼",
-            "嵩"
+            "颂",
+            "耸"
           ],
           "mnemonic": "S + ONG = SONG"
         },
@@ -2604,7 +2610,7 @@
         "minCpm": 20
       },
       "stageMinWords": {
-        "exam": 40
+        "exam": 50
       },
       "reviewFamily": "o"
     },
@@ -2720,7 +2726,7 @@
         "maxUnfamiliar": 0,
         "lengthRange": [
           2,
-          4
+          5
         ]
       },
       "atomMeta": {
@@ -2733,7 +2739,9 @@
           ],
           "free": false,
           "anchors": [
-            "追"
+            "追",
+            "锥",
+            "坠"
           ],
           "mnemonic": "ZH + UI = ZHUI（同在 V 键）"
         },
@@ -2891,8 +2899,8 @@
             "带",
             "待",
             "代",
-            "袋",
-            "贷"
+            "戴",
+            "呆"
           ],
           "mnemonic": "D + AI = DAI"
         },
@@ -2987,7 +2995,8 @@
           ],
           "free": false,
           "anchors": [
-            "鸟"
+            "鸟",
+            "尿"
           ],
           "mnemonic": "N + IAO = NIAO"
         },
@@ -3113,8 +3122,8 @@
             "送",
             "宋",
             "松",
-            "讼",
-            "嵩"
+            "颂",
+            "耸"
           ],
           "mnemonic": "S + ONG = SONG"
         },
@@ -3209,7 +3218,7 @@
         "minCpm": 20
       },
       "stageMinWords": {
-        "exam": 40
+        "exam": 50
       }
     },
     {
@@ -3324,7 +3333,7 @@
         "maxUnfamiliar": 0,
         "lengthRange": [
           2,
-          4
+          5
         ]
       },
       "atomMeta": {
@@ -3337,7 +3346,9 @@
           ],
           "free": false,
           "anchors": [
-            "追"
+            "追",
+            "锥",
+            "坠"
           ],
           "mnemonic": "ZH + UI = ZHUI（同在 V 键）"
         },
@@ -3495,8 +3506,8 @@
             "带",
             "待",
             "代",
-            "袋",
-            "贷"
+            "戴",
+            "呆"
           ],
           "mnemonic": "D + AI = DAI"
         },
@@ -3591,7 +3602,8 @@
           ],
           "free": false,
           "anchors": [
-            "鸟"
+            "鸟",
+            "尿"
           ],
           "mnemonic": "N + IAO = NIAO"
         },
@@ -3717,8 +3729,8 @@
             "送",
             "宋",
             "松",
-            "讼",
-            "嵩"
+            "颂",
+            "耸"
           ],
           "mnemonic": "S + ONG = SONG"
         },
@@ -3819,7 +3831,7 @@
         ]
       },
       "stageMinWords": {
-        "exam": 40
+        "exam": 50
       }
     },
     {
@@ -3873,7 +3885,7 @@
         "maxUnfamiliar": 0,
         "lengthRange": [
           2,
-          3
+          5
         ]
       },
       "atomMeta": {
@@ -3906,9 +3918,9 @@
         "mode": "accuracy"
       },
       "stageMinWords": {
-        "single": 10,
-        "word": 10,
-        "exam": 20
+        "single": 15,
+        "word": 15,
+        "exam": 25
       }
     },
     {
@@ -3963,7 +3975,7 @@
         "maxUnfamiliar": 0,
         "lengthRange": [
           2,
-          3
+          5
         ]
       },
       "atomMeta": {
@@ -3996,9 +4008,9 @@
         "mode": "accuracy"
       },
       "stageMinWords": {
-        "single": 10,
-        "word": 10,
-        "exam": 20
+        "single": 15,
+        "word": 15,
+        "exam": 25
       }
     },
     {
@@ -4054,7 +4066,7 @@
         "maxUnfamiliar": 0,
         "lengthRange": [
           2,
-          3
+          5
         ]
       },
       "atomMeta": {
@@ -4084,9 +4096,9 @@
         "mode": "accuracy"
       },
       "stageMinWords": {
-        "single": 10,
-        "word": 10,
-        "exam": 20
+        "single": 15,
+        "word": 15,
+        "exam": 25
       }
     },
     {
@@ -4156,7 +4168,7 @@
         "maxUnfamiliar": 0,
         "lengthRange": [
           2,
-          4
+          5
         ]
       },
       "atomMeta": {
@@ -4279,7 +4291,7 @@
         "minCpm": 20
       },
       "stageMinWords": {
-        "exam": 40
+        "exam": 50
       },
       "reviewFamily": "e"
     },
@@ -4337,7 +4349,7 @@
         "maxUnfamiliar": 0,
         "lengthRange": [
           2,
-          3
+          5
         ]
       },
       "atomMeta": {
@@ -4351,6 +4363,7 @@
           "free": false,
           "anchors": [
             "滨",
+            "彬",
             "宾"
           ],
           "mnemonic": "B + IN = BIN"
@@ -4367,9 +4380,9 @@
         "mode": "accuracy"
       },
       "stageMinWords": {
-        "single": 10,
-        "word": 10,
-        "exam": 20
+        "single": 15,
+        "word": 15,
+        "exam": 25
       }
     },
     {
@@ -4427,7 +4440,7 @@
         "maxUnfamiliar": 0,
         "lengthRange": [
           2,
-          3
+          5
         ]
       },
       "atomMeta": {
@@ -4460,9 +4473,9 @@
         "mode": "accuracy"
       },
       "stageMinWords": {
-        "single": 10,
-        "word": 10,
-        "exam": 20
+        "single": 15,
+        "word": 15,
+        "exam": 25
       }
     },
     {
@@ -4521,7 +4534,7 @@
         "maxUnfamiliar": 0,
         "lengthRange": [
           2,
-          3
+          5
         ]
       },
       "atomMeta": {
@@ -4554,9 +4567,9 @@
         "mode": "accuracy"
       },
       "stageMinWords": {
-        "single": 10,
-        "word": 10,
-        "exam": 20
+        "single": 15,
+        "word": 15,
+        "exam": 25
       }
     },
     {
@@ -4616,7 +4629,7 @@
         "maxUnfamiliar": 0,
         "lengthRange": [
           2,
-          3
+          5
         ]
       },
       "atomMeta": {
@@ -4648,9 +4661,9 @@
         "mode": "accuracy"
       },
       "stageMinWords": {
-        "single": 10,
-        "word": 10,
-        "exam": 20
+        "single": 15,
+        "word": 15,
+        "exam": 25
       }
     },
     {
@@ -4717,7 +4730,7 @@
         "maxUnfamiliar": 0,
         "lengthRange": [
           2,
-          4
+          5
         ]
       },
       "atomMeta": {
@@ -4731,6 +4744,7 @@
           "free": false,
           "anchors": [
             "滨",
+            "彬",
             "宾"
           ],
           "mnemonic": "B + IN = BIN"
@@ -4798,7 +4812,7 @@
         "minCpm": 20
       },
       "stageMinWords": {
-        "exam": 40
+        "exam": 50
       },
       "reviewFamily": "i"
     },
@@ -4860,7 +4874,7 @@
         "maxUnfamiliar": 0,
         "lengthRange": [
           2,
-          3
+          5
         ]
       },
       "atomMeta": {
@@ -4893,9 +4907,9 @@
         "mode": "accuracy"
       },
       "stageMinWords": {
-        "single": 10,
-        "word": 10,
-        "exam": 20
+        "single": 15,
+        "word": 15,
+        "exam": 25
       }
     },
     {
@@ -4957,7 +4971,7 @@
         "maxUnfamiliar": 0,
         "lengthRange": [
           2,
-          3
+          5
         ]
       },
       "atomMeta": {
@@ -4973,8 +4987,8 @@
             "云",
             "运",
             "允",
-            "郧",
-            "孕"
+            "晕",
+            "郧"
           ],
           "mnemonic": "Y + UN = YUN"
         }
@@ -4990,9 +5004,9 @@
         "mode": "accuracy"
       },
       "stageMinWords": {
-        "single": 10,
-        "word": 10,
-        "exam": 20
+        "single": 15,
+        "word": 15,
+        "exam": 25
       }
     },
     {
@@ -5059,7 +5073,7 @@
         "maxUnfamiliar": 0,
         "lengthRange": [
           2,
-          3
+          5
         ]
       },
       "atomMeta": {
@@ -5123,9 +5137,9 @@
         "mode": "accuracy"
       },
       "stageMinWords": {
-        "single": 10,
-        "word": 10,
-        "exam": 20
+        "single": 15,
+        "word": 15,
+        "exam": 25
       }
     },
     {
@@ -5197,7 +5211,7 @@
         "maxUnfamiliar": 0,
         "lengthRange": [
           2,
-          4
+          5
         ]
       },
       "atomMeta": {
@@ -5230,8 +5244,8 @@
             "云",
             "运",
             "允",
-            "郧",
-            "孕"
+            "晕",
+            "郧"
           ],
           "mnemonic": "Y + UN = YUN"
         },
@@ -5279,7 +5293,7 @@
         "minCpm": 20
       },
       "stageMinWords": {
-        "exam": 40
+        "exam": 50
       },
       "reviewFamily": "u-ü"
     },
@@ -5431,7 +5445,7 @@
         "maxUnfamiliar": 0,
         "lengthRange": [
           2,
-          4
+          5
         ]
       },
       "atomMeta": {
@@ -5444,7 +5458,9 @@
           ],
           "free": false,
           "anchors": [
-            "追"
+            "追",
+            "锥",
+            "坠"
           ],
           "mnemonic": "ZH + UI = ZHUI（同在 V 键）"
         },
@@ -5602,8 +5618,8 @@
             "带",
             "待",
             "代",
-            "袋",
-            "贷"
+            "戴",
+            "呆"
           ],
           "mnemonic": "D + AI = DAI"
         },
@@ -5698,7 +5714,8 @@
           ],
           "free": false,
           "anchors": [
-            "鸟"
+            "鸟",
+            "尿"
           ],
           "mnemonic": "N + IAO = NIAO"
         },
@@ -5824,8 +5841,8 @@
             "送",
             "宋",
             "松",
-            "讼",
-            "嵩"
+            "颂",
+            "耸"
           ],
           "mnemonic": "S + ONG = SONG"
         },
@@ -5904,6 +5921,7 @@
           "free": false,
           "anchors": [
             "滨",
+            "彬",
             "宾"
           ],
           "mnemonic": "B + IN = BIN"
@@ -5987,8 +6005,8 @@
             "云",
             "运",
             "允",
-            "郧",
-            "孕"
+            "晕",
+            "郧"
           ],
           "mnemonic": "Y + UN = YUN"
         },
@@ -6114,7 +6132,7 @@
         "minCpm": 20
       },
       "stageMinWords": {
-        "exam": 40
+        "exam": 50
       }
     },
     {
@@ -6265,7 +6283,7 @@
         "maxUnfamiliar": 0,
         "lengthRange": [
           2,
-          4
+          5
         ]
       },
       "atomMeta": {
@@ -6278,7 +6296,9 @@
           ],
           "free": false,
           "anchors": [
-            "追"
+            "追",
+            "锥",
+            "坠"
           ],
           "mnemonic": "ZH + UI = ZHUI（同在 V 键）"
         },
@@ -6436,8 +6456,8 @@
             "带",
             "待",
             "代",
-            "袋",
-            "贷"
+            "戴",
+            "呆"
           ],
           "mnemonic": "D + AI = DAI"
         },
@@ -6532,7 +6552,8 @@
           ],
           "free": false,
           "anchors": [
-            "鸟"
+            "鸟",
+            "尿"
           ],
           "mnemonic": "N + IAO = NIAO"
         },
@@ -6658,8 +6679,8 @@
             "送",
             "宋",
             "松",
-            "讼",
-            "嵩"
+            "颂",
+            "耸"
           ],
           "mnemonic": "S + ONG = SONG"
         },
@@ -6738,6 +6759,7 @@
           "free": false,
           "anchors": [
             "滨",
+            "彬",
             "宾"
           ],
           "mnemonic": "B + IN = BIN"
@@ -6821,8 +6843,8 @@
             "云",
             "运",
             "允",
-            "郧",
-            "孕"
+            "晕",
+            "郧"
           ],
           "mnemonic": "Y + UN = YUN"
         },
@@ -6954,7 +6976,7 @@
         ]
       },
       "stageMinWords": {
-        "exam": 40
+        "exam": 50
       }
     },
     {
@@ -7105,7 +7127,7 @@
         "maxUnfamiliar": 0,
         "lengthRange": [
           2,
-          4
+          5
         ]
       },
       "atomMeta": {
@@ -7118,7 +7140,9 @@
           ],
           "free": false,
           "anchors": [
-            "追"
+            "追",
+            "锥",
+            "坠"
           ],
           "mnemonic": "ZH + UI = ZHUI（同在 V 键）"
         },
@@ -7276,8 +7300,8 @@
             "带",
             "待",
             "代",
-            "袋",
-            "贷"
+            "戴",
+            "呆"
           ],
           "mnemonic": "D + AI = DAI"
         },
@@ -7372,7 +7396,8 @@
           ],
           "free": false,
           "anchors": [
-            "鸟"
+            "鸟",
+            "尿"
           ],
           "mnemonic": "N + IAO = NIAO"
         },
@@ -7498,8 +7523,8 @@
             "送",
             "宋",
             "松",
-            "讼",
-            "嵩"
+            "颂",
+            "耸"
           ],
           "mnemonic": "S + ONG = SONG"
         },
@@ -7578,6 +7603,7 @@
           "free": false,
           "anchors": [
             "滨",
+            "彬",
             "宾"
           ],
           "mnemonic": "B + IN = BIN"
@@ -7661,8 +7687,8 @@
             "云",
             "运",
             "允",
-            "郧",
-            "孕"
+            "晕",
+            "郧"
           ],
           "mnemonic": "Y + UN = YUN"
         },
@@ -7794,7 +7820,7 @@
         ]
       },
       "stageMinWords": {
-        "exam": 80
+        "exam": 100
       }
     }
   ]

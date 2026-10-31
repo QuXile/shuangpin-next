@@ -59,8 +59,16 @@ export interface TrainingBank {
   generatedAt?: string
   description?: string
   chars: WordEntry[]
+}
+
+export interface CommonWordsFile {
+  dataVersion: string
+  count: number
   words: WordEntry[]
 }
 
 export const loadTrainingBank = (): Promise<TrainingBank> =>
   cached('training-bank', () => getJSON<TrainingBank>('training/bank.json'))
+
+export const loadCommonWords = (): Promise<CommonWordsFile> =>
+  cached('common-words', () => getJSON<CommonWordsFile>('words/words.sample.json'))

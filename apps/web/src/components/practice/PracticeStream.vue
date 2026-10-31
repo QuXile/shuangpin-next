@@ -275,6 +275,7 @@ watch(
 }
 .stream-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   justify-content: center;
   gap: 8px;

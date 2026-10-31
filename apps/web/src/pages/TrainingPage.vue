@@ -28,7 +28,7 @@ import { useCourseStore } from '@/stores/course'
 import { useLayoutStore } from '@/stores/layout'
 import { useGlobalKeys, type KeyBinding } from '@/composables/useGlobalKeys'
 import { useTrainingSession } from '@/composables/useTrainingSession'
-import { loadTrainingBank, type TrainingBank } from '@/lib/data'
+import { loadCommonWords, loadTrainingBank, type CommonWordsFile, type TrainingBank } from '@/lib/data'
 import {
   articlesToPracticeWords,
   buildArticlePlan,
@@ -65,6 +65,7 @@ const {
 const tab = ref<Tab>('drill')
 const drillMode = ref<DrillMode>('char')
 const bank = shallowRef<TrainingBank | null>(null)
+const commonWords = shallowRef<CommonWordsFile | null>(null)
 const bankStatus = ref<'loading' | 'ready' | 'error'>('loading')
 const bankError = ref('')
 const selectedInitials = ref<ReadonlySet<string>>(new Set())
@@ -122,7 +123,9 @@ onMounted(async () => {
     selectAll()
   }
   try {
-    bank.value = await loadTrainingBank()
+    const [chars, words] = await Promise.all([loadTrainingBank(), loadCommonWords()])
+    bank.value = chars
+    commonWords.value = words
     bankStatus.value = 'ready'
   } catch (cause) {
     bankStatus.value = 'error'
@@ -141,9 +144,8 @@ const scope = computed<TrainingScope>(() => ({
 }))
 
 const baseEntries = computed<readonly WordEntry[]>(() => {
-  const data = bank.value
-  if (!data) return []
-  return drillMode.value === 'char' ? data.chars : data.words
+  if (drillMode.value === 'char') return bank.value?.chars ?? []
+  return commonWords.value?.words ?? []
 })
 const availableEntries = computed<readonly WordEntry[]>(() =>
   bank.value ? filterTrainingEntries(baseEntries.value, scope.value) : [],
@@ -196,16 +198,55 @@ function clearGroup(group: Group): void {
     selectedFinals.value = new Set()
   }
 }
-function invertGroup(group: Group): void {
+
+
+// ── 当前学习进度 → 选中已学完课程覆盖的音 ─────────────────────
+const passedLessons = computed(() =>
+  course.lessons.filter((lesson) => course.progress[lesson.id]?.passed),
+)
+const passedLessonCount = computed(() => passedLessons.value.length)
+
+function selectLearnedAtoms(): void {
   const options = atomOptions.value
-  if (!options) return
-  if (group === 'initial') {
-    selectedInitials.value = new Set(options.initials.filter((item) => !selectedInitials.value.has(item)))
-    selectedZeroFinals.value = new Set(options.zeroFinals.filter((item) => !selectedZeroFinals.value.has(item)))
-  } else {
-    selectedFinals.value = new Set(options.finals.filter((item) => !selectedFinals.value.has(item)))
+  if (!options || passedLessons.value.length === 0) return
+  const initialSet = new Set<string>()
+  const finalSet = new Set<string>()
+  const zeroSet = new Set<string>()
+  const initialKeys = new Set(options.initials)
+  const finalKeys = new Set(options.finals)
+  const zeroKeys = new Set(options.zeroFinals)
+  for (const lesson of passedLessons.value) {
+    for (const atom of lesson.focusAtoms) {
+      const [type, key] = atom.split(':', 2)
+      if (type === 'initial' && initialKeys.has(key ?? '')) initialSet.add(key ?? '')
+      else if (type === 'final' && finalKeys.has(key ?? '')) finalSet.add(key ?? '')
+      else if (type === 'zero' && zeroKeys.has(key ?? '')) zeroSet.add(key ?? '')
+    }
   }
+  selectedInitials.value = initialSet
+  selectedFinals.value = finalSet
+  selectedZeroFinals.value = zeroSet
 }
+
+function toggleAppearAll(group: Group): void {
+  const all = group === 'initial' ? appearInitialAll.value : appearFinalAll.value
+  if (all) clearGroup(group)
+  else selectGroup(group)
+}
+
+const appearInitialAll = computed(() => {
+  const options = atomOptions.value
+  if (!options) return false
+  return (
+    selectedInitials.value.size === options.initials.length &&
+    selectedZeroFinals.value.size === options.zeroFinals.length
+  )
+})
+const appearFinalAll = computed(() => {
+  const options = atomOptions.value
+  if (!options) return false
+  return selectedFinals.value.size === options.finals.length
+})
 
 // ── 练习时隐藏映射（出现 / 隐藏双选栏） ──────────────────────
 
@@ -270,6 +311,32 @@ function hiddenGroupCandidates(scope: HiddenScope, group: Group): readonly strin
   return group === 'initial' ? candidates.initials : candidates.finals
 }
 
+/** 隐藏栏的全选勾选框状态。 */
+function hiddenGroupAllChecked(scope: HiddenScope, group: Group): boolean {
+  const candidates = hiddenCandidatesOf(scope)
+  const target = group === 'initial' ? hiddenInitialsOf(scope) : hiddenFinalsOf(scope)
+  const values = group === 'initial' ? candidates.initials : candidates.finals
+  const zeros = group === 'initial' ? hiddenZeroFinalsOf(scope).value : new Set<string>()
+  if (values.length === 0 && (group !== 'initial' || candidates.zeroFinals.length === 0)) return false
+  return (
+    values.every((item) => target.value.has(item)) &&
+    (group !== 'initial' || candidates.zeroFinals.every((item) => zeros.has(item)))
+  )
+}
+
+
+function hiddenGroupDisabled(scope: HiddenScope, group: Group): boolean {
+  const candidates = hiddenCandidatesOf(scope)
+  return group === 'initial'
+    ? candidates.initials.length + candidates.zeroFinals.length === 0
+    : candidates.finals.length === 0
+}
+
+function toggleHiddenAll(scope: HiddenScope, group: Group): void {
+  if (hiddenGroupAllChecked(scope, group)) clearHiddenGroup(scope, group)
+  else selectHiddenGroup(scope, group)
+}
+
 /** 隐藏栏的 全选/反选/全不选 与出现栏一致，按声母/韵母分组 */
 function selectHiddenGroup(scope: HiddenScope, group: Group): void {
   const target = group === 'initial' ? hiddenInitialsOf(scope) : hiddenFinalsOf(scope)
@@ -285,16 +352,6 @@ function clearHiddenGroup(scope: HiddenScope, group: Group): void {
   if (group === 'initial') hiddenZeroFinalsOf(scope).value = new Set()
 }
 
-function invertHiddenGroup(scope: HiddenScope, group: Group): void {
-  const candidates = hiddenGroupCandidates(scope, group)
-  const target = group === 'initial' ? hiddenInitialsOf(scope) : hiddenFinalsOf(scope)
-  target.value = new Set(candidates.filter((item) => !target.value.has(item)))
-  if (group === 'initial') {
-    const zeroCandidates = hiddenCandidatesOf(scope).zeroFinals
-    const hiddenZeros = hiddenZeroFinalsOf(scope)
-    hiddenZeros.value = new Set(zeroCandidates.filter((item) => !hiddenZeros.value.has(item)))
-  }
-}
 
 const drillHiddenCount = computed(
   () => hiddenInitials.value.size + hiddenFinals.value.size + hiddenZeroFinals.value.size,
@@ -655,16 +712,30 @@ onScopeDispose(() => {
         <section v-else-if="tab === 'drill'" class="training-panel">
           <div class="setup-grid">
             <SetupCard pill="出现" tone="appear" subtitle="本局训练范围">
+              <template #head-extra>
+                <div class="setup-progress">
+                  <span class="setup-progress-label">当前进度 {{ passedLessonCount }}/{{ course.lessons.length }} 课</span>
+                  <button
+                    type="button"
+                    class="setup-progress-btn"
+                    :disabled="passedLessonCount === 0"
+                    title="选中已学完课程包含的声母、韵母与零声母"
+                    @click="selectLearnedAtoms"
+                  >
+                    已学
+                  </button>
+                </div>
+              </template>
               <div v-if="bankStatus === 'loading'" class="training-state">正在加载训练字库…</div>
               <template v-else-if="atomOptions">
-                <SetupGroup title="声母" group="initial">
+                <SetupGroup
+                  title="声母"
+                  group="initial"
+                  :all-checked="appearInitialAll"
+                    @toggle-all="toggleAppearAll('initial')"
+                >
                   <template #count>
                     已选 {{ selectedInitials.size }}/{{ atomOptions.initials.length }} · 零 {{ selectedZeroFinals.size }}/{{ atomOptions.zeroFinals.length }}
-                  </template>
-                  <template #actions>
-                    <button type="button" @click="selectGroup('initial')">全选</button>
-                    <button type="button" @click="invertGroup('initial')">反选</button>
-                    <button type="button" @click="clearGroup('initial')">全不选</button>
                   </template>
                   <button
                     v-for="initial in atomOptions.initials"
@@ -688,14 +759,14 @@ onScopeDispose(() => {
                   </button>
                 </SetupGroup>
 
-                <SetupGroup title="韵母" group="final">
+                <SetupGroup
+                  title="韵母"
+                  group="final"
+                  :all-checked="appearFinalAll"
+                    @toggle-all="toggleAppearAll('final')"
+                >
                   <template #count>
                     已选 {{ selectedFinals.size }}/{{ atomOptions.finals.length }}
-                  </template>
-                  <template #actions>
-                    <button type="button" @click="selectGroup('final')">全选</button>
-                    <button type="button" @click="invertGroup('final')">反选</button>
-                    <button type="button" @click="clearGroup('final')">全不选</button>
                   </template>
                   <button
                     v-for="final in atomOptions.finals"
@@ -716,14 +787,12 @@ onScopeDispose(() => {
                 v-if="drillHiddenInitialCandidates.length || drillHiddenZeroCandidates.length"
                 title="声母"
                 group="initial"
+                :all-checked="hiddenGroupAllChecked('drill', 'initial')"
+                :all-disabled="hiddenGroupDisabled('drill', 'initial')"
+                @toggle-all="toggleHiddenAll('drill', 'initial')"
               >
                 <template #count>
                   已隐藏 {{ hiddenInitials.size }}/{{ drillHiddenInitialCandidates.length }} · 零 {{ hiddenZeroFinals.size }}/{{ drillHiddenZeroCandidates.length }}
-                </template>
-                <template #actions>
-                  <button type="button" @click="selectHiddenGroup('drill', 'initial')">全选</button>
-                  <button type="button" @click="invertHiddenGroup('drill', 'initial')">反选</button>
-                  <button type="button" @click="clearHiddenGroup('drill', 'initial')">全不选</button>
                 </template>
                 <button
                   v-for="initial in drillHiddenInitialCandidates"
@@ -747,14 +816,16 @@ onScopeDispose(() => {
                 </button>
               </SetupGroup>
 
-              <SetupGroup v-if="drillHiddenFinalCandidates.length" title="韵母" group="final">
+              <SetupGroup
+                v-if="drillHiddenFinalCandidates.length"
+                title="韵母"
+                group="final"
+                :all-checked="hiddenGroupAllChecked('drill', 'final')"
+                :all-disabled="hiddenGroupDisabled('drill', 'final')"
+                @toggle-all="toggleHiddenAll('drill', 'final')"
+              >
                 <template #count>
                   已隐藏 {{ hiddenFinals.size }}/{{ drillHiddenFinalCandidates.length }}
-                </template>
-                <template #actions>
-                  <button type="button" @click="selectHiddenGroup('drill', 'final')">全选</button>
-                  <button type="button" @click="invertHiddenGroup('drill', 'final')">反选</button>
-                  <button type="button" @click="clearHiddenGroup('drill', 'final')">全不选</button>
                 </template>
                 <button
                   v-for="final in drillHiddenFinalCandidates"
@@ -886,14 +957,15 @@ onScopeDispose(() => {
             </SetupCard>
 
             <SetupCard pill="隐藏" tone="hidden" subtitle="练习时不显示映射">
-              <SetupGroup title="声母" group="initial">
+              <SetupGroup
+                title="声母"
+                group="initial"
+                :all-checked="hiddenGroupAllChecked('article', 'initial')"
+                :all-disabled="hiddenGroupDisabled('article', 'initial')"
+                @toggle-all="toggleHiddenAll('article', 'initial')"
+              >
                 <template #count>
                   已隐藏 {{ articleHiddenInitials.size }}/{{ articleHiddenInitialCandidates.length }} · 零 {{ articleHiddenZeroFinals.size }}/{{ articleHiddenZeroCandidates.length }}
-                </template>
-                <template #actions>
-                  <button type="button" @click="selectHiddenGroup('article', 'initial')">全选</button>
-                  <button type="button" @click="invertHiddenGroup('article', 'initial')">反选</button>
-                  <button type="button" @click="clearHiddenGroup('article', 'initial')">全不选</button>
                 </template>
                 <button
                   v-for="initial in articleHiddenInitialCandidates"
@@ -917,14 +989,15 @@ onScopeDispose(() => {
                 </button>
               </SetupGroup>
 
-              <SetupGroup title="韵母" group="final">
+              <SetupGroup
+                title="韵母"
+                group="final"
+                :all-checked="hiddenGroupAllChecked('article', 'final')"
+                :all-disabled="hiddenGroupDisabled('article', 'final')"
+                @toggle-all="toggleHiddenAll('article', 'final')"
+              >
                 <template #count>
                   已隐藏 {{ articleHiddenFinals.size }}/{{ articleHiddenFinalCandidates.length }}
-                </template>
-                <template #actions>
-                  <button type="button" @click="selectHiddenGroup('article', 'final')">全选</button>
-                  <button type="button" @click="invertHiddenGroup('article', 'final')">反选</button>
-                  <button type="button" @click="clearHiddenGroup('article', 'final')">全不选</button>
                 </template>
                 <button
                   v-for="final in articleHiddenFinalCandidates"
@@ -1571,6 +1644,37 @@ onScopeDispose(() => {
   border-color: var(--danger-line);
   background: var(--danger-soft);
   color: var(--danger);
+}
+.setup-progress {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  min-width: 0;
+}
+.setup-progress-label {
+  color: var(--ink-4);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.setup-progress-btn {
+  flex: none;
+  padding: 3px 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  color: var(--ink-3);
+  font-size: 11px;
+  font-weight: 600;
+}
+.setup-progress-btn:hover:not(:disabled) {
+  color: var(--brand-ink);
+  border-color: var(--brand-line, var(--line));
+  background: var(--brand-soft);
+}
+.setup-progress-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 .setup-actions {
   flex: none;

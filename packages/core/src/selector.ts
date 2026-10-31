@@ -5,16 +5,15 @@
  * - free 原子（键位与全拼一致）始终视为已学；只有 initial/final 阻塞选词；
  * - newFocus = 本课 blockingAtoms 中尚未掌握的原子（复习/考核课为空）；
  * - 候选分层：S = 未知阻塞原子 ⊆ newFocus；A = 额外 ≤ maxUnfamiliar 个预习原子；B = 无未知原子；
- * - 组卷：先按 MIN_PER_FOCUS 随机补足 newFocus 覆盖，再随机填充，最后整体洗牌；
+ * - 组卷：使用概率均衡抽样（balancedSampling.ts）：
+ *   每个 focus 音的期望出现次数相等；含目标音次数多的词权重更高；
  * - 只有 newFocus 为空（复习/考核/规则课）时，候选词必须命中至少 1 个 focus 原子。
  */
 import type { AtomId, SelectWordsInput, WordEntry } from './types.ts'
 import { focusHitsOf } from './atoms.ts'
 import { parseAtomId } from './pinyin.ts'
 import { mulberry32, shuffle } from './random.ts'
-
-/** 每个 focus 知识点在目标词中至少出现的次数 */
-export const MIN_PER_FOCUS = 3
+import { sampleBalancedTargets, type BalancedCandidate } from './balancedSampling.ts'
 
 type Tier = 'S' | 'A' | 'B'
 
@@ -139,68 +138,59 @@ export function selectWords(input: SelectWordsInput): WordEntry[] {
     candidates.push({ word, score, focusHits: hits, tier })
   }
 
-  const rng = mulberry32(seed ^ 0x9e3779b9)
-  const picked: Candidate[] = []
-  const pickedTexts = new Set<string>()
-  const remaining = [...candidates]
-
-  const weightedPick = (pool: readonly Candidate[], weightOf: (candidate: Candidate) => number): Candidate | null => {
-    if (pool.length === 0) return null
-    let total = 0
-    const weights = pool.map((candidate) => {
-      const weight = Math.max(0.05, weightOf(candidate))
-      total += weight
-      return weight
+  const selectedWords = new Set<string>()
+  const balanced: BalancedCandidate<WordEntry>[] = []
+  for (const candidate of candidates) {
+    const counts = targetCountsOf(candidate.word, fullFocus)
+    if (counts.size === 0) continue
+    balanced.push({
+      item: candidate.word,
+      counts,
+      quality: Math.exp((candidate.score - 60) / 25),
     })
-    let roll = rng() * total
-    for (let index = 0; index < pool.length; index++) {
-      roll -= weights[index] ?? 0
-      if (roll <= 0) return pool[index] ?? null
+    selectedWords.add(candidate.word.text)
+  }
+
+  // 「以字代词」：词池不足时补充单字候选，单字不设特殊标记，直接参与同一套概率抽样。
+  for (const word of input.extraWords ?? []) {
+    if (selectedWords.has(word.text)) continue
+    const counts = targetCountsOf(word, fullFocus)
+    if (counts.size === 0) continue
+    balanced.push({
+      item: word,
+      counts,
+      quality: 0.45 + Math.log1p(Math.max(0, word.freq)) / 20,
+    })
+    selectedWords.add(word.text)
+  }
+
+  // 无 focus 的兜底课：没有可均衡的目标音，按原质量随机选词。
+  if (fullFocus.length === 0) {
+    return shuffle([...candidates], mulberry32(seed ^ 0x85ebca6b))
+      .slice(0, count)
+      .map((candidate) => candidate.word)
+  }
+  if (balanced.length === 0) return []
+  return sampleBalancedTargets(balanced, count, seed)
+}
+
+/** 目标音的逐音节出现次数（同一音在一个词中出现多次会计多次）。 */
+export function targetCountsOf(word: WordEntry, focusAtoms: readonly AtomId[]): Map<AtomId, number> {
+  if (focusAtoms.length === 0) return new Map()
+  const focus = new Set(focusAtoms)
+  const counts = new Map<AtomId, number>()
+  for (const syllable of word.syllables) {
+    if (syllable.initial === '') {
+      const atom = `zero:${syllable.final}` as AtomId
+      if (focus.has(atom)) counts.set(atom, (counts.get(atom) ?? 0) + 1)
+      continue
     }
-    return pool[pool.length - 1] ?? null
+    const initialAtom = `initial:${syllable.initial}` as AtomId
+    if (focus.has(initialAtom)) counts.set(initialAtom, (counts.get(initialAtom) ?? 0) + 1)
+    const finalAtom = `final:${syllable.final}` as AtomId
+    if (focus.has(finalAtom)) counts.set(finalAtom, (counts.get(finalAtom) ?? 0) + 1)
   }
-
-  const pick = (candidate: Candidate) => {
-    picked.push(candidate)
-    pickedTexts.add(candidate.word.text)
-    remaining.splice(remaining.indexOf(candidate), 1)
-  }
-
-  // 覆盖 pass：每个新 focus 至少命中 MIN_PER_FOCUS 次
-  if (newFocus.length > 0) {
-    const hits = new Map<AtomId, number>(newFocus.map((atom) => [atom, 0]))
-    for (const candidate of candidates) {
-      for (const atom of candidate.focusHits) {
-        if (hits.has(atom)) hits.set(atom, (hits.get(atom) ?? 0) + 1)
-      }
-    }
-    while (picked.length < count) {
-      const deficits = newFocus.filter((atom) => (hits.get(atom) ?? 0) < MIN_PER_FOCUS)
-      if (deficits.length === 0) break
-      const eligible = remaining.filter((candidate) =>
-        candidate.focusHits.some((atom) => deficits.includes(atom)),
-      )
-      const chosen = weightedPick(eligible, (candidate) => {
-        const gain = candidate.focusHits.filter((atom) => deficits.includes(atom)).length
-        return 1 + gain * 3
-      })
-      if (!chosen) break
-      pick(chosen)
-      for (const atom of chosen.focusHits) {
-        if (hits.has(atom)) hits.set(atom, (hits.get(atom) ?? 0) + 1)
-      }
-    }
-  }
-
-  // 填充 pass：质量分作为权重随机抽取
-  while (picked.length < count && remaining.length > 0) {
-    const chosen = weightedPick(remaining, (candidate) => 0.2 + candidate.score / 100)
-    if (!chosen) break
-    pick(chosen)
-  }
-
-  // 展示顺序随机，避免固定首词
-  return shuffle(picked.map((candidate) => candidate.word), rng)
+  return counts
 }
 
 function isFreeAtom(

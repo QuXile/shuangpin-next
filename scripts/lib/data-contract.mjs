@@ -151,7 +151,7 @@ export function curriculumVersionOf(chapters, lessons) {
 
 /** training-<12hex>：训练库 schema + chars + words 的内容 hash（generatedAt 不参与）。 */
 export function trainingVersionOf(bank) {
-  const input = JSON.stringify({ schemaVersion: bank.schemaVersion, chars: bank.chars, words: bank.words })
+  const input = JSON.stringify({ schemaVersion: bank.schemaVersion, chars: bank.chars })
   return `training-${hash12(input)}`
 }
 

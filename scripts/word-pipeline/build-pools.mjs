@@ -40,9 +40,11 @@ import { enumerateExampleSyllables } from '../lib/pool-examples.mjs'
 const POLICY = WORD_POLICY
 const TARGET = POLICY.pools?.targetWordsPerLesson ?? 500
 const MIN_TARGET = POLICY.pools?.minWordsPerLesson ?? 300
+const REVIEW_TARGET = POLICY.pools?.reviewTargetWordsPerLesson ?? 1000
 const QUALITY_MAX_CHAR_RANK = POLICY.pools?.qualityMaxCharRank ?? 4000
 const EXAMPLE_MAX_CHAR_RANK = POLICY.examples?.maxRepresentativeCharRank ?? 3000
 const INTRO_SEED_WORDS = POLICY.intro?.seedWords ?? ['双拼']
+const LENGTH_QUOTAS = POLICY.pools?.lengthQuotas ?? { 2: 0.7, 3: 0.2, 4: 0.1 }
 const CURRICULUM_FILE = path.join(CURRICULUM_DIR, 'xiaohe.curriculum.json')
 const SCHEME_FILE = path.join(SCHEME_DIR, 'xiaohe.json')
 
@@ -179,25 +181,116 @@ function main() {
     b.freq - a.freq ||
     (a.text < b.text ? -1 : a.text > b.text ? 1 : 0)
 
-  function pickPool(strict, target) {
-    const picked = []
-    for (const word of strict) {
-      picked.push(word)
-      if (picked.length >= target) break
+  function lengthQuotaCounts(target) {
+    const entries = Object.entries(LENGTH_QUOTAS)
+      .map(([length, share]) => ({ length: Number(length), share: Number(share) }))
+      .filter((item) => [2, 3, 4, 5].includes(item.length) && item.share > 0)
+    const totalShare = entries.reduce((sum, item) => sum + item.share, 0) || 1
+    const counts = new Map()
+    let assigned = 0
+    for (const item of entries) {
+      const count = Math.floor((target * item.share) / totalShare)
+      counts.set(item.length, count)
+      assigned += count
     }
-    return picked
+    let remaining = target - assigned
+    const byRemainder = entries
+      .map((item) => ({
+        item,
+        remainder: ((target * item.share) / totalShare) % 1,
+      }))
+      .sort((a, b) => b.remainder - a.remainder)
+    let index = 0
+    while (remaining > 0) {
+      const entry = byRemainder[index % byRemainder.length]?.item
+      if (!entry) break
+      counts.set(entry.length, (counts.get(entry.length) ?? 0) + 1)
+      remaining -= 1
+      index += 1
+    }
+    return counts
   }
 
-  /** review/exam：质量优先 + 全局低使用优先，保持每课 500 词并压低跨课重复。 */
-  function pickReviewPool(strict, target) {
-    const quality = []
-    const other = []
-    for (const word of strict) (isQuality(word) ? quality : other).push(word)
+  const isIdiom = (word) => posByText.get(word.text) === 'i'
+
+  /**
+   * 先在池子里为每个 focus 预留一批候选，避免 500 词全被高频音占满，
+   * 使概率校准器有足够材料做到各音期望相等。
+   */
+  function seedFocusWords(strict, lesson) {
+    const focus = lesson.focusAtoms ?? []
+    if (focus.length === 0) return []
+    const desiredExam =
+      lesson.kind === 'exam' ? 100 : lesson.kind === 'review' ? 50 : 25
+    const perAtom = Math.max(8, Math.ceil(desiredExam / focus.length) * 3)
+    const byUsageThenFreq = (a, b) =>
+      (globalWordUsage.get(a.text) ?? 0) - (globalWordUsage.get(b.text) ?? 0) ||
+      b.freq - a.freq
+    const seeded = []
+    const used = new Set()
+    for (const atom of focus) {
+      const matches = strict
+        .filter((word) => !used.has(word.text))
+        .filter((word) => wordAtoms(word).some((item) => item.atom === atom))
+        .sort(byUsageThenFreq)
+        .slice(0, perAtom)
+      for (const word of matches) {
+        if (used.has(word.text)) continue
+        used.add(word.text)
+        seeded.push(word)
+      }
+    }
+    return seeded
+  }
+
+  /** 按 2/3/4/5 字长度配额选池；4 字组优先词性 i 的成语。 */
+  function pickPool(strict, target, review = false, seeds = []) {
+    const groups = new Map()
+    for (const word of strict) {
+      const group = groups.get(word.length) ?? []
+      group.push(word)
+      groups.set(word.length, group)
+    }
     const byUsageThenFreq = (a, b) =>
       (globalWordUsage.get(a.text) ?? 0) - (globalWordUsage.get(b.text) ?? 0) || b.freq - a.freq
-    quality.sort(byUsageThenFreq)
-    other.sort(byUsageThenFreq)
-    return [...quality, ...other].slice(0, target)
+    const compare = review
+      ? (a, b) =>
+          Number(isQuality(b)) - Number(isQuality(a)) ||
+          byUsageThenFreq(a, b)
+      : compareQualityThenFreq
+    for (const [length, group] of groups) {
+      group.sort(
+        length === 4
+          ? (a, b) => Number(isIdiom(b)) - Number(isIdiom(a)) || compare(a, b)
+          : compare,
+      )
+    }
+    const quotas = lengthQuotaCounts(target)
+    const picked = []
+    const used = new Set()
+    for (const word of seeds) {
+      if (picked.length >= target) break
+      if (used.has(word.text)) continue
+      used.add(word.text)
+      picked.push(word)
+    }
+    for (const [length, quota] of quotas) {
+      const group = groups.get(length) ?? []
+      for (const word of group.slice(0, quota)) {
+        if (used.has(word.text)) continue
+        used.add(word.text)
+        picked.push(word)
+      }
+    }
+    // 某个长度供给不足时，用剩余候选补齐。
+    const all = [...groups.values()].flat().sort(compare)
+    for (const word of all) {
+      if (picked.length >= target) break
+      if (used.has(word.text)) continue
+      used.add(word.text)
+      picked.push(word)
+    }
+    return picked.slice(0, target)
   }
 
   function recordUsage(words) {
@@ -273,10 +366,12 @@ function main() {
       if (unknown === 0) strict.push(word)
     }
     const reviewLike = lesson.kind === 'review' || lesson.kind === 'exam'
+    const poolTarget = reviewLike ? Math.max(MIN_TARGET, REVIEW_TARGET) : Math.max(MIN_TARGET, TARGET)
     strict.sort(compareQualityThenFreq)
+    const seeds = seedFocusWords(strict, lesson)
     let picked = reviewLike
-      ? pickReviewPool(strict, Math.max(MIN_TARGET, TARGET))
-      : pickPool(strict, Math.max(MIN_TARGET, TARGET))
+      ? pickPool(strict, poolTarget, true, seeds)
+      : pickPool(strict, poolTarget, false, seeds)
     if (lesson.zeroExamples?.length && !hasNonZeroFocus) {
       const zeroWords = entries
         .filter(
@@ -291,7 +386,7 @@ function main() {
         if (seen.has(word.text)) continue
         seen.add(word.text)
         merged.push(word)
-        if (merged.length >= Math.max(MIN_TARGET, TARGET)) break
+        if (merged.length >= poolTarget) break
       }
       picked = merged
     }
@@ -299,7 +394,7 @@ function main() {
       const free = entries
         .filter((word) => isKnownWord(word, state))
         .sort((a, b) => Number(isQuality(b)) - Number(isQuality(a)) || b.freq - a.freq)
-      picked = pickPool(free, Math.max(MIN_TARGET, TARGET))
+      picked = pickPool(free, poolTarget)
     }
     if (
       lesson.kind === 'drill' &&
@@ -323,7 +418,7 @@ function main() {
         if (seen.has(word.text)) continue
         seen.add(word.text)
         merged.push(word)
-        if (merged.length >= Math.max(MIN_TARGET, TARGET)) break
+        if (merged.length >= poolTarget) break
       }
       picked = merged
     }

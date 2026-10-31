@@ -50,6 +50,7 @@ function buildFilePlan() {
   for (const lesson of poolIndex.lessons ?? []) {
     add(path.join(POOLS_DIR, lesson.file), `pools/${lesson.file}`)
   }
+  add(WORDS_FILE, 'words/words.sample.json')
   add(TRAINING_BANK_FILE, 'training/bank.json')
   const trainingVersion = readJSON(TRAINING_BANK_FILE).dataVersion
   return {

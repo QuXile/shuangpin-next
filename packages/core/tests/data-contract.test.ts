@@ -127,9 +127,9 @@ describe('课程数据契约', () => {
   it('每课 stageMinWords 与课程类型一致，且不再有旧 review/hintTier 字段', () => {
     const DEFAULTS: Record<string, Record<string, number>> = {
       intro: {},
-      drill: { single: 10, word: 10, exam: 20 },
-      review: { exam: 40 },
-      exam: { exam: 80 },
+      drill: { single: 15, word: 15, exam: 25 },
+      review: { exam: 50 },
+      exam: { exam: 100 },
     }
     for (const curriculum of curricula) {
       for (const lesson of curriculum.lessons) {
@@ -180,6 +180,9 @@ describe('课程数据契约', () => {
         expect(lesson.title, label).toBeTruthy()
         expect(lesson.wordPlan.lengthRange, label).toHaveLength(2)
         expect(typeof lesson.wordPlan.maxUnfamiliar, label).toBe('number')
+        if (lesson.kind !== 'intro') {
+          expect(lesson.wordPlan.lengthRange, label).toEqual([2, 5])
+        }
         if (lesson.kind === 'intro') {
           expect(lesson.passCriteria, label).toBeUndefined()
           expect(lesson.focusAtoms, label).toEqual([])
@@ -524,15 +527,15 @@ describe('词池数据契约', () => {
 })
 
 describe('基础词表与同步产物', () => {
-  it('words.sample：8000 词、tone 1–5、final 合法、dataVersion 格式', () => {
+  it('words.sample：10000 词、tone 1–5、final 合法、dataVersion 格式', () => {
     const bank = readDataJSON<{
       dataVersion: string
       count: number
       words: WordEntry[]
     }>('words', 'words.sample.json')
     expect(bank.dataVersion).toMatch(/^words-[0-9a-f]{12}$/)
-    expect(bank.count).toBe(8000)
-    expect(bank.words).toHaveLength(8000)
+    expect(bank.count).toBe(10000)
+    expect(bank.words).toHaveLength(10000)
     for (const word of bank.words) {
       expect(word.syllables.length).toBe(word.text.length)
       for (const syllable of word.syllables) {
@@ -576,5 +579,33 @@ describe('基础词表与同步产物', () => {
     expect(poolIndexCheck.targetWordsPerLesson).toBeGreaterThan(0)
     expect(schemeIndexCheck.defaultScheme).toBeTruthy()
     expect(findLesson(loadCurriculum('xiaohe'), 'L2.1').title).toBeTruthy()
+  })
+})
+
+
+describe('长度配额与训练词库补充', () => {
+  it('词池中 3 字、4 字词占比显著提升', () => {
+    let three = 0
+    let four = 0
+    let total = 0
+    for (const pool of allPools()) {
+      for (const word of pool.words) {
+        total += 1
+        if (word.length === 3) three += 1
+        if (word.length === 4) four += 1
+      }
+    }
+    expect(three / total).toBeGreaterThan(0.12)
+    expect(four / total).toBeGreaterThan(0.05)
+    expect(four).toBeGreaterThan(1500)
+  })
+
+  it('训练库只保存公共字库，不重复词语', () => {
+    const bank = readDataJSON<{
+      chars: WordEntry[]
+      words?: WordEntry[]
+    }>('training', 'bank.json')
+    expect(bank.chars.length).toBeGreaterThanOrEqual(5000)
+    expect(bank.words).toBeUndefined()
   })
 })

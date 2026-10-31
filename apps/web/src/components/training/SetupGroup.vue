@@ -1,12 +1,27 @@
 <script setup lang="ts">
 /**
- * 训练场统一分组：名称 + 计数 + 全选/反选/全不选 + chips。
- * 三张选择卡片的声母/韵母分组共用此结构，保证排版与测量一致。
+ * 训练场统一分组：名称 + 计数 + 全选勾选框 + chips。
  */
-defineProps<{
-  title: string
-  group: 'initial' | 'final'
-}>()
+withDefaults(
+  defineProps<{
+    title: string
+    group: 'initial' | 'final'
+    allChecked?: boolean
+    allDisabled?: boolean
+  }>(),
+  {
+    allChecked: false,
+    allDisabled: false,
+  },
+)
+
+const emit = defineEmits<{ toggleAll: [] }>()
+
+function onToggle(event: Event): void {
+  const target = event.target as HTMLInputElement
+  target.checked = !target.checked
+  emit('toggleAll')
+}
 </script>
 
 <template>
@@ -14,7 +29,16 @@ defineProps<{
     <div class="setup-group-head">
       <strong>{{ title }}</strong>
       <span class="setup-count"><slot name="count" /></span>
-      <div class="setup-group-actions"><slot name="actions" /></div>
+      <label class="setup-select-all" :class="{ 'is-disabled': allDisabled }">
+        <input
+          type="checkbox"
+          :checked="allChecked"
+          :disabled="allDisabled"
+          :aria-label="`${title}全选`"
+          @change="onToggle"
+        />
+        <span>全选</span>
+      </label>
     </div>
     <div class="chip-list"><slot /></div>
   </section>
@@ -30,8 +54,7 @@ defineProps<{
 .setup-group-head {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 4px 12px;
+  gap: 10px;
   min-height: 28px;
 }
 .setup-group-head strong {
@@ -46,21 +69,34 @@ defineProps<{
   font-size: 11px;
   font-variant-numeric: tabular-nums;
 }
-.setup-group-actions {
-  display: flex;
-  gap: 3px;
+.setup-select-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: none;
   margin-left: auto;
-}
-.setup-group-actions :slotted(button) {
-  padding: 4px 9px;
-  border-radius: var(--r-sm);
   color: var(--ink-3);
   font-size: 11px;
-  line-height: 1.2;
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
 }
-.setup-group-actions :slotted(button:hover) {
+.setup-select-all input {
+  width: 13px;
+  height: 13px;
+  margin: 0;
+  accent-color: var(--brand);
+  cursor: pointer;
+}
+.setup-select-all:hover {
   color: var(--brand-ink);
-  background: var(--brand-soft);
+}
+.setup-select-all.is-disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.setup-select-all.is-disabled input {
+  cursor: not-allowed;
 }
 .chip-list {
   display: flex;

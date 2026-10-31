@@ -2,25 +2,58 @@
   "schemaVersion": 1,
   "description": "词库构建口径（CONTRACT-V8 §4）：build/build-pools/validate 共用；数值变更会进入 pools 版本/校验阈值。",
   "wordBank": {
-    "wordCount": 8000,
-    "lengthRange": [2, 4],
-    "erhuaKeep": [
-      "女儿", "婴儿", "胎儿", "孤儿", "幼儿", "患儿", "健儿", "男儿", "婴幼儿", "新生儿"
+    "wordCount": 10000,
+    "lengthRange": [
+      2,
+      5
     ],
-    "anchorsCharsLimit": 8
+    "erhuaKeep": [
+      "女儿",
+      "婴儿",
+      "胎儿",
+      "孤儿",
+      "幼儿",
+      "患儿",
+      "健儿",
+      "男儿",
+      "婴幼儿",
+      "新生儿"
+    ],
+    "anchorsCharsLimit": 8,
+    "baseWordCount": 8000,
+    "supplements": {
+      "threeChar": 700,
+      "fourCharIdioms": 800,
+      "fiveChar": 500
+    }
   },
   "pools": {
     "targetWordsPerLesson": 500,
     "minWordsPerLesson": 300,
     "qualityMaxCharRank": 4000,
-    "blockedPosTags": ["nr", "nz", "x", "ns", "nt", "nrt", "nrfg"],
+    "blockedPosTags": [
+      "nr",
+      "nz",
+      "x",
+      "ns",
+      "nt",
+      "nrt",
+      "nrfg"
+    ],
     "maxCrossPoolDuplicateRate": 0.2,
     "singleChar": {
       "targetPerLesson": 40,
       "minPerLesson": 5,
       "maxPolyphoneRatio": 0.1,
       "allowPolyphoneFallback": true
-    }
+    },
+    "lengthQuotas": {
+      "2": 0.65,
+      "3": 0.18,
+      "4": 0.12,
+      "5": 0.05
+    },
+    "reviewTargetWordsPerLesson": 1000
   },
   "examples": {
     "maxRepresentativeCharRank": 4000,
@@ -28,6 +61,11 @@
     "maxRareRatio": 0.03
   },
   "intro": {
-    "seedWords": ["双拼"]
+    "seedWords": [
+      "双拼"
+    ]
+  },
+  "training": {
+    "commonCharRank": 5000
   }
 }

@@ -245,9 +245,8 @@ function buildAtomMeta(scheme, diff, atomId, anchors) {
 
 function wordPlanFor(t) {
   if (t.kind === 'intro') return { maxUnfamiliar: 0, lengthRange: [2, 3] }
-  if (t.kind === 'exam' || t.kind === 'review') return { maxUnfamiliar: 0, lengthRange: [2, 4] }
-  if (t.zero?.length && !t.focusFinal?.length) return { maxUnfamiliar: 0, lengthRange: [1, 2] }
-  return { maxUnfamiliar: 0, lengthRange: [2, 3] }
+  // 所有正式练习允许 2–4 字词；零声母课也允许含零声母的 4 字成语进入练习。
+  return { maxUnfamiliar: 0, lengthRange: [2, 5] }
 }
 
 function passCriteriaFor(t) {
@@ -263,14 +262,13 @@ function passCriteriaFor(t) {
 
 /**
  * 阶段最低完成词数：统一「字 → 半遮挡词 → 全遮挡考核」。
- *   intro {}；drill {single:10, word:10, exam:20}；review {exam:40}；exam {exam:80}。
- * 每课最后一个阶段都是 exam（全遮挡考核）。
+ *   intro {}；drill {single:15, word:15, exam:25}；review {exam:50}；exam {exam:100}。
  */
 function stageMinWordsFor(t) {
   if (t.kind === 'intro') return {}
-  if (t.kind === 'exam') return { exam: 80 }
-  if (t.kind === 'review') return { exam: 40 }
-  return { single: 10, word: 10, exam: 20 }
+  if (t.kind === 'exam') return { exam: 100 }
+  if (t.kind === 'review') return { exam: 50 }
+  return { single: 15, word: 15, exam: 25 }
 }
 
 /**
@@ -633,9 +631,9 @@ export function validateCurriculum(curriculum, scheme) {
     // stageMinWords：每课显式；drill 三段、review/exam 单段；最后阶段必须 exam
     const expectedMinWords = (() => {
       if (lesson.kind === 'intro') return {}
-      if (lesson.kind === 'exam') return { exam: 80 }
-      if (lesson.kind === 'review') return { exam: 40 }
-      return { single: 10, word: 10, exam: 20 }
+      if (lesson.kind === 'exam') return { exam: 100 }
+      if (lesson.kind === 'review') return { exam: 50 }
+      return { single: 15, word: 15, exam: 25 }
     })()
     if (JSON.stringify(expectedMinWords) !== JSON.stringify(lesson.stageMinWords)) {
       errors.push(`${label}: stageMinWords = ${JSON.stringify(lesson.stageMinWords)}，期望 ${JSON.stringify(expectedMinWords)}`)

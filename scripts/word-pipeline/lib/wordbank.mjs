@@ -54,7 +54,7 @@ export function parseJiebaDict(text) {
     const freq = Number(freqText)
     if (!Number.isFinite(freq)) continue
     if (CJK_RE.test(word) && word.length === 1) singles.push({ text: word, freq })
-    if (!/^[\u4e00-\u9fff]{2,4}$/.test(word)) continue
+    if (!/^[\u4e00-\u9fff]{2,5}$/.test(word)) continue
     if (word.endsWith('儿') && !ERHUA_KEEP.has(word)) continue
     raw.push({ text: word, freq, pos })
   }

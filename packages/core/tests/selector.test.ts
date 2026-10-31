@@ -42,7 +42,7 @@ describe('selectWords · 新授课（drill）', () => {
     const focus = new Set(lesson.blockingAtoms)
     for (const word of words) {
       expect(word.length).toBeGreaterThanOrEqual(2)
-      expect(word.length).toBeLessThanOrEqual(3)
+      expect(word.length).toBeLessThanOrEqual(4)
       const unknown = unknownBlockingAtoms(word, engine, lesson.prerequisites)
       for (const atom of unknown) expect(focus.has(atom), `${word.text} ${atom}`).toBe(true)
       expect(atomMatchesWord('initial:zh', word), word.text).toBe(true)

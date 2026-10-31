@@ -9,7 +9,7 @@
 ```text
 40 课 / 10 章 / 5 套完整课程（小鹤、自然码、微软、搜狗、智能ABC）
 27 新授课 + 11 复习（期中检验 2 课、综合冲刺 2 课、家族复习 7 课）+ 1 通关考核 ≈ 326 分钟
-19 套方案键位数据 / 40 课词池（20,000 条 / 19,302 唯一词）
+19 套方案键位数据 / 40 课词池（26,000 条 / 25,255 唯一词）
 学习地图 → 入门试打 → 教学页（技巧 + 记忆锚点）→ 单字 → 词语 → 复习/速度 → 通关考核
 ```
 
@@ -42,13 +42,13 @@ packages/core/                 纯 TS 领域层（无 Vue/DOM/Node 依赖）
   src/scoring.ts               通过标准与星级
   src/atoms.ts                 知识点 ↔ 词匹配谓词
   src/random.ts                确定性 RNG / 洗牌
-  tests/                       185 个 vitest 测试（含数据契约测试，读根 data/）
+  tests/                       192 个 vitest 测试（含数据契约测试，读根 data/）
 data/schemes/                  19 套方案 + index + 判题用例（冻结事实来源）
 data/curriculum/               5 套课程（每套 40 课，模板 1.0.0）
 data/pools/                    40 课词池 + index
-data/words/words.sample.json   8000 词基础词表
+data/words/words.sample.json   10,000 词公共词库（2–5 字）
 data/words/anchors.json        记忆锚点索引（syllableChars / finalChars / initialChars，构建期使用）
-data/training/bank.json        训练场训练库（单字 2161 + 8000 词，一次性加载）
+data/training/bank.json        训练/文章共用字库（5,002 字；词语从公共词库加载）
 data/raw/                      jieba dict.txt（不入库，可重新下载）
 scripts/lib/                   数据契约工具（路径、原子写、版本 hash）
 scripts/curriculum/            build-curriculum.mjs
@@ -64,7 +64,7 @@ docs/assets/impl/              界面截图
 ```bash
 pnpm install
 pnpm dev       # http://127.0.0.1:5199/ （dev 会先 sync 数据）
-pnpm verify    # core typecheck + web typecheck + 185 tests + build + validate
+pnpm verify    # core typecheck + web typecheck + 192 tests + build + validate
 pnpm validate  # node scripts/validate-all.mjs
 ```
 
@@ -170,7 +170,7 @@ dataVersion = "words-"      + sha256(dictSha | pinyin-pro 版本 | 过滤参数 
 
 - `data/pools/index.json` 的 `sources = { curriculum: <xiaohe 课程版本>, dict: <词典 sha256 前 12 位> }`；
 - `manifest.json` 记录 `versions{curriculum,pools,words}`、`defaultScheme`、`courses` 与文件清单；
-- 当前版本：`curriculum-ccbddb388b0a`（xiaohe）、`pools-bd34aa65678b`、`words-fed4e16a8e5b`、`training-f914efc941c2`；音节补丁：`data/words/syllable-patches.json`，词库策略：`data/words/word-policy.json`，训练库：`data/training/bank.json`。
+- 当前版本：`curriculum-e70cc76ade4c`（xiaohe）、`pools-24450f68e49a`、`words-ea1e2eb0f56e`、`training-cb1e4cc25756`；音节补丁：`data/words/syllable-patches.json`，词库策略：`data/words/word-policy.json`，训练库：`data/training/bank.json`。
 
 ### 4.6 手写逻辑审计
 
@@ -180,7 +180,7 @@ dataVersion = "words-"      + sha256(dictSha | pinyin-pro 版本 | 过滤参数 
 - 词典未收录音节（zhei、eng 等）放在 `data/words/syllable-patches.json`，不在代码内特判；
 - 教学示例的音节枚举由 `scripts/lib/pool-examples.mjs` 统一提供，build-pools 与 validate-all 共用；
 - 词性过滤、词池规模、质量与示例阈值、intro 试打词等口径集中在 `data/words/word-policy.json`；
-- 复习/考核池按全局使用计数优先低使用词；单字池按 8000 词上下文统计多音风险；
+- 复习/考核池按全局使用计数优先低使用词；单字池按公共 10,000 词上下文统计多音风险；
 - validate-all 按数据特征（focus 数量、家族、review 条件等）定位校验对象，不依赖 lesson id 常量。
 
 保留为「内容 / 契约 / 事实」：课程模板（TEMPLATE/CHAPTERS/FAMILIES）、教学文案库、`stageMinWords` / `passCriteria` 数值、词库阈值、拼音常量与方案键位 JSON。
@@ -209,9 +209,9 @@ dataVersion = "words-"      + sha256(dictSha | pinyin-pro 版本 | 过滤参数 
 
 | 课程类型 | 阶段（提示档位） | 最低词数 |
 |---|---|---|
-| drill（新课） | 单字练习（1，全显）→ 词语练习（2，半遮挡）→ **全遮挡考核**（3） | 10 → 10 → 20 |
-| review（复习） | **全遮挡练习**（3） | 40 |
-| exam（通关） | **通关考核**（3） | 80 |
+| drill（新课） | 单字练习（1，全显）→ 词语练习（2，半遮挡）→ **全遮挡考核**（3） | 15 → 15 → 25 |
+| review（复习） | **全遮挡练习**（3） | 50 |
+| exam（通关） | **通关考核**（3） | 100 |
 | intro | 独立入门组件 | — |
 
 提示档位由阶段唯一决定：`hintTierFor(stage)` = single 1 / word 2 / exam 3；数据不再有 `hintTier` 覆盖字段。
@@ -238,7 +238,7 @@ dataVersion = "words-"      + sha256(dictSha | pinyin-pro 版本 | 过滤参数 
 - 主按钮文案只由阶段位置决定：非最后阶段始终「下一阶段」，最后阶段始终「完成本课」；只有 enabled 状态随门槛变化；
 - 移除工具栏「返回路线」（顶栏已有）；「重新开始」可重置当前阶段会话。
 
-- 单字阶段从 `pool.chars` 挑「本课 focus + 已学/free」的字，稀有韵母课用同键位字补齐；词语/考核由 `selectWords` 组卷；
+- 单字阶段从 `pool.chars` 挑「本课 focus + 已学/free」的字，概率均衡抽样；词语/考核由 `selectWords` 组卷，允许 2–5 字词（含零声母成语与五字词）；
 - 教学页示例由课程数据全量生成：**按 focus 原子学习顺序，枚举所有包含该声母/韵母的音节，跨知识点去重，每个音节一张卡（高频代表字）**，不设数量上限（综合课约 400 张）；示例卡比练习卡更紧凑（宽高比 340/392，上下内边距 7px 对称）；
 - 教学页同时展示 `lesson.tips`（本课技巧）与 `atomMeta.anchors/mnemonic`（记忆锚点），见 §8；
 - 课程详情页采用全高布局：左侧卡片不显示「这节课学什么」标题（kicker 后直接进入范围），课程范围容器撑满剩余高度（**唯一可滚动区域**：标签多时仅在容器内部滚动）；记忆锚点（键位技巧）与「本课技巧」同等地位，固定在卡片底部（开始按钮之上），不随范围滚动；
@@ -257,14 +257,14 @@ dataVersion = "words-"      + sha256(dictSha | pinyin-pro 版本 | 过滤参数 
 顶栏「练习」导航进入，不写课程进度与星级，用于自由巩固；页面标题为「训练场」（正文不使用「板块」措辞）。
 
 - **方案选择**：页面内可直接切换双拼方案（全局生效）。
-- **专项练习**：字 / 词二选一；「出现」栏自由勾选声母、韵母，**零声母按音节逐项展开**（`零 a`、`零 ai`…共 12 项，含 `零 er`；零声母是独立选择集，不受普通韵母勾选限制），支持全选/反选/全不选并预览可用条目；过滤规则由 core `filterTrainingEntries` 统一实现（非零音节命中声母×韵母，零声母命中 `zeroFinals`）；开始后直接进入**无尽练习**（无目标行/完成提示，批次自动追加），直到退出；实时显示已练字/词数、正确率、速度。
-- **「隐藏」双选栏**：专项中隐藏候选**只显示「出现」已选中的声母/韵母/零声母音节**（出现范围变化自动收缩）；文章练习无出现筛选，隐藏候选为方案全部声母/韵母/零声母；与出现栏一致按声母/韵母分组提供全选/反选/全不选。被隐藏的音节在字卡与键位图上不显示映射提示，但键位仍需按对、判题不变，同一个字第 3 次错误仍会揭示答案。
+- **专项练习**：字 / 词二选一；「出现」卡头显示**当前学习进度**（已通过课程数/40）并可一键选中已学完课程覆盖的声母、韵母、零声母；「出现」栏自由勾选声母、韵母，**零声母按音节逐项展开**（`零 a`、`零 ai`…共 12 项，含 `零 er`；零声母是独立选择集，不受普通韵母勾选限制），支持全选勾选框并预览可用条目；过滤规则由 core `filterTrainingEntries` 统一实现（非零音节命中声母×韵母，零声母命中 `zeroFinals`）；开始后直接进入**无尽练习**（无目标行/完成提示，批次自动追加），直到退出；实时显示已练字/词数、正确率、速度。
+- **「隐藏」双选栏**：专项中隐藏候选**只显示「出现」已选中的声母/韵母/零声母音节**（出现范围变化自动收缩）；文章练习无出现筛选，隐藏候选为方案全部声母/韵母/零声母；与出现栏一致按声母/韵母分组提供全选勾选框。被隐藏的音节在字卡与键位图上不显示映射提示，但键位仍需按对、判题不变，同一个字第 3 次错误仍会揭示答案。
 - **页面布局**：训练场桌面不整页滚动——顶部（标题/方案/tabs/字词切换）固定，中间两栏撑满剩余高度、等宽等高且各自卡内滚动，底部为固定 72px 底栏（左侧两行信息、右侧开始按钮，不随卡内滚动移动）；不再显示「开始后为无尽练习…」提示。
-- **统一卡片**：出现、隐藏、文章隐藏三张选择卡共用同一 `SetupCard + SetupGroup` 模板（固定卡头：色块 pill + 副标题；正文：声母/韵母分组 = 名称 + 计数 + 全选/反选/全不选 + chips），只替换文案与选择逻辑；文章输入卡也套用同一外框与内部滚动。
+- **统一卡片**：出现、隐藏、文章隐藏三张选择卡共用同一 `SetupCard + SetupGroup` 模板（固定卡头：色块 pill + 副标题；正文：声母/韵母分组 = 名称 + 计数 + 全选勾选框 + chips），只替换文案与选择逻辑；文章输入卡也套用同一外框与内部滚动。
 - **会话顶栏**：与课程练习、入门课共用 `SessionBar`（48px 卡片；左侧操作、中间数据胶囊、右侧主操作）。训练场胶囊显示已练字/词、正确率、隐藏项与速度（WPM）；隐藏项悬浮可查看具体音节。
 - **文章输入卡**：卡头为「输入 / 导入」分段滑动开关——输入模式文本框撑满卡内正文；导入模式显示可点击/拖拽的 .txt 上传区并撑满（UTF-8），不再有独立的「导入 .txt」按钮；两种模式共用文章内容与解析结果。
 - **文章练习**：粘贴文本或导入 `.txt`；core `parseArticleText` 只保留汉字，**任何非汉字（标点、引号、括号、字母、数字、空白、换行）都不显示并作为断行**，连续分隔合并，每行最多 5 个汉字（短行保留）；多音字按训练库常用读音处理、不做上下文消歧，字库外汉字会跳过并在开始前提示；按顺序逐字练习，练完显示字数/正确率/速度汇总。
-- 训练数据：`data/training/bank.json`（chars 2161 / words 8000，一次加载缓存），由 `scripts/training/build-training-bank.mjs` 生成；输入/错误锁定/退格/空格清空/按下高亮与课程练习共用同一套逻辑。
+- 训练数据：`data/training/bank.json`（chars 5002，仅字库，约 0.8MB；词语从公共词库加载）与 `data/words/words.sample.json`（10,000 词）；输入/错误锁定/退格/空格清空/按下高亮与课程练习共用同一套逻辑。
 - 评分面板：右栏「评分规则」只展示 ★/★★/★★★ 三档。
 
 ## 6. 星级规则（scoring.ts 单一实现）
@@ -274,22 +274,27 @@ dataVersion = "words-"      + sha256(dictSha | pinyin-pro 版本 | 过滤参数 
 | 课程 | ★ | ★★ | ★★★ |
 |---|---|---|---|
 | 入门 | 完成试打 | 同 ★ | 完成试打即记 ★★★ |
-| 新课 drill（20 词全遮挡考核） | 正确率 ≥85% | 正确率 ≥90% | 正确率 ≥95% 且未揭示答案 |
-| 复习 review（40 词全遮挡；家族/混合） | 正确率 ≥85% 且速度 ≥20 WPM | 正确率 ≥90% 且速度 ≥20 WPM | 正确率 ≥95%、速度 ≥20 WPM 且未揭示答案 |
-| 期中/综合速度（40 词） | 正确率 ≥85% 且 ≥30 WPM | 正确率 ≥85% 且 ≥45 WPM | 正确率 ≥85% 且 ≥60 WPM |
-| 通关考核（80 词全遮挡） | 正确率 ≥85% 且 ≥30 WPM | 正确率 ≥90% 且 ≥40 WPM | 正确率 ≥95%、≥50 WPM 且未揭示答案 |
+| 新课 drill（25 词全遮挡考核） | 正确率 ≥85% | 正确率 ≥90% | 正确率 ≥95% 且未揭示答案 |
+| 复习 review（50 词全遮挡；家族/混合） | 正确率 ≥85% 且速度 ≥20 WPM | 正确率 ≥90% 且速度 ≥20 WPM | 正确率 ≥95%、速度 ≥20 WPM 且未揭示答案 |
+| 期中/综合速度（50 词） | 正确率 ≥85% 且 ≥30 WPM | 正确率 ≥85% 且 ≥45 WPM | 正确率 ≥85% 且 ≥60 WPM |
+| 通关考核（100 词全遮挡） | 正确率 ≥85% 且 ≥30 WPM | 正确率 ≥90% 且 ≥40 WPM | 正确率 ≥95%、≥50 WPM 且未揭示答案 |
 
 - 全遮挡阶段：1★ 门槛未达标时「完成本课」不可点；达标后可继续无限练习或完成；
 - 已通过课程重练：仍记录 attempts / bestAccuracy，星级取历史最优；
 - 速度实时显示于工具栏。
 
-## 7. 随机选词（selector.ts）
+## 7. 概率均衡选词（selector.ts + balancedSampling.ts）
 
 - free 原子始终视为已学；`newFocus = blockingAtoms - prerequisites`；
 - 候选分层：S（未知 ⊆ newFocus）、A（额外 ≤ maxUnfamiliar 个预习原子）、B（无未知原子）；
 - 只有 newFocus 为空（复习/考核/规则课）时，候选必须命中至少 1 个 focus 原子；
 - 零声母逐音节门禁：候选词中的每个零声母音节必须在本课 focus 中或已学，否则排除；j/q/x/y 遇 ü、多音字不参与选词，仅作首课备注提示；
-- 组卷：先按 `MIN_PER_FOCUS=3` 随机补足新 focus 覆盖，再按质量权重填充，最后整体洗牌；
+- **目标音计数**：每个候选记录 `a_w(f)` = 该词中目标音 f 的出现次数；同一个词含 3 次 sh 就计 3；
+- **基础权重**：`q_w × Σ_f a_w(f)`，目标音出现次数越多，候选越容易被抽中；
+- **音级校准**：用 θ_f 调整权重 `q_w × Σ a_w(f) × exp(Σ θ_f a_w(f))`，迭代使各 focus 的期望出现次数相等；
+- **无放回系统抽样**：由权重求包含概率 π（Σπ=N），用不等概率系统抽样固定选出 N 个不重复词；期望由 π 保证，实际单轮允许波动；
+- **以字代词**：某 focus 在词池中的可用候选太少时，从 `pool.chars` 加入单字候选，直接参与同一套概率抽样；
+- 数据上确实无法达到相等期望的 focus（候选容量不足）退出均衡集合，但实际仍可被抽到；不伪造不存在的词；
 - 同 seed 完全可复现；应用每次进入阶段使用新 seed。
 
 ## 8. 教学备注与记忆锚点
@@ -307,7 +312,7 @@ dataVersion = "words-"      + sha256(dictSha | pinyin-pro 版本 | 过滤参数 
 `data/words/anchors.json` 由 `scripts/word-pipeline/build.mjs` 生成（构建期内容索引，不进运行时）：
 
 ```text
-syllableChars  每个音节按字频取常用字（先用 8000 词词表的常用字集合过滤繁体/生僻字，每音节前 8）
+syllableChars  每个音节按字频取常用字（先用公共 10,000 词词表的常用字集合过滤繁体/生僻字，每音节前 8）
 finalChars / initialChars  按韵母/声母归组的常用字
 ```
 
@@ -342,12 +347,12 @@ pnpm validate          # 版本链/同步/规模/文档入口校验
 - `sync-data.mjs` 先写临时目录再整体替换；Windows 目录被占用时退化为逐文件原子写；
 - `validate-all.mjs` 重算三条版本链、learn 覆盖、命名法、rule 范围、tone/freqRank、public 逐字节一致、manifest、规模与文档入口，失败退出码 1。
 - `scripts/word-pipeline/audit-words.mjs` 输出词库/词池统计；口径集中在 `data/words/word-policy.json`（词性过滤/词池规模/质量与示例阈值/intro 试打词），示例枚举由 `scripts/lib/pool-examples.mjs` 在 build-pools 与 validate-all 间共享；词库问题与改进见 [WORDS.md](WORDS.md)。
-- `scripts/training/build-training-bank.mjs` 生成训练场训练库 `data/training/bank.json`（单字 + 8000 词），随 sync 同步并被 validate-all 校验。
-- 当前课程模板 1.0.0；词池 40 课 / 20,000 条 / 19,302 个唯一词。
+- `scripts/training/build-training-bank.mjs` 生成训练/文章共用字库 `data/training/bank.json`（5,002 字）；词语统一来自公共词库 `words.sample.json`（10,000 词），不再重复存储。
+- 当前课程模板 1.0.0；词池 40 课 / 26,000 条 / 25,255 个唯一词；公共词库 10,000 词。
 
 ## 11. 测试
 
-`pnpm test`（`packages/core`，185 个）：
+`pnpm test`（`packages/core`，192 个）：
 
 ```text
 engine.test.ts        19 套方案 golden cases + 主键/判题/keyMap/diff

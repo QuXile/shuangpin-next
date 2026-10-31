@@ -271,6 +271,8 @@ export interface SelectWordsInput {
   maxUnfamiliar?: number
   /** 词长过滤（默认取 lesson.wordPlan.lengthRange） */
   lengthRange?: [number, number]
+  /** 词池没有足够合法词时加入的单字候选；绕过词长过滤 */
+  extraWords?: readonly WordEntry[]
 }
 
 // ── 练习会话 ──────────────────────────────────────────────────

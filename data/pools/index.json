@@ -1,14 +1,14 @@
 {
-  "dataVersion": "pools-bd34aa65678b",
-  "generatedAt": "2026-10-30T12:55:37.288Z",
+  "dataVersion": "pools-24450f68e49a",
+  "generatedAt": "2026-10-31T05:20:15.744Z",
   "sources": {
-    "curriculum": "curriculum-ccbddb388b0a",
+    "curriculum": "curriculum-e70cc76ade4c",
     "dict": "7197c3211ddd"
   },
   "targetWordsPerLesson": 500,
   "minWordsPerLesson": 300,
-  "totalEntries": 20000,
-  "uniqueWords": 19302,
+  "totalEntries": 26000,
+  "uniqueWords": 25255,
   "lessons": [
     {
       "id": "L1.1",
@@ -54,7 +54,7 @@
       "id": "L2.5",
       "title": "复习 · 声母与零声母",
       "kind": "review",
-      "words": 500,
+      "words": 1000,
       "chars": 52,
       "file": "L2.5.json"
     },
@@ -94,7 +94,7 @@
       "id": "L3.5",
       "title": "复习 · a 家族开口组",
       "kind": "review",
-      "words": 500,
+      "words": 1000,
       "chars": 44,
       "file": "L3.5.json"
     },
@@ -150,7 +150,7 @@
       "id": "L3.12",
       "title": "复习 · a 家族",
       "kind": "review",
-      "words": 500,
+      "words": 1000,
       "chars": 44,
       "file": "L3.12.json"
     },
@@ -182,7 +182,7 @@
       "id": "L4.4",
       "title": "复习 · o 家族",
       "kind": "review",
-      "words": 500,
+      "words": 1000,
       "chars": 42,
       "file": "L4.4.json"
     },
@@ -190,7 +190,7 @@
       "id": "L5.1",
       "title": "期中 · 混合练习",
       "kind": "review",
-      "words": 500,
+      "words": 1000,
       "chars": 52,
       "file": "L5.1.json"
     },
@@ -198,7 +198,7 @@
       "id": "L5.2",
       "title": "期中 · 速度练习",
       "kind": "review",
-      "words": 500,
+      "words": 1000,
       "chars": 52,
       "file": "L5.2.json"
     },
@@ -230,7 +230,7 @@
       "id": "L6.4",
       "title": "复习 · e 家族",
       "kind": "review",
-      "words": 500,
+      "words": 1000,
       "chars": 44,
       "file": "L6.4.json"
     },
@@ -270,7 +270,7 @@
       "id": "L7.5",
       "title": "复习 · i 家族",
       "kind": "review",
-      "words": 500,
+      "words": 1000,
       "chars": 40,
       "file": "L7.5.json"
     },
@@ -302,7 +302,7 @@
       "id": "L8.4",
       "title": "复习 · u 与 ü 家族",
       "kind": "review",
-      "words": 500,
+      "words": 1000,
       "chars": 40,
       "file": "L8.4.json"
     },
@@ -310,7 +310,7 @@
       "id": "L9.1",
       "title": "综合 · 混合练习",
       "kind": "review",
-      "words": 500,
+      "words": 1000,
       "chars": 52,
       "file": "L9.1.json"
     },
@@ -318,7 +318,7 @@
       "id": "L9.2",
       "title": "综合 · 速度练习",
       "kind": "review",
-      "words": 500,
+      "words": 1000,
       "chars": 52,
       "file": "L9.2.json"
     },
@@ -326,7 +326,7 @@
       "id": "L10.1",
       "title": "通关 · 最终考核",
       "kind": "exam",
-      "words": 500,
+      "words": 1000,
       "chars": 52,
       "file": "L10.1.json"
     }

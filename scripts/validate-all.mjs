@@ -305,9 +305,9 @@ function validateCurriculum(schemeIndex, engines) {
       // stageMinWords：drill 三段；review/exam 单段；每课最后阶段必须 exam
       const expectedMinWords = (() => {
         if (lesson.kind === 'intro') return {}
-        if (lesson.kind === 'exam') return { exam: 80 }
-        if (lesson.kind === 'review') return { exam: 40 }
-        return { single: 10, word: 10, exam: 20 }
+        if (lesson.kind === 'exam') return { exam: 100 }
+        if (lesson.kind === 'review') return { exam: 50 }
+        return { single: 15, word: 15, exam: 25 }
       })()
       ok(
         JSON.stringify(lesson.stageMinWords) === JSON.stringify(expectedMinWords),
@@ -429,7 +429,7 @@ function validateCurriculum(schemeIndex, engines) {
 function validateWords() {
   const wordsDoc = readDataJSON('data/words/words.sample.json')
   const policy = readDataJSON('data/words/word-policy.json')
-  const expectedWordCount = policy?.wordBank?.wordCount ?? 8000
+  const expectedWordCount = policy?.wordBank?.wordCount ?? 10000
   ok(!!wordsDoc, '缺少 data/words/words.sample.json')
   ok(!exists(path.join(DATA_DIR, 'words/stats.json')), 'data/words/stats.json 应已删除')
   ok(!exists(path.join(DATA_DIR, 'words/build-report.json')), 'data/words/build-report.json 应已删除')
@@ -480,7 +480,12 @@ function validateWords() {
 }
 
 function wordFreqRankMonotonic(words) {
-  return words.every((word, index) => word.freqRank === index + 1)
+  let previous = 0
+  for (const word of words) {
+    if (!Number.isInteger(word.freqRank) || word.freqRank <= previous) return false
+    previous = word.freqRank
+  }
+  return true
 }
 
 // ── 4. 词池 ──────────────────────────────────────────────────
@@ -567,7 +572,7 @@ function validatePools(xiaoheCurriculum, wordsDoc, engines, anchors) {
 
   const sampleRank = new Map()
   if (wordsDoc) {
-    wordsDoc.words.forEach((word, index) => sampleRank.set(word.text, { rank: index + 1, word }))
+    wordsDoc.words.forEach((word) => sampleRank.set(word.text, { rank: word.freqRank, word }))
   }
   let totalEntries = 0
   let tone0 = 0
@@ -749,7 +754,7 @@ function validatePublicSync(versions) {
   for (const file of publicFiles) {
     if (!manifestFiles.has(file)) failures.push(`public 存在未登记文件：${file}`)
   }
-  ok((manifest.files ?? []).length === 54, `manifest.files = ${(manifest.files ?? []).length}，期望 54（含 training/bank.json）`)
+  ok((manifest.files ?? []).length === 55, `manifest.files = ${(manifest.files ?? []).length}，期望 55（含 words.sample.json 与 training/bank.json）`)
   notes.push(`同步：public/data ${manifestFiles.size} 文件与 data/ 逐字节一致；versions=${JSON.stringify(manifest.versions)}`)
 }
 
@@ -793,6 +798,9 @@ function validateAnchors() {
 
 // ── 训练库 ───────────────────────────────────────────────
 function validateTrainingBank(wordsDoc, anchors) {
+  const trainingPolicy = readDataJSON('data/words/word-policy.json')
+  const trainingCommonRank = trainingPolicy?.training?.commonCharRank ?? 5000
+  const { charRank } = loadJiebaFacts()
   const bank = readDataJSON('data/training/bank.json')
   ok(!!bank, '缺少 data/training/bank.json（请运行 node scripts/training/build-training-bank.mjs）')
   if (!bank) return null
@@ -803,13 +811,9 @@ function validateTrainingBank(wordsDoc, anchors) {
   ok(typeof bank.description === 'string' && bank.description.trim().length > 0, 'training.description 为空')
 
   ok(Array.isArray(bank.chars), 'training.chars 非数组')
-  ok(bank.chars.length >= 1000 && bank.chars.length <= 5000, `training.chars = ${bank.chars.length}，期望 1000–5000`)
+  ok(bank.chars.length >= 1000 && bank.chars.length <= 6000, `training.chars = ${bank.chars.length}，期望 1000–6000`)
   const charSeen = new Set()
   const syllableCoverage = new Set()
-  const commonChars = new Set()
-  for (const word of wordsDoc?.words ?? []) {
-    for (const char of word.chars ?? []) commonChars.add(char)
-  }
   let fallbackChars = 0
   for (const entry of bank.chars ?? []) {
     ok(typeof entry.text === 'string' && entry.text.length === 1, `训练字 ${entry.text}: 应为单字`)
@@ -829,26 +833,17 @@ function validateTrainingBank(wordsDoc, anchors) {
     if (!FINAL_SET.has(syllable.final) && syllable.final !== 'er') failures.push(`训练字 ${entry.text}: final 非法 ${syllable.final}`)
     if (!(syllable.tone >= 1 && syllable.tone <= 5)) failures.push(`训练字 ${entry.text}: tone 非法 ${syllable.tone}`)
     syllableCoverage.add(`${syllable.initial}|${syllable.final}`)
-    if (!commonChars.has(entry.text)) fallbackChars += 1
+    if ((charRank.get(entry.text) ?? Infinity) > trainingCommonRank) fallbackChars += 1
   }
   const expectedCoverage = Object.keys(anchors?.syllableChars ?? {}).length
   ok(syllableCoverage.size >= 400, `训练字音节覆盖 = ${syllableCoverage.size}，期望 ≥400（共 ${expectedCoverage} 合法音节）`)
   ok(fallbackChars <= bank.chars.length * 0.1, `训练字保底生僻字 = ${fallbackChars}，期望 ≤10%`)
 
-  ok(Array.isArray(bank.words), 'training.words 非数组')
-  ok(bank.words.length === wordsDoc?.count, `training.words = ${bank.words.length}，期望 ${wordsDoc?.count}`)
-  const wordSeen = new Set()
-  for (const word of bank.words ?? []) {
-    ok(!wordSeen.has(word.text), `training.words 重复：${word.text}`)
-    wordSeen.add(word.text)
-  }
-  ok(
-    JSON.stringify(bank.words) === JSON.stringify(wordsDoc?.words ?? []),
-    'training.words 应为 data/words/words.sample.json 的 8000 词（逐字节一致）',
-  )
+  ok(bank.words === undefined, 'training.bank 不应再保存 words（词语统一从公共词库加载）')
+  ok((bank.chars ?? []).length >= 5000, `training.chars = ${bank.chars?.length}，期望 ≥5000`)
   const bytes = fs.statSync(TRAINING_BANK_FILE).size
   notes.push(
-    `训练库：chars ${bank.chars.length}（音节覆盖 ${syllableCoverage.size}/${expectedCoverage}，保底补字 ${fallbackChars}） / words ${bank.words.length} / ${(bytes / 1024 / 1024).toFixed(2)} MB / ${bank.dataVersion}`,
+    `训练库：chars ${bank.chars.length}（音节覆盖 ${syllableCoverage.size}/${expectedCoverage}，保底补字 ${fallbackChars}） / ${(bytes / 1024 / 1024).toFixed(2)} MB / ${bank.dataVersion}`,
   )
   return bank
 }
