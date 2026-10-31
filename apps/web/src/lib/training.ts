@@ -17,6 +17,12 @@ export interface TrainingAtomOptions {
   zeroFinals: string[]
 }
 
+/** 训练范围里与全拼一致的公共键位（用于「全拼沿用」子包）。 */
+export interface CommonAtomEntry {
+  kind: 'initial' | 'final' | 'zero'
+  value: string
+}
+
 /** 方案可选声母/韵母（零声母为特殊项，不在 initials 内） */
 export function trainingAtomOptions(scheme: SchemeDef): TrainingAtomOptions {
   return {

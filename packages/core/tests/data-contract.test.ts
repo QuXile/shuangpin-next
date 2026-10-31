@@ -17,6 +17,7 @@ import type {
 } from '../src/types.ts'
 import { FINALS, ZERO_INITIALS, parseAtomId, splitPinyin } from '../src/pinyin.ts'
 import { lessonStages } from '../src/stages.ts'
+import { freeTrainingAtoms } from '../src/training.ts'
 import {
   dataPath,
   findLesson,
@@ -92,6 +93,10 @@ describe('方案数据契约', () => {
       expect(diff.freeInitials.length, summary.id).toBe(summary.atoms?.initials?.free)
       expect(diff.freeFinals.length, summary.id).toBe(summary.atoms?.finals?.free)
       expect(diff.freeZero.length, summary.id).toBe(summary.atoms?.zeroInitial?.free)
+      const common = freeTrainingAtoms(def)
+      expect(common.initials, summary.id).toEqual(diff.freeInitials)
+      expect(common.finals, summary.id).toEqual(diff.freeFinals)
+      expect(common.zeroFinals, summary.id).toEqual(diff.freeZero)
     }
   })
 })

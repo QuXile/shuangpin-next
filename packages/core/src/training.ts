@@ -5,7 +5,8 @@
  * - 文章：只保留汉字；任何非汉字（标点/引号/括号/字母/数字/空白/换行）都作为换行分隔且不显示；
  *   连续分隔合并；每行最多 5 个汉字（满 5 自动换行）；保留标点造成的短行。
  */
-import type { WordEntry } from './types.ts'
+import type { SchemeDef, WordEntry } from './types.ts'
+import { freeAtomsOf } from './scheme.ts'
 
 export interface TrainingScope {
   /** 选中的声母；含 '' 表示零声母（未传 zeroFinals 时的兼容用法） */
@@ -22,6 +23,23 @@ export interface ParsedArticle {
 }
 
 const HAN = /\p{Script=Han}/u
+
+/** 与全拼拼写完全一致的键位集合（free atoms）。 */
+export interface TrainingCommonAtoms {
+  initials: string[]
+  finals: string[]
+  zeroFinals: string[]
+}
+
+/** 单个方案里与全拼一致的声母、韵母、零声母音节。 */
+export function freeTrainingAtoms(scheme: SchemeDef): TrainingCommonAtoms {
+  const free = freeAtomsOf(scheme)
+  return {
+    initials: free.freeInitials,
+    finals: free.freeFinals,
+    zeroFinals: free.freeZero,
+  }
+}
 
 /** 该音节是否命中训练范围 */
 export function syllableInTrainingScope(

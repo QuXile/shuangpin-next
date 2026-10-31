@@ -51,9 +51,8 @@ const zhKey = zhuangKeys[0] ?? '?'
 const uangKey = zhuangKeys[1] ?? '?'
 const learnInitialsText = diff.learnInitials.join(' / ')
 const freeInitialsText = diff.freeInitials.join('、')
-const freeFinalsText = diff.freeFinals
-  .filter((final) => final.length === 1 && final !== 'v')
-  .join('、')
+const freeFinalsText = diff.freeFinals.join('、')
+const freeZeroText = diff.freeZero.join('、')
 
 // ── 试打（core session） ─────────────────────────────────────
 const trialWord = computed<PracticeWord | null>(() => {
@@ -380,28 +379,35 @@ defineExpose({ pressKey: handleKey, backspace: handleBackspace })
     </section>
 
     <section v-else-if="step === 'overlap'" class="intro-card">
-      <div class="intro-kicker">04 · 全拼复习</div>
+      <div class="intro-kicker">04 · 全拼沿用</div>
       <h1>双拼没有推翻你会的全拼</h1>
       <div class="intro-grid">
         <div class="overlap-board">
           <div class="overlap-row">
-            <span class="overlap-label">键位不变</span>
+            <span class="overlap-pill" title="声母继续沿用全拼">全拼沿用</span>
             <div class="overlap-keys">
               <span v-for="key in diff.freeInitials" :key="key">{{ key }}</span>
             </div>
           </div>
           <div v-if="freeFinalsText" class="overlap-row">
-            <span class="overlap-label">单韵母不变</span>
+            <span class="overlap-pill" title="韵母继续沿用全拼">全拼沿用</span>
             <div class="overlap-keys">
-              <span v-for="key in diff.freeFinals.filter((final) => final.length === 1 && final !== 'v')" :key="key">{{ key }}</span>
+              <span v-for="key in diff.freeFinals" :key="key">{{ key }}</span>
             </div>
           </div>
-          <div class="overlap-note">这些键位和全拼完全一样，不需要重新记。</div>
+          <div v-if="freeZeroText" class="overlap-row">
+            <span class="overlap-pill" title="零声母继续沿用全拼">全拼沿用</span>
+            <div class="overlap-keys">
+              <span v-for="key in diff.freeZero" :key="key">{{ key }}</span>
+            </div>
+          </div>
+          <div class="overlap-note">这些声母、韵母和零声母继续沿用全拼，不需要重新记。</div>
         </div>
         <div class="intro-prose">
           <p>你不需要把全拼忘掉。在「{{ scheme.name }}」里，这些声母仍在原来的键上：{{ freeInitialsText }} 都保持全拼习惯。</p>
-          <p v-if="freeFinalsText">单韵母 {{ freeFinalsText }} 也直接沿用全拼键位。真正需要重新记的，是本方案的改造声母（{{ learnInitialsText }}）以及复韵母和鼻韵母被压缩到单键后的位置。</p>
-          <p v-else>真正需要重新记的，是本方案的改造声母（{{ learnInitialsText }}）以及复韵母和鼻韵母被压缩到单键后的位置。</p>
+          <p v-if="freeFinalsText">韵母 {{ freeFinalsText }} 也直接沿用全拼键位。</p>
+          <p v-if="freeZeroText">零声母 {{ freeZeroText }} 仍按全拼拼写输入。</p>
+          <p>真正需要重新记的，是本方案的改造声母（{{ learnInitialsText }}）以及复韵母和鼻韵母被压缩到单键后的位置。</p>
           <p>所以这一课不是重新学拼音，而是一次全拼复习：键位图已经出现，先确认哪些键和全拼完全一样，再只看真正需要重记的部分。</p>
           <p class="overlap-foot">你已有的全拼能力是底座；双拼只是在底座上换几条线路。</p>
         </div>
@@ -609,10 +615,18 @@ defineExpose({ pressKey: handleKey, backspace: handleBackspace })
   flex-direction: column;
   gap: 7px;
 }
-.overlap-label {
+.overlap-pill {
+  display: inline-flex;
+  width: fit-content;
+  align-self: flex-start;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: var(--r-pill);
+  background: var(--brand-soft);
+  color: var(--brand-ink);
   font-size: 11px;
   font-weight: 700;
-  color: var(--ink-3);
+  letter-spacing: 0.02em;
 }
 .overlap-keys {
   display: flex;

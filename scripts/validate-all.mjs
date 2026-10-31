@@ -797,7 +797,7 @@ function validateAnchors() {
 }
 
 // ── 训练库 ───────────────────────────────────────────────
-function validateTrainingBank(wordsDoc, anchors) {
+function validateTrainingBank(anchors) {
   const trainingPolicy = readDataJSON('data/words/word-policy.json')
   const trainingCommonRank = trainingPolicy?.training?.commonCharRank ?? 5000
   const { charRank } = loadJiebaFacts()
@@ -856,7 +856,23 @@ function validateDocsAndEntries() {
     'packages/core/src/index.ts',
   ]
   for (const rel of required) ok(exists(path.join(ROOT, rel)), `缺少入口/文档：${rel}`)
-  const screenshots = ['map-1440.png', 'tutorial-1440.png', 'word-practice.png', 'live-speed.png', 'lesson-rating.png']
+  const screenshots = [
+    'map-1440.png',
+    'map-unlocked.png',
+    'green-dark.png',
+    'tutorial-1440.png',
+    'intro-complete.png',
+    'live-speed.png',
+    'lesson-rating.png',
+    'review-order.png',
+    'zero-badges.png',
+    'word-practice.png',
+    'training-config.png',
+    'training-drill.png',
+    'training-article-config.png',
+    'training-article.png',
+    'training-article-done.png',
+  ]
   for (const name of screenshots) ok(exists(path.join(ROOT, 'docs/assets/impl', name)), `缺少截图 docs/assets/impl/${name}`)
   ok(!exists(path.join(ROOT, 'scripts/word-pipeline/selector.mjs')), 'selector.mjs 应已删除')
   ok(!exists(path.join(ROOT, 'scripts/schemes/extract.mjs')), 'extract.mjs 应已删除')
@@ -871,7 +887,7 @@ function main() {
   validateAnchors()
   const anchorsDoc = readDataJSON('data/words/anchors.json')
   const pools = validatePools(curriculum?.xiaohe, wordsDoc, schemes?.engines, anchorsDoc)
-  const training = validateTrainingBank(wordsDoc, anchorsDoc)
+  const training = validateTrainingBank(anchorsDoc)
   const versions = {
     curriculum: curriculum?.xiaohe?.dataVersion,
     pools: pools?.poolsIndex?.dataVersion,

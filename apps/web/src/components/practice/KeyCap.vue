@@ -94,7 +94,7 @@ const props = withDefaults(
   font-family: var(--font-ui);
   font-size: 12px;
   font-weight: 800;
-  color: #fff;
+  color: var(--on-accent);
   background: var(--brand);
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.18);
 }

@@ -149,7 +149,7 @@ withDefaults(
 .session-bar.is-success .session-side :slotted(.session-primary) {
   background: var(--state-success-fill);
   border-color: var(--state-success-fill);
-  color: #fff;
+  color: var(--on-accent);
   box-shadow: 0 2px 0 var(--state-success-fill-hover);
 }
 .session-bar.is-success .session-side :slotted(.session-primary:hover:not(:disabled)) {

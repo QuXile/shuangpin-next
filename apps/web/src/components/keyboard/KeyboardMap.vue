@@ -285,13 +285,13 @@ const keyViews = computed<KeyView[][]>(() =>
   color: var(--focus-final);
 }
 .key-initial.is-emphasized {
-  color: #fff;
+  color: var(--on-accent);
   background: var(--focus-initial);
   border-radius: 4px;
   padding: 0 5px;
 }
 .key-final.is-emphasized {
-  color: #fff;
+  color: var(--on-accent);
   background: var(--focus-final-strong);
   border-radius: 4px;
   padding: 0 5px;

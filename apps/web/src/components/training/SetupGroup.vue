@@ -5,13 +5,14 @@
 withDefaults(
   defineProps<{
     title: string
-    group: 'initial' | 'final'
     allChecked?: boolean
     allDisabled?: boolean
+    indeterminate?: boolean
   }>(),
   {
     allChecked: false,
     allDisabled: false,
+    indeterminate: false,
   },
 )
 
@@ -25,7 +26,7 @@ function onToggle(event: Event): void {
 </script>
 
 <template>
-  <section class="setup-group" :class="`is-${group}`">
+  <section class="setup-group">
     <div class="setup-group-head">
       <strong>{{ title }}</strong>
       <span class="setup-count"><slot name="count" /></span>
@@ -34,6 +35,7 @@ function onToggle(event: Event): void {
           type="checkbox"
           :checked="allChecked"
           :disabled="allDisabled"
+          :indeterminate.prop="indeterminate"
           :aria-label="`${title}全选`"
           @change="onToggle"
         />
@@ -85,11 +87,11 @@ function onToggle(event: Event): void {
   width: 13px;
   height: 13px;
   margin: 0;
-  accent-color: var(--brand);
+  accent-color: var(--setup-accent, var(--brand));
   cursor: pointer;
 }
 .setup-select-all:hover {
-  color: var(--brand-ink);
+  color: var(--setup-accent-ink, var(--brand-ink));
 }
 .setup-select-all.is-disabled {
   opacity: 0.45;

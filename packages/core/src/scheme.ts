@@ -63,6 +63,32 @@ function normalizeInput(input: string[] | string): string[] {
   return out
 }
 
+export interface FreeAtomSets {
+  freeInitials: string[]
+  freeFinals: string[]
+  freeZero: string[]
+}
+
+function isIdentityKey(values: readonly string[] | undefined, atom: string): boolean {
+  return values?.length === 1 && String(values[0]).toLowerCase() === atom
+}
+
+/** 与全拼拼写完全一致的键位（课程、入门课、训练场共用唯一口径）。 */
+export function freeAtomsOf(def: SchemeDef): FreeAtomSets {
+  const freeInitials = Object.keys(def.initials).filter((name) =>
+    isIdentityKey(def.initials[name as keyof typeof def.initials], name),
+  )
+  const freeFinals = Object.keys(def.finals).filter((name) =>
+    isIdentityKey(def.finals[name as keyof typeof def.finals], name),
+  )
+  const freeZero = Object.keys(def.zeroInitial).filter((name) =>
+    (def.zeroInitial[name as keyof typeof def.zeroInitial] ?? []).some(
+      (sequence) => String(sequence).toLowerCase() === name,
+    ),
+  )
+  return { freeInitials, freeFinals, freeZero }
+}
+
 export function createSchemeEngine(def: SchemeDef): SchemeEngine {
   const { initials, finals, zeroInitial } = def
   const overrides = def.overrides ?? {}
@@ -129,19 +155,11 @@ export function createSchemeEngine(def: SchemeDef): SchemeEngine {
     return [] // 未知知识点
   }
 
-  function isIdentityKey(values: readonly string[] | undefined, atom: string): boolean {
-    return values?.length === 1 && String(values[0]).toLowerCase() === atom
-  }
-
   function diff(): SchemeDiff {
     const initialNames = Object.keys(initials)
     const finalNames = Object.keys(finals)
     const zeroNames = Object.keys(zeroInitial)
-    const freeInitials = initialNames.filter((name) => isIdentityKey(initials[name], name))
-    const freeFinals = finalNames.filter((name) => isIdentityKey(finals[name], name))
-    const freeZero = zeroNames.filter((name) =>
-      (zeroInitial[name] ?? []).some((sequence) => String(sequence).toLowerCase() === name),
-    )
+    const { freeInitials, freeFinals, freeZero } = freeAtomsOf(def)
     const freeInitialSet = new Set(freeInitials)
     const freeFinalSet = new Set(freeFinals)
     const freeZeroSet = new Set(freeZero)

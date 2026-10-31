@@ -10,10 +10,12 @@ import { computed, onBeforeUnmount, onMounted, onScopeDispose, ref, shallowRef, 
 import {
   createSchemeEngine,
   filterTrainingEntries,
+  freeTrainingAtoms,
   parseArticleText,
   sessionMetrics,
   type AtomId,
   type SchemeEngine,
+  type TrainingCommonAtoms,
   type TrainingScope,
   type WordEntry,
 } from '@shuangpin/core'
@@ -24,17 +26,30 @@ import KeyboardDock from '@/components/keyboard/KeyboardDock.vue'
 import ArticleGrid from '@/components/training/ArticleGrid.vue'
 import SetupCard from '@/components/training/SetupCard.vue'
 import SetupGroup from '@/components/training/SetupGroup.vue'
+import CommonCapsule from '@/components/training/CommonCapsule.vue'
 import { useCourseStore } from '@/stores/course'
 import { useLayoutStore } from '@/stores/layout'
 import { useGlobalKeys, type KeyBinding } from '@/composables/useGlobalKeys'
 import { useTrainingSession } from '@/composables/useTrainingSession'
 import { loadCommonWords, loadTrainingBank, type CommonWordsFile, type TrainingBank } from '@/lib/data'
 import {
+  groupAllChecked,
+  groupIndeterminate,
+  groupSelected,
+  groupTotal,
+} from '@/lib/trainingGroups'
+import {
+  readTrainingConfig,
+  writeTrainingConfig,
+  type TrainingConfigSnapshot,
+} from '@/lib/trainingConfig'
+import {
   articlesToPracticeWords,
   buildArticlePlan,
   buildTrainingBatch,
   entriesToPracticeWords,
   trainingAtomOptions,
+  type CommonAtomEntry,
 } from '@/lib/training'
 
 type Tab = 'drill' | 'article'
@@ -73,6 +88,8 @@ const selectedInitials = ref<ReadonlySet<string>>(new Set())
 const selectedFinals = ref<ReadonlySet<string>>(new Set())
 const selectedZeroFinals = ref<ReadonlySet<string>>(new Set())
 const schemeId = ref('')
+let hydratedScheme = ''
+let readyToPersist = false
 // 隐藏映射选择（出现/隐藏双选栏）；必须在下方 immediate watch 之前初始化
 const hiddenInitials = ref<ReadonlySet<string>>(new Set())
 const hiddenFinals = ref<ReadonlySet<string>>(new Set())
@@ -87,7 +104,100 @@ const engine = computed<SchemeEngine | null>(() =>
   course.scheme ? createSchemeEngine(course.scheme) : null,
 )
 
+/** 当前方案与全拼一致的 free atoms；在声母/韵母组内各聚合为一个「全拼沿用」胶囊。 */
+const EMPTY_COMMON_ATOMS: TrainingCommonAtoms = { initials: [], finals: [], zeroFinals: [] }
+/** 当前方案相对全拼的 free atoms：随方案切换自动重算，不手写固定集合。 */
+const commonAtoms = computed<TrainingCommonAtoms>(() =>
+  course.scheme ? freeTrainingAtoms(course.scheme) : EMPTY_COMMON_ATOMS,
+)
+const commonInitialSet = computed(() => new Set(commonAtoms.value.initials))
+const commonFinalSet = computed(() => new Set(commonAtoms.value.finals))
+const commonZeroSet = computed(() => new Set(commonAtoms.value.zeroFinals))
+const selectableInitials = computed(() =>
+  (atomOptions.value?.initials ?? []).filter((item) => !commonInitialSet.value.has(item)),
+)
+const selectableFinals = computed(() =>
+  (atomOptions.value?.finals ?? []).filter((item) => !commonFinalSet.value.has(item)),
+)
+const selectableZeroFinals = computed(() =>
+  (atomOptions.value?.zeroFinals ?? []).filter((item) => !commonZeroSet.value.has(item)),
+)
+const selectedSelectableInitialCount = computed(
+  () => selectableInitials.value.filter((item) => selectedInitials.value.has(item)).length,
+)
+const selectedSelectableFinalCount = computed(
+  () => selectableFinals.value.filter((item) => selectedFinals.value.has(item)).length,
+)
+const selectedSelectableZeroCount = computed(
+  () => selectableZeroFinals.value.filter((item) => selectedZeroFinals.value.has(item)).length,
+)
+
+type CommonAtomKind = CommonAtomEntry['kind']
+type CommonScope = 'appear' | 'drill' | 'article'
+type CommonGroup = 'initial' | 'final'
+
+const commonAtomEntries = computed<CommonAtomEntry[]>(() => [
+  ...commonAtoms.value.initials.map((value) => ({ kind: 'initial' as const, value })),
+  ...commonAtoms.value.finals.map((value) => ({ kind: 'final' as const, value })),
+  ...commonAtoms.value.zeroFinals.map((value) => ({ kind: 'zero' as const, value })),
+])
+
+function commonSetOf(scope: CommonScope, kind: CommonAtomKind): ReadonlySet<string> {
+  const initial =
+    scope === 'appear' ? selectedInitials : scope === 'drill' ? hiddenInitials : articleHiddenInitials
+  const final =
+    scope === 'appear' ? selectedFinals : scope === 'drill' ? hiddenFinals : articleHiddenFinals
+  const zero =
+    scope === 'appear' ? selectedZeroFinals : scope === 'drill' ? hiddenZeroFinals : articleHiddenZeroFinals
+  return kind === 'initial' ? initial.value : kind === 'final' ? final.value : zero.value
+}
+
+function commonEntriesFor(scope: CommonScope, group: CommonGroup): CommonAtomEntry[] {
+  const entries = commonAtomEntries.value.filter((entry) =>
+    group === 'initial' ? entry.kind !== 'final' : entry.kind === 'final',
+  )
+  if (scope !== 'drill') return entries
+  return entries.filter((entry) => commonSetOf('appear', entry.kind).has(entry.value))
+}
+
+function commonAllChecked(scope: CommonScope, group: CommonGroup): boolean {
+  const entries = commonEntriesFor(scope, group)
+  return entries.length > 0 && entries.every((entry) => commonSetOf(scope, entry.kind).has(entry.value))
+}
+
+function writeCommonSet(scope: CommonScope, kind: CommonAtomKind, next: ReadonlySet<string>): void {
+  if (scope === 'appear') {
+    if (kind === 'initial') selectedInitials.value = next
+    else if (kind === 'final') selectedFinals.value = next
+    else selectedZeroFinals.value = next
+  } else if (scope === 'drill') {
+    if (kind === 'initial') hiddenInitials.value = next
+    else if (kind === 'final') hiddenFinals.value = next
+    else hiddenZeroFinals.value = next
+  } else {
+    if (kind === 'initial') articleHiddenInitials.value = next
+    else if (kind === 'final') articleHiddenFinals.value = next
+    else articleHiddenZeroFinals.value = next
+  }
+}
+
+
+function toggleCommonAll(scope: CommonScope, group: CommonGroup): void {
+  const entries = commonEntriesFor(scope, group)
+  const add = !commonAllChecked(scope, group)
+  for (const kind of ['initial', 'final', 'zero'] as const) {
+    const next = new Set(commonSetOf(scope, kind))
+    for (const entry of entries) {
+      if (entry.kind !== kind) continue
+      if (add) next.add(entry.value)
+      else next.delete(entry.value)
+    }
+    writeCommonSet(scope, kind, next)
+  }
+}
+
 function selectAll(): void {
+  // 默认全部开启：普通键位 + 「全拼沿用」胶囊代表的公共键位。
   const options = atomOptions.value
   if (!options) return
   selectedInitials.value = new Set(options.initials)
@@ -95,34 +205,66 @@ function selectAll(): void {
   selectedZeroFinals.value = new Set(options.zeroFinals)
 }
 
+function applyTrainingConfig(config: TrainingConfigSnapshot): void {
+  const options = atomOptions.value
+  if (!options) return
+  const allowedInitials = new Set(options.initials)
+  const allowedFinals = new Set(options.finals)
+  const allowedZeros = new Set(options.zeroFinals)
+  tab.value = config.tab
+  drillMode.value = config.drillMode
+  selectedInitials.value = new Set(config.selectedInitials.filter((item) => allowedInitials.has(item)))
+  selectedFinals.value = new Set(config.selectedFinals.filter((item) => allowedFinals.has(item)))
+  selectedZeroFinals.value = new Set(config.selectedZeroFinals.filter((item) => allowedZeros.has(item)))
+  hiddenInitials.value = new Set(
+    config.hiddenInitials.filter(
+      (item) => allowedInitials.has(item) && selectedInitials.value.has(item),
+    ),
+  )
+  hiddenFinals.value = new Set(
+    config.hiddenFinals.filter((item) => allowedFinals.has(item) && selectedFinals.value.has(item)),
+  )
+  hiddenZeroFinals.value = new Set(
+    config.hiddenZeroFinals.filter(
+      (item) => allowedZeros.has(item) && selectedZeroFinals.value.has(item),
+    ),
+  )
+  articleHiddenInitials.value = new Set(
+    config.articleHiddenInitials.filter((item) => allowedInitials.has(item)),
+  )
+  articleHiddenFinals.value = new Set(
+    config.articleHiddenFinals.filter((item) => allowedFinals.has(item)),
+  )
+  articleHiddenZeroFinals.value = new Set(
+    config.articleHiddenZeroFinals.filter((item) => allowedZeros.has(item)),
+  )
+}
+
 watch(
-  () => course.schemeId,
-  (id) => {
-    if (!id || id === schemeId.value) {
-      if (!schemeId.value && atomOptions.value) {
-        schemeId.value = id
-        selectAll()
-      }
-      return
-    }
+  [() => course.schemeId, atomOptions],
+  ([id, options]) => {
+    if (!id || !options || hydratedScheme === id) return
+    hydratedScheme = id
     schemeId.value = id
-    selectAll()
+    readyToPersist = false
+    tab.value = 'drill'
+    drillMode.value = 'char'
     hiddenInitials.value = new Set()
     hiddenFinals.value = new Set()
     hiddenZeroFinals.value = new Set()
     articleHiddenInitials.value = new Set()
     articleHiddenFinals.value = new Set()
     articleHiddenZeroFinals.value = new Set()
+    const config = readTrainingConfig(window.localStorage, id)
+    if (config) applyTrainingConfig(config)
+    else selectAll()
+    readyToPersist = true
   },
-  { immediate: true },
+  { immediate: true, flush: 'post' },
 )
 
 onMounted(async () => {
   await course.init()
-  if (!schemeId.value && course.schemeId) {
-    schemeId.value = course.schemeId
-    selectAll()
-  }
   try {
     const [chars, words] = await Promise.all([loadTrainingBank(), loadCommonWords()])
     bank.value = chars
@@ -134,9 +276,39 @@ onMounted(async () => {
   }
 })
 
-watch(atomOptions, (options) => {
-  if (options && selectedInitials.value.size === 0 && selectedFinals.value.size === 0) selectAll()
-})
+watch(
+  [
+    tab,
+    drillMode,
+    selectedInitials,
+    selectedFinals,
+    selectedZeroFinals,
+    hiddenInitials,
+    hiddenFinals,
+    hiddenZeroFinals,
+    articleHiddenInitials,
+    articleHiddenFinals,
+    articleHiddenZeroFinals,
+  ],
+  () => {
+    if (!readyToPersist || !schemeId.value || !atomOptions.value) return
+    const config: TrainingConfigSnapshot = {
+      tab: tab.value,
+      drillMode: drillMode.value,
+      selectedInitials: [...selectedInitials.value],
+      selectedFinals: [...selectedFinals.value],
+      selectedZeroFinals: [...selectedZeroFinals.value],
+      hiddenInitials: [...hiddenInitials.value],
+      hiddenFinals: [...hiddenFinals.value],
+      hiddenZeroFinals: [...hiddenZeroFinals.value],
+      articleHiddenInitials: [...articleHiddenInitials.value],
+      articleHiddenFinals: [...articleHiddenFinals.value],
+      articleHiddenZeroFinals: [...articleHiddenZeroFinals.value],
+    }
+    writeTrainingConfig(window.localStorage, schemeId.value, config)
+  },
+  { flush: 'post' },
+)
 
 const scope = computed<TrainingScope>(() => ({
   initials: [...selectedInitials.value],
@@ -156,8 +328,6 @@ const previewTexts = computed(() => availableEntries.value.slice(0, 16).map((ent
 const previewSample = computed(
   () => previewTexts.value.join('、') + (availableCount.value > previewTexts.value.length ? '…' : ''),
 )
-const initialsSelectedCount = computed(() => selectedInitials.value.size)
-const initialsTotalCount = computed(() => atomOptions.value?.initials.length ?? 0)
 const canStartDrill = computed(
   () => bankStatus.value === 'ready' && Boolean(engine.value) && availableEntries.value.length > 0,
 )
@@ -182,13 +352,11 @@ function toggleZeroFinal(value: string): void {
 }
 type Group = 'initial' | 'final'
 function selectGroup(group: Group): void {
-  const options = atomOptions.value
-  if (!options) return
   if (group === 'initial') {
-    selectedInitials.value = new Set(options.initials)
-    selectedZeroFinals.value = new Set(options.zeroFinals)
+    selectedInitials.value = new Set([...commonInitialSet.value, ...selectableInitials.value])
+    selectedZeroFinals.value = new Set([...commonZeroSet.value, ...selectableZeroFinals.value])
   } else {
-    selectedFinals.value = new Set(options.finals)
+    selectedFinals.value = new Set([...commonFinalSet.value, ...selectableFinals.value])
   }
 }
 function clearGroup(group: Group): void {
@@ -210,9 +378,15 @@ const passedLessonCount = computed(() => passedLessons.value.length)
 function selectLearnedAtoms(): void {
   const options = atomOptions.value
   if (!options || passedLessons.value.length === 0) return
-  const initialSet = new Set<string>()
-  const finalSet = new Set<string>()
-  const zeroSet = new Set<string>()
+  const initialSet = new Set(
+    [...selectedInitials.value].filter((item) => commonInitialSet.value.has(item)),
+  )
+  const finalSet = new Set(
+    [...selectedFinals.value].filter((item) => commonFinalSet.value.has(item)),
+  )
+  const zeroSet = new Set(
+    [...selectedZeroFinals.value].filter((item) => commonZeroSet.value.has(item)),
+  )
   const initialKeys = new Set(options.initials)
   const finalKeys = new Set(options.finals)
   const zeroKeys = new Set(options.zeroFinals)
@@ -235,36 +409,66 @@ function toggleAppearAll(group: Group): void {
   else selectGroup(group)
 }
 
-const appearInitialAll = computed(() => {
-  const options = atomOptions.value
-  if (!options) return false
-  return (
-    selectedInitials.value.size === options.initials.length &&
-    selectedZeroFinals.value.size === options.zeroFinals.length
-  )
-})
-const appearFinalAll = computed(() => {
-  const options = atomOptions.value
-  if (!options) return false
-  return selectedFinals.value.size === options.finals.length
-})
+function commonCapsuleCount(scope: CommonScope, group: CommonGroup): number {
+  return commonEntriesFor(scope, group).length > 0 ? 1 : 0
+}
+
+const appearInitialGroup = computed(() => ({
+  specificCount: selectableInitials.value.length + selectableZeroFinals.value.length,
+  specificSelected: selectedSelectableInitialCount.value + selectedSelectableZeroCount.value,
+  hasCapsule: commonCapsuleCount('appear', 'initial') > 0,
+  capsuleSelected: commonAllChecked('appear', 'initial'),
+}))
+const appearFinalGroup = computed(() => ({
+  specificCount: selectableFinals.value.length,
+  specificSelected: selectedSelectableFinalCount.value,
+  hasCapsule: commonCapsuleCount('appear', 'final') > 0,
+  capsuleSelected: commonAllChecked('appear', 'final'),
+}))
+const appearInitialTotalCount = computed(() => groupTotal(appearInitialGroup.value))
+const appearInitialSelectedCount = computed(() => groupSelected(appearInitialGroup.value))
+const appearFinalTotalCount = computed(() => groupTotal(appearFinalGroup.value))
+const appearFinalSelectedCount = computed(() => groupSelected(appearFinalGroup.value))
+const appearInitialAll = computed(() => groupAllChecked(appearInitialGroup.value))
+const appearFinalAll = computed(() => groupAllChecked(appearFinalGroup.value))
+const appearInitialPartial = computed(() => groupIndeterminate(appearInitialGroup.value))
+const appearFinalPartial = computed(() => groupIndeterminate(appearFinalGroup.value))
 
 // ── 练习时隐藏映射（出现 / 隐藏双选栏） ──────────────────────
 
 type HiddenScope = 'drill' | 'article'
 
+// 公共 free atoms 在声母/韵母组内以「全拼沿用」胶囊展示，不混入普通 chips。
 const drillHiddenInitialCandidates = computed(() =>
-  atomOptions.value ? atomOptions.value.initials.filter((item) => selectedInitials.value.has(item)) : [],
+  atomOptions.value
+    ? atomOptions.value.initials.filter(
+        (item) => selectedInitials.value.has(item) && !commonInitialSet.value.has(item),
+      )
+    : [],
 )
 const drillHiddenFinalCandidates = computed(() =>
-  atomOptions.value ? atomOptions.value.finals.filter((item) => selectedFinals.value.has(item)) : [],
+  atomOptions.value
+    ? atomOptions.value.finals.filter(
+        (item) => selectedFinals.value.has(item) && !commonFinalSet.value.has(item),
+      )
+    : [],
 )
 const drillHiddenZeroCandidates = computed(() =>
-  atomOptions.value ? atomOptions.value.zeroFinals.filter((item) => selectedZeroFinals.value.has(item)) : [],
+  atomOptions.value
+    ? atomOptions.value.zeroFinals.filter(
+        (item) => selectedZeroFinals.value.has(item) && !commonZeroSet.value.has(item),
+      )
+    : [],
 )
-const articleHiddenInitialCandidates = computed(() => atomOptions.value?.initials ?? [])
-const articleHiddenFinalCandidates = computed(() => atomOptions.value?.finals ?? [])
-const articleHiddenZeroCandidates = computed(() => atomOptions.value?.zeroFinals ?? [])
+const articleHiddenInitialCandidates = computed(() =>
+  atomOptions.value ? selectableInitials.value : [],
+)
+const articleHiddenFinalCandidates = computed(() =>
+  atomOptions.value ? selectableFinals.value : [],
+)
+const articleHiddenZeroCandidates = computed(() =>
+  atomOptions.value ? selectableZeroFinals.value : [],
+)
 
 const hiddenInitialsOf = (scope: HiddenScope) =>
   scope === 'drill' ? hiddenInitials : articleHiddenInitials
@@ -312,25 +516,50 @@ function hiddenGroupCandidates(scope: HiddenScope, group: Group): readonly strin
   return group === 'initial' ? candidates.initials : candidates.finals
 }
 
-/** 隐藏栏的全选勾选框状态。 */
-function hiddenGroupAllChecked(scope: HiddenScope, group: Group): boolean {
+/** 隐藏组把「全拼沿用」胶囊也算作一个可全选项目。 */
+function hiddenGroupState(scope: HiddenScope, group: Group): {
+  specificCount: number
+  specificSelected: number
+  hasCapsule: boolean
+  capsuleSelected: boolean
+} {
   const candidates = hiddenCandidatesOf(scope)
-  const target = group === 'initial' ? hiddenInitialsOf(scope) : hiddenFinalsOf(scope)
-  const values = group === 'initial' ? candidates.initials : candidates.finals
-  const zeros = group === 'initial' ? hiddenZeroFinalsOf(scope).value : new Set<string>()
-  if (values.length === 0 && (group !== 'initial' || candidates.zeroFinals.length === 0)) return false
-  return (
-    values.every((item) => target.value.has(item)) &&
-    (group !== 'initial' || candidates.zeroFinals.every((item) => zeros.has(item)))
-  )
+  if (group === 'initial') {
+    return {
+      specificCount: candidates.initials.length + candidates.zeroFinals.length,
+      specificSelected:
+        candidates.initials.filter((item) => hiddenInitialsOf(scope).value.has(item)).length +
+        candidates.zeroFinals.filter((item) => hiddenZeroFinalsOf(scope).value.has(item)).length,
+      hasCapsule: commonCapsuleCount(scope, 'initial') > 0,
+      capsuleSelected: commonAllChecked(scope, 'initial'),
+    }
+  }
+  return {
+    specificCount: candidates.finals.length,
+    specificSelected: candidates.finals.filter((item) => hiddenFinalsOf(scope).value.has(item)).length,
+    hasCapsule: commonCapsuleCount(scope, 'final') > 0,
+    capsuleSelected: commonAllChecked(scope, 'final'),
+  }
 }
 
+function hiddenGroupTotal(scope: HiddenScope, group: Group): number {
+  return groupTotal(hiddenGroupState(scope, group))
+}
+
+function hiddenGroupSelected(scope: HiddenScope, group: Group): number {
+  return groupSelected(hiddenGroupState(scope, group))
+}
+
+function hiddenGroupAllChecked(scope: HiddenScope, group: Group): boolean {
+  return groupAllChecked(hiddenGroupState(scope, group))
+}
 
 function hiddenGroupDisabled(scope: HiddenScope, group: Group): boolean {
-  const candidates = hiddenCandidatesOf(scope)
-  return group === 'initial'
-    ? candidates.initials.length + candidates.zeroFinals.length === 0
-    : candidates.finals.length === 0
+  return hiddenGroupTotal(scope, group) === 0
+}
+
+function hiddenGroupPartial(scope: HiddenScope, group: Group): boolean {
+  return groupIndeterminate(hiddenGroupState(scope, group))
 }
 
 function toggleHiddenAll(scope: HiddenScope, group: Group): void {
@@ -338,12 +567,17 @@ function toggleHiddenAll(scope: HiddenScope, group: Group): void {
   else selectHiddenGroup(scope, group)
 }
 
-/** 隐藏栏的 全选/反选/全不选 与出现栏一致，按声母/韵母分组 */
+/** 隐藏栏同样按组全选：普通键位 + 全拼沿用胶囊一起处理。 */
 function selectHiddenGroup(scope: HiddenScope, group: Group): void {
   const target = group === 'initial' ? hiddenInitialsOf(scope) : hiddenFinalsOf(scope)
   target.value = new Set(hiddenGroupCandidates(scope, group))
   if (group === 'initial') {
     hiddenZeroFinalsOf(scope).value = new Set(hiddenCandidatesOf(scope).zeroFinals)
+  }
+  for (const entry of commonEntriesFor(scope, group)) {
+    const next = new Set(commonSetOf(scope, entry.kind))
+    next.add(entry.value)
+    writeCommonSet(scope, entry.kind, next)
   }
 }
 
@@ -729,31 +963,39 @@ onScopeDispose(() => {
               </template>
               <div v-if="bankStatus === 'loading'" class="training-state">正在加载训练字库…</div>
               <template v-else-if="atomOptions">
+
                 <SetupGroup
                   title="声母"
-                  group="initial"
                   :all-checked="appearInitialAll"
+                    :indeterminate="appearInitialPartial"
                     @toggle-all="toggleAppearAll('initial')"
                 >
                   <template #count>
-                    已选 {{ selectedInitials.size }}/{{ atomOptions.initials.length }} · 零 {{ selectedZeroFinals.size }}/{{ atomOptions.zeroFinals.length }}
+                    已选 {{ appearInitialSelectedCount }}/{{ appearInitialTotalCount }}
                   </template>
+                  <CommonCapsule
+                    v-if="commonEntriesFor('appear', 'initial').length > 0"
+                    :selected="commonAllChecked('appear', 'initial')"
+                    @toggle="toggleCommonAll('appear', 'initial')"
+                  />
                   <button
-                    v-for="initial in atomOptions.initials"
+                    v-for="initial in selectableInitials"
                     :key="initial"
                     type="button"
                     class="chip"
                     :class="{ 'is-selected': selectedInitials.has(initial) }"
+                    :aria-pressed="selectedInitials.has(initial)"
                     @click="toggleInitial(initial)"
                   >
                     {{ initial }}
                   </button>
                   <button
-                    v-for="zero in atomOptions.zeroFinals"
+                    v-for="zero in selectableZeroFinals"
                     :key="`zero-${zero}`"
                     type="button"
                     class="chip is-special is-zero-chip"
                     :class="{ 'is-selected': selectedZeroFinals.has(zero) }"
+                    :aria-pressed="selectedZeroFinals.has(zero)"
                     @click="toggleZeroFinal(zero)"
                   >
                     零 {{ zero }}
@@ -762,19 +1004,25 @@ onScopeDispose(() => {
 
                 <SetupGroup
                   title="韵母"
-                  group="final"
                   :all-checked="appearFinalAll"
+                    :indeterminate="appearFinalPartial"
                     @toggle-all="toggleAppearAll('final')"
                 >
                   <template #count>
-                    已选 {{ selectedFinals.size }}/{{ atomOptions.finals.length }}
+                    已选 {{ appearFinalSelectedCount }}/{{ appearFinalTotalCount }}
                   </template>
+                  <CommonCapsule
+                    v-if="commonEntriesFor('appear', 'final').length > 0"
+                    :selected="commonAllChecked('appear', 'final')"
+                    @toggle="toggleCommonAll('appear', 'final')"
+                  />
                   <button
-                    v-for="final in atomOptions.finals"
+                    v-for="final in selectableFinals"
                     :key="final"
                     type="button"
                     class="chip"
                     :class="{ 'is-selected': selectedFinals.has(final) }"
+                    :aria-pressed="selectedFinals.has(final)"
                     @click="toggleFinal(final)"
                   >
                     {{ final }}
@@ -784,23 +1032,30 @@ onScopeDispose(() => {
             </SetupCard>
 
             <SetupCard pill="隐藏" tone="hidden" subtitle="练习时不显示映射">
+
               <SetupGroup
-                v-if="drillHiddenInitialCandidates.length || drillHiddenZeroCandidates.length"
+                v-if="hiddenGroupTotal('drill', 'initial') > 0"
                 title="声母"
-                group="initial"
                 :all-checked="hiddenGroupAllChecked('drill', 'initial')"
+                :indeterminate="hiddenGroupPartial('drill', 'initial')"
                 :all-disabled="hiddenGroupDisabled('drill', 'initial')"
                 @toggle-all="toggleHiddenAll('drill', 'initial')"
               >
                 <template #count>
-                  已隐藏 {{ hiddenInitials.size }}/{{ drillHiddenInitialCandidates.length }} · 零 {{ hiddenZeroFinals.size }}/{{ drillHiddenZeroCandidates.length }}
+                  已隐藏 {{ hiddenGroupSelected('drill', 'initial') }}/{{ hiddenGroupTotal('drill', 'initial') }}
                 </template>
+                  <CommonCapsule
+                    v-if="commonEntriesFor('drill', 'initial').length > 0"
+                    :selected="commonAllChecked('drill', 'initial')"
+                    @toggle="toggleCommonAll('drill', 'initial')"
+                  />
                 <button
                   v-for="initial in drillHiddenInitialCandidates"
                   :key="initial"
                   type="button"
-                  class="chip is-hidden-chip"
+                  class="chip"
                   :class="{ 'is-selected': hiddenInitials.has(initial) }"
+                  :aria-pressed="hiddenInitials.has(initial)"
                   @click="toggleHidden('drill', 'initial', initial)"
                 >
                   {{ initial }}
@@ -809,8 +1064,9 @@ onScopeDispose(() => {
                   v-for="zero in drillHiddenZeroCandidates"
                   :key="`hidden-zero-${zero}`"
                   type="button"
-                  class="chip is-special is-zero-chip is-hidden-chip"
+                  class="chip is-special is-zero-chip"
                   :class="{ 'is-selected': hiddenZeroFinals.has(zero) }"
+                  :aria-pressed="hiddenZeroFinals.has(zero)"
                   @click="toggleHiddenZeroFinal('drill', zero)"
                 >
                   零 {{ zero }}
@@ -818,22 +1074,28 @@ onScopeDispose(() => {
               </SetupGroup>
 
               <SetupGroup
-                v-if="drillHiddenFinalCandidates.length"
+                v-if="hiddenGroupTotal('drill', 'final') > 0"
                 title="韵母"
-                group="final"
                 :all-checked="hiddenGroupAllChecked('drill', 'final')"
+                :indeterminate="hiddenGroupPartial('drill', 'final')"
                 :all-disabled="hiddenGroupDisabled('drill', 'final')"
                 @toggle-all="toggleHiddenAll('drill', 'final')"
               >
                 <template #count>
-                  已隐藏 {{ hiddenFinals.size }}/{{ drillHiddenFinalCandidates.length }}
+                  已隐藏 {{ hiddenGroupSelected('drill', 'final') }}/{{ hiddenGroupTotal('drill', 'final') }}
                 </template>
+                  <CommonCapsule
+                    v-if="commonEntriesFor('drill', 'final').length > 0"
+                    :selected="commonAllChecked('drill', 'final')"
+                    @toggle="toggleCommonAll('drill', 'final')"
+                  />
                 <button
                   v-for="final in drillHiddenFinalCandidates"
                   :key="final"
                   type="button"
-                  class="chip is-hidden-chip"
+                  class="chip"
                   :class="{ 'is-selected': hiddenFinals.has(final) }"
+                  :aria-pressed="hiddenFinals.has(final)"
                   @click="toggleHidden('drill', 'final', final)"
                 >
                   {{ final }}
@@ -841,7 +1103,7 @@ onScopeDispose(() => {
               </SetupGroup>
 
               <p
-                v-if="!drillHiddenInitialCandidates.length && !drillHiddenFinalCandidates.length && !drillHiddenZeroCandidates.length"
+                v-if="hiddenGroupTotal('drill', 'initial') === 0 && hiddenGroupTotal('drill', 'final') === 0"
                 class="setup-empty"
               >
                 先在「出现」中选择声母或韵母。
@@ -940,6 +1202,7 @@ onScopeDispose(() => {
                   tabindex="0"
                   @click="fileInput?.click()"
                   @keydown.enter.prevent="fileInput?.click()"
+                  @keydown.space.prevent="fileInput?.click()"
                   @dragover.prevent="articleDragActive = true"
                   @dragleave.prevent="articleDragActive = false"
                   @drop.prevent="onArticleDrop"
@@ -958,22 +1221,29 @@ onScopeDispose(() => {
             </SetupCard>
 
             <SetupCard pill="隐藏" tone="hidden" subtitle="练习时不显示映射">
+
               <SetupGroup
                 title="声母"
-                group="initial"
                 :all-checked="hiddenGroupAllChecked('article', 'initial')"
+                :indeterminate="hiddenGroupPartial('article', 'initial')"
                 :all-disabled="hiddenGroupDisabled('article', 'initial')"
                 @toggle-all="toggleHiddenAll('article', 'initial')"
               >
                 <template #count>
-                  已隐藏 {{ articleHiddenInitials.size }}/{{ articleHiddenInitialCandidates.length }} · 零 {{ articleHiddenZeroFinals.size }}/{{ articleHiddenZeroCandidates.length }}
+                  已隐藏 {{ hiddenGroupSelected('article', 'initial') }}/{{ hiddenGroupTotal('article', 'initial') }}
                 </template>
+                  <CommonCapsule
+                    v-if="commonEntriesFor('article', 'initial').length > 0"
+                    :selected="commonAllChecked('article', 'initial')"
+                    @toggle="toggleCommonAll('article', 'initial')"
+                  />
                 <button
                   v-for="initial in articleHiddenInitialCandidates"
                   :key="initial"
                   type="button"
-                  class="chip is-hidden-chip"
+                  class="chip"
                   :class="{ 'is-selected': articleHiddenInitials.has(initial) }"
+                  :aria-pressed="articleHiddenInitials.has(initial)"
                   @click="toggleHidden('article', 'initial', initial)"
                 >
                   {{ initial }}
@@ -982,8 +1252,9 @@ onScopeDispose(() => {
                   v-for="zero in articleHiddenZeroCandidates"
                   :key="`article-hidden-zero-${zero}`"
                   type="button"
-                  class="chip is-special is-zero-chip is-hidden-chip"
+                  class="chip is-special is-zero-chip"
                   :class="{ 'is-selected': articleHiddenZeroFinals.has(zero) }"
+                  :aria-pressed="articleHiddenZeroFinals.has(zero)"
                   @click="toggleHiddenZeroFinal('article', zero)"
                 >
                   零 {{ zero }}
@@ -992,20 +1263,26 @@ onScopeDispose(() => {
 
               <SetupGroup
                 title="韵母"
-                group="final"
                 :all-checked="hiddenGroupAllChecked('article', 'final')"
+                :indeterminate="hiddenGroupPartial('article', 'final')"
                 :all-disabled="hiddenGroupDisabled('article', 'final')"
                 @toggle-all="toggleHiddenAll('article', 'final')"
               >
                 <template #count>
-                  已隐藏 {{ articleHiddenFinals.size }}/{{ articleHiddenFinalCandidates.length }}
+                  已隐藏 {{ hiddenGroupSelected('article', 'final') }}/{{ hiddenGroupTotal('article', 'final') }}
                 </template>
+                  <CommonCapsule
+                    v-if="commonEntriesFor('article', 'final').length > 0"
+                    :selected="commonAllChecked('article', 'final')"
+                    @toggle="toggleCommonAll('article', 'final')"
+                  />
                 <button
                   v-for="final in articleHiddenFinalCandidates"
                   :key="final"
                   type="button"
-                  class="chip is-hidden-chip"
+                  class="chip"
                   :class="{ 'is-selected': articleHiddenFinals.has(final) }"
+                  :aria-pressed="articleHiddenFinals.has(final)"
                   @click="toggleHidden('article', 'final', final)"
                 >
                   {{ final }}
@@ -1120,285 +1397,6 @@ onScopeDispose(() => {
 </template>
 
 <style scoped>
-.training-page {
-  height: 100%;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-.training-config {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  width: 100%;
-  max-width: 1080px;
-  margin: 0 auto;
-  padding: 22px 20px 32px;
-}
-.training-head {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
-}
-.training-head h1 {
-  margin: 2px 0 0;
-  font-size: 28px;
-  letter-spacing: -0.02em;
-}
-.training-sub {
-  margin: 0;
-  max-width: 720px;
-  color: var(--ink-3);
-  font-size: var(--text-sm);
-  line-height: 1.7;
-}
-.training-scheme {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 4px;
-  color: var(--ink-3);
-  font-size: 12px;
-}
-.scheme-select {
-  height: 30px;
-  padding: 0 8px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-sm);
-  background: var(--surface);
-  color: var(--ink);
-  font-size: 12px;
-}
-.training-tabs {
-  display: flex;
-  gap: 6px;
-  margin: 14px 0 4px;
-  padding: 3px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  background: var(--surface-2);
-}
-.training-tab {
-  height: 32px;
-  padding: 0 18px;
-  border-radius: var(--r-md);
-  color: var(--ink-3);
-  font-size: 12px;
-  font-weight: 600;
-}
-.training-tab.is-active {
-  color: var(--brand-ink);
-  background: var(--surface);
-  box-shadow: var(--shadow-sm);
-}
-.training-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  margin-top: 16px;
-}
-.training-mode {
-  display: inline-flex;
-  align-self: flex-start;
-  gap: 2px;
-  padding: 2px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-md);
-  background: var(--surface-2);
-}
-.mode-btn {
-  min-width: 56px;
-  height: 28px;
-  border-radius: var(--r-sm);
-  color: var(--ink-3);
-  font-size: 12px;
-  font-weight: 650;
-}
-.mode-btn.is-active {
-  color: var(--brand-ink);
-  background: var(--surface);
-  box-shadow: var(--shadow-sm);
-}
-.chip-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 12px 14px;
-  border: 1px solid var(--line-faint);
-  border-radius: var(--r-lg);
-  background: var(--surface);
-}
-.chip-head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-.chip-head strong {
-  font-size: 12px;
-  color: var(--ink-2);
-}
-.chip-count {
-  color: var(--ink-3);
-  font-size: 10.5px;
-  font-variant-numeric: tabular-nums;
-}
-.chip-actions {
-  display: flex;
-  gap: 2px;
-  margin-left: auto;
-}
-.chip-actions button {
-  padding: 3px 7px;
-  border-radius: var(--r-sm);
-  color: var(--ink-3);
-  font-size: 10.5px;
-}
-.chip-actions button:hover {
-  color: var(--brand-ink);
-  background: var(--brand-soft);
-}
-.chip-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-.chip {
-  min-width: 34px;
-  height: 28px;
-  padding: 0 9px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-pill);
-  background: var(--surface);
-  color: var(--ink-3);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 600;
-}
-.chip:hover {
-  border-color: var(--brand);
-}
-.chip.is-selected {
-  border-color: var(--brand-soft-2);
-  background: var(--brand-soft);
-  color: var(--brand-ink);
-}
-.chip.is-special {
-  font-family: var(--font-ui);
-  font-size: 11px;
-}
-.training-preview {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 0;
-  padding: 10px 14px;
-  border: 1px solid var(--line-faint);
-  border-radius: var(--r-lg);
-  background: color-mix(in srgb, var(--surface-2) 70%, transparent);
-}
-.preview-head {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 4px 10px;
-}
-.preview-head strong {
-  font-size: 12px;
-  color: var(--ink-2);
-}
-.preview-sample {
-  min-width: 0;
-  overflow: hidden;
-  color: var(--ink-3);
-  font-size: 11px;
-  line-height: 1.55;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.preview-warning {
-  margin: 6px 0 0;
-  color: var(--danger);
-  font-size: 11px;
-}
-.article-input {
-  width: 100%;
-  min-height: 168px;
-  resize: vertical;
-  padding: 12px 14px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  background: var(--surface);
-  color: var(--ink);
-  font-family: var(--font-ui);
-  font-size: 13px;
-  line-height: 1.75;
-}
-.article-input:focus {
-  outline: none;
-  border-color: var(--brand);
-  box-shadow: 0 0 0 3px var(--brand-soft);
-}
-.article-drop {
-  flex: 1;
-  min-height: 180px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 20px;
-  border: 1.5px dashed var(--line-strong);
-  border-radius: var(--r-lg);
-  background: color-mix(in srgb, var(--surface-2) 55%, transparent);
-  color: var(--ink-3);
-  text-align: center;
-  cursor: pointer;
-  transition: border-color 120ms, background 120ms;
-}
-.article-drop:hover,
-.article-drop.is-drag {
-  border-color: var(--brand);
-  background: var(--brand-soft);
-}
-.article-drop-icon {
-  width: 34px;
-  height: 34px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  color: var(--brand-ink);
-  font-size: 18px;
-  font-weight: 700;
-}
-.article-drop strong {
-  color: var(--ink-2);
-  font-size: 12.5px;
-  font-weight: 700;
-}
-.article-drop-meta {
-  max-width: 300px;
-  color: var(--ink-4);
-  font-size: 10.5px;
-  line-height: 1.55;
-}
-.article-meta {
-  color: var(--ink-3);
-  font-size: 11px;
-}
-.article-notes {
-  margin: 0;
-  padding-left: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  color: var(--ink-3);
-  font-size: 11px;
-  line-height: 1.6;
-}
 .training-session {
   flex: 1;
   min-height: 0;
@@ -1423,32 +1421,6 @@ onScopeDispose(() => {
 }
 .article-summary-wrap > * {
   max-width: 860px;
-}
-.stream-shell {
-  flex: 1;
-  min-height: 0;
-}
-@media (max-width: 640px) {
-  .training-config {
-    padding: 16px 14px 28px;
-  }
-  .training-head h1 {
-    font-size: 22px;
-  }
-  .training-session {
-    padding: 8px 10px 0;
-  }
-  .training-tab {
-    padding: 0 12px;
-  }
-  .chip-actions button {
-    padding: 2px 5px;
-  }
-  .chip {
-    height: 26px;
-    min-width: 30px;
-    padding: 0 7px;
-  }
 }
 
 /* ── v15：统一卡片 + 固定底栏 + 两栏内部滚动 ─────────────── */
@@ -1600,34 +1572,6 @@ onScopeDispose(() => {
   align-items: stretch;
   gap: 18px;
 }
-.chip {
-  height: 30px;
-  min-width: 36px;
-  padding: 0 10px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-pill);
-  background: var(--surface);
-  color: var(--ink-3);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 600;
-}
-.chip:hover {
-  border-color: var(--brand);
-}
-.chip.is-selected {
-  border-color: var(--brand-soft-2);
-  background: var(--brand-soft);
-  color: var(--brand-ink);
-}
-.chip.is-special {
-  font-family: var(--font-ui);
-  font-size: 11px;
-}
-.chip.is-zero-chip {
-  font-family: var(--font-ui);
-  letter-spacing: 0.01em;
-}
 .setup-empty {
   margin: 0;
   padding: 14px 12px;
@@ -1636,17 +1580,6 @@ onScopeDispose(() => {
   color: var(--ink-4);
   font-size: 11px;
   text-align: center;
-}
-.chip.is-hidden-chip {
-  font-family: var(--font-mono);
-}
-.chip.is-hidden-chip.is-special {
-  font-family: var(--font-ui);
-}
-.chip.is-hidden-chip.is-selected {
-  border-color: var(--danger-line);
-  background: var(--danger-soft);
-  color: var(--danger);
 }
 .setup-progress {
   display: inline-flex;

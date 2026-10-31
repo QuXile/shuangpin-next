@@ -21,7 +21,8 @@ export {
   atomDisplayLabel,
 } from './pinyin.ts'
 
-export { createSchemeEngine } from './scheme.ts'
+export { createSchemeEngine, freeAtomsOf } from './scheme.ts'
+export type { FreeAtomSets } from './scheme.ts'
 
 export { atomMatchesWord, focusHitsOf } from './atoms.ts'
 
@@ -61,7 +62,8 @@ export {
   parseArticleText,
   syllableInTrainingScope,
 } from './training.ts'
-export type { ParsedArticle, TrainingScope } from './training.ts'
+export { freeTrainingAtoms } from './training.ts'
+export type { ParsedArticle, TrainingCommonAtoms, TrainingScope } from './training.ts'
 
 export {
   createSession,

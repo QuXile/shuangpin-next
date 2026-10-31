@@ -23,6 +23,7 @@
 
   /* 品牌 */
   --brand: #4f46e5;
+  --on-accent: #fff;
   --brand-fill: #4f46e5;
   --brand-fill-hover: #4338ca;
   --brand-soft: #eef0ff;
@@ -36,6 +37,8 @@
   --success-strong: #16a34a;
   --danger: #dc2626;
   --danger-soft: #fdecec;
+  --star: #d69e2e;
+  --star-bright: #f59e0b;
 
   /* 拼音分色：声母 / 韵母 */
   --ini: #4338ca;
@@ -120,6 +123,7 @@ html[data-theme='dark'] {
   --ink-4: #6c7686;
 
   --brand: #8b87ff;
+  --on-accent: #fff;
   --brand-fill: #6366f1;
   --brand-fill-hover: #7c7ff5;
   --brand-soft: #23224a;
@@ -132,6 +136,8 @@ html[data-theme='dark'] {
   --success-strong: #22c55e;
   --danger: #f87171;
   --danger-soft: #2e1717;
+  --star: #fbbf24;
+  --star-bright: #fbbf24;
 
   --ini: #a5b4fc;
   --fin: #fbbf24;

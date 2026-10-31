@@ -158,6 +158,6 @@ const emit = defineEmits<{ start: [lessonId: string] }>()
   line-height: 1;
 }
 .stars .on {
-  color: #f59e0b;
+  color: var(--star-bright);
 }
 </style>

@@ -120,13 +120,13 @@ kbd {
   transform: none;
 }
 .btn--primary {
-  color: #fff;
+  color: var(--on-accent);
   background: var(--brand-fill);
   border-color: transparent;
   box-shadow: 0 8px 20px -10px var(--brand-ring), var(--shadow-sm);
 }
 .btn--primary:hover:not(:disabled) {
-  color: #fff;
+  color: var(--on-accent);
   background: var(--brand-fill-hover);
 }
 .btn--ghost {
@@ -142,6 +142,52 @@ kbd {
   height: 34px;
   padding: 0 14px;
   font-size: var(--text-sm);
+}
+
+.chip {
+  min-width: 36px;
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+}
+.chip:hover:not(:disabled) {
+  border-color: var(--setup-accent, var(--brand));
+}
+.chip.is-selected {
+  border-color: var(--setup-accent-line, var(--brand-soft-2));
+  background: var(--setup-accent-soft, var(--brand-soft));
+  color: var(--setup-accent-ink, var(--brand-ink));
+}
+.chip.is-special,
+.chip.is-zero-chip {
+  font-family: var(--font-ui);
+  font-size: 11px;
+}
+.chip.is-zero-chip {
+  letter-spacing: 0.01em;
+}
+.chip:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+@media (max-width: 640px) {
+  .chip {
+    height: 26px;
+    min-width: 30px;
+    padding: 0 7px;
+  }
+}
+
+/* 「全拼沿用」胶囊只显示四个字，颜色由所属 SetupCard 的 tone 变量控制。 */
+.common-capsule {
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
 .icon {
@@ -203,7 +249,7 @@ kbd {
 .toolbar-card.is-complete .btn--primary {
   background: var(--state-success-fill);
   border-color: var(--state-success-fill);
-  color: #fff;
+  color: var(--on-accent);
   box-shadow: 0 2px 0 var(--state-success-fill-hover);
 }
 .toolbar-card.is-complete .btn--primary:hover:not(:disabled) {

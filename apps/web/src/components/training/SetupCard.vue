@@ -32,6 +32,10 @@ withDefaults(
 
 <style scoped>
 .setup-card {
+  --setup-accent: var(--brand);
+  --setup-accent-ink: var(--brand-ink);
+  --setup-accent-soft: var(--brand-soft);
+  --setup-accent-line: var(--brand-soft-2);
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -44,7 +48,17 @@ withDefaults(
   box-shadow: var(--shadow-sm);
 }
 .setup-card.tone-hidden {
+  --setup-accent: var(--danger);
+  --setup-accent-ink: var(--danger);
+  --setup-accent-soft: var(--danger-soft);
+  --setup-accent-line: var(--danger-line);
   background: color-mix(in srgb, var(--surface-2) 62%, var(--surface));
+}
+.setup-card.tone-input {
+  --setup-accent: var(--ink-3);
+  --setup-accent-ink: var(--ink-2);
+  --setup-accent-soft: var(--surface-3);
+  --setup-accent-line: var(--line);
 }
 .setup-card-head {
   flex: none;

@@ -187,7 +187,7 @@ withDefaults(
   line-height: 1.25;
 }
 .summary-rating.is-passed .summary-rating-stars {
-  color: #d69e2e;
+  color: var(--star);
 }
 .summary-rating-note {
   color: var(--ink-3);

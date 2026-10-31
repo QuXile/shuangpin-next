@@ -59,7 +59,7 @@ withDefaults(defineProps<{ items: readonly FocusAtomView[]; compact?: boolean }>
   line-height: 1;
 }
 .focus-badge.is-new {
-  color: #fff;
+  color: var(--on-accent);
   background: var(--brand);
 }
 .focus-badge.is-contained {

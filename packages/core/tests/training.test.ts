@@ -2,8 +2,8 @@
  * 练习板块纯函数测试：范围过滤与文章解析。
  */
 import { describe, expect, it } from 'vitest'
-import type { Initial, SyllableFinal, WordEntry } from '../src/types.ts'
-import { filterTrainingEntries, parseArticleText } from '../src/training.ts'
+import type { Initial, SchemeDef, SyllableFinal, WordEntry } from '../src/types.ts'
+import { filterTrainingEntries, freeTrainingAtoms, parseArticleText } from '../src/training.ts'
 
 function entry(text: string, syllables: Array<{ initial: string; final: string }>): WordEntry {
   return {
@@ -81,4 +81,28 @@ describe('parseArticleText · 文章解析', () => {
     expect(parseArticleText('').chars).toEqual([])
     expect(parseArticleText('甲 乙').lines).toEqual([['甲'], ['乙']])
   })
+})
+
+describe('freeTrainingAtoms · 当前方案与全拼的公共键位', () => {
+  function scheme(
+    initials: Record<string, string[]>,
+    finals: Record<string, string[]>,
+    zeroInitial: Record<string, string[]>,
+  ): SchemeDef {
+    return { id: 'test', name: '测试', type: 'compositional', initials, finals, zeroInitial } as SchemeDef
+  }
+
+  it('free atom 只认与全拼拼写完全一致的键位', () => {
+    const free = freeTrainingAtoms(
+      scheme(
+        { b: ['b'], zh: ['v'], ch: ['i'] },
+        { a: ['a'], ai: ['d'], o: ['o'] },
+        { ai: ['ai'], an: ['an'], a: ['aa'] },
+      ),
+    )
+    expect(free.initials).toEqual(['b'])
+    expect(free.finals).toEqual(['a', 'o'])
+    expect(free.zeroFinals).toEqual(['ai', 'an'])
+  })
+
 })
