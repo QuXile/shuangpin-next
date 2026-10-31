@@ -92,9 +92,15 @@
 - [实现说明](docs/ARCHITECTURE.md)
 - [词库说明](docs/WORDS.md)
 
+## 许可证
+
+本项目采用 **GNU General Public License v3.0（GPL-3.0-only）** 授权；完整文本见 [LICENSE](LICENSE)。
+
+你可以自由使用、修改和分发本项目，分发衍生作品时需要遵守 GPL-3.0 的开源与声明要求。
+
 ## 来源与第三方许可
 
-本项目自身尚未声明项目级许可证；以下是第三方来源与许可：
+第三方来源与许可如下：
 
 - 键位数据参考 [BlueSky-07/Shuang](https://github.com/BlueSky-07/Shuang)（GPL-3.0），仅使用其键位映射作为事实来源。
 - 词表和词频来自 [jieba](https://github.com/fxsjy/jieba)（MIT）。

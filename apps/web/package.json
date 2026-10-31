@@ -2,6 +2,7 @@
   "name": "@shuangpin/web",
   "version": "1.0.0",
   "private": true,
+  "license": "GPL-3.0-only",
   "type": "module",
   "description": "双拼 NEXT Web 应用（Vue 3 + Vite + TS）",
   "scripts": {

@@ -2,6 +2,7 @@
   "name": "shuangpin-next",
   "version": "1.0.0",
   "private": true,
+  "license": "GPL-3.0-only",
   "description": "双拼 NEXT：面向全拼熟练者的结构化双拼学习应用",
   "packageManager": "pnpm@11.28.5",
   "type": "module",

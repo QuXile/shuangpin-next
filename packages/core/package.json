@@ -2,6 +2,7 @@
   "name": "@shuangpin/core",
   "version": "1.0.0",
   "private": true,
+  "license": "GPL-3.0-only",
   "type": "module",
   "description": "双拼领域层：拼音拆分、方案引擎、选词、练习会话状态机（纯 TS，无框架/DOM 依赖）",
   "exports": {
