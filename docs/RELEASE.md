@@ -53,7 +53,7 @@ sha256sum shuangpin-next-<版本>-static.zip > SHA256SUMS
 
 ## CI 工作流
 
-- **`verify.yml`**：推送 `main` 或 PR 时触发；安装依赖、下载构建期 jieba 词典后运行 `pnpm verify`。
+- **`verify.yml`**：推送 `main` 或 PR 时触发；安装依赖后运行 `pnpm verify`。
 - **`release-static.yml`**：推送 `v*` tag 或手动触发；运行 `pnpm verify` 后以 `VITE_BASE=./ VITE_ROUTER_MODE=hash` 构建静态包，附加 `LICENSE`、`start.py`、`使用说明.txt`，生成 ZIP 与 `SHA256SUMS`，上传 Actions artifact，tag 触发时创建 GitHub Release。
 - **`deploy-pages.yml`**：推送 `v*` tag 或手动触发；以 `VITE_BASE=/shuangpin-next/` 构建，复制 `index.html` 为 `404.html` 作为 SPA 回退，用 `peaceiris/actions-gh-pages` 发布到 `gh-pages`。在线地址 <https://quxile.github.io/shuangpin-next/>。
 
