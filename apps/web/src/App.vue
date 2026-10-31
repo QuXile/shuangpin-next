@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /** 应用外壳：全局顶栏 + 路由视图 + 页脚；数据引导与全局快捷键在这里启动一次。 */
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { RouterView, useRoute, useRouter } from 'vue-router'
 import Topbar from '@/components/layout/Topbar.vue'
 import ShortcutHelp from '@/components/layout/ShortcutHelp.vue'
@@ -10,14 +10,22 @@ import { usePointerBlur } from '@/composables/usePointerBlur'
 import { useCourseStore } from '@/stores/course'
 import { useLayoutStore } from '@/stores/layout'
 import { useSettingsStore } from '@/stores/settings'
+import { useSoundStore } from '@/stores/sound'
 
 const route = useRoute()
 const router = useRouter()
 const settings = useSettingsStore()
+const sound = useSoundStore()
 const course = useCourseStore()
 const layout = useLayoutStore()
 useCourseBootstrap()
 usePointerBlur()
+
+onMounted(() => {
+  const unlockAudio = (): void => sound.unlock()
+  window.addEventListener('pointerdown', unlockAudio, { capture: true, once: true })
+  window.addEventListener('keydown', unlockAudio, { capture: true, once: true })
+})
 
 const isPractice = computed(() => route.path.startsWith('/practice') || route.path === '/training')
 
@@ -27,6 +35,12 @@ useGlobalKeys(() => [
     alt: true,
     allowInInput: true,
     run: () => settings.toggleTheme(),
+  },
+  {
+    key: 'b',
+    alt: true,
+    allowInInput: true,
+    run: () => sound.toggle(),
   },
   {
     key: 'k',

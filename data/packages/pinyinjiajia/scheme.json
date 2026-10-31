@@ -1,0 +1,272 @@
+{
+  "id": "pinyinjiajia",
+  "name": "拼音加加",
+  "type": "compositional",
+  "initials": {
+    "b": [
+      "b"
+    ],
+    "p": [
+      "p"
+    ],
+    "m": [
+      "m"
+    ],
+    "f": [
+      "f"
+    ],
+    "d": [
+      "d"
+    ],
+    "t": [
+      "t"
+    ],
+    "n": [
+      "n"
+    ],
+    "l": [
+      "l"
+    ],
+    "g": [
+      "g"
+    ],
+    "k": [
+      "k"
+    ],
+    "h": [
+      "h"
+    ],
+    "j": [
+      "j"
+    ],
+    "q": [
+      "q"
+    ],
+    "x": [
+      "x"
+    ],
+    "zh": [
+      "v"
+    ],
+    "ch": [
+      "u"
+    ],
+    "sh": [
+      "i"
+    ],
+    "r": [
+      "r"
+    ],
+    "z": [
+      "z"
+    ],
+    "c": [
+      "c"
+    ],
+    "s": [
+      "s"
+    ],
+    "y": [
+      "y"
+    ],
+    "w": [
+      "w"
+    ]
+  },
+  "finals": {
+    "a": [
+      "a"
+    ],
+    "o": [
+      "o"
+    ],
+    "e": [
+      "e"
+    ],
+    "i": [
+      "i"
+    ],
+    "u": [
+      "u"
+    ],
+    "v": [
+      "v"
+    ],
+    "ai": [
+      "s"
+    ],
+    "ei": [
+      "w"
+    ],
+    "ui": [
+      "v"
+    ],
+    "ao": [
+      "d"
+    ],
+    "ou": [
+      "p"
+    ],
+    "iu": [
+      "n"
+    ],
+    "ie": [
+      "m"
+    ],
+    "ve": [
+      "x"
+    ],
+    "an": [
+      "f"
+    ],
+    "en": [
+      "r"
+    ],
+    "in": [
+      "l"
+    ],
+    "un": [
+      "z"
+    ],
+    "ang": [
+      "g"
+    ],
+    "eng": [
+      "t"
+    ],
+    "ing": [
+      "q"
+    ],
+    "ong": [
+      "y"
+    ],
+    "ia": [
+      "b"
+    ],
+    "iao": [
+      "k"
+    ],
+    "ian": [
+      "j"
+    ],
+    "iang": [
+      "h"
+    ],
+    "iong": [
+      "y"
+    ],
+    "ua": [
+      "b"
+    ],
+    "uo": [
+      "o"
+    ],
+    "uai": [
+      "x"
+    ],
+    "uan": [
+      "c"
+    ],
+    "uang": [
+      "h"
+    ],
+    "ue": [
+      "x"
+    ]
+  },
+  "zeroInitial": {
+    "a": [
+      "aa"
+    ],
+    "ai": [
+      "as"
+    ],
+    "an": [
+      "af"
+    ],
+    "ang": [
+      "ag"
+    ],
+    "ao": [
+      "ad"
+    ],
+    "e": [
+      "ee"
+    ],
+    "ei": [
+      "ew"
+    ],
+    "en": [
+      "er"
+    ],
+    "eng": [
+      "et"
+    ],
+    "er": [
+      "eq"
+    ],
+    "o": [
+      "oo"
+    ],
+    "ou": [
+      "op"
+    ]
+  },
+  "overrides": {},
+  "umlautNote": "j/q/x/y 与 ü 相拼时：除 initials[声母]×finals[u] 的组合外，另接受 initials[声母]×finals[v] 的组合（对应参考实现 core.js 的 jqxy+ü 补充规则）；数据结构上仍把音节记为 u/ue/un/uan 归属，ü 语义由 UI 标注。",
+  "sameKeyGroups": [
+    {
+      "key": "b",
+      "finals": [
+        "ia",
+        "ua"
+      ]
+    },
+    {
+      "key": "h",
+      "finals": [
+        "iang",
+        "uang"
+      ]
+    },
+    {
+      "key": "o",
+      "finals": [
+        "o",
+        "uo"
+      ]
+    },
+    {
+      "key": "v",
+      "finals": [
+        "v",
+        "ui"
+      ]
+    },
+    {
+      "key": "x",
+      "finals": [
+        "ve",
+        "uai",
+        "ue"
+      ]
+    },
+    {
+      "key": "y",
+      "finals": [
+        "ong",
+        "iong"
+      ]
+    }
+  ],
+  "source": {
+    "repo": "BlueSky-07/Shuang",
+    "file": "src/scheme/pinyinjiajia.js",
+    "note": "从 https://github.com/BlueSky-07/Shuang（v6.0.0，commit 5a5e71e）提取键位事实；仅做数据比对与规范化，未复制其实现代码（原项目 GPL-3.0）。"
+  },
+  "notes": [
+    "声母改造：ch→u、sh→i、zh→v（注意与小鹤的 ch/sh 键相反）。",
+    "零声母为「字母+韵母键」式（如 ai→as），不是双字母音节全拼直出。",
+    "参考项目提示：iOS (>= 11.3) 自带方案。"
+  ]
+}

@@ -57,6 +57,9 @@
 }
 .hero-copy :slotted(.eyebrow) {
   margin: 0;
+  min-height: 28px;
+  display: flex;
+  align-items: flex-end;
 }
 .hero-copy :slotted(h1) {
   margin: 0;
@@ -79,9 +82,9 @@
 }
 .hero-visual :deep(.scheme-keycaps) {
   --cap: var(--hero-keycap-size);
-  min-height: 0;
+  --cap-gap: 6px;
   padding: 0;
-  gap: 6px;
+  gap: var(--cap-gap);
 }
 .hero-bottom {
   grid-column: 1 / -1;

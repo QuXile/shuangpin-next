@@ -1,6 +1,6 @@
 {
   "name": "shuangpin-next",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "license": "GPL-3.0-only",
   "description": "双拼 NEXT：面向全拼熟练者的结构化双拼学习应用",
@@ -22,6 +22,7 @@
     "data:curriculum": "node scripts/curriculum/build-curriculum.mjs",
     "data:pools": "node scripts/word-pipeline/build-pools.mjs",
     "data:sync": "node scripts/sync-data.mjs",
+    "data:packages": "node scripts/scheme-packages/build.mjs",
     "lint:ui": "node scripts/check-ui-conventions.mjs"
   },
   "devDependencies": {

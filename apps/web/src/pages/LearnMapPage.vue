@@ -12,17 +12,34 @@ import HeroPanel from '@/components/map/HeroPanel.vue'
 import LearningProgressCard from '@/components/map/LearningProgressCard.vue'
 import MapKeymapPanel from '@/components/map/MapKeymapPanel.vue'
 import StateCard from '@/components/common/StateCard.vue'
+import BackToTop from '@/components/common/BackToTop.vue'
 import { useCourseBootstrap } from '@/composables/useCourseBootstrap'
 import { useGlobalKeys, type KeyBinding } from '@/composables/useGlobalKeys'
 import { buildChapterViews } from '@/lib/lessonView'
 import { useCourseStore } from '@/stores/course'
 import { useProgressStore } from '@/stores/progress'
+import { useSoundStore } from '@/stores/sound'
 
 const router = useRouter()
 const course = useCourseStore()
 const progress = useProgressStore()
+const sound = useSoundStore()
 const { status, error, retry } = useCourseBootstrap()
 const busy = ref(false)
+const errorText = computed(() => {
+  if (!error.value) return ''
+  if (!import.meta.env.DEV) return '应用数据未能加载。请确认静态包完整，并使用正确的启动方式。'
+  return error.value
+})
+const errorHint = computed(() => {
+  if (import.meta.env.DEV) {
+    return '请确认 public/data 已由 node scripts/sync-data.mjs 生成，或执行 pnpm dev。'
+  }
+  if (typeof window !== 'undefined' && window.location.protocol === 'file:') {
+    return '检测到直接双击 index.html：浏览器不允许读取本地 JSON 数据。请解压后运行 python start.py，再访问终端中显示的地址。'
+  }
+  return '请通过静态服务器启动（推荐解压后运行 python start.py），不要直接双击 index.html；同时确认 data/ 目录完整。'
+})
 
 // ── 学习地图滚动位置：按方案记忆；返回地图/课程页时恢复，而不是每次置顶 ──
 const SCROLL_KEY = 'shuangpin-next:map-scroll'
@@ -117,6 +134,10 @@ const chapters = computed(() =>
 watch(
   [status, chapters],
   async () => {
+    if (status.value === 'ready' && !course.curriculum) {
+      restorePending.value = false
+      return
+    }
     if (scrollRestored || status.value !== 'ready' || chapters.value.length === 0) return
     scrollRestored = true
     await nextTick()
@@ -172,11 +193,29 @@ function pressHeroKey(key: string): void {
   heroPanelRef.value?.pressKey(key)
 }
 
+const schemeOptions = computed(() => course.allSchemeOptions)
+const primarySchemeIds = computed(() => course.schemeOptions.map((option) => option.id))
+
 async function changeScheme(id: string): Promise<void> {
   if (!id || id === course.schemeId) return
+  sound.playKey()
   busy.value = true
-  await course.setScheme(id)
-  busy.value = false
+  try {
+    await course.selectScheme(id)
+  } finally {
+    busy.value = false
+  }
+}
+
+function focusOtherScheme(): void {
+  const select = document.querySelector<HTMLSelectElement>('.scheme-more select')
+  if (!select) return
+  select.focus()
+  try {
+    select.showPicker()
+  } catch {
+    /* 浏览器不支持时仍可聚焦后用方向键选择 */
+  }
 }
 
 function focusLesson(step: 1 | -1): void {
@@ -202,6 +241,11 @@ const bindings = computed<KeyBinding[]>(() => {
       alt: true,
       run: () => heroPanelRef.value?.selectScheme(option.id),
     })),
+    {
+      key: '6',
+      alt: true,
+      run: () => focusOtherScheme(),
+    },
     {
       key: 'u',
       alt: true,
@@ -241,9 +285,9 @@ useGlobalKeys(bindings)
     <StateCard
       v-else-if="status === 'error'"
       title="数据加载失败"
-      :message="error"
+      :message="errorText"
     >
-      <p class="hint">请确认 public/data 已由 <code>node scripts/sync-data.mjs</code> 生成，或执行 <code>pnpm dev</code>。</p>
+      <p class="hint">{{ errorHint }}</p>
       <button class="btn btn--primary" type="button" @click="retry()">重试</button>
     </StateCard>
 
@@ -251,7 +295,8 @@ useGlobalKeys(bindings)
       <div class="hero-overview">
         <HeroPanel
           ref="heroPanelRef"
-          :scheme-options="course.schemeOptions"
+          :scheme-options="schemeOptions"
+          :primary-scheme-ids="primarySchemeIds"
           :scheme-id="course.schemeId"
           :scheme="course.scheme"
           :busy="busy"
@@ -263,6 +308,7 @@ useGlobalKeys(bindings)
           :current-title="currentTitle"
           :passed-count="course.passedCount"
           :lesson-total="course.lessons.length"
+          :empty-message="course.previewMode ? '当前方案是纯练习方案，暂无课程路线。' : undefined"
           @start="startCurrent"
         />
       </div>
@@ -271,6 +317,7 @@ useGlobalKeys(bindings)
         <MapKeymapPanel
           :rows="engine?.keyMap() ?? []"
           :special-initials="engine?.diff().learnInitials ?? []"
+          :zero-initials="course.scheme?.zeroInitial"
           :scheme-name="schemeName"
           @key="pressHeroKey"
         />
@@ -280,9 +327,10 @@ useGlobalKeys(bindings)
           :lesson-total="course.lessons.length"
           :chapter-count="course.curriculum?.chapters.length ?? 0"
           :completed-chapter-count="completedChapterCount"
-          :word-count="course.wordCount"
-          :can-clear="course.passedCount > 0"
+          :word-count="course.previewMode ? 0 : course.wordCount"
+          :can-clear="!course.previewMode && course.passedCount > 0"
           :unlocked-all="course.unlockedAll"
+          :preview="course.previewMode"
           @clear-progress="clearProgress"
           @toggle-unlock="course.toggleUnlockedAll()"
         />
@@ -297,7 +345,23 @@ useGlobalKeys(bindings)
             <kbd>Enter</kbd> 开始
           </span>
         </header>
-        <div class="chapters">
+        <div v-if="course.previewMode" class="route-placeholder">
+          <div class="route-placeholder-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <circle cx="12" cy="12" r="8" />
+              <path d="m6.6 6.6 10.8 10.8" />
+            </svg>
+          </div>
+          <div>
+            <strong>{{ course.scheme?.name ?? '当前方案' }} 暂无学习路线</strong>
+            <p>这是一个纯练习方案：没有课程、章节和学习进度。键位图仍按该方案完整显示，可前往练习场自由练习。</p>
+          </div>
+          <button class="btn btn--primary route-placeholder-action" type="button" @click="router.push('/training')">
+            去练习场
+            <kbd>Alt+P</kbd>
+          </button>
+        </div>
+        <div v-else class="chapters">
           <ChapterSection
             v-for="chapter in chapters"
             :key="chapter.id"
@@ -308,6 +372,7 @@ useGlobalKeys(bindings)
         </div>
       </section>
     </div>
+    <BackToTop />
   </div>
 </template>
 
@@ -357,6 +422,53 @@ useGlobalKeys(bindings)
 }
 .chapters {
   display: block;
+}
+.route-placeholder {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 28px 22px;
+  color: var(--ink-3);
+}
+.route-placeholder-mark {
+  flex: none;
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--brand-soft);
+  color: var(--brand);
+  font-size: 24px;
+  font-weight: 800;
+}
+.route-placeholder-mark svg {
+  width: 22px;
+  height: 22px;
+}
+.route-placeholder strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--ink);
+  font-size: 15px;
+}
+.route-placeholder p {
+  max-width: 620px;
+  line-height: 1.65;
+  font-size: var(--text-sm);
+}
+.route-placeholder-action {
+  flex: none;
+  margin-left: auto;
+}
+@media (max-width: 640px) {
+  .route-placeholder {
+    flex-wrap: wrap;
+    padding: 20px 16px;
+  }
+  .route-placeholder-action {
+    margin-left: 0;
+  }
 }
 .hint {
   margin-bottom: 8px;

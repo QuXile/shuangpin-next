@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * 词库只读审计。
- * 只统计数据，不修改 data/**；输出 Markdown 片段供 docs/WORDS.md 使用。
+ * 只统计数据，不修改 data/**；输出 Markdown 片段供 docs/DATA.md 使用。
  *
  * 用法：node scripts/word-pipeline/audit-words.mjs
  */

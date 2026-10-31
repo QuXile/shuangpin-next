@@ -10,7 +10,8 @@
  *  4) 词池：40 课、tone/freqRank/polyphone、索引 sources/版本重算、全局 freqRank 一致性；
  *  5) 版本链：curriculum → pools.sources；words/pools/curriculum 重算 hash；
  *  6) public/data 与 manifest：逐字节一致、版本一致；
- *  7) 文档/入口/截图存在。
+ *  7) 文档结构：新文档必存在、旧文档已删除、README 导航覆盖 docs 下全部 Markdown、
+ *     README 与 docs 下 Markdown 的图片/本地链接可解析、截图清单无未引用项。
  *
  * 用法：node scripts/validate-all.mjs   （退出码 0/1）
  */
@@ -27,6 +28,7 @@ import {
   CURRICULUM_DIR,
   CURRICULUM_INDEX_FILE,
   DATA_DIR,
+  PACKAGES_DIR,
   POOLS_DIR,
   POOLS_INDEX_FILE,
   PUBLIC_DATA_DIR,
@@ -754,7 +756,25 @@ function validatePublicSync(versions) {
   for (const file of publicFiles) {
     if (!manifestFiles.has(file)) failures.push(`public 存在未登记文件：${file}`)
   }
-  ok((manifest.files ?? []).length === 55, `manifest.files = ${(manifest.files ?? []).length}，期望 55（含 words.sample.json 与 training/bank.json）`)
+  const packageIndex = readDataJSON('data/packages/index.json')
+  ok(!!packageIndex, '缺少 data/packages/index.json')
+  if (packageIndex) {
+    const manifests = packageIndex.packages ?? []
+    ok(manifests.length === 19, `方案包数 = ${manifests.length}，期望 19`)
+    ok((packageIndex.courseSupported ?? []).length === 5, `方案包课程能力数 = ${(packageIndex.courseSupported ?? []).length}，期望 5`)
+    for (const item of manifests) {
+      const dir = path.join(PACKAGES_DIR, item.id)
+      ok(fs.existsSync(path.join(dir, 'scheme.json')), `方案包缺 scheme：${item.id}`)
+      ok(fs.existsSync(path.join(dir, 'manifest.json')), `方案包缺 manifest：${item.id}`)
+      if (item.capabilities?.course) {
+        ok(fs.existsSync(path.join(dir, 'curriculum.json')), `课程方案包缺 curriculum：${item.id}`)
+        ok(item.curriculum?.profile === 'standard-40', `课程方案 profile 异常：${item.id}`)
+      } else {
+        ok(item.curriculum === null, `practice-only 包不应带 curriculum：${item.id}`)
+      }
+    }
+  }
+  ok((manifest.files ?? []).length >= 55, `manifest.files = ${(manifest.files ?? []).length}，至少应包含基础 55 个文件`)
   notes.push(`同步：public/data ${manifestFiles.size} 文件与 data/ 逐字节一致；versions=${JSON.stringify(manifest.versions)}`)
 }
 
@@ -848,35 +868,81 @@ function validateTrainingBank(anchors) {
   return bank
 }
 
+const REQUIRED_DOCS = [
+  'docs/CONTRIBUTING.md',
+  'docs/USAGE.md',
+  'docs/LEARNING.md',
+  'docs/TRAINING.md',
+  'docs/SHORTCUTS.md',
+  'docs/UI.md',
+  'docs/SCREENSHOTS.md',
+  'docs/ARCHITECTURE.md',
+  'docs/DATA.md',
+  'docs/RELEASE.md',
+]
+
+/** 文档与截图引用的唯一来源：README 与 docs 下全部 Markdown。 */
+function documentationFiles() {
+  const docs = walkFiles(path.join(ROOT, 'docs'), '')
+    .filter((rel) => rel.endsWith('.md'))
+    .map((rel) => `docs/${rel}`)
+  return ['README.md', ...docs]
+}
+
 function validateDocsAndEntries() {
-  const required = [
-    'README.md',
-    'docs/ARCHITECTURE.md',
-    'apps/web/src/main.ts',
-    'packages/core/src/index.ts',
-  ]
-  for (const rel of required) ok(exists(path.join(ROOT, rel)), `缺少入口/文档：${rel}`)
-  const screenshots = [
-    'map-1440.png',
-    'map-unlocked.png',
-    'green-dark.png',
-    'tutorial-1440.png',
-    'intro-complete.png',
-    'live-speed.png',
-    'lesson-rating.png',
-    'review-order.png',
-    'zero-badges.png',
-    'word-practice.png',
-    'training-config.png',
-    'training-drill.png',
-    'training-article-config.png',
-    'training-article.png',
-    'training-article-done.png',
-  ]
-  for (const name of screenshots) ok(exists(path.join(ROOT, 'docs/assets/impl', name)), `缺少截图 docs/assets/impl/${name}`)
-  ok(!exists(path.join(ROOT, 'scripts/word-pipeline/selector.mjs')), 'selector.mjs 应已删除')
-  ok(!exists(path.join(ROOT, 'scripts/schemes/extract.mjs')), 'extract.mjs 应已删除')
-  notes.push('文档/入口/截图存在')
+  for (const rel of ['README.md', 'apps/web/src/main.ts', 'packages/core/src/index.ts', 'LICENSE']) {
+    ok(exists(path.join(ROOT, rel)), `缺少入口/文档：${rel}`)
+  }
+  for (const rel of REQUIRED_DOCS) ok(exists(path.join(ROOT, rel)), `缺少文档：${rel}`)
+  // 旧文档 / 旧脚本应已删除，避免与新版文档重复。
+  for (const rel of [
+    'docs/WORDS.md',
+    'scripts/word-pipeline/README.md',
+    'scripts/word-pipeline/selector.mjs',
+    'scripts/schemes/extract.mjs',
+  ]) {
+    ok(!exists(path.join(ROOT, rel)), `应已删除：${rel}`)
+  }
+
+  const docFiles = documentationFiles()
+  const referencedScreenshots = new Set()
+  for (const rel of docFiles) {
+    const text = fs.readFileSync(path.join(ROOT, rel), 'utf8')
+    // 文档内的 assets/impl 图片引用统一指向 docs/assets/impl/。
+    for (const match of text.matchAll(/assets\/impl\/([\w.-]+\.png)/g)) {
+      referencedScreenshots.add(match[1])
+    }
+    // 本地 Markdown 链接必须可解析（外链、纯锚点除外）。
+    for (const match of text.matchAll(/\]\(([^)\s]+)\)/g)) {
+      const link = match[1]
+      if (/^(?:https?:|mailto:|#)/.test(link)) continue
+      const target = link.split('#')[0]
+      if (!target) continue
+      const resolved = path.resolve(path.dirname(path.join(ROOT, rel)), target)
+      ok(exists(resolved), `${rel} 的链接目标不存在：${link}`)
+    }
+  }
+  for (const name of referencedScreenshots) {
+    ok(exists(path.join(ROOT, 'docs/assets/impl', name)), `缺少截图 docs/assets/impl/${name}`)
+  }
+  // 截图清单单一来源：目录中的每张截图都必须被文档引用。
+  const screenshotDir = path.join(ROOT, 'docs/assets/impl')
+  ok(exists(screenshotDir), '缺少截图目录 docs/assets/impl')
+  if (exists(screenshotDir)) {
+    for (const name of fs.readdirSync(screenshotDir)) {
+      if (name.endsWith('.png')) {
+        ok(referencedScreenshots.has(name), `截图未被文档引用：docs/assets/impl/${name}`)
+      }
+    }
+  }
+  // README 是文档导航的唯一入口：必须链接全部 docs/**/*.md。
+  const readme = fs.readFileSync(path.join(ROOT, 'README.md'), 'utf8')
+  for (const rel of docFiles.filter((file) => file !== 'README.md')) {
+    ok(readme.includes(`](${rel})`), `README 导航缺少文档链接：${rel}`)
+  }
+  notes.push(
+    `文档：${REQUIRED_DOCS.length + 1} 个 Markdown 入口、${referencedScreenshots.size} 张截图引用；README 导航覆盖 docs/**/*.md`,
+  )
 }
 
 // ── 入口 ────────────────────────────────────────────────────

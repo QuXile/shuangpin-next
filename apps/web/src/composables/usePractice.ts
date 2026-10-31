@@ -2,20 +2,19 @@
  * 练习页阶段状态机（页面级 composable）。
  *
  * 规则全部来自 core（lessonStages/lessonStageMinWords/stageGate/evaluateLesson/
- * hintTierFor(stage) / build* / sessionMetrics / applyKey extendWords / resumeSession）。
+ * hintTierFor(stage) / build* / sessionMetrics / applyKey / resumeSession）。
  *
  * 练习模型：
- * - 每阶段无限练习：批次生成器经 applyKey.extendWords 持续追加词卡；
+ * - 每阶段有限目标：完成目标词数后显示总结卡，不自动追加词卡；
  * - 每阶段独立 SessionState（Map 保存），离开/回来用 resumeSession 恢复计时；
  * - 阶段门槛由 stageGate 决定：普通阶段看最低字数，全遮挡严格阶段还要正确率/速度；
  * - 主按钮文案只由阶段位置决定：非最后「下一阶段」、最后「完成本课」；仅 enabled 变化；
- * - 点「完成本课」才 evaluateLesson + recordResult + goNext；达标后可继续无限练习。
+ * - 达标即自动记录本课通过；课程本身不提供无尽练习，需要时跳转练习场。
  */
-import { computed, onMounted, onScopeDispose, ref, shallowRef } from 'vue'
+import { computed, onMounted, onScopeDispose, ref, shallowRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   accuracyTiers,
-  appendSessionWords,
   buildSingleCharWords,
   buildTutorialWords,
   buildWordStageWords,
@@ -57,6 +56,7 @@ import {
   type LessonNote,
 } from '@/lib/lessonView'
 import { useCourseStore } from '@/stores/course'
+import { useSoundStore } from '@/stores/sound'
 import { useGlobalKeys, type KeyBinding } from './useGlobalKeys'
 import { useLiveCpm } from './useLiveCpm'
 
@@ -78,8 +78,8 @@ interface StageRuntime {
   keyErrors: ReadonlyMap<string, number>
   /** 达标粘滞：一旦 gate.met 过就不再撤销（含 alreadyPassed 课程） */
   cleared: boolean
-  /** 是否已选择「继续练习」进入无尽滚动（每阶段独立，重练重置） */
-  infinite: boolean
+  /** 最后一次考核是否已自动/手动记录，避免同一轮重复增加 attempts */
+  recorded?: boolean
 }
 
 export interface EndPromptKeyError {
@@ -121,6 +121,7 @@ export function usePractice() {
   const route = useRoute()
   const router = useRouter()
   const course = useCourseStore()
+  const sound = useSoundStore()
 
   const lessonId = computed(() => String(route.params.lessonId ?? ''))
   const lesson = computed<LessonDef | undefined>(() => course.getLesson(lessonId.value))
@@ -224,7 +225,7 @@ export function usePractice() {
     const runtime = currentRuntime.value
     const value = metrics.value
     const currentLesson = lesson.value
-    if (!runtime || stage.value === 'tutorial' || runtime.infinite || !currentLesson) return null
+    if (!runtime || stage.value === 'tutorial' || !currentLesson) return null
     if (runtime.session.phase !== 'finished' || !value) return null
 
     const words = value.completedWords
@@ -342,7 +343,7 @@ export function usePractice() {
   }
   let pressTimer: number | undefined
 
-  // ── 批次生成器（无限练习） ──────────────────────────────────
+  // ── 批次生成器 ──────────────────────────────────────────────
 
   function stageMinWords(target: PracticeStage): number {
     const currentLesson = lesson.value
@@ -430,7 +431,6 @@ export function usePractice() {
       cellErrors: new Map(),
       keyErrors: new Map(),
       cleared: alreadyPassed.value || stageWasCleared(target),
-      infinite: false,
     })
     liveCpm.reset()
   }
@@ -485,7 +485,11 @@ export function usePractice() {
     // 只要事件在页面被处理（练习/tutorial/锁定/完成态），键位图都显示按下反馈
     showPressed(raw)
     const currentStage = stage.value
-    if (currentStage === 'tutorial') return
+    if (currentStage === 'tutorial') {
+      // 教学页没有判题，但键位图仍会响应按键；保持与练习阶段一致的敲击声。
+      sound.playKey()
+      return
+    }
     const runtime = runtimes.value.get(currentStage)
     const currentLesson = lesson.value
     if (
@@ -494,13 +498,17 @@ export function usePractice() {
       runtime.session.phase === 'finished' ||
       status.value !== 'ready'
     ) {
+      // 完成总结、锁定或异常阶段仍应给出按键反馈，不能只有退格有声音。
+      sound.playKey()
       return
     }
     const state = runtime.session
-    const { state: nextState, tracker } = applySessionKey(state, raw, trackerOf(runtime), {
+    const { state: nextState, tracker, feedback } = applySessionKey(state, raw, trackerOf(runtime), {
       at: performance.now(),
-      extendWords: runtime.infinite ? () => makeBatch(currentStage) : undefined,
     })
+    if (feedback.kind === 'wrong') sound.playError()
+    else if (feedback.kind === 'word-complete') sound.playComplete()
+    else sound.playKey()
     const nextGate = stageGate(
       currentLesson,
       currentStage,
@@ -516,12 +524,12 @@ export function usePractice() {
       cellErrors: tracker.cellErrors,
       keyErrors: tracker.keyErrors,
       cleared: runtime.cleared || nextGate.met,
-      infinite: runtime.infinite,
     })
   }
 
   function handleBackspace(): void {
     showPressed('backspace')
+    sound.playKey()
     const runtime = currentRuntime.value
     if (!runtime || runtime.session.phase === 'finished') return
     const { state, tracker } = backspaceSession(runtime.session, trackerOf(runtime))
@@ -539,6 +547,7 @@ export function usePractice() {
   function clearCurrentInput(): void {
     const currentStage = stage.value
     if (currentStage === 'tutorial') return
+    sound.playKey()
     const runtime = runtimes.value.get(currentStage)
     if (!runtime || runtime.session.phase === 'finished') return
     const { state, tracker } = clearSessionInput(runtime.session, trackerOf(runtime))
@@ -554,26 +563,14 @@ export function usePractice() {
 
   // ── 主按钮：文案只由阶段位置决定，仅 enabled 变化 ────────────
 
-  /** 提示行「继续练习」：追加同目标词数的一批，开启无尽滚动 */
-  function continuePractice(): void {
-    const currentStage = stage.value
-    if (currentStage === 'tutorial') return
-    const runtime = runtimes.value.get(currentStage)
-    if (!runtime || runtime.infinite || runtime.session.phase !== 'finished') return
-    const words = makeBatch(currentStage)
-    if (words.length === 0) return
-    setRuntime(currentStage, {
-      ...runtime,
-      session: appendSessionWords(runtime.session, words),
-      infinite: true,
-    })
-    liveCpm.reset()
-  }
-
-  function completeLesson(): void {
+  /** 最后一次考核达到门槛即记录成绩，不再依赖用户在结束卡片上点「完成本课」。 */
+  function recordFinalAttempt(): void {
     const currentLesson = lesson.value
     const runtime = currentRuntime.value
-    if (!currentLesson || !runtime || !isLastStage.value) return
+    if (!currentLesson || !runtime || runtime.recorded || !isLastStage.value) return
+    // 只按「本次尝试是否达标」记录：已通过课程会继承 gateReady，不能拿它当落库依据，
+    // 否则未达标的尝试会被记录（evaluateLesson 与 stageGate 的 accuracy 口径不同）。
+    if (!gate.value?.met) return
     const value = sessionMetrics(runtime.session, performance.now())
     const result = evaluateLesson(currentLesson, {
       accuracy: value.accuracy,
@@ -581,8 +578,52 @@ export function usePractice() {
       revealed: runtime.revealed.size > 0,
     })
     course.recordResult(currentLesson.id, result, value.accuracy)
+    setRuntime(stage.value as PracticeStage, { ...runtime, recorded: true })
+  }
+
+  function completeLesson(): void {
+    if (!lesson.value || !currentRuntime.value || !isLastStage.value) return
+    // 门槛未达标时不落库（按钮与 Enter 已按 gateReady 禁用，这里兜底程序调用）。
+    if (!gateReady.value) return
+    recordFinalAttempt()
     goNext()
   }
+
+  /** 结束卡「进入无尽练习」：只带入本课范围与当前阶段隐藏设置，不自动开始。 */
+  function goEndlessPractice(): void {
+    const current = lesson.value
+    if (!current || stage.value === 'tutorial') return
+    try {
+      sessionStorage.setItem(
+        'shuangpin-next:training-preset',
+        JSON.stringify({ from: current.id, stage: stage.value, scheme: course.schemeId }),
+      )
+    } catch {
+      /* 隐私模式下仍然跳转，训练场使用当前/默认设置 */
+    }
+    void router.push('/training')
+  }
+
+  // 考核门槛一旦满足就自动记录；“最后一次评分覆盖前一次”由 progress store
+  // 的 passed / stars / bestAccuracy 取历史最优保证。
+  watch(
+    () => [stage.value, isLastStage.value, gate.value?.met === true, currentRuntime.value?.recorded === true] as const,
+    () => {
+      if (stage.value === 'exam' && isLastStage.value && gate.value?.met) recordFinalAttempt()
+    },
+    { flush: 'post' },
+  )
+
+  // 阶段总结卡出现时播放完成音；未达标不播。
+  // 每次尝试只播一次：record 落库会触发 endPrompt 重算，按已完成的会话去重。
+  const completionSounded = new WeakSet<SessionState>()
+  watch(endPrompt, (prompt) => {
+    if (!prompt?.met) return
+    const state = session.value
+    if (!state || state.phase !== 'finished' || completionSounded.has(state)) return
+    completionSounded.add(state)
+    sound.playComplete()
+  })
 
   const primary = computed<PracticeAction | null>(() => {
     if (status.value !== 'ready' || !lesson.value || isIntro.value) return null
@@ -605,6 +646,7 @@ export function usePractice() {
     introRecorded.value = true
     const result = evaluateLesson(lesson.value, { accuracy: 1, cpm: 0, revealed: false })
     course.recordResult(lesson.value.id, result, 1)
+    // 完成音由 IntroLesson 在试打通过的同一按键里播放，这里不再重播，避免双响。
   }
 
   // ── 键盘快捷键（唯一入口） ─────────────────────────────────
@@ -620,7 +662,14 @@ export function usePractice() {
     ]
     if (isIntro.value || status.value !== 'ready') return list
     list.push(
-      { letter: true, run: (event) => handleKey(event.key) },
+      {
+        letter: true,
+        run: (event) => {
+          // 教学页没有判题，但物理按键也必须稳定发声，不能依赖深层分支。
+          if (stage.value === 'tutorial') sound.playKey()
+          handleKey(event.key)
+        },
+      },
       { key: 'Backspace', run: () => handleBackspace() },
       { key: ' ', when: () => hasInputError.value, run: () => clearCurrentInput() },
       {
@@ -643,7 +692,7 @@ export function usePractice() {
         key: 'Enter',
         alt: true,
         when: () => Boolean(endPrompt.value),
-        run: () => continuePractice(),
+        run: () => goEndlessPractice(),
       },
       {
         key: 'ArrowLeft',
@@ -704,6 +753,7 @@ export function usePractice() {
     errorMessage,
     lesson,
     lessonId,
+    alreadyPassed,
     lessonOrder,
     isIntro,
     stage,
@@ -742,7 +792,7 @@ export function usePractice() {
     advanceStage,
     retryStage,
     previousStage,
-    continuePractice,
+    goEndlessPractice,
     goNext,
     showPressed,
     handleKey,

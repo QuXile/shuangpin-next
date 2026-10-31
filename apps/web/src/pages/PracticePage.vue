@@ -14,14 +14,17 @@ import SessionBar from '@/components/layout/SessionBar.vue'
 import TutorialStage from '@/components/practice/TutorialStage.vue'
 import { usePractice } from '@/composables/usePractice'
 import { useLayoutStore } from '@/stores/layout'
+import { useSoundStore } from '@/stores/sound'
 const router = useRouter()
 const practice = usePractice()
 const layout = useLayoutStore()
+const sound = useSoundStore()
 const {
   status,
   errorMessage,
   lesson,
   lessonOrder,
+  alreadyPassed,
   isIntro,
   stage,
   session,
@@ -53,7 +56,7 @@ const {
   primary,
   retryStage,
   previousStage,
-  continuePractice,
+  goEndlessPractice,
   handleBackspace,
   onIntroFinished,
 } = practice
@@ -87,7 +90,11 @@ function onKeymapKey(letter: string): void {
     introRef.value?.pressKey(letter)
     return
   }
-  if (stage.value !== 'tutorial') handleKey(letter)
+  if (stage.value === 'tutorial') {
+    sound.playKey()
+    return
+  }
+  handleKey(letter)
 }
 function onExit(): void {
   void router.push('/')
@@ -122,6 +129,7 @@ function onDockBackspace(): void {
           ref="introRef"
           :scheme="scheme"
           :words="introWords"
+          :passed="alreadyPassed"
           @finished="onIntroFinished"
           @next="goNext"
           @key-pressed="showPressed"
@@ -209,7 +217,7 @@ function onDockBackspace(): void {
           :revealed="revealed"
           :prompt="endPrompt"
           @primary="primary?.run()"
-          @continue="continuePractice"
+          @endless="goEndlessPractice"
           @restart="retryStage"
         />
       </div>
@@ -218,8 +226,10 @@ function onDockBackspace(): void {
     <DockReveal :open="showDock && layout.keyboardVisible">
       <KeyboardDock
         :rows="keyMapRows"
+        :scheme-name="scheme?.name"
         :highlight-atom-ids="stage === 'tutorial' || stage === 'single' ? highlightAtomIds : []"
         :special-initials="specialInitials"
+        :zero-initials="scheme?.zeroInitial"
         :pressed="pressedKeys"
         :conceal="conceal"
         @key="onKeymapKey"

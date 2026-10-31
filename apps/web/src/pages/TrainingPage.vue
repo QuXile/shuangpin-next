@@ -11,6 +11,7 @@ import {
   createSchemeEngine,
   filterTrainingEntries,
   freeTrainingAtoms,
+  parseAtomId,
   parseArticleText,
   sessionMetrics,
   type AtomId,
@@ -34,6 +35,7 @@ import SetupGroup from '@/components/training/SetupGroup.vue'
 import CommonCapsule from '@/components/training/CommonCapsule.vue'
 import { useCourseStore } from '@/stores/course'
 import { useLayoutStore } from '@/stores/layout'
+import { useSoundStore } from '@/stores/sound'
 import { useGlobalKeys, type KeyBinding } from '@/composables/useGlobalKeys'
 import { useTrainingSession } from '@/composables/useTrainingSession'
 import { loadCommonWords, loadTrainingBank, type CommonWordsFile, type TrainingBank } from '@/lib/data'
@@ -63,6 +65,7 @@ type SessionKind = 'drill' | 'article' | null
 
 const course = useCourseStore()
 const layout = useLayoutStore()
+const sound = useSoundStore()
 const trainer = useTrainingSession()
 const {
   session,
@@ -95,6 +98,7 @@ const selectedZeroFinals = ref<ReadonlySet<string>>(new Set())
 const schemeId = ref('')
 let hydratedScheme = ''
 let readyToPersist = false
+let coursePresetApplied = false
 // 隐藏映射选择（出现/隐藏双选栏）；必须在下方 immediate watch 之前初始化
 const hiddenInitials = ref<ReadonlySet<string>>(new Set())
 const hiddenFinals = ref<ReadonlySet<string>>(new Set())
@@ -103,13 +107,54 @@ const articleHiddenInitials = ref<ReadonlySet<string>>(new Set())
 const articleHiddenFinals = ref<ReadonlySet<string>>(new Set())
 const articleHiddenZeroFinals = ref<ReadonlySet<string>>(new Set())
 
-const schemeOptions = computed(() => course.schemeOptions)
+const schemeOptions = computed(() => course.allSchemeOptions)
+const primarySchemeIds = computed(() => course.schemeOptions.map((option) => option.id))
+const primarySchemeOptions = computed(() => course.schemeOptions)
+const schemeBusy = ref(false)
 const heroKeycapsRef = ref<InstanceType<typeof SchemeKeycaps> | null>(null)
 
-function chooseScheme(id: string): void {
+/** 方案切换/预览失败的反馈：保留当前可用方案，提供重试，不静默。 */
+const schemeError = ref('')
+const schemeRetryId = ref('')
+const failedSchemeName = computed(
+  () =>
+    course.allSchemeOptions.find((option) => option.id === schemeRetryId.value)?.name ??
+    schemeRetryId.value,
+)
+/** 课程数据首次加载中 / 加载失败（尚未有可用方案时）。 */
+const courseLoading = computed(
+  () => !course.scheme && (course.status === 'loading' || course.status === 'idle'),
+)
+const courseFailed = computed(() => !course.scheme && course.status === 'error')
+
+async function chooseScheme(id: string): Promise<void> {
   // 与课程页方案按钮一致：重复点击也重新散落一次。
   heroKeycapsRef.value?.refreshKeycaps()
-  if (id !== course.schemeId) course.setScheme(id)
+  if (id === course.schemeId || schemeBusy.value) return
+  sound.playKey()
+  schemeBusy.value = true
+  schemeError.value = ''
+  try {
+    await course.selectScheme(id)
+  } finally {
+    schemeBusy.value = false
+  }
+  if (course.status === 'error') {
+    // 课程方案 / 纯练习方案加载失败：记录失败方案并提示重试（当前方案仍可用）。
+    schemeError.value = course.error || '方案加载失败'
+    schemeRetryId.value = id
+  }
+}
+
+function retryScheme(): void {
+  const id = schemeRetryId.value
+  if (!id || schemeBusy.value) return
+  schemeError.value = ''
+  void chooseScheme(id)
+}
+
+async function retryCourse(): Promise<void> {
+  await course.init()
 }
 
 const atomOptions = computed(() => (course.scheme ? trainingAtomOptions(course.scheme) : null))
@@ -147,7 +192,7 @@ const selectedSelectableZeroCount = computed(
 
 type CommonAtomKind = CommonAtomEntry['kind']
 type CommonScope = 'appear' | 'drill' | 'article'
-type CommonGroup = 'initial' | 'final'
+type CommonGroup = 'initial' | 'final' | 'zero'
 
 const commonAtomEntries = computed<CommonAtomEntry[]>(() => [
   ...commonAtoms.value.initials.map((value) => ({ kind: 'initial' as const, value })),
@@ -167,7 +212,7 @@ function commonSetOf(scope: CommonScope, kind: CommonAtomKind): ReadonlySet<stri
 
 function commonEntriesFor(scope: CommonScope, group: CommonGroup): CommonAtomEntry[] {
   const entries = commonAtomEntries.value.filter((entry) =>
-    group === 'initial' ? entry.kind !== 'final' : entry.kind === 'final',
+    group === 'zero' ? entry.kind === 'zero' : entry.kind === group,
   )
   if (scope !== 'drill') return entries
   return entries.filter((entry) => commonSetOf('appear', entry.kind).has(entry.value))
@@ -253,6 +298,104 @@ function applyTrainingConfig(config: TrainingConfigSnapshot): void {
   )
 }
 
+/** 从课程总结卡跳转过来的无尽练习：把本课 focus 与当前阶段的遮挡档位映射成训练设置。 */
+function applyCoursePreset(): void {
+  if (coursePresetApplied || course.previewMode) return
+  const presetKey = 'shuangpin-next:training-preset'
+  let raw: string | null = null
+  try {
+    raw = sessionStorage.getItem(presetKey)
+    sessionStorage.removeItem(presetKey)
+  } catch {
+    return
+  }
+  if (!raw) return
+  let preset: { from?: unknown; stage?: unknown; scheme?: unknown }
+  try {
+    preset = JSON.parse(raw) as { from?: unknown; stage?: unknown; scheme?: unknown }
+  } catch {
+    return
+  }
+  const from = typeof preset.from === 'string' ? preset.from : ''
+  const stage = typeof preset.stage === 'string' ? preset.stage : ''
+  const presetScheme = typeof preset.scheme === 'string' ? preset.scheme : ''
+  if (!from || !['single', 'word', 'exam'].includes(stage)) return
+  if (presetScheme && presetScheme !== course.schemeId) {
+    // 极端情况下训练页仍停留在另一个方案：先把方案切回来，再重新读取一次性预设。
+    try {
+      sessionStorage.setItem(presetKey, raw)
+    } catch {
+      return
+    }
+    void course.selectScheme(presetScheme)
+    return
+  }
+  const lesson = course.getLesson(from)
+  const options = atomOptions.value
+  if (!lesson || !options) return
+  coursePresetApplied = true
+
+  const focusInitials = new Set<string>()
+  const focusFinals = new Set<string>()
+  const focusZeros = new Set<string>()
+  const learnedInitials = new Set<string>()
+  const learnedFinals = new Set<string>()
+  const learnedZeros = new Set<string>()
+  const currentIndex = course.lessons.findIndex((item) => item.id === lesson.id)
+  const lastIndex = currentIndex >= 0 ? currentIndex : course.lessons.length - 1
+  for (let index = 0; index <= lastIndex; index += 1) {
+    const item = course.lessons[index]
+    if (!item) continue
+    for (const atomId of item.focusAtoms) {
+      const parsed = parseAtomId(atomId)
+      if (!parsed) continue
+      if (parsed.type === 'initial') learnedInitials.add(parsed.key)
+      else if (parsed.type === 'final') learnedFinals.add(parsed.key)
+      else learnedZeros.add(parsed.key)
+    }
+  }
+  // 当前课的 focus 单独保存，用于 word 阶段只隐藏本课新学的映射。
+  for (const atomId of lesson.focusAtoms) {
+    const parsed = parseAtomId(atomId)
+    if (!parsed) continue
+    if (parsed.type === 'initial') focusInitials.add(parsed.key)
+    else if (parsed.type === 'final') focusFinals.add(parsed.key)
+    else focusZeros.add(parsed.key)
+  }
+
+  // 全拼沿用 + 已学课程 focus 构成本课已学范围；零声母只取课程真正教过的部分，
+  // 避免 L2.1 这种早期课程提前带入未学的零声母。
+  const nextInitials = new Set([...commonAtoms.value.initials, ...learnedInitials])
+  const nextFinals = new Set([...commonAtoms.value.finals, ...learnedFinals])
+  const nextZeros = new Set(learnedZeros)
+
+  tab.value = 'drill'
+  drillMode.value = stage === 'single' ? 'char' : 'word'
+  selectedInitials.value = new Set([...nextInitials].filter((item) => options.initials.includes(item)))
+  selectedFinals.value = new Set([...nextFinals].filter((item) => options.finals.includes(item)))
+  selectedZeroFinals.value = new Set([...nextZeros].filter((item) => options.zeroFinals.includes(item)))
+
+  const hideAll = stage === 'exam'
+  const hideFocus = stage === 'word' || hideAll
+  hiddenInitials.value = new Set(
+    [...(hideAll ? selectedInitials.value : hideFocus ? focusInitials : new Set<string>())].filter(
+      (item) => selectedInitials.value.has(item),
+    ),
+  )
+  hiddenFinals.value = new Set(
+    [...(hideAll ? selectedFinals.value : hideFocus ? focusFinals : new Set<string>())].filter(
+      (item) => selectedFinals.value.has(item),
+    ),
+  )
+  hiddenZeroFinals.value = new Set(
+    [...(hideAll ? selectedZeroFinals.value : hideFocus ? focusZeros : new Set<string>())].filter(
+      (item) => selectedZeroFinals.value.has(item),
+    ),
+  )
+
+  // 一次性预设从 sessionStorage 取出后已删除，刷新不会再次覆盖用户后续修改。
+}
+
 watch(
   [() => course.schemeId, atomOptions],
   ([id, options]) => {
@@ -271,13 +414,16 @@ watch(
     const config = readTrainingConfig(window.localStorage, id)
     if (config) applyTrainingConfig(config)
     else selectAll()
+    applyCoursePreset()
     readyToPersist = true
   },
   { immediate: true, flush: 'post' },
 )
 
-onMounted(async () => {
-  await course.init()
+/** 加载练习字库（失败可重试；数据层不缓存失败结果）。 */
+async function loadBank(): Promise<void> {
+  bankStatus.value = 'loading'
+  bankError.value = ''
   try {
     const [chars, words] = await Promise.all([loadTrainingBank(), loadCommonWords()])
     bank.value = chars
@@ -287,6 +433,11 @@ onMounted(async () => {
     bankStatus.value = 'error'
     bankError.value = cause instanceof Error ? cause.message : String(cause)
   }
+}
+
+onMounted(async () => {
+  await course.init()
+  await loadBank()
 })
 
 watch(
@@ -363,22 +514,20 @@ function toggleZeroFinal(value: string): void {
   else next.add(value)
   selectedZeroFinals.value = next
 }
-type Group = 'initial' | 'final'
+type Group = 'initial' | 'final' | 'zero'
 function selectGroup(group: Group): void {
   if (group === 'initial') {
     selectedInitials.value = new Set([...commonInitialSet.value, ...selectableInitials.value])
-    selectedZeroFinals.value = new Set([...commonZeroSet.value, ...selectableZeroFinals.value])
-  } else {
+  } else if (group === 'final') {
     selectedFinals.value = new Set([...commonFinalSet.value, ...selectableFinals.value])
+  } else {
+    selectedZeroFinals.value = new Set([...commonZeroSet.value, ...selectableZeroFinals.value])
   }
 }
 function clearGroup(group: Group): void {
-  if (group === 'initial') {
-    selectedInitials.value = new Set()
-    selectedZeroFinals.value = new Set()
-  } else {
-    selectedFinals.value = new Set()
-  }
+  if (group === 'initial') selectedInitials.value = new Set()
+  else if (group === 'final') selectedFinals.value = new Set()
+  else selectedZeroFinals.value = new Set()
 }
 
 
@@ -417,7 +566,12 @@ function selectLearnedAtoms(): void {
 }
 
 function toggleAppearAll(group: Group): void {
-  const all = group === 'initial' ? appearInitialAll.value : appearFinalAll.value
+  const all =
+    group === 'initial'
+      ? appearInitialAll.value
+      : group === 'final'
+        ? appearFinalAll.value
+        : appearZeroAll.value
   if (all) clearGroup(group)
   else selectGroup(group)
 }
@@ -427,10 +581,16 @@ function commonCapsuleCount(scope: CommonScope, group: CommonGroup): number {
 }
 
 const appearInitialGroup = computed(() => ({
-  specificCount: selectableInitials.value.length + selectableZeroFinals.value.length,
-  specificSelected: selectedSelectableInitialCount.value + selectedSelectableZeroCount.value,
+  specificCount: selectableInitials.value.length,
+  specificSelected: selectedSelectableInitialCount.value,
   hasCapsule: commonCapsuleCount('appear', 'initial') > 0,
   capsuleSelected: commonAllChecked('appear', 'initial'),
+}))
+const appearZeroGroup = computed(() => ({
+  specificCount: selectableZeroFinals.value.length,
+  specificSelected: selectedSelectableZeroCount.value,
+  hasCapsule: commonCapsuleCount('appear', 'zero') > 0,
+  capsuleSelected: commonAllChecked('appear', 'zero'),
 }))
 const appearFinalGroup = computed(() => ({
   specificCount: selectableFinals.value.length,
@@ -444,8 +604,12 @@ const appearFinalTotalCount = computed(() => groupTotal(appearFinalGroup.value))
 const appearFinalSelectedCount = computed(() => groupSelected(appearFinalGroup.value))
 const appearInitialAll = computed(() => groupAllChecked(appearInitialGroup.value))
 const appearFinalAll = computed(() => groupAllChecked(appearFinalGroup.value))
+const appearZeroAll = computed(() => groupAllChecked(appearZeroGroup.value))
 const appearInitialPartial = computed(() => groupIndeterminate(appearInitialGroup.value))
 const appearFinalPartial = computed(() => groupIndeterminate(appearFinalGroup.value))
+const appearZeroPartial = computed(() => groupIndeterminate(appearZeroGroup.value))
+const appearZeroTotalCount = computed(() => groupTotal(appearZeroGroup.value))
+const appearZeroSelectedCount = computed(() => groupSelected(appearZeroGroup.value))
 
 // ── 练习时隐藏映射（出现 / 隐藏双选栏） ──────────────────────
 
@@ -526,7 +690,11 @@ function hiddenCandidatesOf(scope: HiddenScope): {
 
 function hiddenGroupCandidates(scope: HiddenScope, group: Group): readonly string[] {
   const candidates = hiddenCandidatesOf(scope)
-  return group === 'initial' ? candidates.initials : candidates.finals
+  return group === 'initial'
+    ? candidates.initials
+    : group === 'final'
+      ? candidates.finals
+      : candidates.zeroFinals
 }
 
 /** 隐藏组把「全拼沿用」胶囊也算作一个可全选项目。 */
@@ -539,19 +707,25 @@ function hiddenGroupState(scope: HiddenScope, group: Group): {
   const candidates = hiddenCandidatesOf(scope)
   if (group === 'initial') {
     return {
-      specificCount: candidates.initials.length + candidates.zeroFinals.length,
-      specificSelected:
-        candidates.initials.filter((item) => hiddenInitialsOf(scope).value.has(item)).length +
-        candidates.zeroFinals.filter((item) => hiddenZeroFinalsOf(scope).value.has(item)).length,
+      specificCount: candidates.initials.length,
+      specificSelected: candidates.initials.filter((item) => hiddenInitialsOf(scope).value.has(item)).length,
       hasCapsule: commonCapsuleCount(scope, 'initial') > 0,
       capsuleSelected: commonAllChecked(scope, 'initial'),
     }
   }
+  if (group === 'final') {
+    return {
+      specificCount: candidates.finals.length,
+      specificSelected: candidates.finals.filter((item) => hiddenFinalsOf(scope).value.has(item)).length,
+      hasCapsule: commonCapsuleCount(scope, 'final') > 0,
+      capsuleSelected: commonAllChecked(scope, 'final'),
+    }
+  }
   return {
-    specificCount: candidates.finals.length,
-    specificSelected: candidates.finals.filter((item) => hiddenFinalsOf(scope).value.has(item)).length,
-    hasCapsule: commonCapsuleCount(scope, 'final') > 0,
-    capsuleSelected: commonAllChecked(scope, 'final'),
+    specificCount: candidates.zeroFinals.length,
+    specificSelected: candidates.zeroFinals.filter((item) => hiddenZeroFinalsOf(scope).value.has(item)).length,
+    hasCapsule: commonCapsuleCount(scope, 'zero') > 0,
+    capsuleSelected: commonAllChecked(scope, 'zero'),
   }
 }
 
@@ -580,24 +754,33 @@ function toggleHiddenAll(scope: HiddenScope, group: Group): void {
   else selectHiddenGroup(scope, group)
 }
 
-/** 隐藏栏同样按组全选：普通键位 + 全拼沿用胶囊一起处理。 */
-function selectHiddenGroup(scope: HiddenScope, group: Group): void {
-  const target = group === 'initial' ? hiddenInitialsOf(scope) : hiddenFinalsOf(scope)
-  target.value = new Set(hiddenGroupCandidates(scope, group))
-  if (group === 'initial') {
-    hiddenZeroFinalsOf(scope).value = new Set(hiddenCandidatesOf(scope).zeroFinals)
-  }
+/** 隐藏组按组选中/清除：普通候选与「全拼沿用」胶囊对应的公共原子一起处理，避免全不选后胶囊仍选中。 */
+function applyHiddenGroup(scope: HiddenScope, group: Group, selected: boolean): void {
+  const target =
+    group === 'initial'
+      ? hiddenInitialsOf(scope)
+      : group === 'final'
+        ? hiddenFinalsOf(scope)
+        : hiddenZeroFinalsOf(scope)
+  target.value = selected ? new Set(hiddenGroupCandidates(scope, group)) : new Set()
   for (const entry of commonEntriesFor(scope, group)) {
-    const next = new Set(commonSetOf(scope, entry.kind))
-    next.add(entry.value)
+    const current = commonSetOf(scope, entry.kind)
+    const has = current.has(entry.value)
+    if (selected === has) continue
+    const next = new Set(current)
+    if (selected) next.add(entry.value)
+    else next.delete(entry.value)
     writeCommonSet(scope, entry.kind, next)
   }
 }
 
+/** 隐藏栏同样按组全选：普通键位 + 全拼沿用胶囊一起处理。 */
+function selectHiddenGroup(scope: HiddenScope, group: Group): void {
+  applyHiddenGroup(scope, group, true)
+}
+
 function clearHiddenGroup(scope: HiddenScope, group: Group): void {
-  const target = group === 'initial' ? hiddenInitialsOf(scope) : hiddenFinalsOf(scope)
-  target.value = new Set()
-  if (group === 'initial') hiddenZeroFinalsOf(scope).value = new Set()
+  applyHiddenGroup(scope, group, false)
 }
 
 
@@ -697,6 +880,7 @@ function startDrill(): void {
 }
 
 const keyMapRows = computed(() => (engine.value ? engine.value.keyMap() : []))
+const specialInitials = computed(() => engine.value?.diff().learnInitials ?? [])
 const sessionTitle = computed(() =>
   kind.value === 'article' ? '文章练习' : `专项练习 · ${drillMode.value === 'char' ? '单字' : '词语'}`,
 )
@@ -736,15 +920,20 @@ function restartSession(): void {
 function onLetter(raw: string): void {
   if (!playing.value) return
   showPressed(raw)
-  apply(raw)
+  const feedback = apply(raw)
+  if (feedback?.kind === 'wrong') sound.playError()
+  else if (feedback?.kind === 'word-complete') sound.playComplete()
+  else sound.playKey()
 }
 function onBackspace(): void {
   if (!playing.value) return
   showPressed('backspace')
+  sound.playKey()
   sessionBackspace()
 }
 function onClearInput(): void {
   if (!playing.value) return
+  sound.playKey()
   clearInput()
 }
 function onDockKey(letter: string): void {
@@ -773,6 +962,10 @@ const articleDone = computed(() => {
   if (kind.value !== 'article') return false
   return session.value?.phase === 'finished'
 })
+watch(articleDone, (done) => {
+  if (done) sound.playComplete()
+})
+
 const articleSummary = computed(() => {
   const state = session.value
   if (kind.value !== 'article' || !state) return null
@@ -871,6 +1064,17 @@ function isConfigInteractiveTarget(target: EventTarget | null): boolean {
   )
 }
 
+function focusOtherScheme(): void {
+  const select = document.querySelector<HTMLSelectElement>('.scheme-more select')
+  if (!select) return
+  select.focus()
+  try {
+    select.showPicker()
+  } catch {
+    /* 部分浏览器不支持 showPicker，聚焦后仍可用方向键/回车 */
+  }
+}
+
 const bindings = computed<KeyBinding[]>(() => {
   if (!playing.value) {
     return [
@@ -902,11 +1106,16 @@ const bindings = computed<KeyBinding[]>(() => {
           drillMode.value = drillMode.value === 'char' ? 'word' : 'char'
         },
       },
-      ...schemeOptions.value.map((option, index) => ({
+      ...primarySchemeOptions.value.map((option, index) => ({
         key: String(index + 1),
         alt: true,
         run: () => chooseScheme(option.id),
       })),
+      {
+        key: '6',
+        alt: true,
+        run: () => focusOtherScheme(),
+      },
     ]
   }
   return [
@@ -950,13 +1159,16 @@ onScopeDispose(() => {
               :scheme="course.scheme"
               text="练习场"
               :columns="6"
+              :fixed-rows="1"
             />
           </template>
           <template #bottom>
             <SchemeSelector
               v-if="schemeOptions.length > 1"
               :options="schemeOptions"
+              :primary-ids="primarySchemeIds"
               :model-value="course.schemeId"
+              :busy="schemeBusy"
               show-keys
               @select="chooseScheme"
             />
@@ -1030,9 +1242,28 @@ onScopeDispose(() => {
             </div>
           </div>
 
+          <div v-if="schemeError" class="side-error" role="alert">
+            <span>「{{ failedSchemeName }}」加载失败：{{ schemeError }}</span>
+            <button class="meta-btn" type="button" @click="retryScheme">重试</button>
+          </div>
+
           <div class="side-start">
             <div class="side-info">
-              <template v-if="tab === 'drill'">
+              <template v-if="courseFailed">
+                <strong>课程数据加载失败</strong>
+                <span class="side-info-sub is-warning">请重试加载课程数据。</span>
+              </template>
+              <template v-else-if="courseLoading">
+                <strong>正在加载课程数据…</strong>
+              </template>
+              <template v-else-if="bankStatus === 'loading'">
+                <strong>正在加载练习字库…</strong>
+              </template>
+              <template v-else-if="bankStatus === 'error'">
+                <strong>练习字库加载失败</strong>
+                <span class="side-info-sub is-warning">请重试加载练习字库。</span>
+              </template>
+              <template v-else-if="tab === 'drill'">
                 <strong>可用{{ drillMode === 'char' ? '字' : '词' }} {{ availableCount }} 条</strong>
                 <span v-if="availableCount === 0" class="side-info-sub is-warning">当前选择下没有匹配的{{ drillMode === 'char' ? '字' : '词' }}，请调整声母 / 韵母选择。</span>
               </template>
@@ -1053,9 +1284,20 @@ onScopeDispose(() => {
           </div>
         </aside>
 
-        <div v-if="bankStatus === 'error'" class="training-state panel is-error training-state--wide">
+        <div v-if="courseFailed" class="training-state panel is-error training-state--wide">
+          <strong>课程数据加载失败</strong>
+          <p>{{ course.error || '无法加载课程数据，请重试。' }}</p>
+          <button class="btn btn--sm" type="button" @click="retryCourse">重试</button>
+        </div>
+
+        <div v-else-if="courseLoading" class="training-state panel training-state--wide">
+          正在加载课程数据…
+        </div>
+
+        <div v-else-if="bankStatus === 'error'" class="training-state panel is-error training-state--wide">
           <strong>练习字库加载失败</strong>
           <p>{{ bankError }}</p>
+          <button class="btn btn--sm" type="button" @click="loadBank">重试</button>
         </div>
 
         <!-- 专项练习 -->
@@ -1103,17 +1345,6 @@ onScopeDispose(() => {
                   >
                     {{ initial }}
                   </button>
-                  <button
-                    v-for="zero in selectableZeroFinals"
-                    :key="`zero-${zero}`"
-                    type="button"
-                    class="chip is-special is-zero-chip"
-                    :class="{ 'is-selected': selectedZeroFinals.has(zero) }"
-                    :aria-pressed="selectedZeroFinals.has(zero)"
-                    @click="toggleZeroFinal(zero)"
-                  >
-                    零 {{ zero }}
-                  </button>
                 </SetupGroup>
 
                 <SetupGroup
@@ -1140,6 +1371,34 @@ onScopeDispose(() => {
                     @click="toggleFinal(final)"
                   >
                     {{ final }}
+                  </button>
+                </SetupGroup>
+
+                <SetupGroup
+                  v-if="appearZeroTotalCount > 0 || commonCapsuleCount('appear', 'zero') > 0"
+                  title="零声母"
+                  :all-checked="appearZeroAll"
+                  :indeterminate="appearZeroPartial"
+                  @toggle-all="toggleAppearAll('zero')"
+                >
+                  <template #count>
+                    已选 {{ appearZeroSelectedCount }}/{{ appearZeroTotalCount }}
+                  </template>
+                  <CommonCapsule
+                    v-if="commonEntriesFor('appear', 'zero').length > 0"
+                    :selected="commonAllChecked('appear', 'zero')"
+                    @toggle="toggleCommonAll('appear', 'zero')"
+                  />
+                  <button
+                    v-for="zero in selectableZeroFinals"
+                    :key="`zero-${zero}`"
+                    type="button"
+                    class="chip is-special is-zero-chip"
+                    :class="{ 'is-selected': selectedZeroFinals.has(zero) }"
+                    :aria-pressed="selectedZeroFinals.has(zero)"
+                    @click="toggleZeroFinal(zero)"
+                  >
+                    零 {{ zero }}
                   </button>
                 </SetupGroup>
               </template>
@@ -1174,17 +1433,6 @@ onScopeDispose(() => {
                 >
                   {{ initial }}
                 </button>
-                <button
-                  v-for="zero in drillHiddenZeroCandidates"
-                  :key="`hidden-zero-${zero}`"
-                  type="button"
-                  class="chip is-special is-zero-chip"
-                  :class="{ 'is-selected': hiddenZeroFinals.has(zero) }"
-                  :aria-pressed="hiddenZeroFinals.has(zero)"
-                  @click="toggleHiddenZeroFinal('drill', zero)"
-                >
-                  零 {{ zero }}
-                </button>
               </SetupGroup>
 
               <SetupGroup
@@ -1216,8 +1464,37 @@ onScopeDispose(() => {
                 </button>
               </SetupGroup>
 
+              <SetupGroup
+                v-if="hiddenGroupTotal('drill', 'zero') > 0"
+                title="零声母"
+                :all-checked="hiddenGroupAllChecked('drill', 'zero')"
+                :indeterminate="hiddenGroupPartial('drill', 'zero')"
+                :all-disabled="hiddenGroupDisabled('drill', 'zero')"
+                @toggle-all="toggleHiddenAll('drill', 'zero')"
+              >
+                <template #count>
+                  已隐藏 {{ hiddenGroupSelected('drill', 'zero') }}/{{ hiddenGroupTotal('drill', 'zero') }}
+                </template>
+                <CommonCapsule
+                  v-if="commonEntriesFor('drill', 'zero').length > 0"
+                  :selected="commonAllChecked('drill', 'zero')"
+                  @toggle="toggleCommonAll('drill', 'zero')"
+                />
+                <button
+                  v-for="zero in drillHiddenZeroCandidates"
+                  :key="`hidden-zero-${zero}`"
+                  type="button"
+                  class="chip is-special is-zero-chip"
+                  :class="{ 'is-selected': hiddenZeroFinals.has(zero) }"
+                  :aria-pressed="hiddenZeroFinals.has(zero)"
+                  @click="toggleHiddenZeroFinal('drill', zero)"
+                >
+                  零 {{ zero }}
+                </button>
+              </SetupGroup>
+
               <p
-                v-if="hiddenGroupTotal('drill', 'initial') === 0 && hiddenGroupTotal('drill', 'final') === 0"
+                v-if="hiddenGroupTotal('drill', 'initial') === 0 && hiddenGroupTotal('drill', 'final') === 0 && hiddenGroupTotal('drill', 'zero') === 0"
                 class="setup-empty"
               >
                 先在「出现」中选择声母或韵母。
@@ -1336,17 +1613,6 @@ onScopeDispose(() => {
                 >
                   {{ initial }}
                 </button>
-                <button
-                  v-for="zero in articleHiddenZeroCandidates"
-                  :key="`article-hidden-zero-${zero}`"
-                  type="button"
-                  class="chip is-special is-zero-chip"
-                  :class="{ 'is-selected': articleHiddenZeroFinals.has(zero) }"
-                  :aria-pressed="articleHiddenZeroFinals.has(zero)"
-                  @click="toggleHiddenZeroFinal('article', zero)"
-                >
-                  零 {{ zero }}
-                </button>
               </SetupGroup>
 
               <SetupGroup
@@ -1374,6 +1640,35 @@ onScopeDispose(() => {
                   @click="toggleHidden('article', 'final', final)"
                 >
                   {{ final }}
+                </button>
+              </SetupGroup>
+
+              <SetupGroup
+                v-if="hiddenGroupTotal('article', 'zero') > 0"
+                title="零声母"
+                :all-checked="hiddenGroupAllChecked('article', 'zero')"
+                :indeterminate="hiddenGroupPartial('article', 'zero')"
+                :all-disabled="hiddenGroupDisabled('article', 'zero')"
+                @toggle-all="toggleHiddenAll('article', 'zero')"
+              >
+                <template #count>
+                  已隐藏 {{ hiddenGroupSelected('article', 'zero') }}/{{ hiddenGroupTotal('article', 'zero') }}
+                </template>
+                <CommonCapsule
+                  v-if="commonEntriesFor('article', 'zero').length > 0"
+                  :selected="commonAllChecked('article', 'zero')"
+                  @toggle="toggleCommonAll('article', 'zero')"
+                />
+                <button
+                  v-for="zero in articleHiddenZeroCandidates"
+                  :key="`article-hidden-zero-${zero}`"
+                  type="button"
+                  class="chip is-special is-zero-chip"
+                  :class="{ 'is-selected': articleHiddenZeroFinals.has(zero) }"
+                  :aria-pressed="articleHiddenZeroFinals.has(zero)"
+                  @click="toggleHiddenZeroFinal('article', zero)"
+                >
+                  零 {{ zero }}
                 </button>
               </SetupGroup>
             </SetupCard>
@@ -1462,6 +1757,9 @@ onScopeDispose(() => {
       <DockReveal :open="keyMapRows.length > 0 && layout.keyboardVisible">
         <KeyboardDock
           :rows="keyMapRows"
+          :scheme-name="course.scheme?.name"
+          :special-initials="specialInitials"
+          :zero-initials="course.scheme?.zeroInitial"
           :hidden-atom-ids="sessionHiddenAtomIds"
           :pressed="pressedKeys"
           @key="onDockKey"
@@ -1555,6 +1853,23 @@ onScopeDispose(() => {
   width: 100%;
   min-height: 40px;
   justify-content: center;
+}
+/* 方案切换/预览失败：内置在设置卡里的小型可重试提示。 */
+.side-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--danger-line);
+  border-radius: var(--r-control);
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+}
+.side-error span {
+  flex: 1;
+  min-width: 0;
 }
 
 /* ── 下排：出现 / 隐藏两张范围卡 ─────────────────────────── */
@@ -1741,6 +2056,9 @@ onScopeDispose(() => {
 .training-state p {
   margin: 0;
   color: var(--ink-2);
+}
+.training-state .btn {
+  margin-top: 12px;
 }
 .setup-empty {
   margin: 0;

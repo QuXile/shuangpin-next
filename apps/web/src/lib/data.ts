@@ -15,6 +15,24 @@ import type {
 
 export type { LessonPool }
 
+export interface SchemePackageManifest {
+  schemaVersion: number
+  id: string
+  name: string
+  version: string
+  license: string
+  capabilities: {
+    course: boolean
+    training: boolean
+    article: boolean
+    zeroInitial: boolean
+    customStages: boolean
+  }
+  curriculum: { profile: string; version: string; file: string } | null
+  data: { scheme: string }
+  shared: { pools: string; words: string; training: string }
+}
+
 const cache = new Map<string, Promise<unknown>>()
 
 async function getJSON<T>(relPath: string): Promise<T> {
@@ -38,13 +56,17 @@ function cached<T>(key: string, loader: () => Promise<T>): Promise<T> {
 }
 
 export const loadSchemeIndex = (): Promise<SchemeIndexFile> =>
-  cached('schemes-index', () => getJSON<SchemeIndexFile>('schemes/index.json'))
+  cached('schemes-index', () => getJSON<SchemeIndexFile>('packages/index.json'))
 
 export const loadScheme = (id: string): Promise<SchemeDef> =>
-  cached(`scheme:${id}`, () => getJSON<SchemeDef>(`schemes/${id}.json`))
+  cached(`scheme:${id}`, () => getJSON<SchemeDef>(`packages/${id}/scheme.json`))
 
 export const loadCurriculum = (id: string): Promise<Curriculum> =>
-  cached(`curriculum:${id}`, () => getJSON<Curriculum>(`curriculum/${id}.curriculum.json`))
+  cached(`curriculum:${id}`, () => getJSON<Curriculum>(`packages/${id}/curriculum.json`))
+
+/** 读取单个方案包的 manifest；practice-only 包读取时没有 curriculum。 */
+export const loadSchemePackage = (id: string): Promise<SchemePackageManifest> =>
+  cached(`package:${id}`, () => getJSON<SchemePackageManifest>(`packages/${id}/manifest.json`))
 
 export const loadPoolIndex = (): Promise<PoolIndexFile> =>
   cached('pools-index', () => getJSON<PoolIndexFile>('pools/index.json'))

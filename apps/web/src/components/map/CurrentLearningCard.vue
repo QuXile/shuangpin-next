@@ -12,8 +12,9 @@ const props = withDefaults(
     currentTitle: string
     passedCount: number
     lessonTotal: number
+    emptyMessage?: string
   }>(),
-  { lesson: null, chapter: null },
+  { lesson: null, chapter: null, emptyMessage: '课程已全部完成，可以选择任意课程继续练习。' },
 )
 
 const emit = defineEmits<{ start: [] }>()
@@ -67,7 +68,7 @@ const tagCount = computed(() => props.lesson?.focusKeys.length ?? 0)
       </div>
     </div>
 
-    <div v-else class="current-empty">课程已全部完成，可以选择任意课程继续练习。</div>
+    <div v-else class="current-empty">{{ emptyMessage }}</div>
   </section>
 </template>
 
@@ -237,10 +238,20 @@ const tagCount = computed(() => props.lesson?.focusKeys.length ?? 0)
   transform: translateY(0) scale(0.97);
 }
 .current-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 28px 16px;
   color: var(--ink-3);
   font-size: 12px;
   text-align: center;
+}
+/* 1440 宽时继续学习卡高度由有数据状态驱动；空态补足相同主体高度，
+   避免 hero-overview grid 行高缩短导致 Hero 跳 12px。 */
+@media (min-width: 1400px) {
+  .current-empty {
+    min-height: 187.4px;
+  }
 }
 @media (max-width: 640px) {
   .practice-card {

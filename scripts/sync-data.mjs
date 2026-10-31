@@ -14,6 +14,7 @@ import path from 'node:path'
 import {
   CURRICULUM_DIR,
   CURRICULUM_INDEX_FILE,
+  PACKAGES_DIR,
   POOLS_DIR,
   POOLS_INDEX_FILE,
   PUBLIC_DATA_DIR,
@@ -25,8 +26,20 @@ import {
   writeJSON,
   replaceDirAtomically,
 } from './lib/data-contract.mjs'
+import { buildSchemePackages } from './scheme-packages/build.mjs'
+
+function walkFiles(dir, base = '') {
+  const out = []
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const rel = base ? `${base}/${entry.name}` : entry.name
+    if (entry.isDirectory()) out.push(...walkFiles(path.join(dir, entry.name), rel))
+    else out.push(rel)
+  }
+  return out
+}
 
 function buildFilePlan() {
+  buildSchemePackages()
   const schemeIndex = readJSON(SCHEME_INDEX_FILE)
   const curriculumIndex = readJSON(CURRICULUM_INDEX_FILE)
   const poolIndex = readJSON(POOLS_INDEX_FILE)
@@ -52,6 +65,9 @@ function buildFilePlan() {
   }
   add(WORDS_FILE, 'words/words.sample.json')
   add(TRAINING_BANK_FILE, 'training/bank.json')
+  for (const rel of walkFiles(PACKAGES_DIR)) {
+    add(path.join(PACKAGES_DIR, rel), `packages/${rel}`)
+  }
   const trainingVersion = readJSON(TRAINING_BANK_FILE).dataVersion
   return {
     plan,

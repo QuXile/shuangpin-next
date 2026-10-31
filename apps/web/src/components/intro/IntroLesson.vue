@@ -21,17 +21,25 @@ import {
 import CharacterCard from '@/components/practice/CharacterCard.vue'
 import SessionBar from '@/components/layout/SessionBar.vue'
 import { useGlobalKeys, type KeyBinding } from '@/composables/useGlobalKeys'
+import { useSoundStore } from '@/stores/sound'
 
-const props = defineProps<{
-  scheme: SchemeDef
-  words: WordEntry[]
-}>()
+const props = withDefaults(
+  defineProps<{
+    scheme: SchemeDef
+    words: WordEntry[]
+    /** 以前已通过入门课：不再要求重做最后的试打 */
+    passed?: boolean
+  }>(),
+  { passed: false },
+)
 
 const emit = defineEmits<{
   finished: []
   next: []
   'key-pressed': [key: string]
 }>()
+
+const sound = useSoundStore()
 
 type Step = 'concept' | 'principle' | 'keymap' | 'overlap' | 'try'
 const stepOrder: readonly Step[] = ['concept', 'principle', 'keymap', 'overlap', 'try']
@@ -41,11 +49,11 @@ const engine = createSchemeEngine(props.scheme)
 const diff = engine.diff()
 
 // ── 动态方案文案 ──────────────────────────────────────────────
-const conceptWord = '壮'
-const conceptKeys = ['z', 'h', 'u', 'a', 'n', 'g']
-const zhuangKeys = engine.primarySequence({ initial: 'zh', final: 'uang' }).map((key) => key.toUpperCase())
-const zhKey = zhuangKeys[0] ?? '?'
-const uangKey = zhuangKeys[1] ?? '?'
+const conceptWord = '双'
+const conceptKeys = ['s', 'h', 'u', 'a', 'n', 'g']
+const shuangKeys = engine.primarySequence({ initial: 'sh', final: 'uang' }).map((key) => key.toUpperCase())
+const shKey = shuangKeys[0] ?? '?'
+const uangKey = shuangKeys[1] ?? '?'
 const learnInitialsText = diff.learnInitials.join(' / ')
 const freeInitialsText = diff.freeInitials.join('、')
 const freeFinalsText = diff.freeFinals.join('、')
@@ -128,13 +136,24 @@ function isRevealed(charIndex: number): boolean {
 }
 
 function handleKey(raw: string): void {
+  if (step.value !== 'try') {
+    emit('key-pressed', raw)
+    sound.playKey()
+    return
+  }
   const state = session.value
-  if (!state || state.phase === 'finished') return
+  if (!state || state.phase === 'finished') {
+    // 试打完成后仍保留键位图反馈，不能只有退格有声音。
+    emit('key-pressed', raw)
+    sound.playKey()
+    return
+  }
   const charIndex = state.words[0]?.charIndex ?? 0
   const cellKey = `0:${charIndex}`
   emit('key-pressed', raw)
   const result = applyKey(state, raw, performance.now())
   if (result.feedback.kind === 'wrong') {
+    sound.playError()
     const nextWrong = new Map(wrongInputs.value)
     nextWrong.set(cellKey, result.feedback.input ?? [])
     wrongInputs.value = nextWrong
@@ -155,12 +174,21 @@ function handleKey(raw: string): void {
     nextWrong.delete(cellKey)
     wrongInputs.value = nextWrong
   }
+  if (result.feedback.kind !== 'wrong') {
+    if (result.state.phase === 'finished' || result.feedback.kind === 'word-complete') {
+      sound.playComplete()
+    } else {
+      sound.playKey()
+    }
+  }
   session.value = result.state
   if (result.state.phase === 'finished') emit('finished')
 }
 
 function handleBackspace(): void {
   emit('key-pressed', 'backspace')
+  sound.playKey()
+  if (step.value !== 'try') return
   if (!session.value || session.value.phase === 'finished') return
   const cellKey = currentCellKey.value
   if (cellKey && wrongInputs.value.has(cellKey)) {
@@ -173,7 +201,9 @@ function handleBackspace(): void {
 
 /** 空格 / Enter：清空当前字输入并取消红色错误状态 */
 function clearCurrentInput(): void {
+  if (step.value !== 'try') return
   if (!session.value || session.value.phase === 'finished') return
+  sound.playKey()
   const cellKey = currentCellKey.value
   if (cellKey && wrongInputs.value.has(cellKey)) {
     const nextWrong = new Map(wrongInputs.value)
@@ -186,7 +216,7 @@ function clearCurrentInput(): void {
 // ── 步骤推进 ─────────────────────────────────────────────────
 const stepIndex = computed(() => stepOrder.indexOf(step.value) + 1)
 const canPrevious = computed(() => step.value !== 'concept')
-const nextDisabled = computed(() => step.value === 'try' && !completed.value)
+const nextDisabled = computed(() => step.value === 'try' && !completed.value && !props.passed)
 const nextLabel = computed(() => (step.value === 'try' ? '开始第 1 课' : '下一页'))
 
 function advance(): void {
@@ -232,7 +262,7 @@ function primaryAction(): void {
     advance()
     return
   }
-  if (completed.value) emit('next')
+  if (completed.value || props.passed) emit('next')
 }
 
 const bindings = computed<KeyBinding[]>(() => {
@@ -258,15 +288,16 @@ const bindings = computed<KeyBinding[]>(() => {
       letter: true,
       run: (event) => {
         if (step.value === 'try') handleKey(event.key)
-        else emit('key-pressed', event.key)
+        else {
+          emit('key-pressed', event.key)
+          sound.playKey()
+        }
       },
     },
     {
       key: 'Backspace',
-      run: () => {
-        if (step.value === 'try') handleBackspace()
-        else emit('key-pressed', 'backspace')
-      },
+      // 非试打页也要有敲击声与键位图反馈；handleBackspace 内部已按步骤分支处理。
+      run: () => handleBackspace(),
     },
   )
   if (step.value === 'try') {
@@ -316,10 +347,10 @@ defineExpose({ pressKey: handleKey, backspace: handleBackspace })
           <div class="full-keycaps">
             <span v-for="letter in conceptKeys" :key="letter" class="visual-key">{{ letter }}</span>
           </div>
-          <div class="mono visual-caption">zhuang · 6 键</div>
+          <div class="mono visual-caption">shuang · 6 键</div>
         </div>
         <div class="intro-prose">
-          <p>全拼输入时，电脑要识别每一个字母。像「壮」的拼音 <b>zhuang</b>，必须依次按下 z、h、u、a、n、g 六个键；拼音越长，手指移动越多。</p>
+          <p>全拼输入时，电脑要识别每一个字母。像「双」的拼音 <b>shuang</b>，必须依次按下 s、h、u、a、n、g 六个键；拼音越长，手指移动越多。</p>
           <p>双拼不是另一套拼音，而是改变按键方式：把声母和韵母各压缩到一个键上，让每个汉字固定只按两下。</p>
           <p>所以我们要学的不是新拼音，而是「哪个声母在哪个键、哪个韵母在哪个键」。</p>
         </div>
@@ -345,7 +376,7 @@ defineExpose({ pressKey: handleKey, backspace: handleBackspace })
           </div>
         </div>
         <div class="intro-prose">
-          <p>每个音节都可以拆成声母和韵母。比如 <b>zh</b> 是声母，<b>uang</b> 是韵母。在「{{ scheme.name }}」里，zh 在 <b>{{ zhKey }}</b> 键、uang 在 <b>{{ uangKey }}</b> 键，所以「壮」只需要按 <b>{{ zhKey }}</b> 和 <b>{{ uangKey }}</b>。</p>
+          <p>每个音节都可以拆成声母和韵母。比如 <b>sh</b> 是声母，<b>uang</b> 是韵母。在「{{ scheme.name }}」里，sh 在 <b>{{ shKey }}</b> 键、uang 在 <b>{{ uangKey }}</b> 键，所以「双」只需要按 <b>{{ shKey }}</b> 和 <b>{{ uangKey }}</b>。</p>
           <p>拼音本身没有变，变的只是按键数量。学会这套映射后，所有汉字都能按「声母键 + 韵母键」两下打出来。</p>
           <p>双拼的优势是击键更少、输入更连贯，尤其适合长拼音和高频输入。</p>
         </div>
@@ -357,13 +388,13 @@ defineExpose({ pressKey: handleKey, backspace: handleBackspace })
       <h1>记住这两张映射</h1>
       <div class="intro-grid">
         <div class="mapping-cards">
-          <div class="mapping-card"><span class="mapping-atom is-initial">zh</span><span class="mapping-arrow">→</span><span class="mapping-key">{{ zhKey }}</span></div>
+          <div class="mapping-card"><span class="mapping-atom is-initial">sh</span><span class="mapping-arrow">→</span><span class="mapping-key">{{ shKey }}</span></div>
           <div class="mapping-card"><span class="mapping-atom is-final">uang</span><span class="mapping-arrow">→</span><span class="mapping-key">{{ uangKey }}</span></div>
         </div>
         <div class="intro-prose">
           <p>页面底部的键位图如果没看到，按 Ctrl+K 唤出；之后随时可以用同一快捷键显示或隐藏。蓝色是改造声母（{{ learnInitialsText || '本方案无改造声母' }}），橘色是韵母；当前正在学的键会用白字 + 底色突出。</p>
           <p>其他课程也一样：记不住时低头看一眼，按下的键会实时亮起，不需要背完所有键再开始。</p>
-          <p>先只记一个例子：zh 在 {{ zhKey }}，uang 在 {{ uangKey }}，所以「壮」就是 {{ zhKey }} + {{ uangKey }}。</p>
+          <p>先只记一个例子：sh 在 {{ shKey }}，uang 在 {{ uangKey }}，所以「双」就是 {{ shKey }} + {{ uangKey }}。</p>
         </div>
       </div>
     </section>

@@ -6,8 +6,19 @@
  */
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { atomId, createSchemeEngine, type SchemeDef } from '@shuangpin/core'
+import { useSoundStore } from '@/stores/sound'
 
-const props = defineProps<{ scheme: SchemeDef; text: string; columns?: number }>()
+const props = withDefaults(
+  defineProps<{
+    scheme: SchemeDef
+    text: string
+    columns?: number
+    /** Hero 预留的高度行数；练习场固定 1 行，路线固定 2 行 */
+    fixedRows?: number
+  }>(),
+  { columns: undefined, fixedRows: 2 },
+)
+const sound = useSoundStore()
 
 /** 键帽文本固定读音表；标题里出现的拉丁字母原样展示。 */
 const CHAR_PINYIN: Record<string, [string, string]> = {
@@ -28,12 +39,38 @@ const CHAR_PINYIN: Record<string, [string, string]> = {
   练: ['l', 'ian'],
   场: ['ch', 'ang'],
   习: ['x', 'i'],
+  音: ['y', 'in'],
+  加: ['j', 'ia'],
+  紫: ['z', 'i'],
+  光: ['g', 'uang'],
+  蓝: ['l', 'an'],
+  天: ['t', 'ian'],
+  白: ['b', 'ai'],
+  云: ['y', 'un'],
+  月: ['y', 'ue'],
+  国: ['g', 'uo'],
+  标: ['b', 'iao'],
+  开: ['k', 'ai'],
+  源: ['y', 'uan'],
+  鹳: ['g', 'uan'],
+  浪: ['l', 'ang'],
+  韵: ['y', 'un'],
+  块: ['k', 'uai'],
+  星: ['x', 'ing'],
+  空: ['k', 'ong'],
+  大: ['d', 'a'],
+  牛: ['n', 'iu'],
+  键: ['j', 'ian'],
+  道: ['d', 'ao'],
 }
 
 const engine = computed(() => createSchemeEngine(props.scheme))
 
+const FALLBACK_CAPS = ['E', 'R', 'R', 'O', 'R'] as const
+
 const caps = computed<string[]>(() => {
   const out: string[] = []
+  let mappedChinese = false
   for (const char of props.text) {
     if (/^[A-Za-z]$/.test(char)) {
       out.push(char.toUpperCase())
@@ -44,12 +81,17 @@ const caps = computed<string[]>(() => {
     const [initial, final] = pinyin
     for (const id of [atomId('initial', initial), atomId('final', final)]) {
       const key = engine.value.keysForAtom(id)[0]
-      if (key) out.push(key.toUpperCase())
+      if (key) {
+        out.push(key.toUpperCase())
+        mappedChinese = true
+      }
       if (out.length >= 8) break
     }
     if (out.length >= 8) break
   }
-  return out
+  // C 双拼这类 syllable-code 方案没有可展开的声母/韵母，
+  // 若方案名里的汉字一个键都生成不出来，用 5 个 ERROR 键帽兜底。
+  return mappedChinese ? out : [...FALLBACK_CAPS]
 })
 
 const roundCaps = ref<string[]>([])
@@ -59,14 +101,18 @@ const leaving = ref(false)
 const roundNonce = ref(0)
 const IDLE_REFRESH_MS = 8000
 
+const isErrorCaps = computed(() => roundCaps.value.join('|') === FALLBACK_CAPS.join('|'))
+
 const rows = computed<Array<{ offset: number; caps: string[] }>>(() => {
   const list = roundCaps.value
   if (list.length === 0) return []
-  const perRow = props.columns && props.columns > 0
-    ? props.columns
-    : list.length <= 4
-      ? 2
-      : 4
+  const perRow = isErrorCaps.value
+    ? list.length
+    : props.columns && props.columns > 0
+      ? props.columns
+      : list.length <= 4
+        ? 2
+        : 4
   return Array.from({ length: Math.ceil(list.length / perRow) }, (_, row) => ({
     offset: row * perRow,
     caps: list.slice(row * perRow, row * perRow + perRow),
@@ -84,13 +130,15 @@ const layouts = ref<CapLayout[]>([])
 function randomizeLayout(): void {
   // 每次重新排布都重建键帽节点，确保浮现动画从头播放。
   roundNonce.value += 1
-  layouts.value = roundCaps.value.map(() => {
+  layouts.value = roundCaps.value.map((_, index) => {
     const dx = (Math.random() * 2 - 1) * 5
     const dy = (Math.random() * 2 - 1) * 7
     const rot = (Math.random() * 2 - 1) * 5
     return {
       transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) rotate(${rot.toFixed(1)}deg)`,
-      zIndex: String(1 + Math.floor(Math.random() * 12)),
+      // 保持原来的随机离位/旋转，只把层叠顺序固定成阅读顺序：
+      // 同一行右侧键帽压住左侧，下一行压住上一行。
+      zIndex: String(index + 1),
     }
   })
 }
@@ -164,18 +212,27 @@ function pressKey(key: string): void {
   const expected = roundCaps.value[index]
   if (!expected || expected.toLowerCase() !== normalized) {
     // 第一个键错误时不进入失败流程：不标红、不重置。
-    if (index === 0) return
+    if (index === 0) {
+      sound.playKey()
+      return
+    }
     // 已经答对过至少一个键后再错：当前应该敲的键帽变红，随后整组隐去，按原顺序重新开始。
+    sound.playError()
     errorIndex.value = index
     scheduleRestart()
     return
   }
 
+  sound.playKey()
   const next = [...doneFlags.value]
   next[index] = true
   doneFlags.value = next
-  if (next.every(Boolean)) scheduleRestart()
-  else armIdleRefresh()
+  if (next.every(Boolean)) {
+    sound.playComplete()
+    scheduleRestart()
+  } else {
+    armIdleRefresh()
+  }
 }
 
 function onWindowKeydown(event: KeyboardEvent): void {
@@ -205,7 +262,11 @@ defineExpose({ refreshKeycaps, pressKey })
 </script>
 
 <template>
-  <div class="scheme-keycaps" :class="{ 'is-leaving': leaving }" :aria-label="`${text}键帽`">
+  <div
+    class="scheme-keycaps"
+    :class="{ 'is-leaving': leaving, 'is-single-row': fixedRows <= 1 }"
+    :aria-label="`${text}键帽`"
+  >
     <div v-for="(row, rowIndex) in rows" :key="`${rowIndex}-${roundNonce}`" class="cap-row">
       <span
         v-for="(cap, index) in row.caps"
@@ -223,14 +284,17 @@ defineExpose({ refreshKeycaps, pressKey })
 <style scoped>
 .scheme-keycaps {
   --cap: clamp(46px, 5.2vw, 88px);
+  --cap-gap: 13px;
   transition: opacity 220ms ease, transform 220ms ease;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 13px;
+  gap: var(--cap-gap);
   width: 100%;
-  min-height: 200px;
+  min-width: calc(var(--cap) * 3 + 24px);
+  /* 默认预留两行高度；练习场通过 fixedRows=1 固定为一行。 */
+  min-height: calc(var(--cap) * 2.16 + var(--cap-gap));
   padding: 10px;
 }
 .cap-row {
@@ -238,6 +302,9 @@ defineExpose({ refreshKeycaps, pressKey })
   align-items: center;
   justify-content: center;
   gap: 12px;
+}
+.scheme-keycaps.is-single-row {
+  min-height: calc(var(--cap) * 1.08);
 }
 .keycap {
   position: relative;

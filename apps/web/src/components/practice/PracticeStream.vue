@@ -19,7 +19,7 @@ const props = withDefaults(
     wrongInputs?: ReadonlyMap<string, string[]>
     revealed?: ReadonlySet<string>
     liveMessage?: string
-    /** 有限目标完成后的提示行（已达标可 Enter，未达标只能 Alt+Enter 继续） */
+    /** 有限目标完成后的总结卡（达标自动记录，可在操作区继续或重新开始） */
     prompt?: EndPromptView | null
     /** 练习页「练习时隐藏」映射 */
     hiddenAtoms?: readonly AtomId[]
@@ -41,8 +41,8 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   primary: []
-  continue: []
   restart: []
+  endless: []
 }>()
 
 interface CellView {
@@ -210,8 +210,8 @@ watch(
               重新开始
               <kbd>Alt+R</kbd>
             </button>
-            <button class="btn" type="button" @click="emit('continue')">
-              继续练习
+            <button class="btn" type="button" @click="emit('endless')">
+              进入无尽练习
               <kbd>Alt+Enter</kbd>
             </button>
           </template>

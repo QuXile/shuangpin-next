@@ -3,24 +3,33 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import type { LetterKey } from '@shuangpin/core'
 import KeyboardMap from '@/components/keyboard/KeyboardMap.vue'
+import { useSoundStore } from '@/stores/sound'
 import CardHeader from '@/components/common/CardHeader.vue'
 
 withDefaults(
   defineProps<{
     rows: LetterKey[][]
     specialInitials?: readonly string[]
+    zeroInitials?: Readonly<Record<string, readonly string[]>>
     schemeName: string
   }>(),
-  { specialInitials: () => [] },
+  { specialInitials: () => [], zeroInitials: () => ({}) },
 )
 
 const emit = defineEmits<{ key: [letter: string] }>()
+const sound = useSoundStore()
 const pressedKeys = ref<string[]>([])
 let pressTimer: number | undefined
 
 function onMapKey(key: string): void {
+  sound.playKey()
   showPressed(key)
   emit('key', key)
+}
+
+function onBackspace(): void {
+  sound.playKey()
+  showPressed('backspace')
 }
 
 function showPressed(key: string): void {
@@ -36,11 +45,15 @@ function onWindowKeydown(event: KeyboardEvent): void {
   const target = event.target as HTMLElement | null
   if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable)) return
   if (event.key === 'Backspace') {
+    sound.playKey()
     showPressed('backspace')
     return
   }
   const key = event.key.toLowerCase()
-  if (/^[a-z;]$/.test(key)) showPressed(key)
+  if (/^[a-z;]$/.test(key)) {
+    sound.playKey()
+    showPressed(key)
+  }
 }
 
 onMounted(() => window.addEventListener('keydown', onWindowKeydown))
@@ -65,10 +78,11 @@ onBeforeUnmount(() => {
       <KeyboardMap
         :rows="rows"
         :special-initials="specialInitials"
+        :zero-initials="zeroInitials"
         :pressed="pressedKeys"
         :legend="false"
         @key="onMapKey"
-        @backspace="showPressed('backspace')"
+        @backspace="onBackspace"
       />
     </div>
   </section>

@@ -1,444 +1,287 @@
-# 双拼 NEXT · 架构与实现说明
+# 架构说明
 
-本文是项目唯一的设计与运维入口。以**代码、数据文件与自动化校验**为准；与代码冲突时修改本文。
+[← 文档导航](../README.md#文档导航)
 
-## 1. 项目概览
+本文是项目的实现说明：领域模型、数据契约、Web 应用层与自动化校验的权威入口以**代码、数据文件与校验脚本**为准，与代码冲突时修改本文。面向使用者的规则见 [学习指南](LEARNING.md)、[练习场](TRAINING.md)，数据管线细节见 [数据说明](DATA.md)，视觉规范见 [界面与设计](UI.md)。
 
-双拼 NEXT 面向已经会全拼、但没学过双拼的学习者。核心不是重复教拼音，而是把双拼的键位差异拆成可执行的一课一键路径。
+## 1. 项目定位与架构原则
+
+双拼 NEXT 面向已经会全拼、但没学过双拼的学习者，把双拼的键位差异拆成可执行的「一课一键」路径：
 
 ```text
-40 课 / 10 章 / 5 套完整课程（小鹤、自然码、微软、搜狗、智能ABC）
-27 新授课 + 11 复习（期中检验 2 课、综合冲刺 2 课、家族复习 7 课）+ 1 通关考核 ≈ 326 分钟
-19 套方案键位数据 / 40 课词池（26,000 条 / 25,255 唯一词）
-学习地图 → 入门试打 → 教学页（技巧 + 记忆锚点）→ 单字 → 词语 → 复习/速度 → 通关考核
+40 课 / 10 章 / 5 套完整课程（小鹤、自然码、微软、搜狗、智能 ABC）≈ 326 分钟
+1 入门 + 27 新课 + 11 复习 / 检验 + 1 通关
+19 套方案键位数据 / 40 课词池（26,000 条课次 / 25,255 唯一词）
+学习地图 → 入门试打 → 教学页（技巧 + 记忆锚点）→ 单字 → 词语 → 复习 / 速度 → 通关考核
 ```
 
 架构原则：
 
 1. **领域层单一权威**：拼音、方案、判题、展示模型、选词、阶段、评分、统计全部在 `packages/core`，Web 不做领域计算。
-2. **数据驱动**：与方案相关的键位与 free/learn 划分由 `data/schemes/*.json` 推导（`SchemeEngine.diff()`），代码中不硬编码「小鹤式」键位。
-3. **契约 + 校验**：数据文件契约类型在 core，`pnpm verify` 同时跑 typecheck、core 测试、构建和 `scripts/validate-all.mjs`。
+2. **数据驱动**：方案键位与 free/learn 划分来自 `data/schemes/*.json`（`SchemeEngine.diff()`），代码中不硬编码某套方案的键位；课程词池与文档由数据生成。
+3. **契约 + 校验**：数据文件契约类型在 core，生成器与校验器共用同一套 hash / 契约工具；`pnpm verify` 依次跑 typecheck、UI 约定检查、数据同步、测试、构建与 `scripts/validate-all.mjs`。
 
 ## 2. 仓库结构
 
 ```text
-apps/web/                      Vue 3 + TS + Vite
-  src/App.vue                  布局壳（顶栏 / 主题 / 路由出口）
-  src/router.ts                路由：/ 与 /practice/:lessonId
-  src/pages/                   学习地图、练习页（只做编排，≤220 行）
-  src/composables/             useCourseBootstrap / usePractice / useGlobalKeys / useLiveCpm
-  src/components/              layout / map / practice / keyboard / intro 与通用组件
-  src/stores/                  course（加载与进度持久化）、progress、settings（主题）
-  src/lib/                     data（fetch + 缓存）、lessonView（展示视图文案）
-  src/styles/                  tokens（语义 token）、base（reset/按钮/公共件）
-packages/core/                 纯 TS 领域层（无 Vue/DOM/Node 依赖）
-  src/types.ts                 类型与数据文件契约（唯一权威）
-  src/pinyin.ts                音节拆分、声调、知识点 ID
-  src/scheme.ts                方案引擎
-  src/practice.ts              练习展示模型
-  src/selector.ts              选词组卷
-  src/stages.ts                阶段计划与内容装配
-  src/session.ts               会话状态机与统计
-  src/scoring.ts               通过标准与星级
-  src/atoms.ts                 知识点 ↔ 词匹配谓词
-  src/random.ts                确定性 RNG / 洗牌
-  tests/                       197 个 core vitest 测试（含数据契约测试，读根 data/）+ 5 个 web 单元测试
-data/schemes/                  19 套方案 + index + 判题用例（冻结事实来源）
-data/curriculum/               5 套课程（每套 40 课，模板 1.0.0）
-data/pools/                    40 课词池 + index
-data/words/words.sample.json   10,000 词公共词库（2–5 字）
-data/words/anchors.json        记忆锚点索引（syllableChars / finalChars / initialChars，构建期使用）
-data/training/bank.json        练习/文章共用字库（5,002 字；词语从公共词库加载）
-data/raw/                      jieba dict.txt（不入库，可重新下载）
-scripts/lib/                   数据契约工具（路径、原子写、版本 hash）
-scripts/curriculum/            build-curriculum.mjs
-scripts/word-pipeline/         lib/wordbank.mjs + build.mjs + build-pools.mjs
-scripts/curriculum/content.mjs 课程备注与技巧内容库（调研整理 + 方案动态生成）
-scripts/sync-data.mjs          data/ → apps/web/public/data/（原子）+ manifest
-scripts/validate-all.mjs       全局数据/版本链/同步/规模校验
-docs/assets/impl/              界面截图
+apps/web/                          Vue 3 + TS + Vite
+  src/App.vue                      应用外壳：固定顶栏 + 路由视图 + 页脚 + 全局快捷键
+  src/router.ts                    路由：/、/training、/practice/:lessonId（history / hash 可切换）
+  src/pages/                       LearnMapPage / PracticePage / TrainingPage（只做编排）
+  src/composables/                 useCourseBootstrap / usePractice / useTrainingSession /
+                                   useGlobalKeys / useLiveCpm / usePointerBlur
+  src/components/
+    common/                        HeroLayout / CardHeader / BackToTop / StateCard / Spinner
+    layout/                        Topbar / SessionBar / ShortcutHelp
+    map/                           HeroPanel / CurrentLearningCard / LearningProgressCard /
+                                   MapKeymapPanel / ChapterSection / LessonCard
+    practice/                      PracticeStream / CharacterCard / InputSlots / KeyCap /
+                                   TutorialStage / TutorialExamples / StageSummaryCard
+    keyboard/                      KeyboardMap / KeyboardDock / DockReveal /
+                                   SchemeKeycaps / SchemeSelector
+    training/                      SetupCard / SetupGroup / CommonCapsule / ArticleGrid
+    intro/                         IntroLesson
+    FocusTagList.vue
+  src/stores/                      course（数据 / 方案 / 进度委派）、progress、settings、sound、layout
+  src/lib/                         data（fetch + 缓存）、lessonView、shortcuts、sessionInput、
+                                   training、trainingConfig、trainingGroups
+  src/styles/                      tokens（语义 token）、base（reset / 共享原语）
+packages/core/                     纯 TS 领域层（无 Vue / DOM / Node 依赖）
+  src/types.ts                     类型与数据文件契约（唯一权威）
+  src/pinyin.ts                    音节拆分、声调、知识点 ID、显示标签
+  src/scheme.ts                    方案引擎（判题 / free-learn 划分 / 键位图）
+  src/practice.ts                  练习展示模型（键帽、零声母）
+  src/selector.ts                  选词组卷
+  src/balancedSampling.ts          概率均衡抽样
+  src/stages.ts                    阶段计划、内容装配、阶段门槛
+  src/session.ts                   会话状态机与统计
+  src/scoring.ts                   通过标准与星级
+  src/atoms.ts                     知识点 ↔ 词匹配谓词
+  src/random.ts                    确定性 RNG / 洗牌
+  src/training.ts                  练习范围过滤、文章解析
+  tests/                           core vitest（含读根 data/ 的数据契约测试）
+apps/web/tests/                    progress / trainingConfig / trainingGroups 单测
+data/                              schemes / curriculum / packages / pools / words / training / raw
+scripts/                           data-contract、word-pipeline、curriculum、scheme-packages、
+                                   training、sync-data、validate-all、check-ui-conventions、
+                                   static-package-server.py
+docs/                              本套文档与 assets/impl 截图
 ```
 
-## 3. 快速开始与验证
+## 3. 领域模型
 
-```bash
-pnpm install
-pnpm dev       # http://127.0.0.1:5199/ （dev 会先 sync 数据）
-pnpm verify    # typecheck + UI 约定检查 + 197 core tests + 5 web tests + build + validate
-pnpm validate  # node scripts/validate-all.mjs
-```
-
-Node.js ≥ 24：数据脚本直接 import `packages/core/src/*.ts`（Node 原生 TS 类型擦除），因此脚本与运行时共享同一份拼音/方案/课程逻辑。
-
-## 4. 领域模型
-
-### 4.1 音节与知识点
+### 3.1 音节与知识点
 
 ```text
-Syllable { text, pinyin, initial, final, tone?, zeroInitial }
-Final    = 33 个规范韵母（ü 记 v）
-SyllableFinal = Final | 'er'（er 只作为零声母出现）
-AtomId   = initial:<声母> | final:<韵母> | zero:<零声母音节>
+Syllable   { text, pinyin, initial, final, tone?, zeroInitial }
+Final      = 33 个规范韵母（ü 记 v）+ 只作零声母的 er
+ZERO_INITIALS = 12 个零声母音节（a o e ai ei ao ou an en ang eng er）
+AtomId     = initial:<声母> | final:<韵母> | zero:<零声母音节>
 ```
 
 - `zh/ch/sh` 是独立声母；零声母不占声母键，由方案给出完整两键序列；声调只影响显示。
-- **j/q/x/y + ü**：全拼写作 u，主键取 `finals[u]`（所有方案都是 U 键，例如「去」= QU）；方案 ü 键（小鹤 V、微软/搜狗 Y）作为判题容错接受。n/l 后的 ü 主键取方案 ü 键（女 NV / NY，略 LT / LY 视方案）。
+- **j/q/x/y + ü**：全拼写作 u，主键取 `finals[u]`（各方案均为 U 键，如「去」= QU）；方案自己的 ü 键（小鹤 V、微软 / 搜狗 Y 等）作为判题容错接受。n/l 后的 ü 主键取方案 ü 键（如 女 NV / NY、略 LT / LY）。
 - `er`、`ue/ve` 等拼写口径由 `pinyin.ts` 统一规范化，非法音节返回 `null`。
+- 零声母知识点显示标签统一为「零 <音节>」（如「零 ai」），由 `atomDisplayLabel` 唯一实现并测试。
 
-### 4.2 方案引擎（scheme.ts）
+### 3.2 方案引擎（scheme.ts）
+
+方案数据（`data/schemes/<id>.json`）包含 `initials / finals / zeroInitial / overrides / type` 等字段；`createSchemeEngine(def)` 提供：
 
 ```text
-acceptedSequences(syl)  该音节全部可接受键序列（零声母整段、override 整段、或声母×韵母笛卡尔积；
-                        jqxy+u 额外并入 ü 键序列；去重保序）
-primarySequence(syl)    展示主键（取 accepted 第一条）
-judge(input, syl)       输入是否命中任一可接受序列
-keysForAtom(atom)       知识点主键（零声母返回整段单元素）
-diff()                  数据驱动的 free/learn 划分（single key && value === atom 即 free）
-keyMap()                3 行键盘映射（含方案用到的 ';'）
+acceptedSequences(syllable)  该音节全部可接受键序列（零声母整段 / override 整段 /
+                             声母×韵母笛卡尔积；jqxy+u 额外并入 ü 键序列；去重保序）
+primarySequence(syllable)    展示主键（accepted 第一条）
+judge(input, syllable)       输入是否命中任一可接受序列
+keysForAtom(atom)            知识点主键（零声母返回整段）
+keyMap()                     3 行键盘映射（含方案用到的 ';'）
+diff()                       数据驱动的 free / learn 划分
+                              single key && value === atom 即 free
+freeAtomsOf(def)             与全拼拼写一致的 free 原子集合（练习场「全拼沿用」使用）
 ```
 
-19 套方案的数据驱动 golden cases 在 `data/schemes/engine-cases.json`，由 `engine.test.ts` 全量校验。
+- 判题语义：输入小写键序列；命中 `zeroInitial` 则使用其整段序列，命中 `overrides` 则使用 override 整段序列，否则按 `initials[声母] × finals[韵母]` 展开；数组值表示「任一命中即正确」（键道飞键、大牛多键、微软 ue 双键等）。
+- `type=syllable-code`（C 双拼）没有可展开的声母 / 韵母，所有音节由 `overrides`（+ `zeroInitial`）查表。
+- 19 套方案的 golden cases 在 `data/schemes/engine-cases.json`，由 `engine.test.ts` 全量校验；`data/schemes/index.json` 记录 provenance、推荐顺序、课程支持列表与每套方案的原子统计。
 
-学习地图的键位图不再单独实现，直接复用课程同一个 `KeyboardMap`：相同行布局、方案映射、改造声母、图例与退格键，并保留字母/退格按下反馈。
+## 4. 课程与阶段
 
-Web 键位图（`KeyboardMap`）：所有按键等宽（以最多 10 键/行计算，行内居中，不再按行均分）；第三行末尾固定一个与普通键同尺寸的「退格」键：所有页面都显示且始终可点击/可高亮（练习页会撤销输入；tutorial 页只给按下反馈，入门课试打可撤销输入），不再按页面禁用。
+### 4.1 课程数据
 
-**按下反馈**：任何被程序处理的按键（物理键盘字母、点击键位图、退格键/物理退格，以及 tutorial/锁定/完成态下的字母事件）都会统一由 `showPressed` 在键位图上显示绿色按下态；全遮挡考核（conceal）阶段同样保留按下高亮。
-
-学习地图与练习场的 Hero 卡片使用 `overflow: hidden` 裁切内部装饰渐变，保证圆角处不出现方形渐变溢出。
-
-### 4.3 课程
-
-`data/curriculum/<scheme>.curriculum.json`：40 课 / 10 章，模板版本 1.0.0。
+`data/curriculum/<scheme>.curriculum.json`：5 套课程方案 × 40 课 / 10 章，模板版本 1.0.0：
 
 ```text
 LessonDef { id, chapterId, kind, title, desc, estimatedMinutes,
             focusAtoms, blockingAtoms, nonBlockingAtoms, prerequisites,
             wordPlan{maxUnfamiliar,lengthRange}, passCriteria?, atomMeta,
             zeroExamples?, tips, stageMinWords?, reviewFamily? }
-kind      intro（入门）/ drill（新课）/ review（复习）/ exam（考核）
+kind      intro（入门）/ drill（新课）/ review（复习、期中、综合）/ exam（通关）
 ```
 
-课程结构：10 章，章间按「基础 → a/o → 期中 → e/i/u·ü → 综合 → 通关」推进。
+课程结构（10 章：认识双拼 → 声母与零声母 → a/o 家族 → 期中 → e/i/u·ü 家族 → 综合 → 通关）与每章内容见 [学习指南](LEARNING.md#学习路线)。生成与校验规则：
 
-| 章 | 内容 | 关键设计 |
-|---|---|---|
-| 1 认识双拼 | 入门 | 原理 + 键位图 + 试打（通过记 ★★★） |
-| 2 声母与零声母 | zh / ch / sh / 零声母 12 音全表 + 综合 | 翘舌三定；零声母映射一次列全（L2.4）；首课备注提示 jqxy ü/多音字 |
-| 3 a 家族 | ai/ao/an/ang → 小复习 → ia/ua、iao、ian、iang/uang、uai、uan → 总复习 | 同键双韵合并（ia/ua、iang/uang） |
-| 4 o 家族 | uo、ou、ong/iong → 总复习 | 同键合并（ong/iong） |
-| 5 期中检验 | 混合练习 + 速度练习 | 前半程混合检验（混合全显引导、期中速度与综合速度同标准：正确率 ≥85% 且速度 ≥45/60/75 WPM） |
-| 6 e 家族 | ei、en、eng → 总复习 | 前后鼻音对比 |
-| 7 i 家族 | in、ing、ie、iu → 总复习 | 前后鼻音对比 |
-| 8 u 与 ü 家族 | ui、un、ü 组(ü/üe/ve) → 家族复习 | ü 家族三种拼写同课；家族复习收尾 |
-| 9 综合冲刺 | 混合练习 + 速度练习 | 全量混合；综合速度与期中速度同为速度专题（正确率 ≥85% 且速度 ≥45/60/75 WPM） |
-| 10 通关考核 | 通关 · 最终考核 | 与入门章呼应；全遮挡 + 限时 |
+- 只有 `initial/final` 阻塞选词；`zero` 不阻塞；`prerequisites` 为此前所有 focus 的累计集合；复习范围直接取 `prerequisites`（程序化生成，不手写子集）。
+- 同键双韵合并成一课：`ia/ua`、`iang/uang`、`ong/iong`、`ue/ve`；校验器强制「多个新原子必须共用键位」或同属 ü 家族。
+- 零声母 12 音节在 `L2.4` 一次性全表教授（focus 恰为 12 个 zero、12 条 zeroExamples）；`j/q/x/y` 遇 ü 与多音字只在首课「声母 · zh」的 tips 中提示一次。
+- 课程范围只包含具体键位知识点（无 rule 原子）；每套方案的 learn 原子必须被某课教授（`diff().learn*` 全覆盖，校验器检查）。
+- 统一定名：章标题 2–6 字；课标题 `<类别> · <内容>`，类别固定 9 种（入门 / 声母 / 零声母 / 韵母 / 同键 / 复习 / 期中 / 综合 / 通关）；课 id 为 `L<章>.<课序>`。
+- `stageMinWords`：各阶段最低完成词数；`passCriteria`：`accuracy`、可选 `mode`（accuracy / speed / accuracy-speed）、`minCpm`、`starCpm`（入门课无门槛）。
+- 教学页展示的 `tips`、`atomMeta.anchors` 与 `mnemonic` 由 `scripts/curriculum/content.mjs` + `data/words/anchors.json` 生成。
 
-**统一命名法**：
+### 4.2 阶段
 
-- 章标题 = `<主题短语>`（2–6 字），章 order 1..10、地图显示 01–10；
-- 课标题 = `<类别> · <内容>`，类别固定 9 种：`入门 / 声母 / 韵母 / 同键 / 零声母 / 复习 / 期中 / 综合 / 通关`；并列内容用 ` / `；
-- 课 id = `L<章序号>.<课序号>`，章内连续；
-- `desc`：新授课「新键：…」、规则课「规则：…」、复习「范围：…」、检验类「检验：…」；
-- 以上规则由生成器校验 + core 数据契约测试共同强制。
-
-- 只有 `initial/final` 阻塞选词；`zero` 不阻塞；`prerequisites` 累积此前所有 focus 原子；
-- **复习范围程序化生成**：累计复习课的 focus 直接取 `prerequisites`（学习顺序），不再手写知识点子集；教学页范围按学习顺序展示（不按类型重排）；
-- **同键双韵**：`ia/ua`、`iang/uang`、`ong/iong`、`ue/ve` 在 5 套方案中均共用键位，因此各并成一课（校验器强制「多新原子必须共用键位」或同属 ü 家族）；
-- **课程范围只包含具体键位知识点**（initial / final / zero，无规则类原子）；零声母 12 个音节在 L2.4 一次性全表教授（focus + 12 张示例 + 完整映射清单）；`j/q/x/y` 遇 ü 与多音字不进入范围，只在第一课（L2.1 声母 · zh）的备注里合并提示一次；
-- 零声母示例 = 本课 focus 的 zero 原子（L2.4 一次展示 12 张全表，家族复习本家族子集，综合课 12 张）；
-- **显示标签唯一规则**：零声母知识点一律显示为「零 <音节>」（如「零 ai」），由 core `atomDisplayLabel` 唯一实现并测试；所有课程、章节、卡片、范围标签一致，避免与同音韵母混淆；
-- 每个方案的 learn 原子必须被某课教授（含微软/搜狗的 `final:v`，并入 L8.3「韵母 · ü / üe / ve」；ü 家族允许同课多键）；
-- `stageMinWords`：各阶段最低完成**词数**（逐字练习 1 字 = 1 词，见 §5.3）；`passCriteria`：`accuracy`、可选 `mode`（accuracy / speed / accuracy-speed）、`minCpm`、`starCpm`；入门课无门槛、完成即 ★★★；
-- 每课最后一场都是**全遮挡考核**（exam 阶段）：提示档位由阶段唯一决定（single 1 / word 2 / exam 3），数据不再有 hintTier 字段；
-- **展示规则统一由 kind + 数据决定**：记忆锚点只在新课显示（零声母全表课为程序生成的汇总行），review/exam 永不显示；零声母标签统一「零 x」前缀。
-
-### 4.4 词池
-
-`data/pools/<lessonId>.json`：`{ lessonId, words, chars, examples }`。5 套课程共用（以 xiaohe 课程作为词池结构的规范来源）。
-
-- `words`：目标词；`chars`：单字池（非零声母课不掺零声母字）；`examples`：教学示例；
-- `WordEntry` 的 `freqRank` 是**全量词表全局排名**，`tone ∈ 1..5`（轻声记 5），保留 `polyphone` 标记。
-
-### 4.5 数据版本链
-
-每次数据重建都写入内容 hash，由生成器与校验器共用同一算法：
-
-```text
-dataVersion = "curriculum-" + sha256(JSON.stringify({ chapters, lessons })).slice(0,12)
-dataVersion = "pools-"      + sha256(concatenate(sorted(fileName + fileContent))).slice(0,12)
-dataVersion = "words-"      + sha256(dictSha | pinyin-pro 版本 | 过滤参数 | 词条内容).slice(0,12)
-```
-
-- `data/pools/index.json` 的 `sources = { curriculum: <xiaohe 课程版本>, dict: <词典 sha256 前 12 位> }`；
-- `manifest.json` 记录 `versions{curriculum,pools,words}`、`defaultScheme`、`courses` 与文件清单；
-- 当前版本：`curriculum-8c11b27afd64`（xiaohe）、`pools-24450f68e49a`、`words-ea1e2eb0f56e`、`training-cb1e4cc25756`；音节补丁：`data/words/syllable-patches.json`，词库策略：`data/words/word-policy.json`，练习字库：`data/training/bank.json`。
-
-### 4.6 手写逻辑审计
-
-原则：可推导的键位、示例与校验一律程序生成；只有「课程内容」与「事实数据」允许手写。
-
-- 示例音节与代表字由 builder 从 `words.sample.json` 自动生成，不保留静态示例表；
-- 词典未收录音节（zhei、eng 等）放在 `data/words/syllable-patches.json`，不在代码内特判；
-- 教学示例的音节枚举由 `scripts/lib/pool-examples.mjs` 统一提供，build-pools 与 validate-all 共用；
-- 词性过滤、词池规模、质量与示例阈值、intro 试打词等口径集中在 `data/words/word-policy.json`；
-- 复习/考核池按全局使用计数优先低使用词；单字池按公共 10,000 词上下文统计多音风险；
-- validate-all 按数据特征（focus 数量、家族、review 条件等）定位校验对象，不依赖 lesson id 常量。
-
-保留为「内容 / 契约 / 事实」：课程模板（TEMPLATE/CHAPTERS/FAMILIES）、教学文案库、`stageMinWords` / `passCriteria` 数值、词库阈值、拼音常量与方案键位 JSON。
-
-### 4.7 UI 主题与共享原语
-
-2026-10 的界面重构以学习地图为基准统一全站视觉；组件样式只消费 `styles/tokens.css`，不再写死颜色。
-
-- **宽度**：浏览类页面（学习地图、练习场、顶栏、页脚）统一 `--page-max`（1440px）、`--page-pad-x`（桌面 28px / 移动 14px）与 `--page-top-gap`（桌面 24px / 移动 12px）；练习会话的滚动容器统一 `scrollbar-gutter: stable`，键位图显隐时不再因滚动条出现/消失而横向跳动。沉浸式练习（课程详情、单课练习、入门课、练习会话）保持 1080px 居中窄栏以聚焦输入。顶栏高度由 `--topbar-h` 统一（桌面 64px / 移动 54px）。
-- **卡片与标题**：共享 `.panel`（surface + 1px `--line` + `--r-xl` + `--shadow-md`）；卡片标题用 `.panel-title`（16px/850），页面 kicker 用 `.eyebrow`（10px/850/0.19em）。
-- **控件**：`.segmented` / `.segmented-btn` 用于顶栏导航、练习场视图/字词切换与文章输入方式；`.meta-btn`、`.count-badge`、`.chip`、`.btn` 提供一致的浅色小操作、计数徽标、标签与主次按钮。
-- **状态**：品牌强调用 `--brand-soft`/`--brand-ink`/`--brand-glow`；通过态用 `--state-success-*`（内部统计/规则/次级按钮使用 `--state-success-surface`，避免深色主题下绿底与深蓝块对比过强）；未通过态用 `--state-danger-*`；错误态用 `--danger*`；教学键位 focus 用 `--focus-initial/final`；地图 Hero 装饰与方案键帽分别用 `--hero-tint` / `--keycap-*`。深色主题只覆盖 token，不在组件内写 `html[data-theme='dark']` 特判。
-- **动效**：`@keyframes ui-*` 统一提供切换/输入反馈——分段控件滑块、tab/阶段/入门步骤的 fade-up、文章输入模式淡入、练习输入格弹入、错误抖动、整字完成脉冲与活动词高亮；练习页通过 `:key="stage"` 在阶段切换时重放进入动画，组件只在实际状态变化时触发（挂载/恢复进度不播放整屏动画）。底部键位图通过 `DockReveal` 测量内容高度做 `height` + opacity 过渡，出现/收起时页面真实回填；收起后 `inert + aria-hidden`。路由切换通过全局 `<Transition name="page">` 做 200ms 淡入/位移过渡；`prefers-reduced-motion: reduce` 下统一降为瞬时。
-- **指针焦点**：全局仅在指针点击（`click.detail > 0`）后清除按钮/链接/role=button 的焦点，避免随后按 Space/Enter 误触刚点过的按钮；键盘激活（`detail === 0`）不清焦点。文本输入、textarea、select、checkbox 保留焦点以继续编辑/勾选，这是刻意例外。
-- **卡头骨架**：继续学习、键位图、学习进度、练习设置四张卡共用 `components/common/CardHeader.vue`；固定 58px 高、标题统一 `panel-title`，右上操作统一在同一行，标题 y 偏移一致。
-- **快捷键排版**：分段按钮、meta 按钮内文字与 kbd 统一由基础样式提供 gap；练习设置的「课程范围」卡头复用 `.panel-title` + `.count-badge`，与示例/评分标准完全同级。
-- **Hero 骨架**：课程/练习场共用 `components/common/HeroLayout.vue`。英文眉题固定顶部、中文标语贴右侧键帽区底边；方案行严格位于两者较低处下方 18px；Hero 高度完全由内容撑开。两端共用 `--hero-keycap-size`，不再分别维护 Hero 尺寸/间距。
-- **导航快捷键**：顶栏「课程 / 练习」内嵌显示 Alt+H / Alt+P；练习设置的「字 / 词」按钮内分别显示 Alt+M，不再使用右侧独立提示。
-
-- **守卫**：`scripts/check-ui-conventions.mjs` 额外校验组件/基础样式无裸色值、所有 token 均有引用、练习场上下文色调契约与文档截图存在。
-
-### 4.8 快捷键体系
-
-- 统一原则：`Enter` 主操作、`Esc` 返回/退出、`Alt+←` 上一级、`Alt+R` 重新开始、`Alt+Enter` 继续；全局 `Alt+H` 课程路线、`Alt+P` 练习/练习场、`Alt+T` 主题、`Ctrl+K` 底部键位图（保留 `Alt+K` 兼容）、`?` 快捷键面板。
-- 页面级：学习路线 `Alt+S` 聚焦方案、`Alt+1–5` 切换方案、`↑/↓` 选择课程卡、`Alt+U` 解锁/恢复、`Alt+C` 清除进度；练习场 `Alt+D`/`Alt+A` 切换专项/文章、`Alt+M` 切换字/词、`Alt+1–5` 切换方案、`Alt+R` 重开会话；练习/考核沿用 Enter / Alt+Enter / Alt+← / Alt+R / Space / Backspace / Esc；入门课 Enter 下一步、Alt+← 上一页。
-- 展示：顶栏 `?` 按钮与 `?` 键打开 `ShortcutHelp`，数据源为 `lib/shortcuts.ts`；主要动作在按钮上直接显示 `<kbd>`（方案按钮 Alt+数字、练习 tab、会话重开、地图清除/解锁、继续按钮 Enter 等）。面板打开时拦截页面快捷键并锁定焦点，关闭后恢复原焦点。
-- 未绑定专属快捷键的控件全部使用原生按钮/勾选框/输入框，可用 `Tab` / `Shift+Tab` 聚焦、`Enter` / `Space` 激活；输入框聚焦时页面快捷键不劫持输入。
-
-![快捷键面板](assets/impl/shortcut-help.png)
-
-## 5. 学习流程
-
-### 5.1 学习地图
-
-- 顶部全局顶栏提供**板块导航**：「课程」（学习路线与单课练习，当前板块）与「练习」（专项/文章练习）；课程板块在单课练习页保持激活；练习页的**阶段名**（单字练习 / 全遮挡练习 / 本课教学等）显示在全局顶栏的课程名之后；右侧提供主题切换（Alt+T）与**底部键盘显隐**（Ctrl+K）按钮，键盘按钮只在当前页面支持底部键位图时出现（入门课/教学页/练习/练习会话），地图内键位图不受影响。
-- **地图滚动位置按方案记忆**（sessionStorage）：点击课程进入详情/练习、切换板块或浏览器前进后退后返回地图时恢复原位置；恢复时临时关闭全局平滑滚动，并在内容渲染后直接落到目标位置，避免先显示顶部再滚动；首次进入仍置顶。
-- 地图顶部为「标语 Hero + 继续学习卡」双卡：Hero 上排左侧英文眉题置顶、中文标语贴右侧键帽区域底边，右侧键帽由**当前方案名称**逐字取拼音，再经当前方案 engine 求按键得到（拉丁字母原样作为键帽）；方案切换行从两侧内容的较低处再留固定 18px 间距后开始，每个方案按钮显示 `Alt+数字`，卡片总高度随内容自适应。下方「键位图 + 学习进度」双卡，键位图复用课程 `KeyboardMap`，声母/韵母图例放在卡片标题右侧；学习进度卡右上角为「清除进度 / 解锁全部课程」（分别显示 Alt+C / Alt+U），未通过任何课程时显示 `--`，数字随可用空间动态缩放；继续学习卡和路线课程卡都会显示「第 N 课 · 课型 + 课程 id」，继续按钮显示 `Enter`；学习路线标题右侧显示 `↑↓ 选课 · Enter 开始`；Hero 键帽可直接用键盘或点击键位图输入：顺序正确变绿、首个键错误不触发流程、已开始后输错变红并重置；键帽重新随机排布会清空未完成进度，暂停 8 秒自动刷新；路线卡映射浮层会根据卡片在视口中的上下空间决定向上或向下展开；最下方学习路线使用独立卡片，章节分组、课程卡两列排布；进度 = 已通过课程 / 40；
-- 课程解锁：前置课程 passed 后解锁；「解锁全部课程」可解除全部顺序限制并持久化，按钮随状态变为「恢复锁定」（可恢复按进度解锁）；已通过课程可重练；
-- 切换双拼方案（5 套）；评分标准入口只在教学页（主页面不再提供）；「清除学习进度」只清当前方案、不影响解锁标记。
-
-### 5.2 入门课（intro）
-
-独立 5 步组件：全拼成本 → 双拼原理 → 键位图 → 与全拼重合 → 试打「双拼」。
-
-- 所有键位/改造声母/零声母示例都由当前方案引擎动态生成，不写死某套方案；
-- 试打复用 core 会话状态机（整字判题、错误保留并锁定、退格撤销、空格/Enter 清空、三次揭示）；
-- 完成后写入通过进度并统一记 ★★★；键位图从第一页起就固定在页面最下方（内容区独立滚动），与其它课程一致，可由顶栏键盘按钮或 Ctrl+K 隐藏；内容从卡片顶部开始排布，不垂直居中。
-
-### 5.3 练习阶段（三阶段 + 无限练习）
-
-阶段由 `lessonStages(lesson)` 给出；非 intro 课程先走教学页，再进入练习阶段。**单位统一为词**（逐字练习时 1 个字 = 1 个词），**每一课最后一场都是全遮挡考核**。
+阶段由 `lessonStages(lesson)` 给出；**单位统一为词**（逐字练习时 1 个字 = 1 个词），每课最后一场都是全遮挡考核：
 
 | 课程类型 | 阶段（提示档位） | 最低词数 |
 |---|---|---|
-| drill（新课） | 单字练习（1，全显）→ 词语练习（2，半遮挡）→ **全遮挡考核**（3） | 15 → 15 → 25 |
-| review（复习） | **全遮挡练习**（3） | 50 |
-| exam（通关） | **通关考核**（3） | 100 |
+| drill | 单字练习（1，全显）→ 词语练习（2，半遮挡）→ 全遮挡考核（3） | 15 → 15 → 25 |
+| review | 全遮挡练习 / 考核（3） | 50 |
+| exam | 通关考核（3） | 100 |
 | intro | 独立入门组件 | — |
 
-提示档位由阶段唯一决定：`hintTierFor(stage)` = single 1 / word 2 / exam 3；数据不再有 `hintTier` 覆盖字段。
+- `hintTierFor(stage)` = single 1 / word 2 / exam 3，提示档位只由阶段决定，课程数据不含 `hintTier` 字段。
+- `stageGate(lesson, stage, metrics)`：非考核阶段只要求完成词数；全遮挡考核还要求达到 `passCriteria`（正确率 / 可选速度）。达标后由练习页自动写入通过记录（无需额外操作）。
+- 阶段切换保留独立 `SessionState`，用 `resumeSession` 恢复（暂停时间不计入速度）；已达标阶段解锁状态粘滞，记录在进度条目的 `clearedStages` 中。
+- 内容装配：`buildSingleCharWords`（本课 focus + 已学 / free 单字）、`buildWordStageWords`（`selectWords` 组卷）、`buildTutorialWords`（按 focus 学习顺序全量枚举示例音节）。
 
-**目标行 → 继续练习**：进入阶段时只生成目标词数（`stageMinWords`）的卡片，列表不自动增长。完成最后一张卡后，列表末尾出现操作行：
+## 5. 会话与判题
 
-- 已达标：`Enter` 进入下一阶段（最后阶段为完成本课），或 `Alt+Enter` 继续练习；
-- 未达标（全遮挡考核）：只提示未达标原因，按 `Alt+Enter` 继续练习，达标后 Enter 才可用。
+`packages/core/src/session.ts` 是输入、错误与统计的唯一状态机：
 
-选择继续练习后才进入**无限模式**：批次用完后由 `applyKey(state, key, at, { extendWords })` 自动追加下一批（单字重洗、词语/考核换 seed 重新组卷），卡片列表持续增长；用户想练多久练多久。
+- `normalizeKeyInput(raw)`：合法键为小写字母与 `;`。
+- `applyKey`：逐字推进；整字判题（多解容错）；判错后保留错误输入并锁定该字（继续按字母无反应、不增加错误数）；同一个字第 3 次错误后揭示目标键。
+- `backspace` 逐键撤销当前字并解除错误状态；`clearInput` 清空当前字输入（空格 / Enter 清空优先于主按钮）。
+- `appendSessionWords` 支持无尽头追加（练习场）；`resumeSession` 恢复阶段会话，暂停时长不计入速度。
+- `sessionMetrics`：`accuracy = 正确字数 / (正确字数 + 错误次数)`，`cpm` 按正确字数 / 用时换算；Web 端 `useLiveCpm` 提供会话中的实时速度。
 
-**自动滚动**：当前行变化（完成一行、切换阶段、追加批次）时把活动行滚到视口垂直居中；完成提示行出现时滚到提示行可见——只按行变化触发，避免逐字抖动。
+## 6. 评分与星级
 
-**阶段门槛 `stageGate(lesson, stage, metrics)`**：
+`packages/core/src/scoring.ts` 是唯一实现，教学页评分标准与判定同源：
 
-- 单字 / 半遮挡词阶段：完成词数达到 `stageMinWords` 即可继续（只作最低量要求，不卡正确率）；
-- 全遮挡考核阶段：除词数门槛外，还必须达到本课 `passCriteria`（正确率 ≥85%；复习课附加最低速度 45 WPM，速度课/通关课再加各自的速度门槛）。达标后可自由选择继续练习或完成本课。
-- 顶层操作条中央是练习数据：`已练 X/Y 词 · 正确率 N%（当前档位）· 速度 N（当前档位 WPM）`；**已练始终显示已完成数（未开始为 0/目标）**，正确率与速度在完成第一个字之前显示 `--`，完成第一个字后才刷新，避免只按一个键就出现 `0%`。档位由 core `accuracyTiers` / `speedTiers` 与评分配置同源计算：每档同时显示对应星级：`<85% · 0★`、`85–90% · ★`、`90–95% · ★★`、`≥95% · ★★★`。速度课/准确率+速度课按速度星级门槛四档；只有速度底线的课显示 `<45 WPM · 0★` / `≥45 WPM · ★` 两档；无速度要求则只显示原始 WPM，不给星级。左右分别为上一阶段、重新开始与主操作；阶段名不再重复在操作条中。
+- `accuracyTiers(criteria)` / `speedTiers(criteria)` 生成各档位（含对应星级），`tierOf` 取命中档位；速度课 / 准确率+速度课按速度星级门槛分档，无速度要求的课只显示原始 WPM。
+- `evaluateLesson(lesson, metrics)` 返回 `LessonResult { passed, stars, ... }`：正确率与速度达到 `passCriteria` 即通过；在正确率 / 准确率+速度模式下 `revealed` 会阻止最高星（纯速度模式只看速度分档）。
+- `describePassCriteria(criteria)` 生成教学页右栏的评分标准文案；星只展示 1–3 星，1★ 即最低通过标准。
+- 评分阈值由课程数据 `passCriteria` 决定；用户可见的星级规则表与门槛见 [学习指南 · 评分与星级](LEARNING.md#评分与星级)。
+- 进度写入由 Web `progress` store 负责：`passed`、`stars`、`bestAccuracy` 取历史最优，`attempts` 累加，重复尝试的较差成绩不覆盖历史最佳。
 
-**阶段切换与按钮语义**：
+## 7. 概率均衡选词
 
-- 每阶段保留独立的 `SessionState`；来回切换用 `resumeSession` 恢复（暂停时间不计入速度），已达标阶段保持解锁（粘滞），返回上一阶段不需要重新完成目标；
-- 工具栏始终显示「上一阶段」：新课 考核→词语→单字→课程详情；复习/通关 全遮挡→课程详情；
-- 主按钮文案只由阶段位置决定：非最后阶段始终「下一阶段」，最后阶段始终「完成本课」；只有 enabled 状态随门槛变化；
-- 移除工具栏「返回路线」（顶栏已有）；「重新开始」可重置当前阶段会话。
-- 有限阶段结束后显示阶段总结卡：按**本次尝试**是否达到 `stageGate` 门槛决定颜色（达标绿色、未达标红色），未达标卡展示本次评分未通过、错误键位与评分标准；此前已通过阶段重练未达标也按本次尝试标红；进入下一阶段/完成本课的可用性仍按已解锁状态（`gateReady`）保留。
+课程词语 / 考核阶段由 `selector.ts` + `balancedSampling.ts` 组卷：
 
-![考核未通过总结（红色）](assets/impl/failed-exam.png)
+- `newFocus = blockingAtoms - prerequisites`；free 原子始终视为已学。
+- 候选分层：S（未知 ⊆ newFocus）、A（额外 ≤ `maxUnfamiliar` 个预习原子）、B（无未知原子）；只有 newFocus 为空（复习 / 考核 / 规则课）时，候选必须命中至少 1 个 focus。
+- 零声母逐音节门禁：候选词中的每个零声母音节必须在 focus 中或已学；`j/q/x/y + ü` 与多音字不进入课程 focus，因此不参与选词。
+- **目标音计数**：每个候选记录 `a_w(f)`（该词中目标音 f 的出现次数）；基础权重 `q_w × Σ a_w(f)`，目标音出现越多越容易被抽中。
+- **音级校准**：用 θ_f 调整权重 `q_w × Σ a_f × exp(Σ θ_f a_f)`，迭代使各 focus 的期望出现次数相等。
+- **无放回系统抽样**：由权重求包含概率 π（Σπ = N），用不等概率系统抽样固定选出 N 个不重复词；期望由 π 保证，单轮允许波动。
+- **以字代词**：某 focus 候选太少时从 `pool.chars` 加入单字候选，参与同一套抽样。
+- 数据上确实无法达到相等期望的 focus 退出均衡集合但仍可被抽到；同 seed 完全可复现（`mulberry32`），每次进入阶段使用新 seed。
 
-- 单字阶段从 `pool.chars` 挑「本课 focus + 已学/free」的字，概率均衡抽样；词语/考核由 `selectWords` 组卷，允许 2–5 字词（含零声母成语与五字词）；
-- 教学页示例由课程数据全量生成：**按 focus 原子学习顺序，枚举所有包含该声母/韵母的音节，跨知识点去重，每个音节一张卡（高频代表字）**，不设数量上限（综合课约 400 张）；示例卡比练习卡更紧凑（宽高比 340/392，上下内边距 7px 对称）；
-- 教学页同时展示 `lesson.tips`（本课技巧）与 `atomMeta.anchors/mnemonic`（记忆锚点），见 §8；
-- 课程详情页采用全高布局：主卡头部左侧为 eyebrow（第 N 课 · 新课/复习/考核）+ 课名，右侧为「开始练习」主按钮（带 Enter）；下方课程范围容器顶部左侧 `panel-title`「课程范围」、右侧 `.count-badge` 映射数徽标，标签从顶部开始（少量/大量映射规则一致，不做稀疏态居中）；记忆锚点（键位技巧）与「本课技巧」在范围容器下方，不随范围滚动；页面整体不滚动。
-- 右侧栏拆成**两张独立卡片**：**上**示例卡（标题「示例」+ 张数徽标，列表内部滚动）；**下**评分标准卡（标题「评分标准」+ 档数徽标 + `describePassCriteria` 规则行，不再显示「答案揭示」说明）；卡头统一使用 `.panel-title` + `.count-badge`，不再使用旧的 side-pill；页面整体不滚动。
-- **记忆锚点（键位技巧）的唯一展示规则**：只在新课（drill）出现——有改造键位时逐键展示记忆法与高频字；零声母全表新课用一条程序生成的「零声母」汇总行（12 音映射）。复习/考核课一律不显示。不按 focus 数量等条件做启发式判断。
+## 8. 教学备注与内容来源
 
-### 5.4 输入与错误
+每节课带 1–4 条 `lesson.tips`；声母 / 韵母知识点带 `atomMeta.anchors`（高频字锚点）与 `mnemonic`（一句话记忆法）。
 
-- 每字独立记录输入、错误次数、是否揭示答案；输入合法键 = 小写字母或 `;`；
-- 整字判题（多解容错）：判错后**保留红色错误输入并锁定**，继续按字母无反应（不增加错误数）；退格逐键撤销并解除错误状态；空格或 Enter 一次清空当前字输入（Enter 清空优先于主按钮）；
-- 同一个字第 3 次错误后揭示目标键；退格只回退当前字已输入的最后一个键；
-- 阶段统计由 `sessionMetrics` 给出：`accuracy = 正确字数 / (正确字数 + 错误次数)`，`cpm = 正确字数 / 用时`。
+- 教学页展示「本课技巧」与锚点行；记忆锚点只在新课（drill）显示，零声母全表课使用程序生成的汇总行，复习 / 考核课不显示。
+- `scripts/curriculum/content.mjs` 的 `buildLessonTips` 按课程类型、focus 原子、方案键位与家族 / 规则动态组装文案。
+- `data/words/anchors.json` 是构建期内容索引（`syllableChars` / `finalChars` / `initialChars`，每键取 8 个常用字），不进入运行时；生成规则为「按键 + 音组合出音节，取该音节高频字，非法音节回退为该韵母常用字」。
+- 示例音节枚举由 `scripts/lib/pool-examples.mjs` 统一提供，build-pools 与 validate-all 共用；词典未收录音节放在 `data/words/syllable-patches.json`，不在代码内特判。
 
-### 5.5 练习场（/training）
+**教学备注来源**（调研整理，跨方案通用方法）：
 
-顶栏「练习」导航进入，不写课程进度与星级，用于自由巩固；页面标题为「练习场」（正文不使用「板块」措辞）。
+- 脚手架式记忆与「先准确后速度」：[shuangpin.xyz 四步学习路线](https://shuangpin.xyz/blog/start-shuangpin/)
+- 字组结合、5-5 原则与漏洞表：[oroc 七日上手双拼](https://blog.oroc.top/post/double-pinyin-guide/)
+- 口诀与规律：[一文搞懂小鹤双拼](https://www.cnblogs.com/PeterJXL/p/18539136)
+- 高频字与盲打训练：[键位记忆方法](https://www.php.cn/faq/3096414.html)、[提速技巧](https://www.php.cn/faq/3096337.html)
+- 前后鼻音对比：[普通话测试站](https://putonghua.szu.edu.cn/info/1014/2862.htm)
 
-- **方案选择**：页面内可直接切换双拼方案（全局生效）。
-- **专项练习**：字 / 词二选一（默认「词」）；练习设置卡内「专项/文章」居左、「字/词」居右，同一行排列；「出现」卡头显示**当前学习进度**（已通过课程数/40）并可一键选中已学完课程覆盖的声母、韵母、零声母；「出现」栏的声母、韵母分组内各有一个置顶的「全拼沿用」小胶囊（只显示四个字，不展开内部键位）；胶囊算作该组的一个可选项，组全选/全清、隐藏组全选都把它一并处理：按**当前方案**自动计算与全拼拼写一致的 free atoms（不手写固定集合），切换方案时自动重算；这些键位默认开启，可通过胶囊单独取消。以 xiaohe 为例，声母胶囊包含 20 个公共声母（除 zh/ch/sh）和 ai/an/ao/ei/en/er/ou 七个公共零声母，韵母胶囊包含 a/o/e/i/u/v 六个公共韵母；切到微软/搜狗时 v 不再公共，胶囊所代表的集合自动变化。声母组其余仅显示 zh/ch/sh，韵母组其余只显示方案专属映射，**零声母按音节逐项展开**（`零 a`、`零 ai`…共 12 项，含 `零 er`；零声母是独立选择集，不受普通韵母勾选限制）；支持全选勾选框并预览可用条目；过滤规则由 core `filterTrainingEntries` 统一实现（非零音节命中声母×韵母，零声母命中 `zeroFinals`）；练习范围、隐藏选择、字/词模式与 tab 按方案保存在 localStorage（`trainingConfig.ts`），刷新/切换方案后恢复；开始后直接进入**无尽练习**（无目标行/完成提示，批次自动追加），直到退出；实时显示已练字/词数、正确率、速度；配置页焦点不在输入框/按钮时按 Enter 可直接开始当前 tab 的练习（按钮上的 Enter 提示已接线）。
-- **「隐藏」双选栏**：专项中隐藏候选**只显示「出现」已选中的声母/韵母/零声母音节**（出现范围变化自动收缩）；文章练习无出现筛选，隐藏候选为方案全部声母/韵母/零声母；与出现栏一致在声母/韵母组内提供置顶的「全拼沿用」小胶囊；胶囊计入组内项目数，隐藏组全选同样包含胶囊；公共 free atoms 默认开启，也不混入普通 chips。被隐藏的音节在字卡与键位图上不显示映射提示，但键位仍需按对、判题不变，同一个字第 3 次错误仍会揭示答案；键位图的 hover/pressed/focus 反馈独立于映射文字，隐藏映射或全遮挡时仍然保留。
-- **页面布局**：练习场配置页采用课程页式四卡结构：**上排左卡**为品牌区（英文眉题置顶、练习场大标题贴键帽区域底边、练习场 6 个装饰键帽一行排布、当前 5 个双拼方案按钮，方案按钮显示 Alt+数字；键帽复用 `SchemeKeycaps` 的随机排布/自刷新/彩蛋输入/完成退场）；**上排右卡**为练习设置（`panel-title` 练习设置 + `count-badge` 专项/文章状态；专项/文章居左、字/词居右同排；可用字词信息与开始按钮）；**下排两张卡**为出现 / 隐藏练习范围。开始按钮和数据不再占用独立底栏。顶卡宽度比例与课程页「Hero / 继续学习」一致（1.35fr : 0.95fr）；桌面撑满高度、范围卡内部滚动；窄屏（≤980px）按品牌 → 设置 → 出现 → 隐藏自然滚动。页面宽度与学习地图一致（1440，移动端 14px 边距）；与顶栏的顶部间距共用 `--page-top-gap`；练习会话仍为 1080px 窄栏 + 底部键位图 Dock，可由顶栏键盘按钮或 Ctrl+K 隐藏。
-- **统一卡片**：出现、隐藏、文章隐藏三张选择卡共用同一 `SetupCard + SetupGroup` 模板（固定卡头：色块 pill + 副标题；正文：声母/韵母分组 = 名称 + 计数 + 全选勾选框 + 「全拼沿用」小胶囊 + 方案专属 chips），只替换文案与选择逻辑；chips 使用全局 `.chip`（9px 圆角）；文章输入卡也套用同一外框与内部滚动。
-- **会话顶栏**：与课程练习、入门课共用 `SessionBar`（50px 平铺操作条；左侧操作、中间数据直接平铺、右侧主操作）。练习场显示已练字/词、正确率、隐藏项与速度（WPM）；隐藏项悬浮可查看具体音节。
-- **文章输入卡**：卡头为「输入 / 导入」segmented 分段控件——输入模式文本框撑满卡内正文；导入模式显示可点击/拖拽的 .txt 上传区并撑满（UTF-8），不再有独立的「导入 .txt」按钮；两种模式共用文章内容与解析结果。
-- **文章练习**：粘贴文本或导入 `.txt`；core `parseArticleText` 只保留汉字，**任何非汉字（标点、引号、括号、字母、数字、空白、换行）都不显示并作为断行**，连续分隔合并，每行最多 5 个汉字（短行保留）；多音字按练习字库常用读音处理、不做上下文消歧，字库外汉字会跳过并在开始前提示；按顺序逐字练习，练完显示字数/正确率/速度汇总。
-- 练习数据：`data/training/bank.json`（chars 5002，仅字库，约 0.8MB；词语从公共词库加载）与 `data/words/words.sample.json`（10,000 词）；输入/错误锁定/退格/空格清空/按下高亮与课程练习共用同一套逻辑。
-- 评分面板：右栏「评分标准」只展示 ★/★★/★★★ 三档。
+方案相关部分（键位、同键伙伴、零声母写法）全部由 `data/schemes/*.json` 推导，不写死某套方案。
 
-## 6. 星级规则（scoring.ts 单一实现）
+## 9. 数据契约与版本链
 
-教学页右栏「评分标准」与判定同源（`describePassCriteria` / `evaluateLesson`）；**只展示 1–3 星，1★ 即最低限度的通过，不再单列「通过」等级**；规则行使用固定宽度的星标列，保证描述文字左对齐。
-
-| 课程 | ★ | ★★ | ★★★ |
-|---|---|---|---|
-| 入门 | 完成试打 | 同 ★ | 完成试打即记 ★★★ |
-| 新课 drill（25 词全遮挡考核） | 正确率 ≥85% | 正确率 ≥90% | 正确率 ≥95% 且未揭示答案 |
-| 复习 review（50 词全遮挡；家族/混合） | 正确率 ≥85% 且速度 ≥45 WPM | 正确率 ≥90% 且速度 ≥45 WPM | 正确率 ≥95%、速度 ≥45 WPM 且未揭示答案 |
-| 期中/综合速度（50 词） | 正确率 ≥85% 且 ≥45 WPM | 正确率 ≥85% 且 ≥60 WPM | 正确率 ≥85% 且 ≥75 WPM |
-| 通关考核（100 词全遮挡） | 正确率 ≥85% 且 ≥45 WPM | 正确率 ≥90% 且 ≥60 WPM | 正确率 ≥95%、≥75 WPM 且未揭示答案 |
-
-- 全遮挡阶段：1★ 门槛未达标时「完成本课」不可点；达标后可继续无限练习或完成；
-- 已通过课程重练：仍记录 attempts / bestAccuracy，星级取历史最优；
-- 速度实时显示于工具栏。
-
-## 7. 概率均衡选词（selector.ts + balancedSampling.ts）
-
-- free 原子始终视为已学；`newFocus = blockingAtoms - prerequisites`；
-- 候选分层：S（未知 ⊆ newFocus）、A（额外 ≤ maxUnfamiliar 个预习原子）、B（无未知原子）；
-- 只有 newFocus 为空（复习/考核/规则课）时，候选必须命中至少 1 个 focus 原子；
-- 零声母逐音节门禁：候选词中的每个零声母音节必须在本课 focus 中或已学，否则排除；j/q/x/y 遇 ü、多音字不参与选词，仅作首课备注提示；
-- **目标音计数**：每个候选记录 `a_w(f)` = 该词中目标音 f 的出现次数；同一个词含 3 次 sh 就计 3；
-- **基础权重**：`q_w × Σ_f a_w(f)`，目标音出现次数越多，候选越容易被抽中；
-- **音级校准**：用 θ_f 调整权重 `q_w × Σ a_w(f) × exp(Σ θ_f a_w(f))`，迭代使各 focus 的期望出现次数相等；
-- **无放回系统抽样**：由权重求包含概率 π（Σπ=N），用不等概率系统抽样固定选出 N 个不重复词；期望由 π 保证，实际单轮允许波动；
-- **以字代词**：某 focus 在词池中的可用候选太少时，从 `pool.chars` 加入单字候选，直接参与同一套概率抽样；
-- 数据上确实无法达到相等期望的 focus（候选容量不足）退出均衡集合，但实际仍可被抽到；不伪造不存在的词；
-- 同 seed 完全可复现；应用每次进入阶段使用新 seed。
-
-## 8. 教学备注与记忆锚点
-
-每节课都带 1–4 条 `lesson.tips`（技巧备注）；声母/韵母知识点带 `atomMeta.anchors`（高频字锚点）与 `atomMeta.mnemonic`（一句话记忆法）。教学页展示「本课技巧」与锚点行（锚点区块不设可见标题，仅保留屏幕阅读器标签）；零声母 12 音不生成锚点，直接以 L2.4 的映射标签 + 示例 + 完整清单呈现。
-
-### 8.1 内容来源
-
-- 调研整理（跨方案通用方法）：脚手架式记忆与「先准确后速度」（[shuangpin.xyz 四步学习路线](https://shuangpin.xyz/blog/start-shuangpin/)）、字组结合与 5-5 原则/漏洞表（[oroc 七日上手双拼](https://blog.oroc.top/post/double-pinyin-guide/)）、口诀与规律（[一文搞懂小鹤双拼](https://www.cnblogs.com/PeterJXL/p/18539136)）、高频字与盲打训练（[键位记忆方法](https://www.php.cn/faq/3096414.html)、[提速技巧](https://www.php.cn/faq/3096337.html)）、前后鼻音对比（[普通话测试站](https://putonghua.szu.edu.cn/info/1014/2862.htm)）；
-- 文本内容库：`scripts/curriculum/content.mjs`（`buildLessonTips` 按课程类型、focus 原子、方案键位、家族/规则动态组装）；
-- 方案相关部分（键位、同键伙伴、零声母 o+ 式/字母式）全部由 `data/schemes/*.json` 推导，不写死某套方案。
-
-### 8.2 记忆锚点生成（程序兜底，数据驱动）
-
-`data/words/anchors.json` 由 `scripts/word-pipeline/build.mjs` 生成（构建期内容索引，不进运行时）：
+- 所有数据文件的契约类型在 `packages/core/src/types.ts`；构建期与运行期共用。
+- 生成器与校验器共用 `scripts/lib/data-contract.mjs` 的 hash / 原子写 / 路径工具，保证版本算法一致：
 
 ```text
-syllableChars  每个音节按字频取常用字（先用公共 10,000 词词表的常用字集合过滤繁体/生僻字，每音节前 8）
-finalChars / initialChars  按韵母/声母归组的常用字
+dataVersion = "curriculum-" + sha256(JSON.stringify({ chapters, lessons })).slice(0, 12)
+dataVersion = "pools-"      + sha256(concat(sorted(fileName + fileContent))).slice(0, 12)
+dataVersion = "words-"      + sha256(dictSha | pinyin-pro 版本 | 过滤参数 | count | 词条内容).slice(0, 12)
+dataVersion = "training-"   + 由训练库内容重算
 ```
 
-`build-curriculum.mjs` 按「按键 + 音」组合生成：
+- 版本关系：`data/curriculum/index.json` 记录 5 套课程版本；`data/pools/index.json.sources = { curriculum: <xiaohe 课程版本>, dict: <jieba sha 前 12 位> }`；`data/packages/index.json` 汇总 19 个方案包；`apps/web/public/data/manifest.json` 记录 `versions{curriculum,pools,words,training}`、`defaultScheme`、`courses` 与文件清单。
+- 数据目录职责、当前版本快照、重建顺序与质量指标见 [数据说明](DATA.md)。
 
-| 知识点 | 生成规则 | 示例（小鹤） |
-|---|---|---|
-| 韵母 | `K + 韵母 = 音节`，取该音节高频字；非法音节回退为该韵母常用字 | `ai→D` → `D + AI = DAI` → 带 呆 待 代 戴 |
-| 声母 | 找同键位韵母 P，`声母 + P = 音节`，取高频字 | `zh`（V 键，含 ui）→ `ZH + UI = ZHUI` → 追 |
+## 10. Web 应用层
 
-无法组合出合法音节或没有数据时跳过（不强求）。
+### 10.1 路由与外壳
 
-## 9. 进度与本地设置
+- 路由：`/`（学习路线）、`/training`（练习场）、`/practice/:lessonId`（课程详情 / 练习），未知路径重定向到 `/`。
+- `VITE_ROUTER_MODE=hash` 时使用 hash 路由（静态包），否则使用 history 路由（在线站点）；`VITE_BASE` 控制部署子路径。
+- `App.vue` 负责：数据引导、全局快捷键（主题 `Alt+T`、音效 `Alt+B`、键位图 `Ctrl+K` / `Alt+K`、导航 `Alt+H` / `Alt+P`、帮助 `?`）、`ShortcutHelp`、路由过渡与页脚；练习页 / 练习场锁定视口高度。
 
-- 键：`shuangpin-next:progress:<schemeId>`；值：每课 `{passed, stars, bestAccuracy, attempts, updatedAt}`；
-- 主题：`shuangpin-next:theme`；解锁全部课程：`shuangpin-next:unlock-all`（解锁写入、恢复锁定移除）；读写均有形状校验与容错；
-- 清除进度只影响当前方案；解锁标记不受清除进度影响；尚未接入账号/数据库/SRS。
+### 10.2 Store 与数据流
 
-## 10. 数据管线
+| store | 职责 |
+|---|---|
+| `course` | single-flight 加载方案索引与方案包；当前方案、课程、词池索引、解锁标记；progress store 委派；纯练习方案预览 |
+| `progress` | 按方案读写 `localStorage` 进度（通过 / 星级 / 最佳正确率 / attempts / clearedStages），带形状校验与容错 |
+| `settings` | 主题（首次跟随系统，之后持久化） |
+| `sound` | 音效开关与 Web Audio 合成 |
+| `layout` | 顶栏上下文：阶段标题、底部键位图可用 / 显隐、快捷键面板开关 |
 
-```bash
-pnpm data:words        # jieba dict → data/words/words.sample.json（8000 词）+ anchors.json（记忆锚点）
-pnpm data:curriculum   # 方案数据 + 课程模板 → data/curriculum/*.json
-pnpm data:pools        # 词表 + 课程 → data/pools/*.json
-pnpm data:sync         # 原子同步到 apps/web/public/data/ + manifest
-pnpm validate          # 版本链/同步/规模/文档入口校验
-```
+- **方案状态全站共享**：学习路线与练习场都通过 `course.selectScheme(id)` 切换；5 套课程方案走 `setScheme`（加载课程与进度），纯练习方案走 `previewScheme`（只加载方案与键位图，`previewMode = true`，课程 / 进度为空）。预览方案不写入 `shuangpin-next:scheme`，刷新后恢复上次保存的课程方案。
+- 数据加载层 `lib/data.ts` 从 `import.meta.env.BASE_URL + data/` 读取方案包、词池、公共词库与训练库，同一数据只加载一次，失败不缓存 rejected Promise。
 
-- `scripts/word-pipeline/lib/wordbank.mjs` 是唯一词条构建逻辑（jieba 解析 + core `splitPinyin` + tone 0→5 + polyphone + 全局 freqRank）；
-- `scripts/curriculum/content.mjs` 是课程备注/技巧的唯一内容库；`anchors.json` 提供程序化记忆锚点；
-- `build-curriculum.mjs` 用 `engine.diff()` 计算 free/learn，并校验 learn 原子全覆盖；
-- `sync-data.mjs` 先写临时目录再整体替换；Windows 目录被占用时退化为逐文件原子写；
-- `validate-all.mjs` 重算三条版本链、learn 覆盖、命名法、rule 范围、tone/freqRank、public 逐字节一致、manifest、规模与文档入口，失败退出码 1。
-- `scripts/word-pipeline/audit-words.mjs` 输出词库/词池统计；口径集中在 `data/words/word-policy.json`（词性过滤/词池规模/质量与示例阈值/intro 试打词），示例枚举由 `scripts/lib/pool-examples.mjs` 在 build-pools 与 validate-all 间共享；词库问题与改进见 [WORDS.md](WORDS.md)。
-- `scripts/training/build-training-bank.mjs` 生成练习/文章共用字库 `data/training/bank.json`（5,002 字）；词语统一来自公共词库 `words.sample.json`（10,000 词），不再重复存储。
-- 当前课程模板 1.0.0；词池 40 课 / 26,000 条 / 25,255 个唯一词；公共词库 10,000 词。
+### 10.3 页面
 
-## 11. 测试
+- `LearnMapPage`：Hero + 继续学习 + 键位图 + 学习进度 + 章节路线；按方案记忆滚动位置（`sessionStorage`），纯练习方案显示占位说明；`Alt+1–5` / `Alt+6` 切方案，`Alt+U` / `Alt+C` 解锁 / 清除进度。
+- `PracticePage`：只做状态分支与子组件编排；阶段状态机在 `usePractice`，规则全部在 core；顶栏显示课名与阶段标签。
+- `TrainingPage`：配置页 + 会话两态；配置持久化按方案、隐藏范围过滤、文章解析与预设导入都在这里编排；会话核心在 `useTrainingSession`。
 
-`pnpm test`（`packages/core` 197 个 + `apps/web` 5 个）：
+### 10.4 本地存储键
+
+| 键 | 内容 |
+|---|---|
+| `shuangpin-next:theme` | `dark` / `light` |
+| `shuangpin-next:sound` | 音效开关（`0` 关闭） |
+| `shuangpin-next:scheme` | 上次保存的课程方案 id |
+| `shuangpin-next:unlock-all` | 解锁全部课程标记 |
+| `shuangpin-next:progress:<schemeId>` | 该方案的学习进度 |
+| `shuangpin-next:training-config:<schemeId>` | 该方案的练习场配置 |
+| `shuangpin-next:training-preset` | 课程 → 练习场的一次性预设（`sessionStorage`） |
+| `shuangpin-next:map-scroll:<schemeId>` | 学习地图滚动位置（`sessionStorage`） |
+
+所有读写都有容错；隐私模式 / 配额不足时降级为仅当前会话生效。
+
+## 11. 方案包与共享数据
+
+`scripts/scheme-packages/build.mjs` 把扁平数据组装成运行时方案包：
 
 ```text
-engine.test.ts        19 套方案 golden cases + 主键/判题/keyMap/diff
-pinyin.test.ts        常量、规范化、拆分（含 er 与 jqxy+u）、知识点 ID
-practice.test.ts      真实词库/词池的键帽、零声母、多方案（小鹤/微软）、缺数据显式报错
-selector.test.ts      drill/review/exam/零声母课、maxUnfamiliar、seed 可复现、final:v 门控
-session.test.ts       逐字推进、错误反馈、退格、统计与速度、无限延伸、暂停恢复、结束态
-training.test.ts      练习范围过滤（声母/韵母/零声母）与文章解析（汉字、断行、每行≤5字）
-scoring.test.ts       普通/速度/考核/入门星级与评分标准文案（1–3 星）
-stages.test.ts        阶段计划（三阶段词口径）、提示档位、阶段门槛（stageGate）、单字/词语/全量示例装配
-data-contract.test.ts data/** 契约、版本链、tone/er/freqRank、learn 覆盖、同键配对规则、
-                      命名法/id 结构、复习范围程序化（L2.5）、stageMinWords/无 hintTier、
-                      示例全量与学习顺序、tips/anchors/mnemonic、public 同步
-apps/web/tests/trainingConfig.test.ts 练习配置持久化：按方案读写、非法字段过滤、
-                      损坏 JSON 与存储异常降级
-apps/web/tests/trainingGroups.test.ts 组内胶囊计数、全选/部分选中、只选胶囊的隐藏组
+data/packages/<scheme>/manifest.json     能力（course/training/article/zeroInitial/customStages）、
+                                        curriculum profile、共享字词库引用
+data/packages/<scheme>/scheme.json       方案键位映射
+data/packages/<scheme>/curriculum.json   仅课程方案（standard-40）完整课程
+data/packages/index.json                 19 个包的索引，保留 defaultScheme / recommendedOrder / courseSupported
 ```
 
-Web 端领域规则下沉 core；练习配置持久化等 Web 纯逻辑补独立单测；`scripts/check-ui-conventions.mjs` 额外做上下文色调/重复 chip 样式/组件裸色值/未使用 token 的静态检查。
+- 5 套课程方案包带 `curriculum`，其余 14 套为 practice-only 包，只带方案映射与能力声明，不伪造课程。
+- 课程词池、公共词库、训练库通过 `manifest.shared` 引用共享数据，不重复打包。
+- `sync-data.mjs` 在同步前重建方案包，再把包目录与共享数据一起写入 `apps/web/public/data/`。
+- Web 端 `loadScheme(id)` 可直接加载任意方案；纯练习方案在学习路线以预览模式展示（占位说明 + 完整键位图），在练习场可直接练习。C 双拼等整音节编码方案没有可逐字映射的声母 / 韵母，Hero 键帽使用 `ERROR` 兜底。
 
-## 12. 界面快照
+## 12. 测试与校验
 
-> 截图为手工导出的静态文件，不是自动生成/自动刷新；`validate-all` 只校验文档引用文件存在。
-> 修改练习场/地图 UI 后必须人工重新核对并替换截图。
-
-![学习地图（英文置顶/中文贴键帽底边，方案行独立）](assets/impl/map-1440.png)
-
-![解锁全部课程后：按钮变为「恢复锁定」](assets/impl/map-unlocked.png)
-
-![练习场：四卡布局（品牌 + 设置/开始，下方出现/隐藏范围卡）](assets/impl/training-config.png)
-
-![练习场：专项无尽练习（顶栏隐藏项+速度）](assets/impl/training-drill.png)
-
-![练习场：文章练习配置（输入 / 导入分段控件、输入卡与隐藏卡同高）](assets/impl/training-article-config.png)
-
-![练习场：文章逐字练习（每行≤5字）](assets/impl/training-article.png)
-
-![练习场：文章练完汇总](assets/impl/training-article-done.png)
-
-![练习进行中（顶栏进度与实时速度）](assets/impl/live-speed.png)
-
-![教学页](assets/impl/tutorial-1440.png)
-
-![复习范围按学习顺序](assets/impl/review-order.png)
-
-![课程详情右栏评分标准（1–3 星）](assets/impl/lesson-rating.png)
-
-![零声母示例范围](assets/impl/zero-badges.png)
-
-![入门完成](assets/impl/intro-complete.png)
-
-![深色主题完成态](assets/impl/green-dark.png)
+- `packages/core/tests/`：`engine`（19 套方案 golden cases）、`pinyin`、`practice`、`selector`、`balancedSampling`、`session`、`stages`、`scoring`、`training`、`data-contract`（读根 `data/` 校验契约、版本链、命名法、learn 覆盖、示例全量与 public 同步）以及共享 helpers。
+- `apps/web/tests/`：`progress`（进度读写容错 / 最优成绩）、`trainingConfig`（配置持久化与非法字段过滤）、`trainingGroups`（胶囊计数 / 全选 / 部分选中）。
+- `pnpm verify` = typecheck + lint:ui + data:sync + test + build + validate。
+- `scripts/validate-all.mjs`：方案 19 套与判题用例、5 套课程 40 课 / 10 章 / 326 分钟与命名法、词表 / 词池 / 训练库契约与质量阈值、版本链重算、`public/data` 逐字节一致、方案包能力、文档与截图守卫。
+- `scripts/check-ui-conventions.mjs`：组件样式无裸色值、token 无未使用项、练习场上下文色调契约、全局 chip 样式唯一、文档截图引用存在。
+- 文档守卫：README 导航必须覆盖 `docs/*.md`，全部必存在文档清单由 `validate-all.mjs` 维护；README / `docs/*.md` 引用的 `docs/assets/impl` 截图必须存在且不遗留未被引用的截图。
 
 ## 13. 边界与来源
 
-- 参考项目：[BlueSky-07/Shuang](https://github.com/BlueSky-07/Shuang)（GPL-3.0）：仅键位映射作为事实来源，参考克隆不参与构建；`data/schemes/` 视为冻结数据（含 provenance 字段）；
-- 词表/词频：[jieba](https://github.com/fxsjy/jieba)（MIT）；拼音转换：[pinyin-pro](https://github.com/zh-lx/pinyin-pro)（MIT，仅构建期）；
-- 尚未实现：账号/云同步、SRS 复习、自定义方案编辑、数据可视化后台；发布前需完成许可评估。
+- 参考项目：[BlueSky-07/Shuang](https://github.com/BlueSky-07/Shuang)（GPL-3.0）：仅键位映射作为事实来源，参考克隆不参与构建；`data/schemes/` 视为冻结数据并记录 provenance。
+- 词表 / 词频：[jieba](https://github.com/fxsjy/jieba)（MIT）；拼音转换：[pinyin-pro](https://github.com/zh-lx/pinyin-pro)（MIT，仅构建期）。
+- 尚未实现：账号与云同步、SRS 复习、自定义方案编辑、数据可视化后台。
+- 发布流程、静态包与工作流见 [发布说明](RELEASE.md)；许可与第三方声明见 [README](../README.md#来源与第三方许可)。

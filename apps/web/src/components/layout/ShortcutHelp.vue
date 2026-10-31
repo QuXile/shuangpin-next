@@ -6,6 +6,7 @@ import { useLayoutStore } from '@/stores/layout'
 
 const layout = useLayoutStore()
 const closeButton = ref<HTMLButtonElement | null>(null)
+const groupsEl = ref<HTMLElement | null>(null)
 let previousFocus: HTMLElement | null = null
 
 function close(): void {
@@ -18,7 +19,9 @@ watch(
     if (open) {
       previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
       await nextTick()
-      closeButton.value?.focus()
+      // 初始焦点放在可滚动的快捷键列表：方向键 / Page 键可直接浏览，
+      // 关闭按钮仍可通过 Tab 到达。
+      groupsEl.value?.focus()
     } else {
       previousFocus?.focus()
       previousFocus = null
@@ -35,13 +38,36 @@ function onKeydown(event: KeyboardEvent): void {
     return
   }
   if (event.key === 'Tab') {
-    // 面板只有一个可聚焦元素：把 Tab 也留在面板内。
+    // 列表与关闭按钮之间循环，焦点不离开面板。
     event.preventDefault()
     event.stopPropagation()
-    closeButton.value?.focus()
+    if (document.activeElement === closeButton.value) groupsEl.value?.focus()
+    else closeButton.value?.focus()
     return
   }
-  // 阻止快捷键继续落到当前页面。
+
+  // 方向键 / PageUp / PageDown / Home / End 手动滚动画板内容，
+  // 既让面板可用键盘浏览，又不会滚动下面的页面。
+  const scrollKeys = new Set(['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Home', 'End'])
+  const groups = groupsEl.value
+  if (groups && scrollKeys.has(event.key) && !event.ctrlKey && !event.metaKey && !event.altKey) {
+    event.preventDefault()
+    event.stopPropagation()
+    const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    const behavior: ScrollBehavior = reduced ? 'auto' : 'smooth'
+    if (event.key === 'Home') groups.scrollTo({ top: 0, behavior })
+    else if (event.key === 'End') groups.scrollTo({ top: groups.scrollHeight, behavior })
+    else {
+      const page = Math.max(120, Math.round(groups.clientHeight * 0.82))
+      const step = event.key === 'PageDown' ? page : event.key === 'PageUp' ? -page : event.key === 'ArrowDown' ? 48 : -48
+      groups.scrollBy({ top: step, behavior })
+    }
+    return
+  }
+
+  // 阻止方向键 / PageUp / PageDown / Space 等浏览器默认行为，
+  // 否则它们仍会滚动下面的页面；同时阻断页面级快捷键。
+  if (!event.ctrlKey && !event.metaKey && !event.altKey) event.preventDefault()
   event.stopPropagation()
 }
 
@@ -73,7 +99,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown, true))
           </button>
         </header>
 
-        <div class="shortcut-groups thin-scroll">
+        <div ref="groupsEl" class="shortcut-groups thin-scroll" tabindex="0" aria-label="快捷键列表">
           <section v-for="group in SHORTCUT_GROUPS" :key="group.title" class="shortcut-group">
             <h3>{{ group.title }}</h3>
             <ul>
@@ -88,7 +114,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown, true))
         </div>
 
         <footer class="shortcut-foot">
-          输入框聚焦时不会触发页面快捷键；所有其它控件都可以用 <kbd>Tab</kbd> 聚焦，<kbd>Enter</kbd> / <kbd>Space</kbd> 激活。
+          输入框聚焦时不会触发页面快捷键；方向键 / <kbd>PageUp</kbd> / <kbd>PageDown</kbd> 可滚动画板。所有其它控件都可以用 <kbd>Tab</kbd> 聚焦，<kbd>Enter</kbd> / <kbd>Space</kbd> 激活。
         </footer>
       </section>
     </div>
@@ -109,7 +135,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown, true))
   animation: ui-fade-in 160ms var(--ease);
 }
 .shortcut-dialog {
-  width: min(920px, 100%);
+  width: min(1080px, 100%);
   max-height: min(760px, calc(100vh - 48px));
   display: flex;
   flex-direction: column;
@@ -158,14 +184,18 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown, true))
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 18px 22px 8px;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px 22px;
+  padding: 18px 24px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.shortcut-groups:focus-visible {
+  outline: 2px solid var(--brand-line);
+  outline-offset: -3px;
+  border-radius: var(--r-md);
 }
 .shortcut-group {
   min-width: 0;
-  break-inside: avoid;
 }
 .shortcut-group h3 {
   margin: 0 0 8px;
@@ -178,15 +208,16 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown, true))
   margin: 0;
   padding: 0;
   list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px 18px;
 }
 .shortcut-group li {
   display: grid;
-  grid-template-columns: minmax(92px, auto) minmax(0, 1fr);
-  gap: 12px;
+  grid-template-columns: minmax(88px, auto) minmax(0, 1fr);
+  gap: 10px;
   align-items: baseline;
+  min-width: 0;
 }
 .shortcut-keys {
   display: flex;
@@ -210,6 +241,11 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown, true))
   font-size: var(--text-xs);
   line-height: 1.7;
 }
+@media (max-width: 900px) {
+  .shortcut-group ul {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 @media (max-width: 700px) {
   .shortcut-overlay {
     padding: 10px;
@@ -222,8 +258,12 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown, true))
     padding: 16px;
   }
   .shortcut-groups {
-    grid-template-columns: 1fr;
     padding: 14px 16px 6px;
+    gap: 18px;
+  }
+  .shortcut-group ul {
+    grid-template-columns: 1fr;
+    gap: 7px;
   }
   .shortcut-foot {
     padding: 10px 16px 14px;

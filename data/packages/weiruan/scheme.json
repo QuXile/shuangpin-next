@@ -1,0 +1,275 @@
+{
+  "id": "weiruan",
+  "name": "微软双拼",
+  "type": "compositional",
+  "initials": {
+    "b": [
+      "b"
+    ],
+    "p": [
+      "p"
+    ],
+    "m": [
+      "m"
+    ],
+    "f": [
+      "f"
+    ],
+    "d": [
+      "d"
+    ],
+    "t": [
+      "t"
+    ],
+    "n": [
+      "n"
+    ],
+    "l": [
+      "l"
+    ],
+    "g": [
+      "g"
+    ],
+    "k": [
+      "k"
+    ],
+    "h": [
+      "h"
+    ],
+    "j": [
+      "j"
+    ],
+    "q": [
+      "q"
+    ],
+    "x": [
+      "x"
+    ],
+    "zh": [
+      "v"
+    ],
+    "ch": [
+      "i"
+    ],
+    "sh": [
+      "u"
+    ],
+    "r": [
+      "r"
+    ],
+    "z": [
+      "z"
+    ],
+    "c": [
+      "c"
+    ],
+    "s": [
+      "s"
+    ],
+    "y": [
+      "y"
+    ],
+    "w": [
+      "w"
+    ]
+  },
+  "finals": {
+    "a": [
+      "a"
+    ],
+    "o": [
+      "o"
+    ],
+    "e": [
+      "e"
+    ],
+    "i": [
+      "i"
+    ],
+    "u": [
+      "u"
+    ],
+    "v": [
+      "y"
+    ],
+    "ai": [
+      "l"
+    ],
+    "ei": [
+      "z"
+    ],
+    "ui": [
+      "v"
+    ],
+    "ao": [
+      "k"
+    ],
+    "ou": [
+      "b"
+    ],
+    "iu": [
+      "q"
+    ],
+    "ie": [
+      "x"
+    ],
+    "ve": [
+      "v"
+    ],
+    "an": [
+      "j"
+    ],
+    "en": [
+      "f"
+    ],
+    "in": [
+      "n"
+    ],
+    "un": [
+      "p"
+    ],
+    "ang": [
+      "h"
+    ],
+    "eng": [
+      "g"
+    ],
+    "ing": [
+      ";"
+    ],
+    "ong": [
+      "s"
+    ],
+    "ia": [
+      "w"
+    ],
+    "iao": [
+      "c"
+    ],
+    "ian": [
+      "m"
+    ],
+    "iang": [
+      "d"
+    ],
+    "iong": [
+      "s"
+    ],
+    "ua": [
+      "w"
+    ],
+    "uo": [
+      "o"
+    ],
+    "uai": [
+      "y"
+    ],
+    "uan": [
+      "r"
+    ],
+    "uang": [
+      "d"
+    ],
+    "ue": [
+      "t",
+      "v"
+    ]
+  },
+  "zeroInitial": {
+    "a": [
+      "oa"
+    ],
+    "ai": [
+      "ol"
+    ],
+    "an": [
+      "oj"
+    ],
+    "ang": [
+      "oh"
+    ],
+    "ao": [
+      "ok"
+    ],
+    "e": [
+      "oe"
+    ],
+    "ei": [
+      "oz"
+    ],
+    "en": [
+      "of"
+    ],
+    "eng": [
+      "og"
+    ],
+    "er": [
+      "or"
+    ],
+    "o": [
+      "oo"
+    ],
+    "ou": [
+      "ob"
+    ]
+  },
+  "overrides": {},
+  "umlautNote": "j/q/x/y 与 ü 相拼时：除 initials[声母]×finals[u] 的组合外，另接受 initials[声母]×finals[v] 的组合（对应参考实现 core.js 的 jqxy+ü 补充规则）；数据结构上仍把音节记为 u/ue/un/uan 归属，ü 语义由 UI 标注。",
+  "sameKeyGroups": [
+    {
+      "key": "d",
+      "finals": [
+        "iang",
+        "uang"
+      ]
+    },
+    {
+      "key": "o",
+      "finals": [
+        "o",
+        "uo"
+      ]
+    },
+    {
+      "key": "s",
+      "finals": [
+        "ong",
+        "iong"
+      ]
+    },
+    {
+      "key": "v",
+      "finals": [
+        "ui",
+        "ve",
+        "ue"
+      ]
+    },
+    {
+      "key": "w",
+      "finals": [
+        "ia",
+        "ua"
+      ]
+    },
+    {
+      "key": "y",
+      "finals": [
+        "v",
+        "uai"
+      ]
+    }
+  ],
+  "source": {
+    "repo": "BlueSky-07/Shuang",
+    "file": "src/scheme/weiruan.js",
+    "note": "从 https://github.com/BlueSky-07/Shuang（v6.0.0，commit 5a5e71e）提取键位事实；仅做数据比对与规范化，未复制其实现代码（原项目 GPL-3.0）。"
+  },
+  "notes": [
+    "参考判题表 ue 接受 [t,v] 两键（键盘展示表只标 T）；展示表口径：R=er/uan、T=ue、Y=uai/ü、V=zh/ui/üe。",
+    "零声母为「o+键」式。",
+    "ue 的双键属于参考实现的兼容容错，不影响按目标音节判题；课程提示建议只展示主键 T。",
+    "多键韵母：ue→[t,v]。",
+    "参考项目提示：iOS (>= 11.3) 自带方案。"
+  ]
+}

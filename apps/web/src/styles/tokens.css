@@ -187,7 +187,7 @@ html[data-theme='dark'] {
   --pressed-ring: rgba(94, 203, 153, 0.2);
   --danger-line: rgba(240, 138, 138, 0.48);
 
-  --state-success-bg: linear-gradient(100deg, #173a2a, #1a4130);
+  --state-success-bg: linear-gradient(100deg, #143b2a, #23563e);
   --state-success-line: #386b54;
   --state-success-line-strong: #244838;
   --state-success-line-hover: #4a8e6e;
@@ -196,7 +196,7 @@ html[data-theme='dark'] {
   --state-success-fill-hover: #35b37f;
   --state-success-surface: color-mix(in srgb, var(--surface) 62%, var(--success-soft));
 
-  --state-danger-bg: linear-gradient(100deg, #3a1d1d, #341b1b);
+  --state-danger-bg: linear-gradient(100deg, #451d1d, #2f1717);
   --state-danger-line: #6e3535;
   --state-danger-ink: #f3b1b1;
   --state-danger-surface: color-mix(in srgb, var(--surface) 62%, var(--danger-soft));
@@ -213,11 +213,17 @@ html[data-theme='dark'] {
   --cap-hidden-border: #344154;
   --cap-hidden-ink: #6b7789;
 
-  --hero-tint: radial-gradient(
-    ellipse at 88% 16%,
-    color-mix(in srgb, var(--brand) 15%, transparent),
-    transparent 34%
-  );
+  --hero-tint:
+    radial-gradient(
+      ellipse at 88% 16%,
+      color-mix(in srgb, var(--brand) 26%, transparent),
+      transparent 40%
+    ),
+    radial-gradient(
+      ellipse at 4% 96%,
+      color-mix(in srgb, var(--fin) 12%, transparent),
+      transparent 38%
+    );
   --keycap-border: #344154;
   --keycap-face: linear-gradient(145deg, var(--surface-2), var(--surface));
   --keycap-edge: #202836;

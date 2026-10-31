@@ -70,12 +70,29 @@ export const useCourseStore = defineStore('course', () => {
   const unlockedAll = ref(readUnlockedAll())
   const schemeIndex = shallowRef<SchemeIndexFile | null>(null)
   const schemeId = ref('')
+  /** 当前是「纯练习方案」预览：有 scheme 与键位图，但无课程/进度。 */
+  const previewMode = ref(false)
   const scheme = shallowRef<SchemeDef | null>(null)
   const curriculum = shallowRef<Curriculum | null>(null)
   const poolIndex = shallowRef<PoolIndexFile | null>(null)
   const engine = computed<SchemeEngine | null>(() => (scheme.value ? createSchemeEngine(scheme.value) : null))
 
   let bootPromise: Promise<void> | null = null
+  /**
+   * 加载请求代号：init / setScheme / previewScheme 共用。
+   * 只有最后一次发起的请求可以提交数据与状态；旧请求完成时静默丢弃，
+   * 避免快速切换方案时先发的慢请求覆盖后发的选择。
+   */
+  let loadEpoch = 0
+
+  function beginLoad(): number {
+    loadEpoch += 1
+    return loadEpoch
+  }
+
+  function isCurrentLoad(epoch: number): boolean {
+    return epoch === loadEpoch
+  }
 
   const lessons = computed<LessonDef[]>(() => curriculum.value?.lessons ?? [])
   const wordCount = computed<number>(() => poolIndex.value?.uniqueWords ?? 0)
@@ -100,33 +117,83 @@ export const useCourseStore = defineStore('course', () => {
       .map((item) => ({ id: item.id, name: item.name, meta: item }))
   })
 
-  async function applyScheme(id: string): Promise<void> {
+  const allSchemeOptions = computed<SchemeOption[]>(() => {
+    const index = schemeIndex.value
+    if (!index) return []
+    const order = index.recommendedOrder.length > 0
+      ? index.recommendedOrder
+      : index.schemes.map((item) => item.id)
+    return order
+      .map((id) => index.schemes.find((item) => item.id === id))
+      .filter((item): item is SchemeSummary => item !== undefined)
+      .map((item) => ({ id: item.id, name: item.name, meta: item }))
+  })
+
+  async function applyScheme(id: string, epoch: number): Promise<void> {
     const [def, curriculumFile, pools] = await Promise.all([
       loadScheme(id),
       loadCurriculum(id),
       loadPoolIndex(),
     ])
+    // 已被更新的请求取代：不提交数据，交给最后一次请求决定最终方案。
+    if (!isCurrentLoad(epoch)) return
     schemeId.value = id
     scheme.value = def
     curriculum.value = curriculumFile
     poolIndex.value = pools
+    previewMode.value = false
     progressStore.load(id)
     saveScheme(id)
   }
 
+  /** 预览 practice-only 方案：只加载键位映射，课程与进度留空。 */
+  async function previewScheme(id: string): Promise<void> {
+    if (!id || (id === schemeId.value && previewMode.value)) return
+    const epoch = beginLoad()
+    status.value = 'loading'
+    error.value = ''
+    try {
+      const [def, pools] = await Promise.all([loadScheme(id), loadPoolIndex()])
+      if (!isCurrentLoad(epoch)) return
+      schemeId.value = id
+      scheme.value = def
+      curriculum.value = null
+      poolIndex.value = pools
+      previewMode.value = true
+      progressStore.load('')
+      status.value = 'ready'
+    } catch (cause) {
+      if (!isCurrentLoad(epoch)) return
+      error.value = cause instanceof Error ? cause.message : String(cause)
+      status.value = 'error'
+    }
+  }
+
+  /** 所有页面共用的方案切换：课程方案走课程加载，practice-only 走键位预览。 */
+  async function selectScheme(id: string): Promise<void> {
+    if (!id || id === schemeId.value) return
+    const supported = new Set(schemeIndex.value?.courseSupported ?? [])
+    if (supported.has(id)) await setScheme(id)
+    else await previewScheme(id)
+  }
+
   async function runInit(): Promise<void> {
+    const epoch = beginLoad()
     status.value = 'loading'
     error.value = ''
     try {
       const index = await loadSchemeIndex()
+      if (!isCurrentLoad(epoch)) return
       schemeIndex.value = index
       const supported = new Set(index.courseSupported)
       const candidates = [readSavedScheme(), index.defaultScheme, index.courseSupported[0], index.schemes[0]?.id]
       const initial = candidates.find((id): id is string => Boolean(id) && supported.has(id))
       if (!initial) throw new Error('没有可用的双拼方案')
-      await applyScheme(initial)
+      await applyScheme(initial, epoch)
+      if (!isCurrentLoad(epoch)) return
       status.value = 'ready'
     } catch (cause) {
+      if (!isCurrentLoad(epoch)) return
       error.value = cause instanceof Error ? cause.message : String(cause)
       status.value = 'error'
     }
@@ -135,6 +202,8 @@ export const useCourseStore = defineStore('course', () => {
   /** single-flight 数据引导：并发调用共享同一个 Promise，失败后允许重试。 */
   function init(): Promise<void> {
     if (status.value === 'ready') return Promise.resolve()
+    // 正在切换方案/预览时不要重入 init，否则会用默认方案覆盖用户刚选的方案。
+    if (status.value === 'loading' && !bootPromise) return Promise.resolve()
     if (!bootPromise) {
       bootPromise = runInit().finally(() => {
         bootPromise = null
@@ -145,12 +214,15 @@ export const useCourseStore = defineStore('course', () => {
 
   async function setScheme(id: string): Promise<void> {
     if (!id || id === schemeId.value) return
+    const epoch = beginLoad()
     status.value = 'loading'
     error.value = ''
     try {
-      await applyScheme(id)
+      await applyScheme(id, epoch)
+      if (!isCurrentLoad(epoch)) return
       status.value = 'ready'
     } catch (cause) {
+      if (!isCurrentLoad(epoch)) return
       error.value = cause instanceof Error ? cause.message : String(cause)
       status.value = 'error'
     }
@@ -196,6 +268,7 @@ export const useCourseStore = defineStore('course', () => {
     error,
     unlockedAll,
     schemeId,
+    previewMode,
     scheme,
     curriculum,
     lessons,
@@ -205,8 +278,11 @@ export const useCourseStore = defineStore('course', () => {
     passedCount,
     progressPercent,
     schemeOptions,
+    allSchemeOptions,
     init,
     setScheme,
+    previewScheme,
+    selectScheme,
     getLesson,
     canStart,
     toggleUnlockedAll,

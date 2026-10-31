@@ -5,16 +5,19 @@ import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useCourseStore } from '@/stores/course'
 import { useLayoutStore } from '@/stores/layout'
 import { useSettingsStore } from '@/stores/settings'
+import { useSoundStore } from '@/stores/sound'
 
 const route = useRoute()
 const router = useRouter()
 const course = useCourseStore()
 const settings = useSettingsStore()
+const sound = useSoundStore()
 const layout = useLayoutStore()
 
 const isPractice = computed(() => route.path.startsWith('/practice'))
 const courseActive = computed(() => route.path === '/' || isPractice.value)
 const trainingActive = computed(() => route.path === '/training')
+const displayedScheme = computed(() => course.scheme?.name ?? '')
 const practiceTitle = computed(() => {
   if (!isPractice.value) return ''
   const lessonId = String(route.params.lessonId ?? '')
@@ -60,6 +63,7 @@ const practiceTitle = computed(() => {
           <span class="brand-tag">NEXT</span>
         </RouterLink>
         <span v-if="!isPractice && layout.stageLabel" class="topbar-stage">{{ layout.stageLabel }}</span>
+        <span v-if="displayedScheme" class="count-badge topbar-scheme">{{ displayedScheme }}</span>
       </div>
 
       <nav class="topbar-nav segmented" aria-label="主导航">
@@ -120,6 +124,28 @@ const practiceTitle = computed(() => {
             <path v-if="layout.keyboardVisible" d="M4 20 20 4" />
           </svg>
           <kbd>Ctrl+K</kbd>
+        </button>
+
+        <button
+          class="theme-btn sound-btn"
+          type="button"
+          :aria-label="sound.enabled ? '关闭音效（Alt+B）' : '开启音效（Alt+B）'"
+          :aria-pressed="sound.enabled"
+          aria-keyshortcuts="Alt+B"
+          :title="sound.enabled ? '关闭音效（Alt+B）' : '开启音效（Alt+B）'"
+          @click="sound.toggle()"
+        >
+          <svg v-if="sound.enabled" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 5 6 9H3v6h3l5 4V5Z" />
+            <path d="M15.2 8.7a4.7 4.7 0 0 1 0 6.6" />
+            <path d="M18 5.9a8.5 8.5 0 0 1 0 12.2" />
+          </svg>
+          <svg v-else class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 5 6 9H3v6h3l5 4V5Z" />
+            <path d="m15.5 9.5 5 5" />
+            <path d="m20.5 9.5-5 5" />
+          </svg>
+          <kbd>Alt+B</kbd>
         </button>
 
         <button
@@ -262,6 +288,14 @@ const practiceTitle = computed(() => {
   font-weight: 850;
   letter-spacing: -0.015em;
 }
+.topbar-scheme {
+  flex: none;
+  max-width: 112px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+}
 .topbar-stage {
   flex: none;
   max-width: 120px;
@@ -325,6 +359,21 @@ const practiceTitle = computed(() => {
   transform: scale(0.9);
 }
 
+/* 中等宽度：动作区改为图标-only，避免右侧按钮溢出压住主导航。 */
+@media (max-width: 1100px) {
+  .top-actions {
+    gap: 6px;
+  }
+  .theme-btn {
+    gap: 0;
+    width: 34px;
+    padding: 0;
+  }
+  .theme-btn kbd {
+    display: none;
+  }
+}
+
 /* ── 移动端（--topbar-h / --page-pad-x 已由 token 收窄到 54 / 14）── */
 @media (max-width: 640px) {
   .topbar-inner {
@@ -370,6 +419,9 @@ const practiceTitle = computed(() => {
     max-width: 84px;
     padding: 1px 7px;
     font-size: 10px;
+  }
+  .topbar-scheme {
+    display: none;
   }
   .topbar-nav {
     --seg-pad: 2px;

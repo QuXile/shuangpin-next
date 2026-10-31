@@ -77,10 +77,16 @@ const unusedTokens = tokenNames.filter(
 )
 ok(unusedTokens.length === 0, `tokens.css 存在未使用 token：${unusedTokens.join(', ')}`)
 
-const screenshotRefs = [
-  ...read('README.md').matchAll(/assets\/impl\/([\w.-]+\.png)/g),
-  ...read('docs/ARCHITECTURE.md').matchAll(/assets\/impl\/([\w.-]+\.png)/g),
-].map((match) => match[1])
+// ── 文档截图守卫：README + docs/**/*.md 是截图引用的唯一来源 ──────────
+const docFiles = [
+  'README.md',
+  ...walk(path.join(ROOT, 'docs'), (name) => name.endsWith('.md')).map((file) =>
+    path.relative(ROOT, file).replaceAll('\\', '/'),
+  ),
+]
+const screenshotRefs = docFiles.flatMap((rel) =>
+  [...read(rel).matchAll(/assets\/impl\/([\w.-]+\.png)/g)].map((match) => match[1]),
+)
 for (const file of new Set(screenshotRefs)) {
   ok(fs.existsSync(path.join(ROOT, 'docs/assets/impl', file)), `文档引用的截图不存在：${file}`)
 }

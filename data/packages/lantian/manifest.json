@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "lantian",
+  "name": "蓝天双拼",
+  "version": "1.0.0",
+  "license": "GPL-3.0",
+  "source": {
+    "repo": "BlueSky-07/Shuang",
+    "url": "https://github.com/BlueSky-07/Shuang",
+    "version": "6.0.0",
+    "commit": "5a5e71e1ebeab2894f40121d680b9942e30609bb",
+    "commitShort": "5a5e71e",
+    "license": "GPL-3.0（仅提取事实键位映射，未复制实现代码）"
+  },
+  "capabilities": {
+    "course": false,
+    "training": true,
+    "article": true,
+    "zeroInitial": true,
+    "customStages": false
+  },
+  "curriculum": null,
+  "data": {
+    "scheme": "scheme.json"
+  },
+  "shared": {
+    "pools": "shared:pools",
+    "words": "shared:words",
+    "training": "shared:training"
+  }
+}

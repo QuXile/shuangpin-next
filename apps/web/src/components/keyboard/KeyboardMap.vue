@@ -9,6 +9,8 @@ import { parseAtomId } from '@shuangpin/core'
 const props = withDefaults(
   defineProps<{
     rows: LetterKey[][]
+    /** 键位图右上角显示当前双拼方案（底部 Dock 使用） */
+    schemeName?: string
     /** 本课 focus：对应声母/韵母文字反白 + 底色强调 */
     highlightAtomIds?: readonly AtomId[]
     pressed?: readonly string[]
@@ -19,14 +21,18 @@ const props = withDefaults(
     legend?: boolean
     /** 练习页「练习时隐藏」：不渲染这些原子的声母/韵母映射标签 */
     hiddenAtomIds?: readonly AtomId[]
+    /** 零声母映射：底部单独一行展示，最多 12 个 */
+    zeroInitials?: Readonly<Record<string, readonly string[]>>
   }>(),
   {
+    schemeName: '',
     highlightAtomIds: () => [],
     pressed: () => [],
     conceal: false,
     specialInitials: () => [],
     legend: true,
     hiddenAtomIds: () => [],
+    zeroInitials: () => ({}),
   },
 )
 
@@ -54,6 +60,20 @@ const highlightSet = computed(() => new Set(props.highlightAtomIds))
 const pressedSet = computed(() => new Set(props.pressed.map((key) => key.toLowerCase())))
 const specialSet = computed(() => new Set(props.specialInitials))
 const hiddenAtomSet = computed(() => new Set(props.hiddenAtomIds))
+
+const zeroViews = computed(() =>
+  Object.entries(props.zeroInitials)
+    .map(([final, keys]) => {
+      const atom = `zero:${final}` as AtomId
+      return {
+        final,
+        keys: keys.map((key) => key.toUpperCase()),
+        atom,
+        emphasized: highlightSet.value.has(atom),
+      }
+    })
+    .filter((entry) => !hiddenAtomSet.value.has(entry.atom)),
+)
 
 const keyViews = computed<KeyView[][]>(() =>
   props.rows.map((row) =>
@@ -95,9 +115,12 @@ const keyViews = computed<KeyView[][]>(() =>
 
 <template>
   <div class="keyboard-map" :class="{ 'is-concealed': conceal }" aria-label="双拼键位图">
-    <div v-if="!conceal && legend" class="kbd-legend">
-      <span class="legend-item"><i class="legend-swatch is-initial" />声母</span>
-      <span class="legend-item"><i class="legend-swatch is-final" />韵母</span>
+    <div v-if="(!conceal && legend) || schemeName" class="kbd-head">
+      <div v-if="!conceal && legend" class="kbd-legend">
+        <span class="legend-item"><i class="legend-swatch is-initial" />声母</span>
+        <span class="legend-item"><i class="legend-swatch is-final" />韵母</span>
+      </div>
+      <span v-if="schemeName" class="count-badge">{{ schemeName }}</span>
     </div>
     <div v-for="(row, rowIndex) in keyViews" :key="rowIndex" class="kbd-row" :class="`kbd-row--${rowIndex}`">
       <button
@@ -147,6 +170,25 @@ const keyViews = computed<KeyView[][]>(() =>
         <span class="key-backspace-label" aria-hidden="true">退格</span>
       </button>
     </div>
+    <div v-if="!conceal && zeroViews.length > 0" class="kbd-zero-row" aria-label="零声母">
+      <span class="kbd-zero-title">零声母</span>
+      <div class="kbd-zero-list">
+        <div class="kbd-zero-track">
+          <span
+            v-for="entry in zeroViews"
+            :key="entry.final"
+            class="kbd-zero"
+            :class="{ 'is-emphasized': entry.emphasized }"
+            :title="`${entry.final} → ${entry.keys.join(' ')}`"
+          >
+            <b>{{ entry.final }}</b>
+            <span class="kbd-zero-keys">
+              <kbd v-for="key in entry.keys" :key="key">{{ key }}</kbd>
+            </span>
+          </span>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -160,6 +202,64 @@ const keyViews = computed<KeyView[][]>(() =>
   background: var(--surface);
   border: 1px solid var(--line);
   box-shadow: var(--shadow-sm);
+}
+.kbd-zero-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 0 2px;
+  min-width: 0;
+}
+.kbd-zero-title {
+  flex: none;
+  color: var(--ink-4);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.kbd-zero-list {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.kbd-zero-track {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: max-content;
+  min-width: 100%;
+}
+.kbd-zero {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 5px;
+  border-radius: 5px;
+  background: var(--surface);
+  color: var(--ink-3);
+  font-size: 10px;
+  line-height: 1.4;
+}
+.kbd-zero b {
+  color: var(--ink-2);
+  font-weight: 700;
+}
+.kbd-zero kbd {
+  padding: 0 3px;
+  border: 0;
+  background: var(--surface-3);
+  font-size: 8px;
+  line-height: 1.4;
+}
+.kbd-zero.is-emphasized {
+  background: var(--state-info-bg, var(--brand-soft));
+  color: var(--brand-ink);
+  box-shadow: inset 0 0 0 1px var(--brand-line);
 }
 .kbd-row {
   --kbd-gap: 6px;
@@ -187,11 +287,7 @@ const keyViews = computed<KeyView[][]>(() =>
   user-select: none;
   overflow: hidden;
 }
-/* conceal 只改默认外观；hover/pressed/focus 统一按后面的状态层叠，不吞掉交互反馈 */
-.is-concealed .kbd-key {
-  background: var(--surface-2);
-  border-color: var(--line);
-}
+/* 遮挡阶段只隐藏映射文字，不改变键帽外观。 */
 .kbd-key:hover {
   background: var(--surface);
   border-color: var(--brand-line);
@@ -296,6 +392,22 @@ const keyViews = computed<KeyView[][]>(() =>
   border-radius: 4px;
   padding: 0 5px;
 }
+.kbd-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 24px;
+  margin: 0 0 10px;
+  padding: 0 2px;
+}
+.kbd-head .kbd-legend {
+  margin: 0;
+}
+/* 遮挡阶段图例隐藏，但方案胶囊必须仍然靠右，不能掉到左上角。 */
+.kbd-head > .count-badge {
+  margin-left: auto;
+}
 .kbd-legend {
   display: flex;
   flex-wrap: wrap;
@@ -323,9 +435,6 @@ const keyViews = computed<KeyView[][]>(() =>
 .legend-swatch.is-final {
   background: var(--focus-final);
   border-color: var(--focus-final);
-}
-.is-concealed .key-letter {
-  color: var(--ink-3);
 }
 /* 全遮挡模式也要显示按下反馈（覆盖 conceal 的默认底色/边框） */
 .is-concealed .kbd-key.is-pressed,
@@ -385,6 +494,9 @@ const keyViews = computed<KeyView[][]>(() =>
     left: 4px;
     right: auto;
     align-items: flex-start;
+  }
+  .kbd-head {
+    margin-bottom: 8px;
   }
   .kbd-legend {
     gap: 4px 10px;

@@ -9,7 +9,7 @@
     "build:pools": "node build-pools.mjs",
     "audit:words": "node audit-words.mjs"
   },
-  "license": "MIT",
+  "license": "GPL-3.0-only",
   "dependencies": {
     "pinyin-pro": "^3.27.0"
   }

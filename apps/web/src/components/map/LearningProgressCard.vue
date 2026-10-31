@@ -12,8 +12,9 @@ const props = withDefaults(
     wordCount: number
     canClear: boolean
     unlockedAll?: boolean
+    preview?: boolean
   }>(),
-  { unlockedAll: false },
+  { unlockedAll: false, preview: false },
 )
 
 const emit = defineEmits<{
@@ -59,7 +60,8 @@ onBeforeUnmount(() => observer?.disconnect())
 <template>
   <aside class="learning-card panel" aria-label="学习进度">
     <CardHeader title="学习进度">
-      <div class="progress-actions">
+      <span v-if="preview" class="count-badge">纯练习方案</span>
+      <div v-else class="progress-actions">
         <button
           class="meta-btn"
           type="button"

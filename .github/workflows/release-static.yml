@@ -46,18 +46,28 @@ jobs:
       - name: Build portable static package
         run: VITE_BASE=./ VITE_ROUTER_MODE=hash pnpm build
 
-      - name: Attach license and usage notes
+      - name: Attach launcher, license and usage notes
         run: |
           cp LICENSE apps/web/dist/LICENSE
+          cp scripts/static-package-server.py apps/web/dist/start.py
           cat > apps/web/dist/使用说明.txt <<'EOF'
           双拼 NEXT · 静态包
 
-          启动方式：
-          在解压后的目录执行任意静态文件服务器，例如：
-            python -m http.server 8080
-          然后打开 http://localhost:8080/
+          推荐启动方式（自动打开浏览器）：
+            python start.py
 
-          也可以使用 npx serve . 或其它静态服务器。
+          指定端口：
+            python start.py --port 8080
+
+          如果不希望自动打开浏览器：
+            python start.py --no-browser
+
+          也可以使用任意静态文件服务器，例如：
+            python -m http.server 8080
+            npx serve .
+
+          然后浏览器访问终端显示的 http://127.0.0.1:8080/ 地址。
+
           不要直接双击 index.html：浏览器会阻止本地 JSON 数据请求。
           本包使用 hash 路由，不依赖服务器的 SPA 重写规则。
 

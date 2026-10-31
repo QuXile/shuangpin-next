@@ -5,20 +5,24 @@ import KeyboardMap from './KeyboardMap.vue'
 withDefaults(
   defineProps<{
     rows: LetterKey[][]
+    schemeName?: string
     highlightAtomIds?: readonly AtomId[]
     pressed?: readonly string[]
     conceal?: boolean
     specialInitials?: readonly string[]
     legend?: boolean
     hiddenAtomIds?: readonly AtomId[]
+    zeroInitials?: Readonly<Record<string, readonly string[]>>
   }>(),
   {
+    schemeName: '',
     highlightAtomIds: () => [],
     pressed: () => [],
     conceal: false,
     specialInitials: () => [],
     legend: true,
     hiddenAtomIds: () => [],
+    zeroInitials: () => ({}),
   },
 )
 
@@ -32,12 +36,14 @@ const emit = defineEmits<{
   <div class="keymap-dock" aria-label="键位图区">
     <KeyboardMap
       :rows="rows"
+      :scheme-name="schemeName"
       :highlight-atom-ids="highlightAtomIds"
       :pressed="pressed"
       :conceal="conceal"
       :special-initials="specialInitials"
       :legend="legend"
       :hidden-atom-ids="hiddenAtomIds"
+      :zero-initials="zeroInitials"
       @key="emit('key', $event)"
       @backspace="emit('backspace')"
     />

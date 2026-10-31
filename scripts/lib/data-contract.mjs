@@ -16,6 +16,7 @@ import { fileURLToPath } from 'node:url'
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..')
 export const DATA_DIR = path.join(ROOT, 'data')
 export const SCHEME_DIR = path.join(DATA_DIR, 'schemes')
+export const PACKAGES_DIR = path.join(DATA_DIR, 'packages')
 export const CURRICULUM_DIR = path.join(DATA_DIR, 'curriculum')
 export const POOLS_DIR = path.join(DATA_DIR, 'pools')
 export const WORDS_DIR = path.join(DATA_DIR, 'words')

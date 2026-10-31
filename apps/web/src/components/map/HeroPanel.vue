@@ -9,11 +9,12 @@ import SchemeSelector from '@/components/keyboard/SchemeSelector.vue'
 const props = withDefaults(
   defineProps<{
     schemeOptions: SchemeOption[]
+    primarySchemeIds?: readonly string[]
     schemeId: string
     scheme?: SchemeDef | null
     busy?: boolean
   }>(),
-  { scheme: null, busy: false },
+  { scheme: null, busy: false, primarySchemeIds: () => [] },
 )
 
 const emit = defineEmits<{
@@ -21,7 +22,10 @@ const emit = defineEmits<{
 }>()
 
 const schemeName = computed(
-  () => props.schemeOptions.find((option) => option.id === props.schemeId)?.name ?? '双拼方案',
+  () =>
+    props.schemeOptions.find((option) => option.id === props.schemeId)?.name ??
+    props.scheme?.name ??
+    '双拼方案',
 )
 
 const keycapsRef = ref<InstanceType<typeof SchemeKeycaps> | null>(null)
@@ -53,6 +57,7 @@ defineExpose({ pressKey, selectScheme: chooseScheme })
     <template #bottom>
       <SchemeSelector
         :options="schemeOptions"
+        :primary-ids="primarySchemeIds"
         :model-value="schemeId"
         :busy="busy"
         show-keys
