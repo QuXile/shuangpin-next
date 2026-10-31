@@ -69,7 +69,7 @@ jobs:
       - name: Create zip
         run: |
           mkdir -p release
-          (cd apps/web/dist && zip -qr "../../release/${ARTIFACT}" .)
+          (cd apps/web/dist && zip -qr "../../../release/${ARTIFACT}" .)
           (cd release && sha256sum "${ARTIFACT}" > SHA256SUMS)
 
       - name: Upload package artifact
