@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
- * 统一会话顶栏：课程练习、入门课、训练场共用。
- * 左/右插槽放操作按钮，中间胶囊放当前场景的数据/文案。
+ * 统一会话顶栏（50px 平铺操作条）：课程练习、入门课、练习场共用。
+ * 左/右插槽放操作按钮，中间直接平铺当前场景的数据/文案，不再套「卡中卡」胶囊。
  */
 withDefaults(
   defineProps<{
@@ -17,7 +17,7 @@ withDefaults(
       <slot name="left" />
     </div>
     <div class="session-center">
-      <div class="session-pill"><slot /></div>
+      <slot />
     </div>
     <div class="session-side session-side--right">
       <slot name="right" />
@@ -31,16 +31,17 @@ withDefaults(
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 10px;
-  max-width: 960px;
+  gap: 12px;
+  max-width: 1080px;
   width: 100%;
-  height: 48px;
-  margin: 0 auto 8px;
-  padding: 7px 10px;
+  height: 50px;
+  margin: 0 auto 10px;
+  padding: 0 10px;
   border: 1px solid var(--line);
-  border-radius: var(--r-lg);
+  border-radius: var(--r-md);
   background: var(--surface);
   box-shadow: var(--shadow-sm);
+  transition: background var(--dur-mid), border-color var(--dur-mid);
 }
 .session-side {
   display: flex;
@@ -54,23 +55,18 @@ withDefaults(
 .session-side--right {
   justify-self: end;
 }
+/* 统计直接平铺：与操作条同底色，不再有第二层背景 / 边框 */
 .session-center {
   justify-self: center;
   min-width: 0;
   max-width: 100%;
-}
-.session-pill {
-  min-width: 0;
-  max-width: 100%;
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 5px 13px;
-  border: 1px solid var(--line-faint);
-  border-radius: var(--r-pill);
-  background: var(--surface-2);
-  color: var(--ink);
-  font-size: 12.5px;
+  justify-content: center;
+  gap: 8px;
+  overflow: hidden;
+  color: var(--ink-2);
+  font-size: var(--text-sm);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -80,16 +76,20 @@ withDefaults(
   height: 30px;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 0 8px 0 5px;
-  border-radius: var(--r-sm);
+  gap: 6px;
+  padding: 0 9px;
+  border-radius: var(--r-control);
   color: var(--ink-3);
-  font-size: 11px;
+  font-size: var(--text-sm);
   font-weight: 600;
+  transition: background var(--dur-fast), color var(--dur-fast), transform var(--dur-fast);
 }
 .session-side :slotted(.session-btn:hover:not(:disabled)) {
   color: var(--ink);
   background: var(--surface-2);
+}
+.session-side :slotted(.session-btn:active:not(:disabled)) {
+  transform: scale(0.96);
 }
 .session-side :slotted(.session-btn:disabled) {
   opacity: 0.42;
@@ -101,10 +101,11 @@ withDefaults(
 }
 .session-side :slotted(.session-primary) {
   flex: none;
-  height: 32px;
+  height: 34px;
   margin-left: 4px;
-  padding: 0 12px;
-  font-size: 12px;
+  padding: 0 13px;
+  font-size: var(--text-sm);
+  background: var(--brand-fill);
 }
 .session-side :slotted(.session-primary:disabled) {
   color: var(--ink-4);
@@ -118,37 +119,46 @@ withDefaults(
   border-color: var(--line);
   background: var(--surface-2);
 }
-.session-pill :slotted(.session-item) {
+.session-center :slotted(.session-item) {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.session-pill :slotted(.session-sep) {
+.session-center :slotted(.session-sep) {
   flex: none;
   color: var(--ink-4);
 }
-.session-pill :slotted(.session-danger) {
+.session-center :slotted(.session-danger) {
   color: var(--danger);
 }
-.session-pill :slotted(.session-speed) {
+.session-center :slotted(.session-speed) {
   display: inline-flex;
   align-items: center;
   gap: 5px;
 }
+/* 成功态：绿色渐变操作条 + 绿色主按钮（入门课试打完成 / 阶段达标） */
 .session-bar.is-success {
   background: var(--state-success-bg);
   border-color: var(--state-success-line);
+  animation: ui-fade-in 240ms var(--ease);
 }
-.session-bar.is-success .session-pill {
-  background: var(--surface);
-  border-color: var(--state-success-line);
+.session-bar.is-success .session-center {
+  color: var(--state-success-ink);
 }
-.session-side :slotted(.session-primary) {
-  background: var(--brand);
+.session-bar.is-success .session-center :slotted(.session-sep) {
+  color: color-mix(in srgb, var(--state-success-ink) 52%, transparent);
+}
+/* 成功条上的次级操作也走通过态浅色悬停，避免深蓝块压在绿底上 */
+.session-bar.is-success .session-side :slotted(.session-btn) {
+  color: var(--state-success-ink);
+}
+.session-bar.is-success .session-side :slotted(.session-btn:hover:not(:disabled)) {
+  color: var(--state-success-ink);
+  background: color-mix(in srgb, var(--state-success-ink) 13%, transparent);
 }
 .session-bar.is-success .session-side :slotted(.session-primary) {
   background: var(--state-success-fill);
-  border-color: var(--state-success-fill);
+  border-color: transparent;
   color: var(--on-accent);
   box-shadow: 0 2px 0 var(--state-success-fill-hover);
 }
@@ -160,8 +170,8 @@ withDefaults(
     height: auto;
     display: flex;
     flex-wrap: wrap;
-    padding: 7px 8px;
-    row-gap: 6px;
+    padding: 6px 8px;
+    row-gap: 4px;
     column-gap: 6px;
   }
   .session-side--left {
@@ -176,22 +186,23 @@ withDefaults(
   .session-center {
     order: 3;
     flex: 1 1 100%;
-    display: flex;
     justify-content: center;
-  }
-  .session-pill {
-    justify-content: center;
-    padding: 5px 10px;
-    font-size: 12px;
+    flex-wrap: wrap;
+    row-gap: 2px;
+    gap: 6px;
+    font-size: 11.5px;
+    line-height: 1.5;
+    white-space: normal;
   }
   .session-side :slotted(.session-btn) {
-    padding: 0 4px;
+    padding: 0 5px;
+    gap: 4px;
     font-size: 11px;
-    gap: 3px;
   }
   .session-side :slotted(.session-primary) {
+    height: 32px;
     margin-left: 2px;
-    padding: 0 9px;
+    padding: 0 10px;
     font-size: 11.5px;
   }
 }

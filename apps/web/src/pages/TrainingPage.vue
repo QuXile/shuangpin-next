@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * 训练场（/training）：专项练习（字/词，声母×韵母自由组合，无尽练习）
+ * 练习场（/training）：专项练习（字/词，声母×韵母自由组合，无尽练习）
  * 与文章练习（粘贴/.txt 导入，core parseArticleText 断行，逐字练习 + 汇总）。
  *
  * 判题、错误锁定、退格、清空、按下高亮复用 useTrainingSession（内部共享 lib/sessionInput），
@@ -23,6 +23,11 @@ import PracticeStream from '@/components/practice/PracticeStream.vue'
 import SessionBar from '@/components/layout/SessionBar.vue'
 import StageSummaryCard from '@/components/practice/StageSummaryCard.vue'
 import KeyboardDock from '@/components/keyboard/KeyboardDock.vue'
+import DockReveal from '@/components/keyboard/DockReveal.vue'
+import SchemeKeycaps from '@/components/keyboard/SchemeKeycaps.vue'
+import SchemeSelector from '@/components/keyboard/SchemeSelector.vue'
+import HeroLayout from '@/components/common/HeroLayout.vue'
+import CardHeader from '@/components/common/CardHeader.vue'
 import ArticleGrid from '@/components/training/ArticleGrid.vue'
 import SetupCard from '@/components/training/SetupCard.vue'
 import SetupGroup from '@/components/training/SetupGroup.vue'
@@ -79,7 +84,7 @@ const {
 // ── 数据 / 配置 ──────────────────────────────────────────────
 
 const tab = ref<Tab>('drill')
-const drillMode = ref<DrillMode>('char')
+const drillMode = ref<DrillMode>('word')
 const bank = shallowRef<TrainingBank | null>(null)
 const commonWords = shallowRef<CommonWordsFile | null>(null)
 const bankStatus = ref<'loading' | 'ready' | 'error'>('loading')
@@ -99,6 +104,14 @@ const articleHiddenFinals = ref<ReadonlySet<string>>(new Set())
 const articleHiddenZeroFinals = ref<ReadonlySet<string>>(new Set())
 
 const schemeOptions = computed(() => course.schemeOptions)
+const heroKeycapsRef = ref<InstanceType<typeof SchemeKeycaps> | null>(null)
+
+function chooseScheme(id: string): void {
+  // 与课程页方案按钮一致：重复点击也重新散落一次。
+  heroKeycapsRef.value?.refreshKeycaps()
+  if (id !== course.schemeId) course.setScheme(id)
+}
+
 const atomOptions = computed(() => (course.scheme ? trainingAtomOptions(course.scheme) : null))
 const engine = computed<SchemeEngine | null>(() =>
   course.scheme ? createSchemeEngine(course.scheme) : null,
@@ -248,7 +261,7 @@ watch(
     schemeId.value = id
     readyToPersist = false
     tab.value = 'drill'
-    drillMode.value = 'char'
+    drillMode.value = 'word'
     hiddenInitials.value = new Set()
     hiddenFinals.value = new Set()
     hiddenZeroFinals.value = new Set()
@@ -692,7 +705,11 @@ watch(
   () => layout.setStageLabel(playing.value ? sessionTitle.value : ''),
   { immediate: true },
 )
-onBeforeUnmount(() => layout.clearStageLabel())
+watch(playing, (value) => layout.setKeyboardAvailable(value), { immediate: true })
+onBeforeUnmount(() => {
+  layout.clearStageLabel()
+  layout.setKeyboardAvailable(false)
+})
 const countUnit = computed(() =>
   kind.value === 'article' || (kind.value === 'drill' && drillMode.value === 'char') ? '字' : '词',
 )
@@ -709,6 +726,11 @@ const liveMessage = computed(() => {
 function exitSession(): void {
   resetSession()
   kind.value = null
+}
+
+function restartSession(): void {
+  if (kind.value === 'drill') startDrill()
+  else if (kind.value === 'article') startArticle()
 }
 
 function onLetter(raw: string): void {
@@ -841,8 +863,52 @@ function switchTab(next: Tab): void {
 
 // ── 快捷键（唯一入口） ────────────────────────────────────────
 
+/** 配置页的 Enter 不抢按钮/输入框/下拉/文件拖拽区的默认行为。 */
+function isConfigInteractiveTarget(target: EventTarget | null): boolean {
+  return (
+    target instanceof HTMLElement &&
+    Boolean(target.closest('button, a, input, textarea, select, [role="button"]'))
+  )
+}
+
 const bindings = computed<KeyBinding[]>(() => {
-  if (!playing.value) return []
+  if (!playing.value) {
+    return [
+      {
+        key: 'Enter',
+        when: (event) =>
+          !isConfigInteractiveTarget(event.target) &&
+          (tab.value === 'drill' ? canStartDrill.value : canStartArticle.value),
+        run: () => {
+          if (tab.value === 'drill') startDrill()
+          else startArticle()
+        },
+      },
+      {
+        key: 'd',
+        alt: true,
+        run: () => switchTab('drill'),
+      },
+      {
+        key: 'a',
+        alt: true,
+        run: () => switchTab('article'),
+      },
+      {
+        key: 'm',
+        alt: true,
+        when: () => tab.value === 'drill',
+        run: () => {
+          drillMode.value = drillMode.value === 'char' ? 'word' : 'char'
+        },
+      },
+      ...schemeOptions.value.map((option, index) => ({
+        key: String(index + 1),
+        alt: true,
+        run: () => chooseScheme(option.id),
+      })),
+    ]
+  }
   return [
     { letter: true, run: (event) => onLetter(event.key) },
     { key: 'Backspace', run: () => onBackspace() },
@@ -856,6 +922,7 @@ const bindings = computed<KeyBinding[]>(() => {
       run: () => onClearInput(),
     },
     { key: 'Escape', run: () => exitSession() },
+    { key: 'r', alt: true, run: () => restartSession() },
   ]
 })
 useGlobalKeys(bindings)
@@ -869,90 +936,138 @@ onScopeDispose(() => {
   <div class="training-page">
     <template v-if="!playing">
       <div class="training-config">
-        <header class="training-hero">
-          <div class="training-hero-text">
-            <h1>训练场</h1>
-            <p class="training-sub">
-              自由组合声母与韵母做专项训练，或粘贴文章逐字练习；可指定「练习时隐藏」的键位映射。
-              训练结果不写入课程进度与星级。
-            </p>
-          </div>
+        <HeroLayout class="training-brand">
+          <template #eyebrow>
+            <span class="eyebrow">PRACTICE GROUND</span>
+          </template>
+          <template #title>
+            <h1>练习场</h1>
+          </template>
+          <template #visual>
+            <SchemeKeycaps
+              v-if="course.scheme"
+              ref="heroKeycapsRef"
+              :scheme="course.scheme"
+              text="练习场"
+              :columns="6"
+            />
+          </template>
+          <template #bottom>
+            <SchemeSelector
+              v-if="schemeOptions.length > 1"
+              :options="schemeOptions"
+              :model-value="course.schemeId"
+              show-keys
+              @select="chooseScheme"
+            />
+          </template>
+        </HeroLayout>
 
-          <div class="training-controls">
-            <div class="training-controls-left">
-              <div v-if="course.schemeOptions.length > 1" class="training-scheme">
-                <label for="training-scheme-select">双拼方案</label>
-                <select
-                  id="training-scheme-select"
-                  class="scheme-select"
-                  :value="course.schemeId"
-                  @change="course.setScheme(($event.target as HTMLSelectElement).value)"
-                >
-                  <option v-for="option in course.schemeOptions" :key="option.id" :value="option.id">
-                    {{ option.name }}
-                  </option>
-                </select>
-              </div>
-              <div v-if="tab === 'drill'" class="training-mode" role="group" aria-label="练习类型">
+        <aside class="training-side panel">
+          <CardHeader title="练习设置">
+            <span class="count-badge">{{ tab === 'drill' ? '专项 · 无尽练习' : '文章 · 逐字练习' }}</span>
+          </CardHeader>
+          <div class="side-controls">
+            <div class="side-controls-row">
+              <div class="segmented training-tabs" role="tablist" aria-label="练习类型">
                 <button
                   type="button"
-                  class="mode-btn"
+                  role="tab"
+                  :aria-selected="tab === 'drill'"
+                  class="segmented-btn"
+                  :class="{ 'is-active': tab === 'drill' }"
+                  aria-keyshortcuts="Alt+D"
+                  @click="switchTab('drill')"
+                >
+                  专项练习
+                  <kbd>Alt+D</kbd>
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  :aria-selected="tab === 'article'"
+                  class="segmented-btn"
+                  :class="{ 'is-active': tab === 'article' }"
+                  aria-keyshortcuts="Alt+A"
+                  @click="switchTab('article')"
+                >
+                  文章练习
+                  <kbd>Alt+A</kbd>
+                </button>
+              </div>
+
+              <div
+                v-if="tab === 'drill'"
+                class="segmented training-mode"
+                role="group"
+                aria-label="练习类型"
+              >
+                <button
+                  type="button"
+                  class="segmented-btn"
                   :class="{ 'is-active': drillMode === 'char' }"
+                  :aria-pressed="drillMode === 'char'"
+                  aria-keyshortcuts="Alt+M"
+                  title="单字模式（Alt+M 切换）"
                   @click="drillMode = 'char'"
                 >
                   字
+                  <kbd>Alt+M</kbd>
                 </button>
                 <button
                   type="button"
-                  class="mode-btn"
+                  class="segmented-btn"
                   :class="{ 'is-active': drillMode === 'word' }"
+                  :aria-pressed="drillMode === 'word'"
+                  aria-keyshortcuts="Alt+M"
+                  title="词语模式（Alt+M 切换）"
                   @click="drillMode = 'word'"
                 >
                   词
+                  <kbd>Alt+M</kbd>
                 </button>
               </div>
             </div>
-
-            <div class="training-tabs" role="tablist" aria-label="训练类型">
-              <button
-                type="button"
-                role="tab"
-                :aria-selected="tab === 'drill'"
-                class="training-tab"
-                :class="{ 'is-active': tab === 'drill' }"
-                @click="switchTab('drill')"
-              >
-                专项练习
-              </button>
-              <button
-                type="button"
-                role="tab"
-                :aria-selected="tab === 'article'"
-                class="training-tab"
-                :class="{ 'is-active': tab === 'article' }"
-                @click="switchTab('article')"
-              >
-                文章练习
-              </button>
-            </div>
           </div>
-        </header>
 
-        <div v-if="bankStatus === 'error'" class="training-state is-error">
-          <strong>训练字库加载失败</strong>
+          <div class="side-start">
+            <div class="side-info">
+              <template v-if="tab === 'drill'">
+                <strong>可用{{ drillMode === 'char' ? '字' : '词' }} {{ availableCount }} 条</strong>
+                <span v-if="availableCount === 0" class="side-info-sub is-warning">当前选择下没有匹配的{{ drillMode === 'char' ? '字' : '词' }}，请调整声母 / 韵母选择。</span>
+              </template>
+              <template v-else>
+                <strong v-if="parsed">将练习 {{ articleMappedCount }} 字 · 跳过 {{ articleSkippedCount }} 字</strong>
+                <strong v-else>等待输入文章…</strong>
+              </template>
+            </div>
+            <button
+              class="btn btn--primary setup-start"
+              type="button"
+              :disabled="tab === 'drill' ? !canStartDrill : !canStartArticle"
+              @click="tab === 'drill' ? startDrill() : startArticle()"
+            >
+              开始练习
+              <kbd>Enter</kbd>
+            </button>
+          </div>
+        </aside>
+
+        <div v-if="bankStatus === 'error'" class="training-state panel is-error training-state--wide">
+          <strong>练习字库加载失败</strong>
           <p>{{ bankError }}</p>
         </div>
 
         <!-- 专项练习 -->
-        <section v-else-if="tab === 'drill'" class="training-panel">
+        <section v-else-if="tab === 'drill'" :key="tab" class="training-panel">
           <div class="setup-grid">
-            <SetupCard pill="出现" tone="appear" subtitle="本局训练范围">
+            <SetupCard pill="出现" tone="appear" subtitle="本局练习范围">
               <template #head-extra>
                 <div class="setup-progress">
                   <span class="setup-progress-label">当前进度 {{ passedLessonCount }}/{{ course.lessons.length }} 课</span>
                   <button
                     type="button"
-                    class="setup-progress-btn"
+                    class="meta-btn"
                     :disabled="passedLessonCount === 0"
                     title="选中已学完课程包含的声母、韵母与零声母"
                     @click="selectLearnedAtoms"
@@ -961,14 +1076,13 @@ onScopeDispose(() => {
                   </button>
                 </div>
               </template>
-              <div v-if="bankStatus === 'loading'" class="training-state">正在加载训练字库…</div>
+              <div v-if="bankStatus === 'loading'" class="training-state panel">正在加载练习字库…</div>
               <template v-else-if="atomOptions">
-
                 <SetupGroup
                   title="声母"
                   :all-checked="appearInitialAll"
-                    :indeterminate="appearInitialPartial"
-                    @toggle-all="toggleAppearAll('initial')"
+                  :indeterminate="appearInitialPartial"
+                  @toggle-all="toggleAppearAll('initial')"
                 >
                   <template #count>
                     已选 {{ appearInitialSelectedCount }}/{{ appearInitialTotalCount }}
@@ -1005,8 +1119,8 @@ onScopeDispose(() => {
                 <SetupGroup
                   title="韵母"
                   :all-checked="appearFinalAll"
-                    :indeterminate="appearFinalPartial"
-                    @toggle-all="toggleAppearAll('final')"
+                  :indeterminate="appearFinalPartial"
+                  @toggle-all="toggleAppearAll('final')"
                 >
                   <template #count>
                     已选 {{ appearFinalSelectedCount }}/{{ appearFinalTotalCount }}
@@ -1044,11 +1158,11 @@ onScopeDispose(() => {
                 <template #count>
                   已隐藏 {{ hiddenGroupSelected('drill', 'initial') }}/{{ hiddenGroupTotal('drill', 'initial') }}
                 </template>
-                  <CommonCapsule
-                    v-if="commonEntriesFor('drill', 'initial').length > 0"
-                    :selected="commonAllChecked('drill', 'initial')"
-                    @toggle="toggleCommonAll('drill', 'initial')"
-                  />
+                <CommonCapsule
+                  v-if="commonEntriesFor('drill', 'initial').length > 0"
+                  :selected="commonAllChecked('drill', 'initial')"
+                  @toggle="toggleCommonAll('drill', 'initial')"
+                />
                 <button
                   v-for="initial in drillHiddenInitialCandidates"
                   :key="initial"
@@ -1084,11 +1198,11 @@ onScopeDispose(() => {
                 <template #count>
                   已隐藏 {{ hiddenGroupSelected('drill', 'final') }}/{{ hiddenGroupTotal('drill', 'final') }}
                 </template>
-                  <CommonCapsule
-                    v-if="commonEntriesFor('drill', 'final').length > 0"
-                    :selected="commonAllChecked('drill', 'final')"
-                    @toggle="toggleCommonAll('drill', 'final')"
-                  />
+                <CommonCapsule
+                  v-if="commonEntriesFor('drill', 'final').length > 0"
+                  :selected="commonAllChecked('drill', 'final')"
+                  @toggle="toggleCommonAll('drill', 'final')"
+                />
                 <button
                   v-for="final in drillHiddenFinalCandidates"
                   :key="final"
@@ -1110,45 +1224,19 @@ onScopeDispose(() => {
               </p>
             </SetupCard>
           </div>
-
-          <div class="setup-actions">
-            <div class="setup-bar-info">
-              <strong>可用{{ drillMode === 'char' ? '字' : '词' }} {{ availableCount }} 条</strong>
-              <span v-if="availableCount > 0" class="setup-bar-sub" :title="previewSample">
-                示例：{{ previewSample }}
-              </span>
-              <span v-else class="setup-bar-sub is-warning">
-                当前选择下没有匹配的{{ drillMode === 'char' ? '字' : '词' }}，请调整声母 / 韵母选择。
-              </span>
-            </div>
-            <button
-              class="btn btn--primary setup-start"
-              type="button"
-              :disabled="!canStartDrill"
-              @click="startDrill"
-            >
-              开始练习
-              <kbd>Enter</kbd>
-            </button>
-          </div>
         </section>
 
         <!-- 文章练习 -->
-        <section v-else class="training-panel">
+        <section v-else :key="tab" class="training-panel">
           <div class="setup-grid">
             <SetupCard tone="input">
               <template #head>
-                <div class="article-mode-switch" role="tablist" aria-label="文章输入方式">
-                  <span
-                    class="article-mode-thumb"
-                    :class="{ 'is-import': articleInputMode === 'import' }"
-                    aria-hidden="true"
-                  />
+                <div class="segmented segmented--sm" role="tablist" aria-label="文章输入方式">
                   <button
                     type="button"
                     role="tab"
                     :aria-selected="articleInputMode === 'input'"
-                    class="article-mode-btn"
+                    class="segmented-btn"
                     :class="{ 'is-active': articleInputMode === 'input' }"
                     @click="articleInputMode = 'input'"
                   >
@@ -1158,19 +1246,19 @@ onScopeDispose(() => {
                     type="button"
                     role="tab"
                     :aria-selected="articleInputMode === 'import'"
-                    class="article-mode-btn"
+                    class="segmented-btn"
                     :class="{ 'is-active': articleInputMode === 'import' }"
                     @click="articleInputMode = 'import'"
                   >
                     导入
                   </button>
                 </div>
-                <span class="setup-card-sub">
+                <span class="article-head-sub">
                   {{ parsed ? `${parsed.chars.length} 个汉字 · ${parsed.lines.length} 行` : '粘贴文章或导入 .txt' }}
                 </span>
                 <button
                   v-if="articleText"
-                  class="article-clear"
+                  class="meta-btn article-clear"
                   type="button"
                   @click="clearArticle"
                 >
@@ -1178,7 +1266,7 @@ onScopeDispose(() => {
                 </button>
               </template>
 
-              <div v-if="bankStatus === 'loading'" class="training-state">正在加载训练字库…</div>
+              <div v-if="bankStatus === 'loading'" class="training-state panel">正在加载练习字库…</div>
               <template v-else>
                 <input
                   ref="fileInput"
@@ -1232,11 +1320,11 @@ onScopeDispose(() => {
                 <template #count>
                   已隐藏 {{ hiddenGroupSelected('article', 'initial') }}/{{ hiddenGroupTotal('article', 'initial') }}
                 </template>
-                  <CommonCapsule
-                    v-if="commonEntriesFor('article', 'initial').length > 0"
-                    :selected="commonAllChecked('article', 'initial')"
-                    @toggle="toggleCommonAll('article', 'initial')"
-                  />
+                <CommonCapsule
+                  v-if="commonEntriesFor('article', 'initial').length > 0"
+                  :selected="commonAllChecked('article', 'initial')"
+                  @toggle="toggleCommonAll('article', 'initial')"
+                />
                 <button
                   v-for="initial in articleHiddenInitialCandidates"
                   :key="initial"
@@ -1271,11 +1359,11 @@ onScopeDispose(() => {
                 <template #count>
                   已隐藏 {{ hiddenGroupSelected('article', 'final') }}/{{ hiddenGroupTotal('article', 'final') }}
                 </template>
-                  <CommonCapsule
-                    v-if="commonEntriesFor('article', 'final').length > 0"
-                    :selected="commonAllChecked('article', 'final')"
-                    @toggle="toggleCommonAll('article', 'final')"
-                  />
+                <CommonCapsule
+                  v-if="commonEntriesFor('article', 'final').length > 0"
+                  :selected="commonAllChecked('article', 'final')"
+                  @toggle="toggleCommonAll('article', 'final')"
+                />
                 <button
                   v-for="final in articleHiddenFinalCandidates"
                   :key="final"
@@ -1289,22 +1377,6 @@ onScopeDispose(() => {
                 </button>
               </SetupGroup>
             </SetupCard>
-          </div>
-
-          <div class="setup-actions">
-            <div class="setup-bar-info">
-              <strong v-if="parsed">将练习 {{ articleMappedCount }} 字 · 跳过 {{ articleSkippedCount }} 字</strong>
-              <strong v-else>等待输入文章…</strong>
-            </div>
-            <button
-              class="btn btn--primary setup-start"
-              type="button"
-              :disabled="!canStartArticle"
-              @click="startArticle"
-            >
-              开始练习
-              <kbd>Enter</kbd>
-            </button>
           </div>
         </section>
       </div>
@@ -1322,9 +1394,13 @@ onScopeDispose(() => {
               退出
               <kbd>Esc</kbd>
             </button>
+            <button class="session-btn" type="button" @click="restartSession">
+              重新开始
+              <kbd>Alt+R</kbd>
+            </button>
           </template>
 
-          <span class="session-item">已练 {{ hasStarted ? completedWords : '--' }} {{ countUnit }}</span>
+          <span class="session-item">已练 {{ completedWords }} {{ countUnit }}</span>
           <span class="session-sep" aria-hidden="true">·</span>
           <span v-if="hasStarted" class="session-item">正确率 {{ accuracyPercent }}%</span>
           <span v-else class="session-item">正确率 --%</span>
@@ -1381,49 +1457,23 @@ onScopeDispose(() => {
             :hidden-atoms="sessionHiddenAtomIds"
           />
         </template>
+      </div>
 
+      <DockReveal :open="keyMapRows.length > 0 && layout.keyboardVisible">
         <KeyboardDock
-          v-if="keyMapRows.length"
           :rows="keyMapRows"
-          :show-backspace="true"
           :hidden-atom-ids="sessionHiddenAtomIds"
           :pressed="pressedKeys"
           @key="onDockKey"
           @backspace="onBackspace"
         />
-      </div>
+      </DockReveal>
     </template>
   </div>
 </template>
 
 <style scoped>
-.training-session {
-  flex: 1;
-  min-height: 0;
-  width: 100%;
-  max-width: 1080px;
-  margin: 0 auto;
-  padding: 12px 20px 0;
-  display: flex;
-  flex-direction: column;
-}
-.article-summary-wrap {
-  flex: 1;
-  min-height: 0;
-  width: 100%;
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 20px;
-  overflow-y: auto;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-}
-.article-summary-wrap > * {
-  max-width: 860px;
-}
-
-/* ── v15：统一卡片 + 固定底栏 + 两栏内部滚动 ─────────────── */
+/* ── 页面骨架：桌面固定高度、卡内滚动；移动端单一滚动容器 ───── */
 .training-page {
   height: 100%;
   min-height: 0;
@@ -1435,132 +1485,92 @@ onScopeDispose(() => {
   min-height: 0;
   overflow: hidden;
   width: 100%;
-  max-width: 1160px;
+  max-width: var(--page-max);
   margin: 0 auto;
-  padding: 22px 24px 18px;
+  padding: var(--page-top-gap) var(--page-pad-x) 16px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(390px, 0.95fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 16px;
+}
+
+/* ── 左上：课程式品牌区（共用 HeroLayout） ────────────────── */
+.training-brand {
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
+}
+
+/* ── 右上：练习设置 + 开始 ───────────────────────────────── */
+.training-side {
+  grid-column: 2;
+  grid-row: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
+  padding: 0 20px 18px;
 }
-.training-hero {
-  flex: none;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+.side-controls {
+  min-width: 0;
 }
-.training-hero h1 {
-  margin: 0;
-  font-size: 32px;
-  letter-spacing: -0.025em;
-}
-.training-sub {
-  margin: 4px 0 0;
-  max-width: 780px;
-  color: var(--ink-3);
-  font-size: 13px;
-  line-height: 1.7;
-}
-.training-controls {
-  width: 100%;
+.side-controls-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 12px 18px;
-  margin-top: 2px;
-}
-.training-controls-left {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px 14px;
-}
-.training-controls .training-scheme {
-  margin-top: 0;
-}
-.training-controls .training-tabs {
-  margin: 0;
-}
-.training-scheme {
-  display: flex;
-  align-items: center;
   gap: 8px;
-  color: var(--ink-3);
-  font-size: 12px;
 }
-.scheme-select {
-  height: 30px;
-  padding: 0 8px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-sm);
-  background: var(--surface);
-  color: var(--ink);
-  font-size: 12px;
-}
-.training-tabs {
+.side-start {
+  margin-top: auto;
   display: flex;
-  gap: 4px;
-  padding: 3px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  background: var(--surface-2);
+  flex-direction: column;
+  gap: 8px;
 }
-.training-tab {
-  height: 32px;
-  padding: 0 18px;
-  border-radius: var(--r-md);
+.side-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.side-info strong {
+  color: var(--ink);
+  font-size: var(--text-base);
+  font-weight: 700;
+  line-height: 1.4;
+}
+.side-info-sub {
+  min-width: 0;
+  overflow: hidden;
   color: var(--ink-3);
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--text-xs);
+  line-height: 1.5;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.training-tab.is-active {
-  color: var(--brand-ink);
-  background: var(--surface);
-  box-shadow: var(--shadow-sm);
-}
-.training-mode {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  padding: 3px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-md);
-  background: var(--surface-2);
-}
-.mode-btn {
-  min-width: 50px;
-  height: 26px;
-  border-radius: var(--r-sm);
-  color: var(--ink-3);
-  font-size: 12px;
-  font-weight: 650;
-}
-.mode-btn.is-active {
-  color: var(--brand-ink);
-  background: var(--surface);
-  box-shadow: var(--shadow-sm);
-}
-.training-state {
-  padding: 14px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  background: var(--surface);
-  color: var(--ink-3);
-  font-size: 12px;
-}
-.training-state.is-error {
-  border-color: var(--danger-line);
+.side-info-sub.is-warning {
   color: var(--danger);
 }
-.training-state p {
-  margin: 4px 0 0;
+.side-start .setup-start {
+  width: 100%;
+  min-height: 40px;
+  justify-content: center;
 }
+
+/* ── 下排：出现 / 隐藏两张范围卡 ─────────────────────────── */
 .training-panel {
-  flex: 1;
+  grid-column: 1 / -1;
+  grid-row: 2;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
+  padding: 0;
+  animation: ui-fade-up 220ms var(--ease);
+}
+.training-state--wide {
+  grid-column: 1 / -1;
+  grid-row: 2;
   margin: 0;
 }
 .setup-grid {
@@ -1570,16 +1580,10 @@ onScopeDispose(() => {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   grid-template-rows: minmax(0, 1fr);
   align-items: stretch;
-  gap: 18px;
+  gap: 16px;
 }
-.setup-empty {
-  margin: 0;
-  padding: 14px 12px;
-  border: 1px dashed var(--line);
-  border-radius: var(--r-md);
-  color: var(--ink-4);
-  font-size: 11px;
-  text-align: center;
+.setup-start {
+  flex: none;
 }
 .setup-progress {
   display: inline-flex;
@@ -1590,136 +1594,48 @@ onScopeDispose(() => {
 }
 .setup-progress-label {
   color: var(--ink-4);
-  font-size: 11px;
+  font-size: var(--text-xs);
   white-space: nowrap;
 }
-.setup-progress-btn {
-  flex: none;
-  padding: 3px 9px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-pill);
-  background: var(--surface-2);
-  color: var(--ink-3);
-  font-size: 11px;
-  font-weight: 600;
-}
-.setup-progress-btn:hover:not(:disabled) {
-  color: var(--brand-ink);
-  border-color: var(--brand-line, var(--line));
-  background: var(--brand-soft);
-}
-.setup-progress-btn:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-.setup-actions {
-  flex: none;
-  height: 72px;
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  padding: 0 18px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-xl);
-  background: var(--surface);
-  box-shadow: var(--shadow-sm);
-}
-.setup-bar-info {
+
+/* ── 文章练习 ───────────────────────────────────────────── */
+.article-head-sub {
   flex: 1;
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.setup-bar-info strong {
-  color: var(--ink);
-  font-size: 13px;
-  font-weight: 700;
-  line-height: 1.3;
-}
-.setup-bar-sub {
-  min-width: 0;
   overflow: hidden;
+  color: var(--ink-4);
+  font-size: var(--text-xs);
+  line-height: 1.5;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--ink-3);
-  font-size: 11px;
-  line-height: 1.4;
-}
-.setup-bar-sub.is-warning {
-  color: var(--danger);
-}
-.setup-start {
-  flex: none;
-  height: 40px;
-  padding: 0 20px;
-  font-size: 13px;
-}
-.article-mode-switch {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  flex: none;
-  padding: 3px;
-  border-radius: var(--r-md);
-  background: var(--surface-2);
-  border: 1px solid var(--line);
-}
-.article-mode-thumb {
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: calc(50% - 3px);
-  height: calc(100% - 6px);
-  border-radius: var(--r-sm);
-  background: var(--surface);
-  box-shadow: var(--shadow-sm);
-  transition: transform 160ms var(--ease);
-}
-.article-mode-thumb.is-import {
-  transform: translateX(100%);
-}
-.article-mode-btn {
-  position: relative;
-  z-index: 1;
-  min-width: 56px;
-  height: 26px;
-  border-radius: var(--r-sm);
-  color: var(--ink-3);
-  font-size: 11.5px;
-  font-weight: 650;
-}
-.article-mode-btn.is-active {
-  color: var(--brand-ink);
 }
 .article-clear {
+  flex: none;
   margin-left: auto;
-  padding: 4px 9px;
-  border-radius: var(--r-sm);
-  color: var(--ink-3);
-  font-size: 11px;
-}
-.article-clear:hover {
-  color: var(--danger);
-  background: var(--danger-soft);
 }
 .article-input {
   flex: 1;
   width: 100%;
   min-height: 180px;
   resize: none;
-  padding: 12px 14px;
+  padding: 14px 16px;
   border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  background: var(--surface);
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--surface-2) 55%, var(--surface));
   color: var(--ink);
   font-family: var(--font-ui);
-  font-size: 13px;
+  font-size: var(--text-base);
   line-height: 1.75;
+  transition: border-color var(--dur-fast), box-shadow var(--dur-fast), background var(--dur-fast);
+  animation: ui-fade-in 180ms var(--ease);
+}
+.article-input::placeholder {
+  color: var(--ink-4);
 }
 .article-input:focus {
   outline: none;
   border-color: var(--brand);
+  background: var(--surface);
   box-shadow: 0 0 0 3px var(--brand-soft);
 }
 .article-drop {
@@ -1729,157 +1645,223 @@ onScopeDispose(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 20px;
+  gap: 8px;
+  padding: 22px 18px;
   border: 1.5px dashed var(--line-strong);
-  border-radius: var(--r-lg);
-  background: color-mix(in srgb, var(--surface-2) 55%, transparent);
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--surface-2) 55%, var(--surface));
   color: var(--ink-3);
   text-align: center;
   cursor: pointer;
-  transition: border-color 120ms, background 120ms;
+  transition: border-color var(--dur-fast), background var(--dur-fast), box-shadow var(--dur-fast);
+  animation: ui-fade-in 180ms var(--ease);
 }
 .article-drop:hover,
 .article-drop.is-drag {
   border-color: var(--brand);
   background: var(--brand-soft);
 }
+.article-drop:focus-visible {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px var(--brand-soft);
+}
 .article-drop-icon {
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   display: grid;
   place-items: center;
-  border-radius: 50%;
-  background: var(--surface);
   border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--surface);
   color: var(--brand-ink);
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 700;
 }
 .article-drop strong {
   color: var(--ink-2);
-  font-size: 12.5px;
+  font-size: var(--text-sm);
   font-weight: 700;
 }
 .article-drop-meta {
-  max-width: 300px;
+  max-width: 320px;
   color: var(--ink-4);
-  font-size: 10.5px;
+  font-size: var(--text-xs);
   line-height: 1.55;
 }
 .article-notes {
   margin: 0;
-  padding-left: 18px;
+  padding: 10px 12px;
+  list-style: none;
   display: flex;
   flex-direction: column;
   gap: 4px;
+  border: 1px solid var(--line-faint);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
   color: var(--ink-3);
-  font-size: 11px;
+  font-size: var(--text-xs);
   line-height: 1.6;
 }
+.article-notes li {
+  position: relative;
+  padding-left: 11px;
+}
+.article-notes li::before {
+  content: '·';
+  position: absolute;
+  left: 0;
+  color: var(--ink-4);
+  font-weight: 800;
+}
+
+/* ── 加载 / 错误 / 空态 ─────────────────────────────────── */
+.training-state {
+  padding: 16px 18px;
+  border: 1px solid var(--line-faint);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  color: var(--ink-3);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+}
+.training-state.is-error {
+  border-color: var(--danger-line);
+  border-radius: var(--r-xl);
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+.training-state strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--danger);
+  font-size: var(--text-base);
+  font-weight: 750;
+}
+.training-state p {
+  margin: 0;
+  color: var(--ink-2);
+}
+.setup-empty {
+  margin: 0;
+  padding: 24px 16px;
+  border: 1px dashed var(--line);
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--surface-2) 55%, var(--surface));
+  color: var(--ink-4);
+  font-size: var(--text-xs);
+  line-height: 1.6;
+  text-align: center;
+}
+
+/* ── 练习会话：只控制容器宽度与间距，皮肤由练习域负责 ─────── */
+.training-session {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 14px 20px 0;
+  display: flex;
+  flex-direction: column;
+  animation: ui-fade-up 220ms var(--ease);
+}
+.article-summary-wrap {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+.article-summary-wrap > * {
+  max-width: 860px;
+}
+
+@media (max-width: 1050px) and (min-width: 981px) {
+  .training-config {
+    grid-template-columns: minmax(0, 1.15fr) minmax(340px, 0.95fr);
+  }
+}
+
 @media (max-width: 980px) {
   .training-config {
-    padding: 16px 14px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+    padding: var(--page-top-gap) var(--page-pad-x) 12px;
   }
-  .training-hero h1 {
-    font-size: 26px;
+  .training-brand {
+    flex: none;
   }
-  .training-sub {
-    font-size: 12px;
+  .training-side {
+    flex: none;
+    min-height: auto;
+    padding: 0 18px 18px;
+  }
+  .training-panel {
+    flex: none;
+    min-height: 0;
   }
   .setup-grid {
-    flex: 1;
+    flex: none;
     min-height: 0;
     display: flex;
     flex-direction: column;
-    overflow-y: auto;
+    overflow: visible;
     gap: 14px;
   }
   .setup-grid > .setup-card {
     height: auto;
     flex: none;
   }
-  .setup-actions {
-    height: auto;
-    min-height: 64px;
-    padding: 10px 14px;
-    gap: 12px;
-  }
-  .setup-start {
-    height: 38px;
-    padding: 0 16px;
-  }
-}
-@media (max-width: 640px) {
-  .training-controls {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 8px;
-  }
-  .training-tabs {
-    width: 100%;
-  }
-  .training-tab {
-    flex: 1;
-    padding: 0 10px;
-  }
-  .training-mode {
-    order: 2;
-  }
-  .setup-actions {
-    align-items: stretch;
-    flex-direction: column;
-    gap: 8px;
-  }
-  .setup-start {
-    width: 100%;
-  }
-  .setup-bar-info {
-    width: 100%;
-  }
-  .setup-bar-sub {
-    white-space: normal;
+  .training-panel :deep(.setup-card-scroll) {
     overflow: visible;
   }
 }
 
-/* ── 移动端：单滚动容器 + 清晰两行会话栏，消除嵌套滚动与遮挡 ── */
 @media (max-width: 640px) {
   .training-config {
-    padding: 12px 10px 10px;
+    padding: var(--page-top-gap) 10px 10px;
     gap: 10px;
   }
-  .training-hero {
-    gap: 6px;
+  .training-side {
+    padding: 0 16px 14px;
+    gap: 10px;
   }
-  .training-hero h1 {
-    font-size: 24px;
+  .side-controls-row {
+    width: 100%;
+    gap: 8px;
   }
-  .training-sub {
-    font-size: 11.5px;
-    line-height: 1.55;
+  .training-tabs {
+    flex: 1;
   }
-  .training-controls {
-    gap: 7px;
+  .training-tabs .segmented-btn {
+    flex: 1;
+    padding: 0 10px;
+  }
+  .training-tabs kbd {
+    display: none;
+  }
+  .side-start {
+    margin-top: 4px;
   }
   .setup-grid {
     gap: 12px;
     padding-bottom: 4px;
   }
-  .setup-grid :deep(.setup-card) {
-    height: auto;
-    flex: none;
-    overflow: visible;
-    padding: 14px;
+  .setup-start {
+    width: 100%;
   }
-  .setup-grid :deep(.setup-card-scroll) {
-    flex: none;
-    min-height: 0;
-    overflow: visible;
-    padding-right: 0;
-  }
-  .setup-actions {
-    padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  .training-session {
+    padding: 10px 10px 0;
   }
   .article-summary-wrap {
     padding: 12px 2px calc(18px + env(safe-area-inset-bottom));

@@ -21,7 +21,7 @@ const props = withDefaults(
     liveMessage?: string
     /** 有限目标完成后的提示行（已达标可 Enter，未达标只能 Alt+Enter 继续） */
     prompt?: EndPromptView | null
-    /** 训练页「练习时隐藏」映射 */
+    /** 练习页「练习时隐藏」映射 */
     hiddenAtoms?: readonly AtomId[]
     hideZero?: boolean
   }>(),
@@ -159,7 +159,10 @@ watch(
           :key="wordIndex"
           :ref="(el) => setRowEl(el as Element | null, wordIndex)"
           class="stream-word"
-          :class="{ 'is-active': wordIndex === session.index }"
+          :class="{
+            'is-active': wordIndex === session.index,
+            'has-error': cellRows[wordIndex]?.some((cell) => cell.inputState === 'wrong'),
+          }"
         >
           <div class="stream-row">
             <CharacterCard
@@ -185,9 +188,9 @@ watch(
       </div>
       <div v-if="prompt" ref="promptEl" class="end-summary-wrap" role="status">
         <StageSummaryCard
-          :kicker="prompt.met ? '阶段完成' : '暂未达标'"
+          :kicker="prompt.passedAttempt ? '阶段完成' : '暂未达标'"
           :title="prompt.title"
-          :tone="prompt.met ? 'success' : 'neutral'"
+          :tone="prompt.passedAttempt ? 'success' : 'danger'"
           :stats="summaryStats"
           :key-errors="prompt.keyErrors"
           :rules="prompt.rules"
@@ -231,6 +234,7 @@ watch(
   max-width: 860px;
   margin: 0 auto;
   padding-bottom: 4px;
+  animation: ui-fade-up 220ms var(--ease);
 }
 .stream-viewport {
   position: relative;
@@ -241,37 +245,46 @@ watch(
   border-radius: var(--r-lg);
   clip-path: inset(0 round var(--r-lg));
   overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
   overscroll-behavior: contain;
   scroll-behavior: smooth;
 }
 .stream-inner {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 18px 4px;
+  gap: 14px;
+  padding: 20px 6px;
 }
 .stream-inner.is-grid {
   flex-direction: row;
   flex-wrap: wrap;
   justify-content: center;
   align-content: flex-start;
-  gap: 12px 8px;
+  gap: 12px 10px;
 }
 .stream-word {
   display: flex;
   justify-content: center;
-  border-radius: calc(var(--r-lg) + 5px);
+  border-radius: var(--r-lg);
   padding: 4px;
   width: fit-content;
   max-width: 100%;
   margin: 0 auto;
-  transition: background 140ms, box-shadow 140ms;
+  transition: background var(--dur-mid), box-shadow var(--dur-mid);
 }
 .stream-inner.is-grid .stream-word {
   margin: 0;
 }
+/* 活动词：品牌柔色底 + 极细内描边；错误时整词切到 danger 语义色 */
 .stream-word.is-active {
-  background: var(--brand-soft);
+  background: color-mix(in srgb, var(--brand-soft) 72%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand) 16%, transparent);
+  animation: ui-row-focus 220ms var(--ease);
+}
+.stream-word.is-active.has-error {
+  background: color-mix(in srgb, var(--danger-soft) 62%, transparent);
+  box-shadow: inset 0 0 0 1px var(--danger-line);
 }
 .stream-row {
   display: flex;
@@ -289,7 +302,7 @@ watch(
   left: 0;
   right: 0;
   z-index: 3;
-  height: 16px;
+  height: 18px;
   pointer-events: none;
 }
 .fade--top {
@@ -301,7 +314,7 @@ watch(
   background: linear-gradient(transparent, color-mix(in srgb, var(--bg) 72%, transparent));
 }
 .end-summary-wrap {
-  margin: 10px 4px 18px;
+  margin: 12px 4px 20px;
 }
 @media (max-width: 700px) {
   .end-summary-wrap {

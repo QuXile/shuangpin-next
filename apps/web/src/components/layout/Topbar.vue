@@ -43,12 +43,12 @@ const practiceTitle = computed(() => {
             <svg viewBox="0 0 32 32">
               <defs>
                 <linearGradient id="brandGrad" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0" stop-color="#6366f1" />
-                  <stop offset="1" stop-color="#8b5cf6" />
+                  <stop offset="0" class="brand-grad-start" />
+                  <stop offset="1" class="brand-grad-end" />
                 </linearGradient>
               </defs>
               <rect x="1.5" y="1.5" width="29" height="29" rx="9" fill="url(#brandGrad)" />
-              <g fill="#ffffff">
+              <g class="brand-glyph">
                 <rect x="7.4" y="8.4" width="7.4" height="6.6" rx="2" opacity=".95" />
                 <rect x="17.2" y="8.4" width="7.4" height="6.6" rx="2" opacity=".55" />
                 <rect x="7.4" y="17" width="7.4" height="6.6" rx="2" opacity=".55" />
@@ -62,14 +62,68 @@ const practiceTitle = computed(() => {
         <span v-if="!isPractice && layout.stageLabel" class="topbar-stage">{{ layout.stageLabel }}</span>
       </div>
 
-      <nav class="topbar-nav" aria-label="主导航">
-        <RouterLink to="/" class="nav-tab" :class="{ 'is-active': courseActive }">课程</RouterLink>
-        <RouterLink to="/training" class="nav-tab" :class="{ 'is-active': trainingActive }">练习</RouterLink>
+      <nav class="topbar-nav segmented" aria-label="主导航">
+        <RouterLink
+          to="/"
+          class="segmented-btn"
+          :class="{ 'is-active': courseActive }"
+          :aria-current="courseActive ? 'page' : undefined"
+          aria-keyshortcuts="Alt+H"
+          title="课程路线（Alt+H）"
+        >
+          课程
+          <kbd>Alt+H</kbd>
+        </RouterLink>
+        <RouterLink
+          to="/training"
+          class="segmented-btn"
+          :class="{ 'is-active': trainingActive }"
+          :aria-current="trainingActive ? 'page' : undefined"
+          aria-keyshortcuts="Alt+P"
+          title="练习场（Alt+P）"
+        >
+          练习
+          <kbd>Alt+P</kbd>
+        </RouterLink>
       </nav>
 
       <div class="top-actions">
         <button
-          class="icon-btn theme-btn"
+          class="theme-btn shortcut-btn"
+          type="button"
+          aria-label="查看快捷键（?）"
+          aria-keyshortcuts="?"
+          title="查看快捷键（?）"
+          @click="layout.openShortcutHelp()"
+        >
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="8.5" />
+            <path d="M12 10.7v4.8" />
+            <path d="M12 7.9h.01" />
+          </svg>
+          <kbd>?</kbd>
+        </button>
+
+        <button
+          v-if="layout.keyboardAvailable"
+          class="theme-btn keyboard-btn"
+          type="button"
+          :aria-label="layout.keyboardVisible ? '隐藏底部键盘（Ctrl+K）' : '显示底部键盘（Ctrl+K）'"
+          :aria-pressed="layout.keyboardVisible"
+          aria-keyshortcuts="Control+K"
+          :title="layout.keyboardVisible ? '隐藏底部键盘（Ctrl+K）' : '显示底部键盘（Ctrl+K）'"
+          @click="layout.toggleKeyboard()"
+        >
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2.5" y="6" width="19" height="12" rx="2.4" />
+            <path d="M6.2 10h.01M9.4 10h.01M12.6 10h.01M15.8 10h.01M19 10h.01M6.2 13.2h.01M9.4 13.2h.01M12.6 13.2h.01M15.8 13.2h.01M19 13.2h.01M7.4 16.2h9.2" />
+            <path v-if="layout.keyboardVisible" d="M4 20 20 4" />
+          </svg>
+          <kbd>Ctrl+K</kbd>
+        </button>
+
+        <button
+          class="theme-btn"
           type="button"
           :aria-label="settings.isDark ? '切换为亮色模式（Alt+T）' : '切换为暗色模式（Alt+T）'"
           :aria-pressed="settings.isDark"
@@ -99,27 +153,29 @@ const practiceTitle = computed(() => {
   right: 0;
   z-index: 20;
   height: var(--topbar-h);
-  background: color-mix(in srgb, var(--bg) 84%, transparent);
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--line-faint);
 }
 .topbar-inner {
-  max-width: 1120px;
+  max-width: var(--page-max);
   margin: 0 auto;
   height: 100%;
-  padding: 0 20px;
+  padding: 0 var(--page-pad-x);
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: 16px;
 }
+
+/* ── 品牌 ─────────────────────────────────── */
 .brand {
   display: inline-flex;
   flex: none;
   align-items: center;
-  gap: 8px;
-  font-weight: 700;
-  font-size: var(--text-md);
+  gap: 9px;
+  font-weight: 800;
+  font-size: 16px;
 }
 .brand-mark {
   width: 30px;
@@ -131,83 +187,80 @@ const practiceTitle = computed(() => {
   height: 100%;
   display: block;
 }
+.brand-grad-start {
+  stop-color: var(--brand);
+}
+.brand-grad-end {
+  stop-color: var(--brand-fill-hover);
+}
+.brand-glyph {
+  fill: var(--on-accent);
+}
 .brand-name {
   letter-spacing: 0.02em;
   white-space: nowrap;
 }
 .brand-tag {
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  color: var(--brand-ink);
+  padding: 2px 6px;
+  border-radius: 6px;
   background: var(--brand-soft);
-  border-radius: var(--r-xs);
-  padding: 2px 5px;
+  color: var(--brand-ink);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  line-height: 1.5;
 }
+
+/* ── 左侧：返回路线 / 课名 / 阶段标签 ─────── */
 .topbar-left {
   min-width: 0;
   height: 100%;
   display: flex;
   align-items: center;
-  gap: 13px;
-}
-.topbar-nav {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  padding: 3px;
-  border: 1px solid var(--line-faint);
-  border-radius: var(--r-pill);
-  background: var(--surface-2);
-}
-.nav-tab {
-  height: 28px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 15px;
-  border-radius: var(--r-pill);
-  color: var(--ink-3);
-  font-size: 12px;
-  font-weight: 650;
-  white-space: nowrap;
-  transition: background var(--dur-fast), color var(--dur-fast), box-shadow var(--dur-fast);
-}
-.nav-tab:hover {
-  color: var(--ink);
-}
-.nav-tab.is-active {
-  color: var(--brand-ink);
-  background: var(--surface);
-  box-shadow: var(--shadow-sm);
+  gap: 12px;
 }
 .topbar-back {
-  height: 32px;
+  flex: none;
+  height: 34px;
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  padding: 0 8px 0 5px;
-  border-radius: var(--r-sm);
+  padding: 0 10px 0 6px;
+  border-radius: var(--r-control);
   color: var(--ink-3);
-  font-size: 12px;
-  transition: background var(--dur-fast), color var(--dur-fast);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  transition: background var(--dur-fast), color var(--dur-fast), transform var(--dur-fast);
 }
 .topbar-back:hover {
   background: var(--surface-2);
   color: var(--ink);
+}
+.topbar-back:active {
+  transform: scale(0.96);
 }
 .topbar-back .icon {
   width: 16px;
   height: 16px;
 }
 .topbar-back kbd {
-  margin-left: 1px;
+  color: var(--ink-3);
 }
 .topbar-divider {
   width: 1px;
-  height: 17px;
+  height: 16px;
   flex: none;
-  background: var(--line);
+  background: var(--line-strong);
+}
+.topbar-course {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink);
+  font-size: var(--text-md);
+  font-weight: 850;
+  letter-spacing: -0.015em;
 }
 .topbar-stage {
   flex: none;
@@ -216,21 +269,15 @@ const practiceTitle = computed(() => {
   text-overflow: ellipsis;
   white-space: nowrap;
   padding: 2px 9px;
-  border-radius: var(--r-pill);
+  border-radius: var(--r-control);
   background: var(--brand-soft);
   color: var(--brand-ink);
-  font-size: 11px;
-  font-weight: 700;
+  font-size: var(--text-xs);
+  font-weight: 750;
+  line-height: 1.5;
 }
-.topbar-course {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 15px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-}
+
+/* ── 右侧：主题切换 ───────────────────────── */
 .top-actions {
   display: flex;
   align-items: center;
@@ -238,39 +285,72 @@ const practiceTitle = computed(() => {
   gap: 10px;
   min-width: 0;
 }
-.icon-btn {
-  width: 34px;
-  height: 34px;
-  display: grid;
-  place-items: center;
-  border-radius: var(--r-pill);
-  color: var(--ink-3);
-  border: 1px solid transparent;
-  transition: background var(--dur-fast), color var(--dur-fast);
-}
-.icon-btn:hover {
-  background: var(--surface-2);
-  color: var(--ink);
-}
 .theme-btn {
-  width: auto;
-  padding: 0 9px;
+  flex: none;
+  height: 34px;
+  min-width: 34px;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  color: var(--ink-3);
+  transition: background var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast);
+}
+.theme-btn:hover {
+  border-color: var(--line-strong);
+  background: var(--surface-2);
+  color: var(--ink);
 }
 .theme-btn kbd {
   color: var(--ink-3);
 }
+.theme-btn .icon {
+  transition: transform var(--dur-mid) var(--ease);
+}
+.theme-btn:hover .icon {
+  transform: rotate(-10deg);
+}
+.theme-btn:active .icon {
+  transform: scale(0.9);
+}
+.keyboard-btn:hover .icon {
+  transform: translateY(-1px);
+}
+.keyboard-btn:active .icon {
+  transform: scale(0.9);
+}
+
+/* ── 移动端（--topbar-h / --page-pad-x 已由 token 收窄到 54 / 14）── */
 @media (max-width: 640px) {
   .topbar-inner {
-    padding: 0 14px;
+    gap: 8px;
   }
   .topbar-left {
     gap: 8px;
   }
+  .brand {
+    gap: 8px;
+  }
+  .brand-mark {
+    width: 26px;
+    height: 26px;
+  }
+  .brand-name {
+    font-size: 14px;
+  }
+  .brand-tag {
+    display: none;
+  }
+  /* 移动端优先保留返回图标，课名与阶段标签仍可读 */
   .topbar-back {
-    padding-left: 2px;
+    width: 34px;
+    justify-content: center;
+    padding: 0;
     font-size: 0;
   }
   .topbar-back .icon {
@@ -284,42 +364,34 @@ const practiceTitle = computed(() => {
     display: none;
   }
   .topbar-course {
-    font-size: 13px;
+    font-size: var(--text-base);
   }
   .topbar-stage {
     max-width: 84px;
     padding: 1px 7px;
     font-size: 10px;
   }
-  .topbar-inner {
-    padding: 0 12px;
-    gap: 8px;
+  .topbar-nav {
+    --seg-pad: 2px;
+    padding: 2px;
+    border-radius: var(--r-control);
   }
-  .brand-tag {
+  .topbar-nav .segmented-btn {
+    height: 26px;
+    padding: 0 11px;
+    font-size: 11.5px;
+  }
+  .topbar-nav kbd {
     display: none;
   }
-  .brand-name {
-    font-size: 14px;
-  }
-  .brand-mark {
-    width: 26px;
-    height: 26px;
-  }
   .theme-btn {
+    width: 34px;
     padding: 0;
   }
   .theme-btn kbd {
     display: none;
   }
-  .topbar-nav {
-    padding: 2px;
-  }
-  .nav-tab {
-    height: 26px;
-    padding: 0 11px;
-    font-size: 11px;
-  }
-  /* 练习页移动端优先展示课名和阶段标签；桌面保留课程/练习切换 */
+  /* 练习进行中：移动端优先展示课名和阶段标签，隐藏主导航 */
   .topbar.has-stage .topbar-inner {
     grid-template-columns: minmax(0, 1fr) auto;
   }

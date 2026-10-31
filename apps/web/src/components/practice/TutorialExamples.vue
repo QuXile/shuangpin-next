@@ -44,8 +44,8 @@ withDefaults(
   scrollbar-width: thin;
   padding: 1px 4px 26px 1px;
   border-radius: var(--r-md);
-  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black calc(100% - 24px), transparent 100%);
+  mask-image: linear-gradient(to bottom, black calc(100% - 24px), transparent 100%);
   clip-path: inset(0 round var(--r-md));
 }
 .example-grid :deep(.char-card) {

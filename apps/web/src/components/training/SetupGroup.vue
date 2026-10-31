@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * 训练场统一分组：名称 + 计数 + 全选勾选框 + chips。
+ * 练习场统一分组：名称 + 计数 + 全选勾选框 + chips。
  */
 withDefaults(
   defineProps<{
@@ -56,19 +56,23 @@ function onToggle(event: Event): void {
 .setup-group-head {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   min-height: 28px;
 }
 .setup-group-head strong {
   flex: none;
-  color: var(--ink-2);
+  color: var(--ink);
   font-size: 12.5px;
-  font-weight: 700;
+  font-weight: 750;
+  letter-spacing: -0.01em;
 }
 .setup-count {
   min-width: 0;
+  overflow: hidden;
   color: var(--ink-3);
-  font-size: 11px;
+  font-size: var(--text-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
 .setup-select-all {
@@ -78,10 +82,14 @@ function onToggle(event: Event): void {
   flex: none;
   margin-left: auto;
   color: var(--ink-3);
-  font-size: 11px;
+  font-size: var(--text-xs);
   line-height: 1;
   cursor: pointer;
   user-select: none;
+  transition: color var(--dur-fast);
+}
+.setup-select-all:hover {
+  color: var(--setup-accent-ink, var(--brand-ink));
 }
 .setup-select-all input {
   width: 13px;
@@ -89,9 +97,6 @@ function onToggle(event: Event): void {
   margin: 0;
   accent-color: var(--setup-accent, var(--brand));
   cursor: pointer;
-}
-.setup-select-all:hover {
-  color: var(--setup-accent-ink, var(--brand-ink));
 }
 .setup-select-all.is-disabled {
   opacity: 0.45;

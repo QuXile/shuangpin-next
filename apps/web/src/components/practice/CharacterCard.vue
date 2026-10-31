@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import type { AtomId, PracticeCap } from '@shuangpin/core'
 import KeyCap from './KeyCap.vue'
 import InputSlots from './InputSlots.vue'
@@ -19,9 +19,9 @@ const props = withDefaults(
     revealed?: boolean
     showInput?: boolean
     focusBadge?: string
-    /** 训练页「练习时隐藏」：这些原子的 KeyCap 映射隐藏（revealed 优先） */
+    /** 练习页「练习时隐藏」：这些原子的 KeyCap 映射隐藏（revealed 优先） */
     hiddenAtoms?: readonly AtomId[]
-    /** 训练页「练习时隐藏」：隐藏零声母映射 */
+    /** 练习页「练习时隐藏」：隐藏零声母映射 */
     hideZero?: boolean
   }>(),
   {
@@ -45,6 +45,41 @@ const hiddenSet = computed(() => new Set(props.hiddenAtoms))
 const initialPinyin = computed(() => props.pinyin.slice(0, props.initialText.length))
 const finalPinyin = computed(() => props.pinyin.slice(props.initialText.length))
 
+// 仅在状态真正发生变化时播放，避免列表重渲染 / 恢复进度时整屏动画。
+const justCompleted = ref(false)
+const justWrong = ref(false)
+let completeTimer: number | undefined
+let wrongTimer: number | undefined
+
+watch(
+  () => props.completed,
+  (done, wasDone) => {
+    if (!done || wasDone) return
+    justCompleted.value = true
+    if (completeTimer !== undefined) window.clearTimeout(completeTimer)
+    completeTimer = window.setTimeout(() => {
+      justCompleted.value = false
+    }, 460)
+  },
+)
+
+watch(
+  () => props.inputState,
+  (state, previous) => {
+    if (state !== 'wrong' || previous === 'wrong') return
+    justWrong.value = true
+    if (wrongTimer !== undefined) window.clearTimeout(wrongTimer)
+    wrongTimer = window.setTimeout(() => {
+      justWrong.value = false
+    }, 360)
+  },
+)
+
+onBeforeUnmount(() => {
+  if (completeTimer !== undefined) window.clearTimeout(completeTimer)
+  if (wrongTimer !== undefined) window.clearTimeout(wrongTimer)
+})
+
 function hidden(cap: PracticeCap): boolean {
   if (props.revealed) return false
   if (hiddenSet.value.has(cap.atomId)) return true
@@ -63,6 +98,8 @@ function hidden(cap: PracticeCap): boolean {
       'is-active': active,
       'is-completed': completed,
       'is-error': inputState === 'wrong',
+      'is-just-completed': justCompleted,
+      'is-just-wrong': justWrong,
     }"
   >
     <span class="char-glyph">{{ char }}</span>
@@ -99,7 +136,7 @@ function hidden(cap: PracticeCap): boolean {
   aspect-ratio: 340 / 430;
   padding: 8px 7px;
   border: 1.1px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--r-md);
   background: var(--surface);
   box-shadow: var(--shadow-sm);
   transition: border-color 130ms, box-shadow 130ms, background 130ms, transform 130ms;
@@ -109,7 +146,7 @@ function hidden(cap: PracticeCap): boolean {
 }
 .char-card.is-active {
   border-color: var(--brand);
-  box-shadow: 0 0 0 3px var(--brand-soft), var(--shadow-md);
+  box-shadow: 0 0 0 3px var(--brand-soft), var(--shadow-sm);
 }
 .char-card.is-completed {
   background: var(--surface-2);
@@ -117,6 +154,12 @@ function hidden(cap: PracticeCap): boolean {
 .char-card.is-error {
   border-color: color-mix(in srgb, var(--danger) 55%, var(--line));
   background: var(--danger-soft);
+}
+.char-card.is-just-wrong {
+  animation: ui-shake 340ms var(--ease);
+}
+.char-card.is-just-completed {
+  animation: ui-success-pulse 440ms var(--ease);
 }
 .char-glyph {
   font-size: 34cqw;
@@ -137,7 +180,7 @@ function hidden(cap: PracticeCap): boolean {
   white-space: nowrap;
 }
 .py-initial {
-  color: var(--brand-ink);
+  color: var(--ini);
 }
 .py-final {
   color: var(--fin);

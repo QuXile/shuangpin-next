@@ -8,6 +8,7 @@ import type { MetricTier } from '@shuangpin/core'
 import IntroLesson from '@/components/intro/IntroLesson.vue'
 import StateCard from '@/components/common/StateCard.vue'
 import KeyboardDock from '@/components/keyboard/KeyboardDock.vue'
+import DockReveal from '@/components/keyboard/DockReveal.vue'
 import PracticeStream from '@/components/practice/PracticeStream.vue'
 import SessionBar from '@/components/layout/SessionBar.vue'
 import TutorialStage from '@/components/practice/TutorialStage.vue'
@@ -55,8 +56,6 @@ const {
   continuePractice,
   handleBackspace,
   onIntroFinished,
-  onIntroRevealKeymap,
-  onIntroHideKeymap,
 } = practice
 const { goNext, handleKey, startFirstStage, showPressed } = practice
 
@@ -65,7 +64,11 @@ watch(
   () => layout.setStageLabel(isIntro.value ? '入门课' : stageTitleText.value),
   { immediate: true },
 )
-onBeforeUnmount(() => layout.clearStageLabel())
+watch(showDock, (available) => layout.setKeyboardAvailable(available), { immediate: true })
+onBeforeUnmount(() => {
+  layout.clearStageLabel()
+  layout.setKeyboardAvailable(false)
+})
 
 const accuracyBelowTarget = computed(() => hasStarted.value && accuracyTier.value?.min === null)
 const speedBelowTarget = computed(() => hasStarted.value && speedTier.value?.min === null)
@@ -99,7 +102,7 @@ function onDockBackspace(): void {
 </script>
 
 <template>
-  <div class="practice-page" :class="{ 'has-dock': showDock, 'is-tutorial': stage === 'tutorial' && !isIntro }">
+  <div class="practice-page" :class="{ 'is-tutorial': stage === 'tutorial' && !isIntro }">
     <StateCard v-if="status === 'loading'" loading message="正在准备课程…" />
     <StateCard
       v-else-if="status === 'error'"
@@ -121,9 +124,6 @@ function onDockBackspace(): void {
           :words="introWords"
           @finished="onIntroFinished"
           @next="goNext"
-          @exit="onExit"
-          @reveal-keymap="onIntroRevealKeymap"
-          @hide-keymap="onIntroHideKeymap"
           @key-pressed="showPressed"
         />
         <StateCard v-else loading message="正在准备入门课…" />
@@ -198,6 +198,7 @@ function onDockBackspace(): void {
 
         <PracticeStream
           v-if="session"
+          :key="stage"
           :session="session"
           :live-message="liveMessage"
           :mode="stage === 'single' ? 'grid' : 'list'"
@@ -214,16 +215,17 @@ function onDockBackspace(): void {
       </div>
     </template>
 
-    <KeyboardDock
-      v-if="showDock"
-      :rows="keyMapRows"
-      :highlight-atom-ids="stage === 'tutorial' || stage === 'single' ? highlightAtomIds : []"
-      :special-initials="specialInitials"
-      :pressed="pressedKeys"
-      :conceal="conceal"
-      @key="onKeymapKey"
-      @backspace="onDockBackspace"
-    />
+    <DockReveal :open="showDock && layout.keyboardVisible">
+      <KeyboardDock
+        :rows="keyMapRows"
+        :highlight-atom-ids="stage === 'tutorial' || stage === 'single' ? highlightAtomIds : []"
+        :special-initials="specialInitials"
+        :pressed="pressedKeys"
+        :conceal="conceal"
+        @key="onKeymapKey"
+        @backspace="onDockBackspace"
+      />
+    </DockReveal>
   </div>
 </template>
 
@@ -239,17 +241,19 @@ function onDockBackspace(): void {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  scrollbar-gutter: stable;
   overscroll-behavior: contain;
-  padding: 16px 20px 28px;
+  padding: 16px var(--page-pad-x) 28px;
 }
-.intro-scroll { padding: 8px 20px 20px; }
+.intro-scroll { padding: 16px var(--page-pad-x) 24px; }
 .practice-stage {
   flex: 1;
   min-height: 0;
   width: 100%;
-  max-width: 1080px;
+  /* 媒体查询外保持内容区 1080（与教学页 / 入门课一致），padding 走 28/16 节奏 */
+  max-width: calc(1080px + 2 * var(--page-pad-x));
   margin: 0 auto;
-  padding: 16px 20px 0;
+  padding: 16px var(--page-pad-x) 0;
   display: flex;
   flex-direction: column;
 }
@@ -261,16 +265,16 @@ function onDockBackspace(): void {
 @media (min-width: 1200px) {
   .practice-inner { width: 1080px; }
 }
-.practice-page.is-tutorial .practice-scroll { overflow: hidden; }
+.practice-page.is-tutorial .practice-scroll { overflow: hidden; padding-bottom: 16px; }
 .practice-page.is-tutorial .practice-inner {
   height: 100%;
   display: flex;
   flex-direction: column;
 }
 @media (max-width: 640px) {
-  .practice-scroll { padding: 10px 12px 20px; }
-  .intro-scroll { padding: 10px 12px 18px; }
-  .practice-stage { padding: 8px 10px 0; }
+  .practice-scroll { padding: 12px var(--page-pad-x) 20px; }
+  .intro-scroll { padding: 12px var(--page-pad-x) 18px; }
+  .practice-stage { padding: 10px var(--page-pad-x) 0; }
   /* 教学页在移动端改为自然滚动，避免固定高度把示例/评分裁切 */
   .practice-page.is-tutorial .practice-scroll {
     overflow-y: auto;

@@ -1,5 +1,5 @@
 /**
- * 训练场的本地视图辅助：方案知识点选项、条目 → PracticeWord、文章行/跳过统计。
+ * 练习场的本地视图辅助：方案知识点选项、条目 → PracticeWord、文章行/跳过统计。
  * 过滤与解析规则本身在 core（filterTrainingEntries / parseArticleText）。
  */
 import {
@@ -17,7 +17,7 @@ export interface TrainingAtomOptions {
   zeroFinals: string[]
 }
 
-/** 训练范围里与全拼一致的公共键位（用于「全拼沿用」子包）。 */
+/** 练习范围里与全拼一致的公共键位（用于「全拼沿用」子包）。 */
 export interface CommonAtomEntry {
   kind: 'initial' | 'final' | 'zero'
   value: string

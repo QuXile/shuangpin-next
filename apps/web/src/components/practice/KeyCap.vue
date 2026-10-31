@@ -55,7 +55,7 @@ const props = withDefaults(
   color: var(--cap-ini-ink);
   box-shadow: 0 3px 0 var(--cap-ini-edge);
   transition: transform 90ms var(--ease), box-shadow 90ms var(--ease),
-    background 120ms, border-color 120ms, color 120ms;
+    background 120ms, border-color 120ms, color 120ms, opacity 120ms;
   user-select: none;
 }
 .keycap--final {
@@ -70,6 +70,10 @@ const props = withDefaults(
 .keycap.is-focus {
   outline: 2px solid var(--brand);
   outline-offset: 1px;
+  box-shadow: 0 3px 0 var(--cap-ini-edge), 0 0 0 3px var(--brand-soft);
+}
+.keycap--final.is-focus {
+  box-shadow: 0 3px 0 var(--cap-fin-edge), 0 0 0 3px var(--brand-soft);
 }
 .keycap.is-hidden {
   border-color: var(--cap-hidden-border);
@@ -79,7 +83,7 @@ const props = withDefaults(
   border-style: dashed;
 }
 .keycap.is-completed {
-  opacity: 0.72;
+  opacity: 0.78;
 }
 .keycap-badge {
   position: absolute;
@@ -96,11 +100,11 @@ const props = withDefaults(
   font-weight: 800;
   color: var(--on-accent);
   background: var(--brand);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.18);
+  box-shadow: var(--badge-shadow);
 }
 .keycap-badge.is-contained {
   color: var(--ink-3);
   background: var(--surface-3);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--badge-shadow-soft);
 }
 </style>

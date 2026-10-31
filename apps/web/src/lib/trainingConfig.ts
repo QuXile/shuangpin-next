@@ -34,7 +34,7 @@ function strings(value: unknown): string[] {
 export function emptyTrainingConfig(): TrainingConfigSnapshot {
   return {
     tab: 'drill',
-    drillMode: 'char',
+    drillMode: 'word',
     selectedInitials: [],
     selectedFinals: [],
     selectedZeroFinals: [],
@@ -59,7 +59,7 @@ export function readTrainingConfig(
     if (!value || typeof value !== 'object') return null
     return {
       tab: value.tab === 'article' ? 'article' : 'drill',
-      drillMode: value.drillMode === 'word' ? 'word' : 'char',
+      drillMode: value.drillMode === 'char' ? 'char' : 'word',
       selectedInitials: strings(value.selectedInitials),
       selectedFinals: strings(value.selectedFinals),
       selectedZeroFinals: strings(value.selectedZeroFinals),

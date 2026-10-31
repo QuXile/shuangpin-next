@@ -94,7 +94,10 @@ export interface EndPromptRating {
 }
 
 export interface EndPromptView {
+  /** 是否已经可以进入下一阶段/完成本课（含此前已通过的阶段） */
   met: boolean
+  /** 本次尝试是否达到当前阶段的评分门槛（决定总结卡颜色） */
+  passedAttempt: boolean
   title: string
   enterLabel: string | null
   stats: {
@@ -163,7 +166,6 @@ export function usePractice() {
   })
 
   const pressedKeys = ref<string[]>([])
-  const introKeymapVisible = ref(false)
   const introRecorded = ref(false)
   const liveCpm = useLiveCpm(() => session.value)
 
@@ -178,18 +180,12 @@ export function usePractice() {
     return state ? sessionMetrics(state, performance.now()) : null
   })
 
-  /** 用户是否已经产生过输入；未输入时顶栏显示占位符而不是 0。 */
+  /** 完成第一个字后才展示正确率/速度，避免只按下一个键时先出现 0%。 */
   const hasStarted = computed(() => {
     const state = session.value
     if (!state) return false
     const stats = state.stats
-    return (
-      state.phase === 'finished' ||
-      stats.keystrokes > 0 ||
-      stats.errors > 0 ||
-      stats.correctChars > 0 ||
-      stats.wordsCompleted > 0
-    )
+    return state.phase === 'finished' || stats.correctChars > 0
   })
 
   const gate = computed<StageGate | null>(() => {
@@ -202,12 +198,10 @@ export function usePractice() {
   const stageCleared = computed(() => Boolean(currentRuntime.value?.cleared || alreadyPassed.value))
   const gateReady = computed(() => Boolean(gate.value?.met || stageCleared.value))
 
-  /** 进度「已练 X/Y 词」：Y=阶段目标词数，X 封顶为 Y；无目标回退「已练 X 词」 */
+  /** 进度始终显示已完成数（未开始为 0）；正确率/速度仍由 hasStarted 决定是否显示。 */
   const progressLabel = computed(() => {
-    const value = metrics.value
-    if (!value) return '已练 -- 词'
     const target = gate.value?.minWords ?? 0
-    const completed = hasStarted.value ? Math.min(value.completedWords, target) : '--'
+    const completed = metrics.value ? Math.min(metrics.value.completedWords, target) : 0
     if (target <= 0) return `已练 ${completed} 词`
     return `已练 ${completed}/${target} 词`
   })
@@ -225,7 +219,7 @@ export function usePractice() {
     return tiers ? tierOf(tiers, liveCpm.cpm.value) : null
   })
 
-  /** 有限目标完成后的总结卡：统计、错误分布、评分规则；最后一场考核额外显示本次星级 */
+  /** 有限目标完成后的总结卡：统计、错误分布、评分标准；最后一场考核额外显示本次星级 */
   const endPrompt = computed<EndPromptView | null>(() => {
     const runtime = currentRuntime.value
     const value = metrics.value
@@ -235,6 +229,7 @@ export function usePractice() {
 
     const words = value.completedWords
     const met = gateReady.value
+    const passedAttempt = Boolean(gate.value?.met)
     const rawStats = runtime.session.stats
 
     // 错误键位统计：应敲的键 vs 实际按下的键
@@ -274,12 +269,16 @@ export function usePractice() {
       errors: rawStats.errors,
       durationSec,
     }
+    const title = passedAttempt
+      ? `已练满 ${words} 词。`
+      : `已练满 ${words} 词，还没达标。`
 
     if (met) {
       const enterLabel = isLastStage.value ? '完成本课' : '进入下一阶段'
       return {
         met,
-        title: `已练满 ${words} 词。`,
+        passedAttempt,
+        title,
         enterLabel,
         stats,
         keyErrors,
@@ -290,7 +289,8 @@ export function usePractice() {
     // 未达标原因已在顶栏以大号文字展示，这里不重复；按钮本身已说明操作方式
     return {
       met,
-      title: `已练满 ${words} 词，还没达标。`,
+      passedAttempt,
+      title,
       enterLabel: null,
       stats,
       keyErrors,
@@ -330,9 +330,7 @@ export function usePractice() {
   })
   const specialInitials = computed(() => engine.value?.diff().learnInitials ?? [])
   const keyMapRows = computed(() => engine.value?.keyMap() ?? [])
-  const showDock = computed(() =>
-    isIntro.value ? introKeymapVisible.value : status.value === 'ready',
-  )
+  const showDock = computed(() => status.value === 'ready')
   const nextLesson = computed(() => (lesson.value ? course.nextLesson(lesson.value.id) : undefined))
 
   function showPressed(key: string): void {
@@ -609,14 +607,6 @@ export function usePractice() {
     course.recordResult(lesson.value.id, result, 1)
   }
 
-  function onIntroRevealKeymap(): void {
-    introKeymapVisible.value = true
-  }
-
-  function onIntroHideKeymap(): void {
-    introKeymapVisible.value = false
-  }
-
   // ── 键盘快捷键（唯一入口） ─────────────────────────────────
 
   const bindings = computed<KeyBinding[]>(() => {
@@ -746,7 +736,6 @@ export function usePractice() {
     specialInitials,
     pressedKeys,
     showDock,
-    introKeymapVisible,
     primary,
     // 动作
     startFirstStage,
@@ -759,7 +748,5 @@ export function usePractice() {
     handleKey,
     handleBackspace,
     onIntroFinished,
-    onIntroRevealKeymap,
-    onIntroHideKeymap,
   }
 }

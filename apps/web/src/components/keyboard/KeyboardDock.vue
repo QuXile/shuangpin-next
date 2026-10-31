@@ -48,9 +48,9 @@ const emit = defineEmits<{
 .keymap-dock {
   flex: none;
   width: 100%;
-  padding: 10px 20px 14px;
-  border-top: 1px solid var(--line);
-  background: color-mix(in srgb, var(--bg) 94%, var(--surface));
+  padding: 12px var(--page-pad-x) 14px;
+  border-top: 1px solid var(--line-faint);
+  background: color-mix(in srgb, var(--bg) 96%, var(--surface));
 }
 .keymap-dock :deep(.keyboard-map) {
   max-width: 900px;
@@ -59,7 +59,7 @@ const emit = defineEmits<{
 }
 @media (max-width: 640px) {
   .keymap-dock {
-    padding: 6px 8px calc(8px + env(safe-area-inset-bottom));
+    padding: 8px var(--page-pad-x) calc(10px + env(safe-area-inset-bottom));
   }
   .keymap-dock :deep(.kbd-legend) {
     display: none;

@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import type { FocusAtomView } from '@/lib/lessonView'
 
-withDefaults(defineProps<{ items: readonly FocusAtomView[]; compact?: boolean }>(), { compact: false })
+defineProps<{ items: readonly FocusAtomView[] }>()
 </script>
 
 <template>
-  <div class="focus-tag-list" :class="{ 'is-compact': compact }">
+  <div class="focus-tag-list">
     <span
       v-for="item in items"
       :key="item.atomId"
@@ -41,7 +41,7 @@ withDefaults(defineProps<{ items: readonly FocusAtomView[]; compact?: boolean }>
   gap: 6px;
   min-width: 0;
   padding: 5px 9px;
-  border-radius: var(--r-md);
+  border-radius: var(--r-control);
   border: 1px solid var(--line);
   background: var(--surface);
   font-size: 11px;
@@ -93,25 +93,5 @@ withDefaults(defineProps<{ items: readonly FocusAtomView[]; compact?: boolean }>
   font-size: 10px;
   font-weight: 700;
   line-height: 1;
-}
-.focus-tag-list.is-compact {
-  gap: 5px;
-  padding: 0;
-}
-.focus-tag-list.is-compact .focus-tag {
-  padding: 3px 7px;
-  font-size: 10px;
-  gap: 5px;
-}
-.focus-tag-list.is-compact .focus-badge {
-  min-width: 16px;
-  height: 16px;
-  font-size: 8px;
-}
-.focus-tag-list.is-compact .focus-keys kbd {
-  min-width: 15px;
-  height: 15px;
-  padding: 0 3px;
-  font-size: 9px;
 }
 </style>

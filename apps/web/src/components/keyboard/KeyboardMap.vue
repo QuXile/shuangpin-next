@@ -17,11 +17,7 @@ const props = withDefaults(
     /** 需要显示在键位图上的「改造声母」（由 engine.diff().learnInitials 传入） */
     specialInitials?: readonly string[]
     legend?: boolean
-    /** 退格键是否可用（tutorial/入门课显示但不可用） */
-    backspaceDisabled?: boolean
-    /** 是否在第三行末尾显示退格键（练习阶段显示，tutorial/intro 不显示） */
-    showBackspace?: boolean
-    /** 训练页「练习时隐藏」：不渲染这些原子的声母/韵母映射标签 */
+    /** 练习页「练习时隐藏」：不渲染这些原子的声母/韵母映射标签 */
     hiddenAtomIds?: readonly AtomId[]
   }>(),
   {
@@ -30,9 +26,7 @@ const props = withDefaults(
     conceal: false,
     specialInitials: () => [],
     legend: true,
-    showBackspace: false,
     hiddenAtomIds: () => [],
-    backspaceDisabled: false,
   },
 )
 
@@ -139,6 +133,7 @@ const keyViews = computed<KeyView[][]>(() =>
           >{{ part.text }}</span>
         </span>
       </button>
+      <!-- 退格键始终显示（教学页 / 练习 / 练习场共用同一套键位图） -->
       <button
         v-if="rowIndex === 2"
         type="button"
@@ -160,7 +155,7 @@ const keyViews = computed<KeyView[][]>(() =>
   width: 100%;
   max-width: 100%;
   margin: 0 auto;
-  padding: 12px 16px 10px;
+  padding: 14px 16px 12px;
   border-radius: var(--r-lg);
   background: var(--surface);
   border: 1px solid var(--line);
@@ -183,21 +178,26 @@ const keyViews = computed<KeyView[][]>(() =>
   min-width: 0;
   height: 60px;
   padding: 0;
-  border-radius: 6px;
+  border-radius: 8px;
   background: var(--surface-2);
-  border: 1.5px solid var(--line-strong);
+  border: 1px solid var(--line-strong);
   color: var(--ink);
   text-align: left;
   transition: background 100ms, border-color 100ms, transform 70ms var(--ease), box-shadow 70ms;
   user-select: none;
   overflow: hidden;
 }
+/* conceal 只改默认外观；hover/pressed/focus 统一按后面的状态层叠，不吞掉交互反馈 */
+.is-concealed .kbd-key {
+  background: var(--surface-2);
+  border-color: var(--line);
+}
 .kbd-key:hover {
   background: var(--surface);
-  border-color: var(--brand);
+  border-color: var(--brand-line);
 }
 .kbd-key.is-pressed {
-  transform: translateY(1.5px);
+  transform: translateY(1.5px) scale(0.985);
   background: var(--pressed-bg);
   border-color: var(--pressed-line);
   box-shadow: 0 0 0 3px var(--pressed-ring);
@@ -227,7 +227,7 @@ const keyViews = computed<KeyView[][]>(() =>
   font-size: 16px;
   font-weight: 600;
   line-height: 1;
-  color: var(--ink-2);
+  color: var(--ink-3);
 }
 .key-backspace-label {
   font-size: 9.5px;
@@ -300,9 +300,9 @@ const keyViews = computed<KeyView[][]>(() =>
   display: flex;
   flex-wrap: wrap;
   gap: 5px 16px;
-  margin: 0 0 9px;
+  margin: 0 0 10px;
   padding: 0 2px;
-  font-size: 10.5px;
+  font-size: var(--text-xs);
   color: var(--ink-3);
 }
 .legend-item {
@@ -323,10 +323,6 @@ const keyViews = computed<KeyView[][]>(() =>
 .legend-swatch.is-final {
   background: var(--focus-final);
   border-color: var(--focus-final);
-}
-.is-concealed .kbd-key {
-  background: var(--surface-2);
-  border-color: var(--line);
 }
 .is-concealed .key-letter {
   color: var(--ink-3);
@@ -356,7 +352,7 @@ const keyViews = computed<KeyView[][]>(() =>
   }
   .kbd-key {
     height: 46px;
-    border-radius: 4px;
+    border-radius: 8px;
   }
   .key-letter {
     top: 4px;

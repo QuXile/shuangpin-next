@@ -30,9 +30,6 @@ const props = defineProps<{
 const emit = defineEmits<{
   finished: []
   next: []
-  exit: []
-  'reveal-keymap': []
-  'hide-keymap': []
   'key-pressed': [key: string]
 }>()
 
@@ -199,7 +196,6 @@ function advance(): void {
   }
   if (step.value === 'principle') {
     step.value = 'keymap'
-    emit('reveal-keymap')
     return
   }
   if (step.value === 'keymap') {
@@ -219,12 +215,10 @@ function previous(): void {
   }
   if (step.value === 'keymap') {
     step.value = 'principle'
-    emit('hide-keymap')
     return
   }
   if (step.value === 'overlap') {
     step.value = 'keymap'
-    emit('reveal-keymap')
     return
   }
   if (step.value === 'try') {
@@ -258,7 +252,7 @@ const bindings = computed<KeyBinding[]>(() => {
     },
     { key: 'ArrowLeft', alt: true, run: () => previous() },
   ]
-  // 从第 3 页开始键位图常驻：即使还没进入试打，也始终显示按键反馈
+  // 键位图从第一页起常驻；非试打步骤也显示按键按下反馈
   list.push(
     {
       letter: true,
@@ -301,10 +295,6 @@ defineExpose({ pressKey: handleKey, backspace: handleBackspace })
       <span class="session-item">第 {{ String(stepIndex).padStart(2, '0') }} / {{ String(stepOrder.length).padStart(2, '0') }} 页</span>
 
       <template #right>
-        <button class="session-btn" type="button" @click="emit('exit')">
-          返回路线
-          <kbd>Esc</kbd>
-        </button>
         <button
           class="btn btn--primary session-primary"
           type="button"
@@ -318,7 +308,7 @@ defineExpose({ pressKey: handleKey, backspace: handleBackspace })
     </SessionBar>
 
     <section v-if="step === 'concept'" class="intro-card">
-      <div class="intro-kicker">01 · 全拼</div>
+      <div class="eyebrow intro-kicker">01 · 全拼</div>
       <h1>全拼要按很多下</h1>
       <div class="intro-grid">
         <div class="intro-visual">
@@ -337,7 +327,7 @@ defineExpose({ pressKey: handleKey, backspace: handleBackspace })
     </section>
 
     <section v-else-if="step === 'principle'" class="intro-card">
-      <div class="intro-kicker">02 · 双拼原理</div>
+      <div class="eyebrow intro-kicker">02 · 双拼原理</div>
       <h1>声母 + 韵母，各按一下</h1>
       <div class="intro-grid">
         <div class="intro-visual">
@@ -363,7 +353,7 @@ defineExpose({ pressKey: handleKey, backspace: handleBackspace })
     </section>
 
     <section v-else-if="step === 'keymap'" class="intro-card">
-      <div class="intro-kicker">03 · {{ scheme.name }}</div>
+      <div class="eyebrow intro-kicker">03 · {{ scheme.name }}</div>
       <h1>记住这两张映射</h1>
       <div class="intro-grid">
         <div class="mapping-cards">
@@ -371,15 +361,15 @@ defineExpose({ pressKey: handleKey, backspace: handleBackspace })
           <div class="mapping-card"><span class="mapping-atom is-final">uang</span><span class="mapping-arrow">→</span><span class="mapping-key">{{ uangKey }}</span></div>
         </div>
         <div class="intro-prose">
-          <p>现在看页面底部的键位图。蓝色是改造声母（{{ learnInitialsText || '本方案无改造声母' }}），橘色是韵母；本课正在学的键会用白字 + 底色突出。</p>
-          <p>以后每节课它都会固定在页面底部。记不住时抬头看一眼，按下的键会实时亮起；不需要背完所有键再开始。</p>
+          <p>页面底部的键位图如果没看到，按 Ctrl+K 唤出；之后随时可以用同一快捷键显示或隐藏。蓝色是改造声母（{{ learnInitialsText || '本方案无改造声母' }}），橘色是韵母；当前正在学的键会用白字 + 底色突出。</p>
+          <p>其他课程也一样：记不住时低头看一眼，按下的键会实时亮起，不需要背完所有键再开始。</p>
           <p>先只记一个例子：zh 在 {{ zhKey }}，uang 在 {{ uangKey }}，所以「壮」就是 {{ zhKey }} + {{ uangKey }}。</p>
         </div>
       </div>
     </section>
 
     <section v-else-if="step === 'overlap'" class="intro-card">
-      <div class="intro-kicker">04 · 全拼沿用</div>
+      <div class="eyebrow intro-kicker">04 · 全拼沿用</div>
       <h1>双拼没有推翻你会的全拼</h1>
       <div class="intro-grid">
         <div class="overlap-board">
@@ -409,13 +399,13 @@ defineExpose({ pressKey: handleKey, backspace: handleBackspace })
           <p v-if="freeZeroText">零声母 {{ freeZeroText }} 仍按全拼拼写输入。</p>
           <p>真正需要重新记的，是本方案的改造声母（{{ learnInitialsText }}）以及复韵母和鼻韵母被压缩到单键后的位置。</p>
           <p>所以这一课不是重新学拼音，而是一次全拼复习：键位图已经出现，先确认哪些键和全拼完全一样，再只看真正需要重记的部分。</p>
-          <p class="overlap-foot">你已有的全拼能力是底座；双拼只是在底座上换几条线路。</p>
+          <p>你已有的全拼能力是底座；双拼只是在底座上换几条线路。</p>
         </div>
       </div>
     </section>
 
     <section v-else class="intro-card">
-      <div class="intro-kicker">05 · 试一下</div>
+      <div class="eyebrow intro-kicker">05 · 试一下</div>
       <h1>看键位图，打出「{{ trialWord?.text ?? '双拼' }}」</h1>
       <div class="intro-grid intro-grid--try">
         <div v-if="trialWord" class="try-cards">
@@ -451,81 +441,93 @@ defineExpose({ pressKey: handleKey, backspace: handleBackspace })
 <style scoped>
 .intro-page {
   width: 100%;
-  max-width: 960px;
+  max-width: 1080px;
+  height: 100%;
+  min-height: 0;
   margin: 0 auto;
-  padding-top: 8px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
 }
+/* 桌面：卡片撑满可用高度，内容从顶部开始（键位图从第一页起就固定在底部） */
 .intro-card {
+  flex: 1;
   width: 100%;
-  padding: 24px 26px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: 28px 40px;
   border-radius: var(--r-xl);
   border: 1px solid var(--line);
   background: var(--surface);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
+  animation: ui-fade-up 260ms var(--ease);
 }
 .intro-kicker {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  color: var(--brand-ink);
-  text-transform: uppercase;
+  margin: 0;
 }
 .intro-card h1 {
-  margin: 8px 0 18px;
-  font-size: clamp(24px, 2.6vw, 32px);
-  letter-spacing: -0.025em;
+  margin: 8px 0 22px;
+  color: var(--ink);
+  font-size: clamp(28px, 2.4vw, 36px);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.2;
 }
 .intro-grid {
   display: grid;
-  grid-template-columns: minmax(280px, 0.9fr) minmax(0, 1.1fr);
-  gap: 28px;
+  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+  gap: clamp(24px, 3.4vw, 48px);
   align-items: center;
 }
 .intro-visual {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 18px;
+  gap: 12px;
+  padding: 24px 20px;
   border-radius: var(--r-lg);
+  border: 1px solid var(--line-faint);
   background: var(--surface-2);
 }
 .visual-word {
-  font-size: 76px;
+  color: var(--ink);
+  font-size: clamp(64px, 6.6vw, 88px);
   font-weight: 800;
   line-height: 1.05;
+  letter-spacing: -0.03em;
 }
 .full-keycaps {
   display: flex;
-  gap: 5px;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
 }
 .visual-key {
-  width: 36px;
-  height: 40px;
+  width: 38px;
+  height: 42px;
   display: grid;
   place-items: center;
-  border-radius: 7px;
+  border-radius: var(--r-control);
   border: 1px solid var(--line-strong);
+  border-bottom-width: 3px;
   background: var(--surface);
+  color: var(--ink-2);
   font-family: var(--font-mono);
   font-size: 16px;
   font-weight: 700;
-  color: var(--ink-2);
+  box-shadow: var(--shadow-sm);
 }
 .visual-caption {
-  font-size: 12px;
   color: var(--ink-3);
+  font-size: var(--text-sm);
 }
 .split-line {
   display: flex;
   gap: 10px;
 }
 .split-part {
-  padding: 6px 14px;
-  border-radius: 8px;
+  padding: 7px 15px;
+  border-radius: var(--r-control);
   font-family: var(--font-mono);
   font-size: 24px;
   font-weight: 700;
@@ -544,12 +546,12 @@ defineExpose({ pressKey: handleKey, backspace: handleBackspace })
   display: flex;
   align-items: center;
   gap: 9px;
-  font-size: 12px;
   color: var(--ink-3);
+  font-size: var(--text-sm);
 }
 .two-key {
-  padding: 5px 10px;
-  border-radius: 7px;
+  padding: 5px 11px;
+  border-radius: var(--r-control);
   border: 1px dashed var(--line-strong);
 }
 .two-key-row strong {
@@ -565,15 +567,15 @@ defineExpose({ pressKey: handleKey, backspace: handleBackspace })
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 16px;
+  gap: 14px;
+  padding: 18px;
   border-radius: var(--r-lg);
-  background: var(--surface-2);
   border: 1px solid var(--line-faint);
+  background: var(--surface-2);
 }
 .mapping-atom {
-  padding: 4px 9px;
-  border-radius: 6px;
+  padding: 5px 10px;
+  border-radius: var(--r-control);
   font-family: var(--font-mono);
   font-size: 18px;
   font-weight: 700;
@@ -582,16 +584,18 @@ defineExpose({ pressKey: handleKey, backspace: handleBackspace })
   color: var(--ink-4);
 }
 .mapping-key {
-  min-width: 38px;
-  height: 38px;
+  min-width: 42px;
+  height: 42px;
   display: grid;
   place-items: center;
-  border-radius: 7px;
+  border-radius: var(--r-control);
   border: 1px solid var(--line-strong);
+  border-bottom-width: 3px;
   background: var(--surface);
   font-family: var(--font-mono);
   font-size: 18px;
   font-weight: 800;
+  box-shadow: var(--shadow-sm);
 }
 .intro-prose {
   color: var(--ink-2);
@@ -605,7 +609,7 @@ defineExpose({ pressKey: handleKey, backspace: handleBackspace })
   display: flex;
   flex-direction: column;
   gap: 14px;
-  padding: 18px;
+  padding: 20px;
   border-radius: var(--r-lg);
   border: 1px solid var(--line-faint);
   background: var(--surface-2);
@@ -624,7 +628,7 @@ defineExpose({ pressKey: handleKey, backspace: handleBackspace })
   border-radius: var(--r-pill);
   background: var(--brand-soft);
   color: var(--brand-ink);
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-weight: 700;
   letter-spacing: 0.02em;
 }
@@ -634,61 +638,83 @@ defineExpose({ pressKey: handleKey, backspace: handleBackspace })
   gap: 5px;
 }
 .overlap-keys span {
-  min-width: 29px;
-  height: 31px;
+  min-width: 30px;
+  height: 32px;
   display: grid;
   place-items: center;
-  border-radius: 6px;
+  border-radius: var(--r-control);
   border: 1px solid var(--line-strong);
+  border-bottom-width: 2px;
   background: var(--surface);
+  color: var(--ink-2);
   font-family: var(--font-mono);
   font-size: 14px;
   font-weight: 700;
-  color: var(--ink-2);
 }
 .overlap-note {
   padding-top: 10px;
   border-top: 1px dashed var(--line-faint);
-  font-size: 11px;
   color: var(--ink-3);
-}
-.overlap-foot {
-  color: var(--brand-ink);
-  font-weight: 600;
+  font-size: var(--text-sm);
 }
 .intro-grid--try {
-  grid-template-columns: minmax(260px, 0.8fr) minmax(0, 1.2fr);
+  grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
 }
 .try-cards {
   display: flex;
   justify-content: center;
-  gap: 10px;
+  gap: 12px;
 }
 .try-cards :deep(.char-card) {
   width: 140px;
 }
 .try-tip {
   color: var(--ink-3);
-  font-size: 11px;
-  line-height: 1.6;
+  font-size: var(--text-sm);
+  line-height: 1.7;
 }
 .try-bad {
   color: var(--danger);
+  font-weight: 650;
 }
 .try-ok {
   color: var(--success-strong);
-  font-weight: 600;
+  font-weight: 650;
+}
+@media (max-width: 900px) {
+  .intro-card {
+    padding: 26px 28px;
+  }
+  .intro-grid {
+    gap: 22px;
+  }
 }
 @media (max-width: 760px) {
+  /* 移动端恢复自然高度，交给页面滚动 */
+  .intro-page {
+    height: auto;
+    min-height: 0;
+  }
+  .intro-card {
+    flex: none;
+    padding: 20px 16px;
+  }
+  .intro-card h1 {
+    margin: 6px 0 16px;
+    font-size: 26px;
+  }
   .intro-grid,
   .intro-grid--try {
     grid-template-columns: 1fr;
     gap: 16px;
   }
-  .intro-card {
-    padding: 18px 16px;
+  .intro-visual {
+    padding: 18px 14px;
   }
-    .try-cards :deep(.char-card) {
+  .visual-word {
+    font-size: 64px;
+  }
+  .try-cards :deep(.char-card) {
     width: 120px;
   }
 }

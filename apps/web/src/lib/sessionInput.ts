@@ -1,6 +1,6 @@
 /**
  * 会话输入的共享逻辑：错误锁定 / 第 3 次错误揭示 / 退格撤销 / 空格或 Enter 清空。
- * 课程练习（usePractice）与训练场（useTrainingSession）共用，避免复制判题交互。
+ * 课程练习（usePractice）与练习场（useTrainingSession）共用，避免复制判题交互。
  */
 import {
   applyKey,

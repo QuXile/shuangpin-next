@@ -7,17 +7,15 @@ const emit = defineEmits<{ start: [lessonId: string] }>()
 </script>
 
 <template>
-  <section class="chapter">
+  <section class="chapter-group">
     <header class="chapter-head">
-      <div class="chapter-title">
+      <div class="chapter-title-wrap">
         <span class="chapter-num">{{ String(chapter.order).padStart(2, '0') }}</span>
-        <div>
-          <h2>{{ chapter.title }}</h2>
-        </div>
+        <span class="chapter-name">{{ chapter.title }}</span>
       </div>
       <div class="chapter-progress">
         <span>{{ chapter.lessons.filter((lesson) => lesson.state === 'passed').length }}/{{ chapter.lessons.length }}</span>
-        <div class="mini-bar">
+        <div class="progress-bar-mini">
           <i :style="{ width: (chapter.lessons.filter((lesson) => lesson.state === 'passed').length / Math.max(chapter.lessons.length, 1)) * 100 + '%' }" />
         </div>
       </div>
@@ -36,27 +34,19 @@ const emit = defineEmits<{ start: [lessonId: string] }>()
 </template>
 
 <style scoped>
-.chapter {
-  background: transparent;
-  border: 0;
-  border-bottom: 1px solid var(--line-faint);
-  border-radius: 0;
-  box-shadow: none;
-  overflow: hidden;
-}
-.chapter:last-child {
-  border-bottom: 0;
+.chapter-group {
+  margin: 0;
 }
 .chapter-head {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 16px;
-  padding: 15px 20px;
-  background: color-mix(in srgb, var(--surface-2) 65%, transparent);
-  border-bottom: 1px solid var(--line-faint);
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 26px 14px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line);
 }
-.chapter-title {
+.chapter-title-wrap {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -64,38 +54,45 @@ const emit = defineEmits<{ start: [lessonId: string] }>()
 }
 .chapter-num {
   flex: none;
-  width: 38px;
-  height: 38px;
+  width: 32px;
+  height: 32px;
   display: grid;
   place-items: center;
-  border-radius: var(--r-md);
-  background: var(--surface-2);
-  border: 1px solid var(--line);
-  font-family: var(--font-mono);
-  font-size: var(--text-md);
-  font-weight: 700;
-  color: var(--ink-3);
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 850;
+  box-shadow: var(--shadow-sm);
 }
-.chapter-title h2 {
-  font-size: var(--text-lg);
+.chapter-name {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 17px;
+  font-weight: 850;
+  letter-spacing: -0.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .chapter-progress {
   flex: none;
   display: flex;
   align-items: center;
-  gap: 9px;
-  font-size: var(--text-xs);
+  gap: 12px;
   color: var(--ink-3);
+  font-size: 12px;
+  font-weight: 750;
   font-variant-numeric: tabular-nums;
 }
-.mini-bar {
-  width: 86px;
+.progress-bar-mini {
+  width: 100px;
   height: 6px;
+  overflow: hidden;
   border-radius: var(--r-pill);
   background: var(--surface-3);
-  overflow: hidden;
 }
-.mini-bar i {
+.progress-bar-mini i {
   display: block;
   height: 100%;
   border-radius: inherit;
@@ -105,17 +102,40 @@ const emit = defineEmits<{ start: [lessonId: string] }>()
 .lesson-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  padding: 14px;
-  align-items: start;
+  gap: 14px;
+  padding: 16px 26px 24px;
 }
-@media (max-width: 680px) {
+@media (max-width: 1050px) {
+  .lesson-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 640px) {
   .chapter-head {
-    padding: 14px;
+    padding: 16px 16px 12px;
+  }
+  .chapter-title-wrap {
+    gap: 8px;
+  }
+  .chapter-name {
+    font-size: 15px;
+  }
+  .chapter-num {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+  .chapter-progress {
+    gap: 8px;
+    font-size: 11px;
+  }
+  .progress-bar-mini {
+    width: 60px;
   }
   .lesson-grid {
     grid-template-columns: 1fr;
-    padding: 12px;
+    padding: 12px 16px 16px;
+    gap: 10px;
   }
 }
 </style>

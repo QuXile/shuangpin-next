@@ -1,5 +1,5 @@
 /**
- * 训练场会话：core SessionState + 共享输入跟踪（错误锁定/揭示/退格/清空）+ 实时速度。
+ * 练习场会话：core SessionState + 共享输入跟踪（错误锁定/揭示/退格/清空）+ 实时速度。
  * 与课程练习共用 lib/sessionInput，不复制判题交互；专注模式始终提供延伸词批次（无尽练习）。
  */
 import { computed, shallowRef } from 'vue'
@@ -52,17 +52,12 @@ export function useTrainingSession() {
   })
   const completedWords = computed(() => metrics.value?.completedWords ?? 0)
   const accuracy = computed(() => metrics.value?.accuracy ?? 0)
+  /** 完成第一个字后才展示正确率/速度，避免只按下一个键时先出现 0%。 */
   const hasStarted = computed(() => {
     const state = session.value
     if (!state) return false
     const stats = state.stats
-    return (
-      state.phase === 'finished' ||
-      stats.keystrokes > 0 ||
-      stats.errors > 0 ||
-      stats.correctChars > 0 ||
-      stats.wordsCompleted > 0
-    )
+    return state.phase === 'finished' || stats.correctChars > 0
   })
   const currentCell = computed(() => currentCellKey(session.value))
   const inError = computed(() =>

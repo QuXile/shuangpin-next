@@ -31,7 +31,7 @@ const emit = defineEmits<{ start: [] }>()
 /** 记忆锚点：仅在本课 focus 的 initial/final 原子 ≤3 个时显示 */
 const anchorRows = computed(() => buildAnchorViews(props.lesson, props.focusItems))
 
-/** 评分规则：与 core evaluateLesson 同一份门槛数据 */
+/** 评分标准：与 core evaluateLesson 同一份门槛数据 */
 const ratingLines = computed<PassCriteriaLine[]>(() => {
   const criteria = props.lesson.passCriteria
   return criteria ? describePassCriteria(criteria) : []
@@ -41,13 +41,30 @@ const ratingLines = computed<PassCriteriaLine[]>(() => {
 <template>
   <div class="tutorial-single">
     <div class="tutorial-top">
-      <section class="tutorial-card">
-        <div class="tutorial-kicker">
-          <span class="side-pill is-brand">第 {{ lessonOrder }} 课 · {{ lessonKindLabel(lesson.kind) }}</span>
-        </div>
+      <section class="tutorial-card panel">
+        <header class="tutorial-head">
+          <div class="tutorial-head-copy">
+            <p class="eyebrow tutorial-eyebrow">第 {{ lessonOrder }} 课 · {{ lessonKindLabel(lesson.kind) }}</p>
+            <h1 class="tutorial-title">{{ lesson.title }}</h1>
+          </div>
+          <button class="btn btn--primary tutorial-start" type="button" @click="emit('start')">
+            {{ startLabel }}
+            <kbd>Enter</kbd>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4.5 12h15" /><path d="m13.5 6 6 6-6 6" />
+            </svg>
+          </button>
+        </header>
 
         <div class="tutorial-range">
-          <div class="focus-block thin-scroll" :class="{ 'is-wide': focusItems.length > 8 }">
+          <header class="range-head panel-head">
+            <h2 class="panel-title">课程范围</h2>
+            <span class="count-badge">{{ focusItems.length }} 个映射</span>
+          </header>
+          <div
+            class="focus-block thin-scroll"
+            :class="{ 'is-wide': focusItems.length > 8 }"
+          >
             <FocusTagList :items="focusItems" />
             <span v-if="focusItems.length === 0" class="focus-empty">键位总览 · 无新键</span>
           </div>
@@ -79,30 +96,22 @@ const ratingLines = computed<PassCriteriaLine[]>(() => {
           </section>
         </div>
 
-        <div class="tutorial-actions">
-          <button class="btn btn--primary" type="button" @click="emit('start')">
-            {{ startLabel }}
-            <kbd>Enter</kbd>
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4.5 12h15" /><path d="m13.5 6 6 6-6 6" />
-            </svg>
-          </button>
-        </div>
       </section>
 
       <aside class="tutorial-side">
-        <section class="tutorial-examples">
-          <div class="tutorial-side-head">
-            <span class="side-pill is-brand">示例</span>
-            <span class="side-pill is-neutral">{{ examples.length }} 张</span>
-          </div>
+        <section class="tutorial-examples panel">
+          <header class="panel-head tutorial-side-head">
+            <h2 class="panel-title">示例</h2>
+            <span class="count-badge">{{ examples.length }} 张</span>
+          </header>
           <TutorialExamples :words="examples" :focus-atoms="focusAtoms" :focus-badge="focusBadge" />
         </section>
 
-        <section v-if="ratingLines.length" class="tutorial-rating" aria-label="评分规则">
-          <div class="tutorial-side-head">
-            <span class="side-pill is-brand">评分规则</span>
-          </div>
+        <section v-if="ratingLines.length" class="tutorial-rating panel" aria-label="评分标准">
+          <header class="panel-head tutorial-side-head">
+            <h2 class="panel-title">评分标准</h2>
+            <span class="count-badge">{{ ratingLines.length }} 档</span>
+          </header>
           <div class="rating-lines thin-scroll">
             <p v-for="line in ratingLines" :key="line.label" class="rating-line">
               <b>{{ line.label }}</b>
@@ -117,11 +126,11 @@ const ratingLines = computed<PassCriteriaLine[]>(() => {
 
 <style scoped>
 .tutorial-single {
-  padding-top: 2px;
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
+  animation: ui-fade-up 240ms var(--ease);
 }
 .tutorial-top {
   display: grid;
@@ -141,18 +150,40 @@ const ratingLines = computed<PassCriteriaLine[]>(() => {
   overflow: visible;
   position: relative;
   z-index: 1;
-  padding: 12px 24px 22px;
-  border-radius: var(--r-xl);
-  border: 1px solid var(--line);
-  background: var(--surface);
-  box-shadow: var(--shadow-sm);
+  padding: 20px 22px 22px;
 }
-.tutorial-kicker {
+.tutorial-head {
+  flex: none;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  justify-content: space-between;
   gap: 12px;
-  min-height: 30px;
-  margin-bottom: 10px;
+  margin-bottom: 14px;
+}
+.tutorial-head-copy {
+  flex: 1 1 200px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.tutorial-eyebrow {
+  margin: 0;
+}
+.tutorial-title {
+  margin: 0;
+  color: var(--ink);
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.22;
+  overflow-wrap: anywhere;
+}
+.tutorial-start {
+  flex: none;
+  min-height: 38px;
+  margin-left: auto;
 }
 .tutorial-range {
   flex: 1;
@@ -161,40 +192,49 @@ const ratingLines = computed<PassCriteriaLine[]>(() => {
   flex-direction: column;
   overflow: hidden;
 }
+.range-head {
+  flex: none;
+  margin-bottom: 10px;
+}
 .focus-block {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  scrollbar-gutter: stable;
   overscroll-behavior: contain;
-  padding: 13px 14px;
-  border-radius: var(--r-lg);
+  display: flex;
+  flex-direction: column;
+  padding: 14px;
+  border-radius: var(--r-md);
   background: var(--surface-2);
   border: 1px solid var(--line-faint);
 }
-.focus-block.is-wide {
-  flex: 1;
+/* 映射标签始终从顶部开始，少量/大量映射保持同一视觉规则 */
+.focus-block.is-wide :deep(.focus-tag-list) {
+  padding-right: 6px;
+}
+.focus-empty {
+  align-self: center;
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: var(--r-control);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--ink-3);
+  font-size: var(--text-sm);
 }
 .tutorial-bottom {
   flex: none;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-top: 10px;
+  margin-top: 12px;
 }
-.focus-empty {
-  display: inline-block;
-  padding: 5px 9px;
-  border-radius: var(--r-md);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  color: var(--ink-3);
-  font-size: 11px;
-}
-.anchors-card {
+.anchors-card,
+.notes-card {
   flex: none;
-  margin-top: 0;
-  padding: 9px 13px;
-  border-radius: var(--r-lg);
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
   border: 1px solid var(--line-faint);
   background: var(--surface-2);
 }
@@ -243,7 +283,7 @@ const ratingLines = computed<PassCriteriaLine[]>(() => {
   flex: 1 1 auto;
   min-width: 0;
   color: var(--ink-2);
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 600;
   overflow-wrap: anywhere;
 }
@@ -253,7 +293,7 @@ const ratingLines = computed<PassCriteriaLine[]>(() => {
   gap: 4px;
 }
 .anchor-chip {
-  padding: 1px 6px;
+  padding: 1px 7px;
   border-radius: 5px;
   border: 1px solid var(--line);
   background: var(--surface);
@@ -261,20 +301,12 @@ const ratingLines = computed<PassCriteriaLine[]>(() => {
   font-size: 10px;
   line-height: 1.5;
 }
-.notes-card {
-  flex: none;
-  margin-top: 0;
-  padding: 11px 13px;
-  border-radius: var(--r-lg);
-  border: 1px solid var(--line-faint);
-  background: color-mix(in srgb, var(--surface-2) 72%, transparent);
-}
 .note-item {
   display: flex;
   gap: 8px;
   padding: 3px 0;
   color: var(--ink-3);
-  font-size: 10.5px;
+  font-size: 11px;
   line-height: 1.6;
 }
 .note-item + .note-item {
@@ -295,16 +327,8 @@ const ratingLines = computed<PassCriteriaLine[]>(() => {
 }
 .note-bullets li {
   color: var(--ink-3);
-  font-size: 10.5px;
+  font-size: 11px;
   line-height: 1.6;
-}
-.tutorial-actions {
-  flex: none;
-  margin-top: 12px;
-  padding-top: 4px;
-}
-.tutorial-actions .btn {
-  min-height: 40px;
 }
 .tutorial-side {
   display: flex;
@@ -312,21 +336,13 @@ const ratingLines = computed<PassCriteriaLine[]>(() => {
   gap: 12px;
   min-height: 0;
   overflow: hidden;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
 }
 .tutorial-examples {
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: 12px 16px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-xl);
-  background: var(--surface);
-  box-shadow: var(--shadow-sm);
+  padding: 16px;
   overflow: hidden;
 }
 .tutorial-rating {
@@ -334,40 +350,12 @@ const ratingLines = computed<PassCriteriaLine[]>(() => {
   max-height: 42%;
   display: flex;
   flex-direction: column;
-  padding: 12px 16px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  background: var(--surface);
-  box-shadow: var(--shadow-sm);
+  padding: 16px;
   overflow: hidden;
 }
 .tutorial-side-head {
   flex: none;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  min-height: 30px;
-  margin-bottom: 8px;
-}
-.side-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 3px 9px;
-  border-radius: var(--r-pill);
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-}
-.side-pill.is-brand {
-  color: var(--brand-ink);
-  background: var(--brand-soft);
-}
-.side-pill.is-neutral {
-  color: var(--ink-3);
-  background: var(--surface-3);
-  letter-spacing: 0;
+  margin-bottom: 10px;
 }
 .rating-lines {
   flex: 1;
@@ -376,7 +364,7 @@ const ratingLines = computed<PassCriteriaLine[]>(() => {
   overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
   padding-right: 2px;
 }
 .rating-line {
@@ -386,12 +374,12 @@ const ratingLines = computed<PassCriteriaLine[]>(() => {
   column-gap: 8px;
   align-items: baseline;
   color: var(--ink-3);
-  font-size: 10.5px;
+  font-size: 11px;
   line-height: 1.55;
 }
 .rating-line b {
   flex: none;
-  color: var(--brand-ink);
+  color: var(--star);
   font-weight: 800;
   letter-spacing: 0.04em;
   font-variant-numeric: tabular-nums;
@@ -432,8 +420,19 @@ const ratingLines = computed<PassCriteriaLine[]>(() => {
   }
   .tutorial-card {
     flex: none;
-    padding: 12px 14px;
+    padding: 14px;
     overflow: visible;
+  }
+  .tutorial-head {
+    margin-bottom: 10px;
+  }
+  .tutorial-start {
+    width: 100%;
+    justify-content: center;
+    margin-left: 0;
+  }
+  .tutorial-title {
+    font-size: 20px;
   }
   .tutorial-range {
     flex: none;
@@ -442,9 +441,12 @@ const ratingLines = computed<PassCriteriaLine[]>(() => {
   .focus-block {
     flex: none;
     overflow: visible;
+    padding: 12px;
   }
   .tutorial-bottom {
     max-height: none;
+    margin-top: 10px;
+    gap: 6px;
   }
   .tutorial-side {
     flex: none;
@@ -462,24 +464,16 @@ const ratingLines = computed<PassCriteriaLine[]>(() => {
     max-height: none;
     padding: 12px 12px 8px;
   }
-  .tutorial-actions .btn {
-    width: 100%;
-    justify-content: center;
-  }
-  .tutorial-rating .tutorial-side-head {
-    margin-bottom: 5px;
+  .tutorial-side-head {
+    margin-bottom: 6px;
   }
   .rating-line {
     font-size: 10px;
     line-height: 1.45;
     gap: 4px;
   }
-  .tutorial-bottom {
-    margin-top: 8px;
-    gap: 6px;
-  }
   .anchors-card {
-    padding: 7px 10px;
+    padding: 8px 10px;
   }
   .anchor-chips {
     display: none;
@@ -495,10 +489,6 @@ const ratingLines = computed<PassCriteriaLine[]>(() => {
   .note-bullets li {
     font-size: 10px;
     line-height: 1.5;
-  }
-  .tutorial-actions {
-    margin-top: 8px;
-    padding-top: 2px;
   }
 }
 </style>

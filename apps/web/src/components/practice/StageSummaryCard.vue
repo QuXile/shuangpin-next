@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
- * 练习总结卡片：课程阶段结束与训练场文章练习完成共用。
- * 纯展示：统计、错误键位、评分规则、可选星级评分与操作按钮。
+ * 练习总结卡片：课程阶段结束与练习场文章练习完成共用。
+ * 纯展示：统计、错误键位、评分标准、可选星级评分与操作按钮。
  */
 import type { PassCriteriaLine } from '@shuangpin/core'
 
@@ -26,7 +26,7 @@ withDefaults(
   defineProps<{
     kicker: string
     title: string
-    tone?: 'success' | 'neutral'
+    tone?: 'success' | 'neutral' | 'danger'
     stats: SummaryStat[]
     keyErrors?: SummaryKeyError[]
     rules?: PassCriteriaLine[]
@@ -42,7 +42,10 @@ withDefaults(
 </script>
 
 <template>
-  <article class="summary-card" :class="{ 'is-success': tone === 'success' }">
+  <article
+    class="summary-card"
+    :class="{ 'is-success': tone === 'success', 'is-danger': tone === 'danger' }"
+  >
     <div class="summary-head">
       <div class="summary-copy">
         <span class="summary-kicker">{{ kicker }}</span>
@@ -85,7 +88,7 @@ withDefaults(
       </section>
 
       <section v-if="rules.length" class="summary-block">
-        <header>本课评分规则</header>
+        <header>本课评分标准</header>
         <p v-for="line in rules" :key="line.label" class="summary-rule">
           <b>{{ line.label }}</b>
           <span>{{ line.text }}</span>
@@ -105,18 +108,23 @@ withDefaults(
 <style scoped>
 .summary-card {
   width: 100%;
-  padding: 16px 18px;
+  padding: 18px 20px;
   border: 1px solid var(--line);
-  border-radius: var(--r-lg);
+  border-radius: var(--r-xl);
   background: var(--surface);
   box-shadow: var(--shadow-md);
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
+  animation: ui-fade-up 280ms var(--ease);
 }
 .summary-card.is-success {
   border-color: var(--state-success-line);
-  background: linear-gradient(180deg, var(--state-success-bg), var(--surface) 58%);
+  background: var(--state-success-bg);
+}
+.summary-card.is-danger {
+  border-color: var(--state-danger-line);
+  background: var(--state-danger-bg);
 }
 .summary-head {
   display: flex;
@@ -132,17 +140,21 @@ withDefaults(
 }
 .summary-kicker {
   width: fit-content;
-  padding: 2px 8px;
-  border-radius: var(--r-pill);
+  padding: 3px 9px;
+  border-radius: var(--r-control);
   color: var(--ink-3);
   background: var(--surface-3);
   font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  font-weight: 800;
+  letter-spacing: 0.08em;
 }
 .summary-card.is-success .summary-kicker {
   color: var(--state-success-ink);
-  background: var(--surface);
+  background: var(--state-success-surface);
+}
+.summary-card.is-danger .summary-kicker {
+  color: var(--state-danger-ink);
+  background: var(--state-danger-surface);
 }
 .summary-text {
   margin: 0;
@@ -158,6 +170,9 @@ withDefaults(
 .summary-card.is-success .summary-text strong {
   color: var(--state-success-ink);
 }
+.summary-card.is-danger .summary-text strong {
+  color: var(--state-danger-ink);
+}
 .summary-rating {
   flex: none;
   min-width: 148px;
@@ -167,11 +182,20 @@ withDefaults(
   gap: 2px;
   padding: 10px 14px 9px;
   border: 1px solid var(--line);
-  border-radius: var(--r-md);
+  border-radius: var(--r-sm);
   background: var(--surface);
+  box-shadow: var(--shadow-sm);
 }
 .summary-rating.is-passed {
   border-color: var(--state-success-line);
+}
+.summary-card.is-success .summary-rating {
+  background: var(--state-success-surface);
+  border-color: color-mix(in srgb, var(--state-success-line) 72%, transparent);
+}
+.summary-card.is-danger .summary-rating {
+  background: var(--state-danger-surface);
+  border-color: color-mix(in srgb, var(--state-danger-line) 72%, transparent);
 }
 .summary-rating-label {
   color: var(--ink-4);
@@ -187,7 +211,7 @@ withDefaults(
   line-height: 1.25;
 }
 .summary-rating.is-passed .summary-rating-stars {
-  color: var(--star);
+  color: var(--star-bright);
 }
 .summary-rating-note {
   color: var(--ink-3);
@@ -201,10 +225,10 @@ withDefaults(
 }
 .summary-stat {
   min-width: 0;
-  padding: 9px 10px;
+  padding: 10px 12px;
   border: 1px solid var(--line-faint);
-  border-radius: var(--r-md);
-  background: var(--surface);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -227,6 +251,22 @@ withDefaults(
   font-size: 10px;
   font-weight: 600;
 }
+.summary-card.is-success .summary-stat,
+.summary-card.is-success .summary-block {
+  background: var(--state-success-surface);
+  border-color: color-mix(in srgb, var(--state-success-line) 55%, transparent);
+}
+.summary-card.is-danger .summary-stat,
+.summary-card.is-danger .summary-block {
+  background: var(--state-danger-surface);
+  border-color: color-mix(in srgb, var(--state-danger-line) 55%, transparent);
+}
+.summary-card.is-danger .summary-key-errors li {
+  background: color-mix(in srgb, var(--state-danger-surface) 72%, var(--surface));
+}
+.summary-card.is-danger .summary-rule b {
+  color: var(--state-danger-ink);
+}
 .summary-details {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
@@ -237,10 +277,10 @@ withDefaults(
 }
 .summary-block {
   min-width: 0;
-  padding: 11px 12px;
+  padding: 12px;
   border: 1px solid var(--line-faint);
-  border-radius: var(--r-md);
-  background: var(--surface);
+  border-radius: var(--r-sm);
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
 }
 .summary-block > header {
   margin-bottom: 7px;
@@ -315,9 +355,46 @@ withDefaults(
   gap: 8px;
 }
 .summary-actions :slotted(.btn) {
-  height: 32px;
-  padding: 0 12px;
-  font-size: 12px;
+  height: 34px;
+  padding: 0 13px;
+  font-size: var(--text-sm);
+}
+.summary-actions :slotted(.btn--primary) {
+  transition: background var(--dur-fast), border-color var(--dur-fast), transform var(--dur-fast);
+}
+.summary-card.is-success .summary-actions :slotted(.btn--primary) {
+  background: var(--state-success-fill);
+  border-color: var(--state-success-fill);
+  box-shadow: 0 2px 0 var(--state-success-fill-hover);
+}
+.summary-card.is-success .summary-actions :slotted(.btn--primary:hover:not(:disabled)) {
+  background: var(--state-success-fill-hover);
+  border-color: var(--state-success-fill-hover);
+}
+.summary-card.is-success .summary-actions :slotted(.btn:not(.btn--primary)) {
+  background: var(--state-success-surface);
+  border-color: color-mix(in srgb, var(--state-success-line) 72%, transparent);
+  color: var(--state-success-ink);
+}
+.summary-card.is-success .summary-actions :slotted(.btn:not(.btn--primary):hover:not(:disabled)) {
+  background: color-mix(in srgb, var(--state-success-surface) 82%, var(--state-success-fill) 18%);
+  border-color: var(--state-success-line);
+  color: var(--state-success-ink);
+}
+.summary-card.is-danger .summary-actions :slotted(.btn--primary) {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: var(--on-accent);
+}
+.summary-card.is-danger .summary-actions :slotted(.btn:not(.btn--primary)) {
+  background: var(--state-danger-surface);
+  border-color: color-mix(in srgb, var(--state-danger-line) 72%, transparent);
+  color: var(--state-danger-ink);
+}
+.summary-card.is-danger .summary-actions :slotted(.btn:not(.btn--primary):hover:not(:disabled)) {
+  background: color-mix(in srgb, var(--state-danger-surface) 82%, var(--danger) 18%);
+  border-color: var(--state-danger-line);
+  color: var(--state-danger-ink);
 }
 .summary-actions :slotted(.btn kbd) {
   margin-left: 2px;

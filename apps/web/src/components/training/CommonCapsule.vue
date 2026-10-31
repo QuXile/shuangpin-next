@@ -22,9 +22,8 @@ const emit = defineEmits<{ toggle: [] }>()
 </template>
 
 <style scoped>
+/* 字重/字距复用 base.css 的 .common-capsule，这里只覆盖字体族。 */
 .common-capsule {
   font-family: var(--font-ui);
-  font-weight: 700;
-  letter-spacing: 0.02em;
 }
 </style>

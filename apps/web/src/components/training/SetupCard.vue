@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * 训练场统一选择卡片：卡头固定 + 正文内部滚动（thin-scroll）。
+ * 练习场统一选择卡片：卡头固定 + 正文内部滚动（thin-scroll）。
  * 文章隐藏卡 / 专项隐藏卡 / 专项出现卡 / 文章输入卡共用同一外框结构。
  */
 withDefaults(
@@ -16,7 +16,7 @@ withDefaults(
 </script>
 
 <template>
-  <article class="setup-card" :class="`tone-${tone}`">
+  <article class="setup-card panel" :class="`tone-${tone}`">
     <header class="setup-card-head">
       <slot name="head">
         <span v-if="pill" class="setup-pill" :class="`is-${tone}`">{{ pill }}</span>
@@ -31,6 +31,7 @@ withDefaults(
 </template>
 
 <style scoped>
+/* 外框复用全局 .panel；这里只负责色调变量、卡内布局与滚动。 */
 .setup-card {
   --setup-accent: var(--brand);
   --setup-accent-ink: var(--brand-ink);
@@ -41,18 +42,15 @@ withDefaults(
   min-width: 0;
   min-height: 0;
   height: 100%;
-  padding: 16px 18px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-xl);
-  background: var(--surface);
-  box-shadow: var(--shadow-sm);
+  padding: 18px 20px;
 }
 .setup-card.tone-hidden {
   --setup-accent: var(--danger);
   --setup-accent-ink: var(--danger);
   --setup-accent-soft: var(--danger-soft);
   --setup-accent-line: var(--danger-line);
-  background: color-mix(in srgb, var(--surface-2) 62%, var(--surface));
+  /* 隐藏语气卡在明暗主题下都更「内敛」：以页面底色混出凹陷感 */
+  background: color-mix(in srgb, var(--bg) 55%, var(--surface));
 }
 .setup-card.tone-input {
   --setup-accent: var(--ink-3);
@@ -65,16 +63,17 @@ withDefaults(
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 6px 10px;
-  padding-bottom: 12px;
+  gap: 8px 10px;
+  padding-bottom: 14px;
 }
 .setup-pill {
   flex: none;
-  padding: 4px 11px;
-  border-radius: var(--r-pill);
-  font-size: 11.5px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  padding: 4px 10px;
+  border-radius: var(--r-control);
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
 }
 .setup-pill.is-appear {
   color: var(--brand-ink);
@@ -91,9 +90,11 @@ withDefaults(
 .setup-card-sub {
   min-width: 0;
   color: var(--ink-4);
-  font-size: 11px;
+  font-size: var(--text-xs);
+  line-height: 1.5;
 }
 .setup-card-scroll {
+  scrollbar-gutter: stable;
   flex: 1;
   min-height: 0;
   overflow-y: auto;
@@ -102,5 +103,13 @@ withDefaults(
   flex-direction: column;
   gap: 16px;
   padding-right: 4px;
+}
+@media (max-width: 640px) {
+  .setup-card {
+    padding: 14px 16px;
+  }
+  .setup-card-head {
+    padding-bottom: 12px;
+  }
 }
 </style>

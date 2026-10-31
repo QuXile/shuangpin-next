@@ -7,7 +7,10 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { onBeforeRouteLeave, useRouter } from 'vue-router'
 import { createSchemeEngine } from '@shuangpin/core'
 import ChapterSection from '@/components/map/ChapterSection.vue'
+import CurrentLearningCard from '@/components/map/CurrentLearningCard.vue'
 import HeroPanel from '@/components/map/HeroPanel.vue'
+import LearningProgressCard from '@/components/map/LearningProgressCard.vue'
+import MapKeymapPanel from '@/components/map/MapKeymapPanel.vue'
 import StateCard from '@/components/common/StateCard.vue'
 import { useCourseBootstrap } from '@/composables/useCourseBootstrap'
 import { useGlobalKeys, type KeyBinding } from '@/composables/useGlobalKeys'
@@ -129,8 +132,19 @@ watch(
   { immediate: true, flush: 'post' },
 )
 const currentId = computed(() => course.currentLesson())
+const heroPanelRef = ref<InstanceType<typeof HeroPanel> | null>(null)
 const currentLesson = computed(() =>
   currentId.value ? course.getLesson(currentId.value) : undefined,
+)
+const currentLessonView = computed(() =>
+  chapters.value.flatMap((chapter) => chapter.lessons).find((lesson) => lesson.id === currentId.value) ?? null,
+)
+const currentChapterView = computed(() =>
+  chapters.value.find((chapter) => chapter.lessons.some((lesson) => lesson.id === currentId.value)) ?? null,
+)
+const schemeName = computed(() => course.scheme?.name ?? '双拼方案')
+const completedChapterCount = computed(
+  () => chapters.value.filter((chapter) => chapter.lessons.length > 0 && chapter.lessons.every((lesson) => lesson.state === 'passed')).length,
 )
 const currentTitle = computed(() => {
   const lesson = currentLesson.value
@@ -154,6 +168,10 @@ function clearProgress(): void {
   progress.clear()
 }
 
+function pressHeroKey(key: string): void {
+  heroPanelRef.value?.pressKey(key)
+}
+
 async function changeScheme(id: string): Promise<void> {
   if (!id || id === course.schemeId) return
   busy.value = true
@@ -162,7 +180,7 @@ async function changeScheme(id: string): Promise<void> {
 }
 
 function focusLesson(step: 1 | -1): void {
-  const buttons = Array.from(document.querySelectorAll<HTMLButtonElement>('.lesson:not(:disabled)'))
+  const buttons = Array.from(document.querySelectorAll<HTMLButtonElement>('.lesson-card:not(:disabled)'))
   if (buttons.length === 0) return
   const current = document.activeElement instanceof HTMLButtonElement
     ? buttons.indexOf(document.activeElement)
@@ -171,30 +189,48 @@ function focusLesson(step: 1 | -1): void {
   buttons[next]?.focus()
 }
 
-const bindings = computed<KeyBinding[]>(() => [
-  {
-    key: 's',
-    alt: true,
-    allowInInput: true,
-    run: () => document.querySelector<HTMLSelectElement>('#scheme-select')?.focus(),
-  },
-  {
-    key: 'Enter',
-    when: (event) =>
-      !(event.target instanceof HTMLButtonElement) && !(event.target instanceof HTMLSelectElement),
-    run: () => startCurrent(),
-  },
-  {
-    key: 'ArrowDown',
-    when: (event) => !(event.target instanceof HTMLSelectElement),
-    run: () => focusLesson(1),
-  },
-  {
-    key: 'ArrowUp',
-    when: (event) => !(event.target instanceof HTMLSelectElement),
-    run: () => focusLesson(-1),
-  },
-])
+const bindings = computed<KeyBinding[]>(() => {
+  const list: KeyBinding[] = [
+    {
+      key: 's',
+      alt: true,
+      allowInInput: true,
+      run: () => document.querySelector<HTMLSelectElement>('#scheme-select')?.focus(),
+    },
+    ...course.schemeOptions.map((option, index) => ({
+      key: String(index + 1),
+      alt: true,
+      run: () => heroPanelRef.value?.selectScheme(option.id),
+    })),
+    {
+      key: 'u',
+      alt: true,
+      run: () => course.toggleUnlockedAll(),
+    },
+    {
+      key: 'c',
+      alt: true,
+      run: () => clearProgress(),
+    },
+    {
+      key: 'Enter',
+      when: (event) =>
+        !(event.target instanceof HTMLButtonElement) && !(event.target instanceof HTMLSelectElement),
+      run: () => startCurrent(),
+    },
+    {
+      key: 'ArrowDown',
+      when: (event) => !(event.target instanceof HTMLSelectElement),
+      run: () => focusLesson(1),
+    },
+    {
+      key: 'ArrowUp',
+      when: (event) => !(event.target instanceof HTMLSelectElement),
+      run: () => focusLesson(-1),
+    },
+  ]
+  return list
+})
 useGlobalKeys(bindings)
 </script>
 
@@ -212,33 +248,65 @@ useGlobalKeys(bindings)
     </StateCard>
 
     <div v-else class="course-board" :class="{ 'is-restoring': restorePending }">
-      <HeroPanel
-        :current-title="currentTitle"
-        :scheme-options="course.schemeOptions"
-        :scheme-id="course.schemeId"
-        :busy="busy"
-        :progress-percent="course.progressPercent"
-        :passed-count="course.passedCount"
-        :lesson-total="course.lessons.length"
-        :chapter-count="course.curriculum?.chapters.length ?? 0"
-        :word-count="course.wordCount"
-        :can-clear="course.passedCount > 0"
-        :unlocked-all="course.unlockedAll"
-        @start="startCurrent"
-        @change-scheme="changeScheme"
-        @clear-progress="clearProgress"
-        @toggle-unlock="course.toggleUnlockedAll()"
-      />
-
-      <div class="chapters">
-        <ChapterSection
-          v-for="chapter in chapters"
-          :key="chapter.id"
-          :chapter="chapter"
-          :current-id="currentId"
-          @start="start"
+      <div class="hero-overview">
+        <HeroPanel
+          ref="heroPanelRef"
+          :scheme-options="course.schemeOptions"
+          :scheme-id="course.schemeId"
+          :scheme="course.scheme"
+          :busy="busy"
+          @change-scheme="changeScheme"
+        />
+        <CurrentLearningCard
+          :lesson="currentLessonView"
+          :chapter="currentChapterView"
+          :current-title="currentTitle"
+          :passed-count="course.passedCount"
+          :lesson-total="course.lessons.length"
+          @start="startCurrent"
         />
       </div>
+
+      <div class="workspace">
+        <MapKeymapPanel
+          :rows="engine?.keyMap() ?? []"
+          :special-initials="engine?.diff().learnInitials ?? []"
+          :scheme-name="schemeName"
+          @key="pressHeroKey"
+        />
+        <LearningProgressCard
+          :progress-percent="course.progressPercent"
+          :passed-count="course.passedCount"
+          :lesson-total="course.lessons.length"
+          :chapter-count="course.curriculum?.chapters.length ?? 0"
+          :completed-chapter-count="completedChapterCount"
+          :word-count="course.wordCount"
+          :can-clear="course.passedCount > 0"
+          :unlocked-all="course.unlockedAll"
+          @clear-progress="clearProgress"
+          @toggle-unlock="course.toggleUnlockedAll()"
+        />
+      </div>
+
+      <section class="course-section panel">
+        <header class="course-header">
+          <h2 class="panel-title">学习路线</h2>
+          <span class="route-hint">
+            <kbd>↑</kbd><kbd>↓</kbd> 选课
+            <span aria-hidden="true">·</span>
+            <kbd>Enter</kbd> 开始
+          </span>
+        </header>
+        <div class="chapters">
+          <ChapterSection
+            v-for="chapter in chapters"
+            :key="chapter.id"
+            :chapter="chapter"
+            :current-id="currentId"
+            @start="start"
+          />
+        </div>
+      </section>
     </div>
   </div>
 </template>
@@ -248,29 +316,88 @@ useGlobalKeys(bindings)
   visibility: hidden;
 }
 .course-board {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--r-xl);
-  box-shadow: var(--shadow-sm);
-  overflow: hidden;
-}
-.chapters {
   display: flex;
   flex-direction: column;
-  background: transparent;
-  border-top: 1px solid var(--line-faint);
-  border-radius: 0;
-  box-shadow: none;
-  overflow: hidden;
+  gap: 15px;
+}
+.hero-overview {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(390px, 0.95fr);
+  gap: 16px;
+  align-items: stretch;
+}
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.85fr) minmax(280px, 0.72fr);
+  gap: 15px;
+  align-items: stretch;
+}
+.course-section {
+  overflow: visible;
+  padding-bottom: 10px;
+}
+.course-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid var(--line);
+}
+.route-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--ink-4);
+  font-size: 10px;
+  font-weight: 600;
+}
+.route-hint kbd {
+  min-width: 18px;
+  justify-content: center;
+}
+.chapters {
+  display: block;
 }
 .hint {
   margin-bottom: 8px;
   color: var(--ink-3);
   font-size: var(--text-sm);
 }
-@media (max-width: 680px) {
+@media (max-width: 1050px) {
+  .hero-overview {
+    grid-template-columns: minmax(0, 1.15fr) minmax(340px, 0.95fr);
+  }
+  .workspace {
+    grid-template-columns: minmax(0, 1.6fr) minmax(260px, 0.75fr);
+  }
+}
+@media (max-width: 800px) {
+  .hero-overview {
+    grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+  }
+  .workspace {
+    grid-template-columns: minmax(0, 1.45fr) minmax(250px, 0.8fr);
+  }
+}
+@media (max-width: 640px) {
+  .course-board {
+    gap: 12px;
+  }
+  .hero-overview,
+  .workspace {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .course-header {
+    padding: 14px 16px 10px;
+  }
+  .course-section {
+    padding-bottom: 6px;
+  }
+}
+@media (max-width: 560px) {
   .page {
-    padding: 16px 12px 48px;
+    padding: var(--page-top-gap) 10px 26px;
   }
 }
 </style>

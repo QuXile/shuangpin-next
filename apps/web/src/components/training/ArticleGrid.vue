@@ -116,7 +116,7 @@ watch(
     <div class="article-lines">
       <div v-for="(line, lineIndex) in lines" :key="lineIndex" class="article-line">
         <template v-for="(cell, cellIndex) in line" :key="`${lineIndex}-${cellIndex}`">
-          <span v-if="cell.wordIndex === null" class="article-skipped" :title="`「${cell.char}」不在训练字库，已跳过`">
+          <span v-if="cell.wordIndex === null" class="article-skipped" :title="`「${cell.char}」不在练习字库，已跳过`">
             {{ cell.char }}
           </span>
           <div
@@ -150,6 +150,7 @@ watch(
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  scrollbar-gutter: stable;
   overscroll-behavior: contain;
   padding: 6px 4px 24px;
 }

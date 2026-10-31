@@ -52,7 +52,7 @@ export const loadPoolIndex = (): Promise<PoolIndexFile> =>
 export const loadLessonPool = (id: string): Promise<LessonPool> =>
   cached(`lesson-pool:${id}`, () => getJSON<LessonPool>(`pools/${id}.json`))
 
-/** 训练场训练库（字/词，一次加载缓存） */
+/** 练习场训练库（字/词，一次加载缓存） */
 export interface TrainingBank {
   schemaVersion: string
   dataVersion: string
