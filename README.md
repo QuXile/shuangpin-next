@@ -96,7 +96,7 @@
 
 本项目采用 **GNU General Public License v3.0（GPL-3.0-only）** 授权；完整文本见 [LICENSE](LICENSE)。
 
-你可以自由使用、修改和分发本项目，分发衍生作品时需要遵守 GPL-3.0 的开源与声明要求。
+Copyright (C) 2026 QuXile。你可以自由使用、修改和分发本项目，分发衍生作品时需要遵守 GPL-3.0 的开源与声明要求。
 
 ## 来源与第三方许可
 
