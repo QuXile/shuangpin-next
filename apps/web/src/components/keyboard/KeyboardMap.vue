@@ -373,6 +373,19 @@ const keyViews = computed<KeyView[][]>(() =>
   .key-final {
     font-size: 9px;
   }
+  /* 窄键帽上「声母 + 韵母」不能同时挤在下半区：韵母上移右侧，声母固定左下。 */
+  .kbd-key.has-both .key-finals {
+    top: 4px;
+    bottom: auto;
+    align-items: flex-end;
+  }
+  .kbd-key.has-both .key-initials {
+    top: auto;
+    bottom: 3px;
+    left: 4px;
+    right: auto;
+    align-items: flex-start;
+  }
   .kbd-legend {
     gap: 4px 10px;
     font-size: 9px;
