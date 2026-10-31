@@ -88,9 +88,9 @@ describe('lessonStages / lessonStageMinWords（三阶段词口径）', () => {
 
     const exam = findLesson(curriculum, 'L10.1')
     expect(
-      stageGate(exam, 'exam', { accuracy: 0.9, cpm: 30, completedWords: 100 }).met,
+      stageGate(exam, 'exam', { accuracy: 0.9, cpm: 45, completedWords: 100 }).met,
     ).toBe(true)
-    const failed = stageGate(exam, 'exam', { accuracy: 0.9, cpm: 29, completedWords: 100 })
+    const failed = stageGate(exam, 'exam', { accuracy: 0.9, cpm: 44, completedWords: 100 })
     expect(failed.met).toBe(false)
     expect(failed.reasons.join()).toMatch(/速度/)
   })

@@ -14,7 +14,7 @@
 | 记忆锚点 `data/words/anchors.json` | 音节 406 / 韵母 34 / 声母 23 | 随词表构建 |
 | 音节补丁 `data/words/syllable-patches.json` | 2 条（zhei→这、eng→鞥） | 数据文件 |
 | 词库口径 `data/words/word-policy.json` | 词性 / 儿化 / 规模 / 质量阈值 | 数据文件 |
-| 课程 | 5 套 × 40 课 / 10 章 / 326 分钟 | 模板 1.0.0，xiaohe `curriculum-2171c31e67d3` |
+| 课程 | 5 套 × 40 课 / 10 章 / 326 分钟 | 模板 1.0.0，xiaohe `curriculum-8c11b27afd64` |
 | 词池 | 40 课 / 26,000 条 / 25,255 唯一词 | `pools-24450f68e49a` |
 | 训练/文章字库 | 5,002 字（词语复用公共词库 10,000 词） | `training-cb1e4cc25756` |
 

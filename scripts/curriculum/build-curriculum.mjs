@@ -111,7 +111,7 @@ const TEMPLATE = [
     desc: '检验：前四章混合练习，准确率优先' },
   { id: 'L5.2', chapterId: 'ch-mid', kind: 'review', title: '期中 · 速度练习', estimatedMinutes: 14,
     cumulative: true, checkpoint: true, speed: 'mid',
-    desc: '检验：前四章速度练习，与综合速度同标准，目标 ≥30 WPM' },
+    desc: '检验：前四章速度练习，正确率 ≥85%，速度按 45/60/75 WPM 分档' },
 
   // ── 6 e 家族 ─────────────────────────────────────────────
   { id: 'L6.1', chapterId: 'ch-e', kind: 'drill', title: '韵母 · ei', estimatedMinutes: 6, focusFinal: ['ei'], desc: '新键：韵母 ei' },
@@ -140,11 +140,11 @@ const TEMPLATE = [
   { id: 'L9.1', chapterId: 'ch-sprint', kind: 'review', title: '综合 · 混合练习', estimatedMinutes: 11,
     cumulative: true, checkpoint: true, desc: '综合：全量混合练习' },
   { id: 'L9.2', chapterId: 'ch-sprint', kind: 'review', title: '综合 · 速度练习', estimatedMinutes: 12,
-    cumulative: true, checkpoint: true, speed: 'full', desc: '速度：全量速度冲刺，目标 ≥30 WPM' },
+    cumulative: true, checkpoint: true, speed: 'full', desc: '速度：全量速度冲刺，目标 ≥45 WPM' },
 
   // ── 10 通关考核 ───────────────────────────────────────────
   { id: 'L10.1', chapterId: 'ch-exam', kind: 'exam', title: '通关 · 最终考核', estimatedMinutes: 14,
-    cumulative: true, checkpoint: true, desc: '全遮挡 + 限时；通过后课程完成' },
+    cumulative: true, checkpoint: true, desc: '全遮挡 + 限时；正确率与速度同时分档（准确率 85/90/95，速度 45/60/75 WPM）' },
 ]
 
 /** 家族成员（课程设计常量，与方案无关） */
@@ -254,7 +254,8 @@ function passCriteriaFor(t) {
   // 期中/综合速度使用相同速度专题标准；通关考核另用准确率+速度双门槛
   if (t.speed === 'mid') return { accuracy: 0.85, mode: 'speed', minCpm: 45, starCpm: [45, 60, 75] }
   if (t.speed === 'full') return { accuracy: 0.85, mode: 'speed', minCpm: 45, starCpm: [45, 60, 75] }
-  if (t.kind === 'exam') return { accuracy: 0.85, mode: 'accuracy-speed', minCpm: 30, starCpm: [30, 40, 50] }
+  // 最终考核：准确率与速度都分级，每档取二者同档门槛。
+  if (t.kind === 'exam') return { accuracy: 0.85, mode: 'accuracy-speed', minCpm: 45, starCpm: [45, 60, 75] }
   // 普通复习课：正确率之外，速度至少 45 WPM
   if (t.kind === 'review') return { accuracy: 0.85, mode: 'accuracy', minCpm: 45 }
   return { accuracy: 0.85, mode: 'accuracy' }

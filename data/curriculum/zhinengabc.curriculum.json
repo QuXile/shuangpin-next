@@ -4,9 +4,9 @@
   "schemeType": "compositional",
   "version": "1.0.0",
   "templateVersion": "1.0.0",
-  "generatedAt": "2026-10-31T07:19:35.577Z",
+  "generatedAt": "2026-10-31T07:30:16.094Z",
   "supportLevel": "full",
-  "dataVersion": "curriculum-3e0737cec43c",
+  "dataVersion": "curriculum-32a71a1c61db",
   "chapters": [
     {
       "id": "ch-intro",
@@ -3231,7 +3231,7 @@
       "chapterId": "ch-mid",
       "kind": "review",
       "title": "期中 · 速度练习",
-      "desc": "检验：前四章速度练习，与综合速度同标准，目标 ≥30 WPM",
+      "desc": "检验：前四章速度练习，正确率 ≥85%，速度按 45/60/75 WPM 分档",
       "estimatedMinutes": 14,
       "focusAtoms": [
         "initial:zh",
@@ -6166,7 +6166,7 @@
       "chapterId": "ch-sprint",
       "kind": "review",
       "title": "综合 · 速度练习",
-      "desc": "速度：全量速度冲刺，目标 ≥30 WPM",
+      "desc": "速度：全量速度冲刺，目标 ≥45 WPM",
       "estimatedMinutes": 12,
       "focusAtoms": [
         "initial:zh",
@@ -7018,7 +7018,7 @@
       "chapterId": "ch-exam",
       "kind": "exam",
       "title": "通关 · 最终考核",
-      "desc": "全遮挡 + 限时；通过后课程完成",
+      "desc": "全遮挡 + 限时；正确率与速度同时分档（准确率 85/90/95，速度 45/60/75 WPM）",
       "estimatedMinutes": 14,
       "focusAtoms": [
         "initial:zh",
@@ -7854,11 +7854,11 @@
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy-speed",
-        "minCpm": 30,
+        "minCpm": 45,
         "starCpm": [
-          30,
-          40,
-          50
+          45,
+          60,
+          75
         ]
       },
       "stageMinWords": {

@@ -170,7 +170,7 @@ dataVersion = "words-"      + sha256(dictSha | pinyin-pro 版本 | 过滤参数 
 
 - `data/pools/index.json` 的 `sources = { curriculum: <xiaohe 课程版本>, dict: <词典 sha256 前 12 位> }`；
 - `manifest.json` 记录 `versions{curriculum,pools,words}`、`defaultScheme`、`courses` 与文件清单；
-- 当前版本：`curriculum-2171c31e67d3`（xiaohe）、`pools-24450f68e49a`、`words-ea1e2eb0f56e`、`training-cb1e4cc25756`；音节补丁：`data/words/syllable-patches.json`，词库策略：`data/words/word-policy.json`，训练库：`data/training/bank.json`。
+- 当前版本：`curriculum-8c11b27afd64`（xiaohe）、`pools-24450f68e49a`、`words-ea1e2eb0f56e`、`training-cb1e4cc25756`；音节补丁：`data/words/syllable-patches.json`，词库策略：`data/words/word-policy.json`，训练库：`data/training/bank.json`。
 
 ### 4.6 手写逻辑审计
 
@@ -277,7 +277,7 @@ dataVersion = "words-"      + sha256(dictSha | pinyin-pro 版本 | 过滤参数 
 | 新课 drill（25 词全遮挡考核） | 正确率 ≥85% | 正确率 ≥90% | 正确率 ≥95% 且未揭示答案 |
 | 复习 review（50 词全遮挡；家族/混合） | 正确率 ≥85% 且速度 ≥45 WPM | 正确率 ≥90% 且速度 ≥45 WPM | 正确率 ≥95%、速度 ≥45 WPM 且未揭示答案 |
 | 期中/综合速度（50 词） | 正确率 ≥85% 且 ≥45 WPM | 正确率 ≥85% 且 ≥60 WPM | 正确率 ≥85% 且 ≥75 WPM |
-| 通关考核（100 词全遮挡） | 正确率 ≥85% 且 ≥30 WPM | 正确率 ≥90% 且 ≥40 WPM | 正确率 ≥95%、≥50 WPM 且未揭示答案 |
+| 通关考核（100 词全遮挡） | 正确率 ≥85% 且 ≥45 WPM | 正确率 ≥90% 且 ≥60 WPM | 正确率 ≥95%、≥75 WPM 且未揭示答案 |
 
 - 全遮挡阶段：1★ 门槛未达标时「完成本课」不可点；达标后可继续无限练习或完成；
 - 已通过课程重练：仍记录 attempts / bestAccuracy，星级取历史最优；
