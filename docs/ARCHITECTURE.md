@@ -5,7 +5,7 @@
 ## 架构原则
 
 - 领域规则集中在 `packages/core`：拼音、方案、判题、展示模型、选词、阶段、评分、统计；Web 只做编排与渲染。
-- 数据驱动：键位与 free / learn 划分来自 `data/schemes/*.json`（`SchemeEngine.diff()`），代码不硬编码某套方案。
+- 数据驱动：键位与 free / learn 划分来自 `data/schemes/<id>/scheme.json`（`SchemeEngine.diff()`），代码不硬编码某套方案。
 - 契约与校验：数据契约类型在 core，数据与校验器共用 `scripts/lib/data-contract.mjs` 的 hash / 原子写工具。
 
 ## 仓库结构
@@ -16,7 +16,7 @@ packages/core/src/    types / pinyin / scheme / practice / selector / balancedSa
                       stages / session / scoring / atoms / random / training
 packages/core/tests/  领域与数据契约测试
 apps/web/tests/       progress / trainingConfig / trainingGroups
-data/                 schemes / curriculum / packages / lexicon
+data/                 schemes/<id>/（scheme + curriculum）/ engine-cases / lexicon
 scripts/              数据构建、方案打包、同步、校验、静态包启动器
 docs/                文档与 assets/impl 截图
 ```
@@ -31,9 +31,9 @@ AtomId        = initial:<声母> | final:<韵母> | zero:<零声母音节>
 ```
 
 - `zh/ch/sh` 是独立声母；零声母不占声母键，由方案给出完整两键序列。零声母标签统一为「零 <音节>」。
-- **j/q/x/y + ü**：主键取 `finals[u]`，方案自己的 ü 键作为判题容错；n/l 后的 ü 取方案 ü 键。拼写规范化与非法音节过滤在 `pinyin.ts`。
+- **j/q/x/y + ü**：标准/推荐主键取 `finals[u]`；V 键兼容码显式写入方案 `compatCodes`；n/l 后的 ü 取方案 ü 键。拼写规范化与非法音节过滤在 `pinyin.ts`。
 
-**方案引擎**（`scheme.ts`）对方案数据 `initials / finals / zeroInitial / overrides / type` 提供：
+**方案引擎**（`scheme.ts`）对方案数据 `initials / finals / zeroInitial / recommended / compatCodes / type` 提供：
 
 ```text
 acceptedSequences(syllable)  全部可接受键序列（零声母整段 / override 整段 / 声母×韵母笛卡尔积；去重保序）
@@ -49,7 +49,7 @@ freeAtomsOf(def)             与全拼一致的 free 原子（练习场「全拼
 
 ## 课程与阶段
 
-课程数据 `data/curriculum/<scheme>.curriculum.json`：5 套方案 × 40 课 / 10 章，模板 1.0.0。
+课程数据 `data/schemes/<id>/curriculum.json`：5 套方案 × 40 课 / 10 章，模板 1.0.0。
 
 ```text
 LessonDef { id, chapterId, kind, title, desc, estimatedMinutes, focusAtoms, blockingAtoms,
@@ -89,6 +89,20 @@ kind      intro（入门）/ drill（新课）/ review（复习、期中、综�
 - 用 θ 做音级校准，使各 focus 期望出现次数相等；再按不等概率系统抽样选出不重复词。
 - 候选不足时以 `pool.chars` 单字补充；同 seed 完全可复现（`mulberry32`）。
 
+## 课程 Hero 与练习场
+
+- 课程 Hero / 入门试打只接受主键序列（`strictPrimary`），防止界面显示与判题不一致；
+- 练习场保持多解容错，兼容编码与组合码都可以练。
+
+## 方案判题
+
+音节判题只有两层：
+
+1. 命中 `recommended` 或 `compatCodes` 的完整键序列直接成功；
+2. 否则按 `initials[声母] × finals[韵母]` 组合匹配，命中任一组合即成功。
+
+兼容编码是**额外接受**，不会禁用组合展开。`primarySequence` 取 `recommended`，没有则取兼容编码第一条，再没有则取组合第一条，用于 Hero / 标答展示。没有一字多码的方案不需要 `recommended` / `compatCodes`。
+
 ## 教学备注与来源
 
 - 课程 `atomMeta.anchors/mnemonic` 和教学示例已冻结在 curriculum 数据中；运行期示例由 `apps/web/src/lib/lessonPool.ts` 从 Lexicon 的 `syllableExamples` 派生。
@@ -127,17 +141,16 @@ shuangpin-next:map-scroll:<schemeId>       学习地图滚动位置（sessionSto
 
 ## 方案包
 
-`scripts/scheme-packages/build.mjs` 把扁平数据组装成运行时包：
+`scripts/scheme-packages/build.mjs` 从每方案文件夹生成运行时包：
 
 ```text
-data/packages/<scheme>/manifest.json     能力声明（course/training/article/zeroInitial/customStages）
-                                        curriculum profile、统一 Lexicon 引用
-data/packages/<scheme>/scheme.json       方案键位映射
-data/packages/<scheme>/curriculum.json   仅课程方案（standard-40）
-data/packages/index.json                 19 个包的索引
+apps/web/public/data/packages/<scheme>/manifest.json  能力声明（生成）
+apps/web/public/data/packages/<scheme>/scheme.json    方案键位映射（生成）
+apps/web/public/data/packages/<scheme>/curriculum.json 仅课程方案（生成）
+apps/web/public/data/packages/index.json               19 个包的索引（生成）
 ```
 
-运行期只发布方案包、课程和统一 Lexicon；`sync-data.mjs` 同步前重建方案包，课程与练习场共享同一份词表，不再发布每课词池。
+运行期只发布方案包、课程和统一 Lexicon；`sync-data.mjs` 从每方案源目录重建 public 方案包，课程与练习场共享同一份词表。
 
 ## 测试与校验
 

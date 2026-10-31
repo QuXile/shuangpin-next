@@ -185,7 +185,7 @@ function resetTry(): void {
     session.value = null
     return
   }
-  session.value = createSession({ words: [word], now: performance.now() })
+  session.value = createSession({ words: [word], now: performance.now(), strictPrimary: true })
   wrongInputs.value = new Map()
   revealed.value = new Set()
   cellErrors.value = new Map()

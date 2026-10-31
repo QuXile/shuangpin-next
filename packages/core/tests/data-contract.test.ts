@@ -24,15 +24,13 @@ const schemeIds = schemeIndex.courseSupported as string[]
 
 describe('方案与课程数据契约', () => {
   it('19 套方案、5 套课程支持，方案均可构造引擎', () => {
-    const files = readdirSync(join(dataPath(), 'schemes')).filter(
-      (file) => file.endsWith('.json') && !['index.json', 'engine-cases.json'].includes(file),
-    )
-    expect(files).toHaveLength(19)
+    const dirs = readdirSync(join(dataPath(), 'schemes'), { withFileTypes: true }).filter((entry) => entry.isDirectory())
+    expect(dirs).toHaveLength(19)
     expect(schemeIds).toHaveLength(5)
     const cases = loadEngineCases()
     expect(Object.keys(cases.schemes)).toHaveLength(19)
     for (const id of schemeIds) {
-      const def = readDataJSON<SchemeDef>('schemes', `${id}.json`)
+      const def = readDataJSON<SchemeDef>('schemes', id, 'scheme.json')
       expect(def.name).toBeTruthy()
       const diff = loadEngine(id).diff()
       expect(diff.learnInitials.length + diff.learnFinals.length).toBeGreaterThan(0)

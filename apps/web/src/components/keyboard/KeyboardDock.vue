@@ -13,6 +13,7 @@ withDefaults(
     legend?: boolean
     hiddenAtomIds?: readonly AtomId[]
     zeroInitials?: Readonly<Record<string, readonly string[]>>
+    compatCodes?: Readonly<Record<string, readonly string[]>>
   }>(),
   {
     schemeName: '',
@@ -23,6 +24,7 @@ withDefaults(
     legend: true,
     hiddenAtomIds: () => [],
     zeroInitials: () => ({}),
+    compatCodes: () => ({}),
   },
 )
 
@@ -44,6 +46,7 @@ const emit = defineEmits<{
       :legend="legend"
       :hidden-atom-ids="hiddenAtomIds"
       :zero-initials="zeroInitials"
+      :compat-codes="compatCodes"
       @key="emit('key', $event)"
       @backspace="emit('backspace')"
     />

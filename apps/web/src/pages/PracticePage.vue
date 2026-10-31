@@ -230,6 +230,7 @@ function onDockBackspace(): void {
         :highlight-atom-ids="stage === 'tutorial' || stage === 'single' ? highlightAtomIds : []"
         :special-initials="specialInitials"
         :zero-initials="scheme?.zeroInitial"
+        :compat-codes="scheme?.compatCodes"
         :pressed="pressedKeys"
         :conceal="conceal"
         @key="onKeymapKey"

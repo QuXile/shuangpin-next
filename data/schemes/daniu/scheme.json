@@ -1,0 +1,415 @@
+{
+  "id": "daniu",
+  "name": "大牛双拼",
+  "type": "hybrid",
+  "initials": {
+    "b": [
+      "b"
+    ],
+    "p": [
+      "p"
+    ],
+    "m": [
+      "m"
+    ],
+    "f": [
+      "f"
+    ],
+    "d": [
+      "d"
+    ],
+    "t": [
+      "t"
+    ],
+    "n": [
+      "n"
+    ],
+    "l": [
+      "l"
+    ],
+    "g": [
+      "g"
+    ],
+    "k": [
+      "k"
+    ],
+    "h": [
+      "h"
+    ],
+    "j": [
+      "j"
+    ],
+    "q": [
+      "q"
+    ],
+    "x": [
+      "x"
+    ],
+    "zh": [
+      "a",
+      "o"
+    ],
+    "ch": [
+      "i"
+    ],
+    "sh": [
+      "u",
+      "v"
+    ],
+    "r": [
+      "r"
+    ],
+    "z": [
+      "z"
+    ],
+    "c": [
+      "c"
+    ],
+    "s": [
+      "s"
+    ],
+    "y": [
+      "y"
+    ],
+    "w": [
+      "w"
+    ]
+  },
+  "finals": {
+    "a": [
+      "a"
+    ],
+    "o": [
+      "o"
+    ],
+    "e": [
+      "e"
+    ],
+    "i": [
+      "i"
+    ],
+    "u": [
+      "u"
+    ],
+    "v": [
+      "v"
+    ],
+    "ai": [
+      "h"
+    ],
+    "ei": [
+      "w"
+    ],
+    "ui": [
+      "n",
+      "v"
+    ],
+    "ao": [
+      "s"
+    ],
+    "ou": [
+      "r"
+    ],
+    "iu": [
+      "t"
+    ],
+    "ie": [
+      "p"
+    ],
+    "ve": [
+      "x"
+    ],
+    "an": [
+      "d"
+    ],
+    "en": [
+      "k"
+    ],
+    "in": [
+      "b"
+    ],
+    "un": [
+      "y"
+    ],
+    "ang": [
+      "f"
+    ],
+    "eng": [
+      "j"
+    ],
+    "ing": [
+      "g"
+    ],
+    "ong": [
+      "l"
+    ],
+    "ia": [
+      "k"
+    ],
+    "iao": [
+      "m"
+    ],
+    "ian": [
+      "c",
+      "q"
+    ],
+    "iang": [
+      "n"
+    ],
+    "iong": [
+      "l"
+    ],
+    "ua": [
+      "q"
+    ],
+    "uo": [
+      "o"
+    ],
+    "uai": [
+      "g"
+    ],
+    "uan": [
+      "z"
+    ],
+    "uang": [
+      "x"
+    ],
+    "ue": [
+      "h",
+      "x"
+    ]
+  },
+  "zeroInitial": {
+    "a": [
+      "ea"
+    ],
+    "ai": [
+      "eh"
+    ],
+    "an": [
+      "ed"
+    ],
+    "ang": [
+      "ef"
+    ],
+    "ao": [
+      "es"
+    ],
+    "e": [
+      "ee"
+    ],
+    "ei": [
+      "ew"
+    ],
+    "en": [
+      "ek"
+    ],
+    "eng": [
+      "ej"
+    ],
+    "er": [
+      "eu"
+    ],
+    "o": [
+      "eo"
+    ],
+    "ou": [
+      "er"
+    ]
+  },
+  "umlautNote": "j/q/x/y 与 ü 相拼时：除 initials[声母]×finals[u] 的组合外，另接受 initials[声母]×finals[v] 的组合（对应参考实现 core.js 的 jqxy+ü 补充规则）；数据结构上仍把音节记为 u/ue/un/uan 归属，ü 语义由 UI 标注。",
+  "sameKeyGroups": [
+    {
+      "key": "g",
+      "finals": [
+        "ing",
+        "uai"
+      ]
+    },
+    {
+      "key": "h",
+      "finals": [
+        "ai",
+        "ue"
+      ]
+    },
+    {
+      "key": "k",
+      "finals": [
+        "en",
+        "ia"
+      ]
+    },
+    {
+      "key": "l",
+      "finals": [
+        "ong",
+        "iong"
+      ]
+    },
+    {
+      "key": "n",
+      "finals": [
+        "ui",
+        "iang"
+      ]
+    },
+    {
+      "key": "o",
+      "finals": [
+        "o",
+        "uo"
+      ]
+    },
+    {
+      "key": "q",
+      "finals": [
+        "ian",
+        "ua"
+      ]
+    },
+    {
+      "key": "v",
+      "finals": [
+        "v",
+        "ui"
+      ]
+    },
+    {
+      "key": "x",
+      "finals": [
+        "ve",
+        "uang",
+        "ue"
+      ]
+    }
+  ],
+  "source": {
+    "repo": "BlueSky-07/Shuang",
+    "file": "src/scheme/daniu.js",
+    "note": "从 https://github.com/BlueSky-07/Shuang（v6.0.0，commit 5a5e71e）提取键位事实；仅做数据比对与规范化，未复制其实现代码（原项目 GPL-3.0）。"
+  },
+  "notes": [
+    "多键声母：zh→a/o、sh→u/v；多键韵母：ian→c/q、ue→h/x、ui→n/v。",
+    "j/q/x/y + üan/ün 使用整音节 override（如 juan→jz/jj、yun→yy/yw）。",
+    "同一读音存在多个合法键序列，判题按「任一命中」处理；三档提示需同时展示两个键位。",
+    "多键声母：zh→[a,o]；sh→[u,v]。",
+    "多键韵母：ui→[n,v]；ian→[c,q]；ue→[h,x]。",
+    "整音节 override 8 条：juan、jun、quan、qun、xuan、xun、yuan、yun；override 命中时替代组合展开。",
+    "参考项目提示：常用输入法几乎不内置。"
+  ],
+  "recommended": {
+    "bian": "bc",
+    "chui": "in",
+    "cui": "cn",
+    "dian": "dc",
+    "dui": "dn",
+    "gui": "gn",
+    "hui": "hn",
+    "jian": "jc",
+    "ju": "ju",
+    "juan": "jz",
+    "jue": "jh",
+    "jun": "jy",
+    "kui": "kn",
+    "lian": "lc",
+    "mian": "mc",
+    "nian": "nc",
+    "pian": "pc",
+    "qian": "qc",
+    "qu": "qu",
+    "quan": "qz",
+    "que": "qh",
+    "qun": "qy",
+    "rui": "rn",
+    "sha": "ua",
+    "shai": "uh",
+    "shan": "ud",
+    "shang": "uf",
+    "shao": "us",
+    "she": "ue",
+    "shen": "uk",
+    "sheng": "uj",
+    "shi": "ui",
+    "shou": "ur",
+    "shu": "uu",
+    "shua": "uq",
+    "shuai": "ug",
+    "shuan": "uz",
+    "shuang": "ux",
+    "shui": "un",
+    "shun": "uy",
+    "shuo": "uo",
+    "sui": "sn",
+    "tian": "tc",
+    "tui": "tn",
+    "xian": "xc",
+    "xu": "xu",
+    "xuan": "xz",
+    "xue": "xh",
+    "xun": "xy",
+    "yu": "yu",
+    "yuan": "yz",
+    "yue": "yh",
+    "yun": "yy",
+    "zha": "aa",
+    "zhai": "ah",
+    "zhan": "ad",
+    "zhang": "af",
+    "zhao": "as",
+    "zhe": "ae",
+    "zhei": "aw",
+    "zhen": "ak",
+    "zheng": "aj",
+    "zhi": "ai",
+    "zhong": "al",
+    "zhou": "ar",
+    "zhu": "au",
+    "zhua": "aq",
+    "zhuai": "ag",
+    "zhuan": "az",
+    "zhuang": "ax",
+    "zhui": "an",
+    "zhun": "ay",
+    "zhuo": "ao",
+    "zui": "zn"
+  },
+  "compatCodes": {
+    "juan": [
+      "jj"
+    ],
+    "jun": [
+      "jw"
+    ],
+    "quan": [
+      "qj"
+    ],
+    "qun": [
+      "qw"
+    ],
+    "xuan": [
+      "xj"
+    ],
+    "xun": [
+      "xw"
+    ],
+    "yuan": [
+      "yj"
+    ],
+    "yun": [
+      "yw"
+    ],
+    "ju": [
+      "jv"
+    ],
+    "qu": [
+      "qv"
+    ],
+    "xu": [
+      "xv"
+    ],
+    "yu": [
+      "yv"
+    ]
+  }
+}

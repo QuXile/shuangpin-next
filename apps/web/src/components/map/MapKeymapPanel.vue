@@ -11,9 +11,10 @@ withDefaults(
     rows: LetterKey[][]
     specialInitials?: readonly string[]
     zeroInitials?: Readonly<Record<string, readonly string[]>>
+    compatCodes?: Readonly<Record<string, readonly string[]>>
     schemeName: string
   }>(),
-  { specialInitials: () => [], zeroInitials: () => ({}) },
+  { specialInitials: () => [], zeroInitials: () => ({}), compatCodes: () => ({}) },
 )
 
 const emit = defineEmits<{ key: [letter: string] }>()
@@ -79,6 +80,7 @@ onBeforeUnmount(() => {
         :rows="rows"
         :special-initials="specialInitials"
         :zero-initials="zeroInitials"
+        :compat-codes="compatCodes"
         :pressed="pressedKeys"
         :legend="false"
         @key="onMapKey"

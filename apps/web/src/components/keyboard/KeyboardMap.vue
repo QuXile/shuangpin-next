@@ -2,7 +2,7 @@
 /**
  * 键位图（纯展示）：视图模型在 setup 里一次性预计算，渲染时不再重复遍历 atomIds。
  */
-import { computed } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { AtomId, LetterKey } from '@shuangpin/core'
 import { parseAtomId } from '@shuangpin/core'
 
@@ -23,6 +23,8 @@ const props = withDefaults(
     hiddenAtomIds?: readonly AtomId[]
     /** 零声母映射：底部单独一行展示，最多 12 个 */
     zeroInitials?: Readonly<Record<string, readonly string[]>>
+    /** 兼容编码表：整音节兼容拼写，底部零声母行下展示 */
+    compatCodes?: Readonly<Record<string, readonly string[]>>
   }>(),
   {
     schemeName: '',
@@ -33,6 +35,7 @@ const props = withDefaults(
     legend: true,
     hiddenAtomIds: () => [],
     zeroInitials: () => ({}),
+    compatCodes: () => ({}),
   },
 )
 
@@ -74,6 +77,54 @@ const zeroViews = computed(() =>
     })
     .filter((entry) => !hiddenAtomSet.value.has(entry.atom)),
 )
+
+const compatViews = computed(() =>
+  Object.entries(props.compatCodes)
+    .map(([syllable, codes]) => ({
+      syllable,
+      codes: codes.map((code) => Array.from(code.toUpperCase())),
+    }))
+    .filter((entry) => entry.codes.length > 0),
+)
+const compatLine = computed(() =>
+  compatViews.value.map((entry) => `${entry.syllable} ${entry.codes.map((code) => code.join('')).join(' ')}`).join('  ·  '),
+)
+const compatContentRef = ref<HTMLElement | null>(null)
+const compatOverflow = ref(false)
+let compatResizeObserver: ResizeObserver | undefined
+
+function measureCompatOverflow(): void {
+  const el = compatContentRef.value
+  if (!el) {
+    compatOverflow.value = false
+    return
+  }
+  compatOverflow.value = el.scrollWidth > el.clientWidth + 1
+}
+
+watch(
+  compatViews,
+  () => {
+    void nextTick(() => {
+      if (compatResizeObserver && compatContentRef.value) {
+        compatResizeObserver.disconnect()
+        compatResizeObserver.observe(compatContentRef.value)
+      }
+      measureCompatOverflow()
+    })
+  },
+  { immediate: true, deep: true },
+)
+
+onMounted(() => {
+  compatResizeObserver = new ResizeObserver(measureCompatOverflow)
+  if (compatContentRef.value) compatResizeObserver.observe(compatContentRef.value)
+  window.addEventListener('resize', measureCompatOverflow)
+})
+onBeforeUnmount(() => {
+  compatResizeObserver?.disconnect()
+  window.removeEventListener('resize', measureCompatOverflow)
+})
 
 const keyViews = computed<KeyView[][]>(() =>
   props.rows.map((row) =>
@@ -189,6 +240,37 @@ const keyViews = computed<KeyView[][]>(() =>
         </div>
       </div>
     </div>
+    <div
+      v-if="!conceal && compatViews.length > 0"
+      class="kbd-compat-row"
+      tabindex="0"
+      aria-label="兼容编码"
+    >
+      <span class="kbd-compat-title">兼容编码</span>
+      <span ref="compatContentRef" class="kbd-compat-content" :title="compatOverflow ? compatLine : undefined">
+        <span class="kbd-compat-track">
+          <span v-for="entry in compatViews" :key="entry.syllable" class="kbd-zero">
+            <b>{{ entry.syllable }}</b>
+            <span class="kbd-zero-keys">
+              <kbd v-for="(code, codeIndex) in entry.codes" :key="codeIndex" class="kbd-compat-code">
+                <span v-for="(key, keyIndex) in code" :key="keyIndex">{{ key }}</span>
+              </kbd>
+            </span>
+          </span>
+        </span>
+      </span>
+      <span v-if="compatOverflow" class="kbd-compat-count">共 {{ compatViews.length }} 个</span>
+      <span v-if="compatOverflow" class="kbd-compat-popup" aria-hidden="true">
+        <span v-for="entry in compatViews" :key="entry.syllable" class="kbd-zero">
+          <b>{{ entry.syllable }}</b>
+          <span class="kbd-zero-keys">
+            <kbd v-for="(code, codeIndex) in entry.codes" :key="codeIndex" class="kbd-compat-code">
+              <span v-for="(key, keyIndex) in code" :key="keyIndex">{{ key }}</span>
+            </kbd>
+          </span>
+        </span>
+      </span>
+    </div>
   </div>
 </template>
 
@@ -260,6 +342,93 @@ const keyViews = computed<KeyView[][]>(() =>
   background: var(--state-info-bg, var(--brand-soft));
   color: var(--brand-ink);
   box-shadow: inset 0 0 0 1px var(--brand-line);
+}
+.kbd-compat-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  padding: 3px 2px;
+  min-width: 0;
+  border-radius: 5px;
+}
+.kbd-compat-row:focus-visible {
+  outline: 2px solid var(--brand-line);
+  outline-offset: 2px;
+}
+.kbd-compat-title {
+  flex: none;
+  color: var(--ink-4);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.kbd-compat-content {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink-3);
+  font-size: 10px;
+  line-height: 1.5;
+}
+.kbd-compat-track {
+  display: flex;
+  align-items: center;
+  justify-content: safe center;
+  gap: 6px;
+  width: max-content;
+  min-width: 100%;
+  white-space: nowrap;
+}
+.kbd-compat-content .kbd-zero {
+  gap: 3px;
+}
+.kbd-compat-content .kbd-zero-keys {
+  gap: 2px;
+}
+.kbd-compat-code {
+  display: inline-flex;
+  gap: 1px;
+  padding: 0 2px;
+}
+.kbd-compat-code + .kbd-compat-code {
+  margin-left: 2px;
+}
+.kbd-compat-count {
+  flex: none;
+  color: var(--ink-4);
+  font-size: 10px;
+  white-space: nowrap;
+}
+.kbd-compat-popup {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  display: none;
+  z-index: 50;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  box-shadow: var(--pop-shadow);
+  pointer-events: auto;
+  overscroll-behavior: contain;
+}
+.kbd-compat-popup .kbd-zero {
+  gap: 3px;
+}
+.kbd-compat-row:hover .kbd-compat-popup,
+.kbd-compat-row:focus-within .kbd-compat-popup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 12px;
+  align-content: flex-start;
+  max-height: 240px;
+  overflow-y: auto;
+  scrollbar-width: thin;
 }
 .kbd-row {
   --kbd-gap: 6px;

@@ -429,7 +429,7 @@ export function usePractice() {
       return
     }
     setRuntime(target, {
-      session: createSession({ words, now: performance.now() }),
+      session: createSession({ words, now: performance.now(), strictPrimary: true }),
       revealed: new Set(),
       wrongInputs: new Map(),
       cellErrors: new Map(),

@@ -10024,26 +10024,10 @@
         {
           "pinyin": "ju",
           "rejected": [
-            "jm"
-          ],
-          "kind": "override-bypass",
-          "reason": "整音节 override 优先：组合展开键位 jm 不被参考实现接受（override：jl）"
-        },
-        {
-          "pinyin": "ju",
-          "rejected": [
             "al"
           ],
           "kind": "wrong-key",
           "reason": "键位错误：al 不是 ju 的合法键序列（合法：jl）"
-        },
-        {
-          "pinyin": "qu",
-          "rejected": [
-            "qm"
-          ],
-          "kind": "override-bypass",
-          "reason": "整音节 override 优先：组合展开键位 qm 不被参考实现接受（override：ql）"
         }
       ],
       "coverage": {
@@ -11049,26 +11033,10 @@
         {
           "pinyin": "cha",
           "rejected": [
-            "js"
-          ],
-          "kind": "override-bypass",
-          "reason": "整音节 override 优先：组合展开键位 js 不被参考实现接受（override：ws）"
-        },
-        {
-          "pinyin": "cha",
-          "rejected": [
             "as"
           ],
           "kind": "wrong-key",
           "reason": "键位错误：as 不是 cha 的合法键序列（合法：ws）"
-        },
-        {
-          "pinyin": "chai",
-          "rejected": [
-            "wh"
-          ],
-          "kind": "override-bypass",
-          "reason": "整音节 override 优先：组合展开键位 wh 不被参考实现接受（override：jh）"
         },
         {
           "pinyin": "chai",

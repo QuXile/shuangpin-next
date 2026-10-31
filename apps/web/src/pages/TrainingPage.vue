@@ -1781,6 +1781,7 @@ onScopeDispose(() => {
           :scheme-name="course.scheme?.name"
           :special-initials="specialInitials"
           :zero-initials="course.scheme?.zeroInitial"
+          :compat-codes="course.scheme?.compatCodes"
           :hidden-atom-ids="sessionHiddenAtomIds"
           :pressed="pressedKeys"
           @key="onDockKey"

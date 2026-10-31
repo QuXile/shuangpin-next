@@ -11,11 +11,10 @@ import { fileURLToPath } from 'node:url'
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..')
 export const DATA_DIR = path.join(ROOT, 'data')
 export const SCHEME_DIR = path.join(DATA_DIR, 'schemes')
-export const PACKAGES_DIR = path.join(DATA_DIR, 'packages')
-export const CURRICULUM_DIR = path.join(DATA_DIR, 'curriculum')
 export const PUBLIC_DATA_DIR = path.join(ROOT, 'apps', 'web', 'public', 'data')
+export const PUBLIC_PACKAGES_DIR = path.join(PUBLIC_DATA_DIR, 'packages')
 export const LEXICON_FILE = path.join(DATA_DIR, 'lexicon', 'lexicon.json')
-export const CURRICULUM_INDEX_FILE = path.join(CURRICULUM_DIR, 'index.json')
+export const CURRICULUM_INDEX_FILE = path.join(SCHEME_DIR, 'curriculum-index.json')
 export const SCHEME_INDEX_FILE = path.join(SCHEME_DIR, 'index.json')
 
 export const TEMPLATE_VERSION = '1.0.0'
@@ -129,7 +128,7 @@ export function curriculumVersionOf(chapters, lessons) {
 
 /** 读取当前课程版本（仅用于校验）。 */
 export function canonicalCurriculumVersion() {
-  const file = path.join(CURRICULUM_DIR, 'xiaohe.curriculum.json')
+  const file = path.join(SCHEME_DIR, 'xiaohe', 'curriculum.json')
   if (!fs.existsSync(file)) return null
   return readJSON(file).dataVersion ?? null
 }

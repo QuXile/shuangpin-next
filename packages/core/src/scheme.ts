@@ -3,10 +3,9 @@
  *
  * 判题语义（权威）：
  *   1) 零声母音节优先 → zeroInitial 的整段键序列；
- *   2) 否则命中整音节 overrides → override 的整段键序列（替代组合展开）；
- *   3) 否则 accepted = initials[声母] × finals[韵母] 的笛卡尔积；
- *      当韵母 = u 且声母 ∈ {j,q,x,y} 时额外并入 initials[声母] × finals[v]
- *      （j/q/x/y + ü 的 ü 键容错；主键仍取 U 键，因为全拼写作 u）；
+ *   2) 否则 accepted = 推荐码 ∪ 兼容编码 ∪（initials[声母] × finals[韵母] 的笛卡尔积）；
+ *      兼容编码命中即成功，未命中继续回退组合；
+ *   3) 组合规则：initials[声母] × finals[韵母]；
  *   4) 输入与任一 accepted 序列完全相等即正确。
  *
  * 只做正向判题（音节 → 键序列），不做键序列 → 音节反查（大量同码方案）。
@@ -21,7 +20,7 @@ import type {
   SchemeEngine,
   SyllableSpec,
 } from './types.ts'
-import { JQXY, parseAtomId } from './pinyin.ts'
+import { parseAtomId } from './pinyin.ts'
 
 const KEYBOARD_ROWS = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm']
 
@@ -34,7 +33,7 @@ function lowerKeys(values: readonly string[] | undefined): string[] {
   return out
 }
 
-/** 整段键序列数组（zeroInitial / overrides）→ 字符数组序列（去重、保序） */
+/** 整段键序列数组（zeroInitial / recommended / compatCodes）→ 字符数组序列（去重、保序） */
 function sequencesOf(values: readonly string[] | undefined): string[][] {
   if (!values || values.length === 0) return []
   const seen = new Set<string>()
@@ -91,12 +90,6 @@ export function freeAtomsOf(def: SchemeDef): FreeAtomSets {
 
 export function createSchemeEngine(def: SchemeDef): SchemeEngine {
   const { initials, finals, zeroInitial } = def
-  const overrides = def.overrides ?? {}
-
-  function overrideFor(syl: SyllableSpec): string[][] | null {
-    const matched = sequencesOf(overrides[`${syl.initial}${syl.final}`])
-    return matched.length > 0 ? matched : null
-  }
 
   function combinationOf(initialKeys: readonly string[], finalKeys: readonly string[]): string[][] {
     const out: string[][] = []
@@ -106,29 +99,44 @@ export function createSchemeEngine(def: SchemeDef): SchemeEngine {
     return out
   }
 
-  function acceptedSequences(syl: SyllableSpec): string[][] {
-    if (isZeroSyllable(syl)) {
-      // 零声母优先；数据缺口返回空数组（由上层显式报错），不做组合兜底
-      return sequencesOf(zeroInitial[syl.final])
-    }
-    const override = overrideFor(syl)
-    if (override) return override
+  function syllableKey(syl: SyllableSpec): string {
+    return isZeroSyllable(syl) ? syl.final : `${syl.initial}${syl.final}`
+  }
+
+  function recommendedOf(syl: SyllableSpec): string[][] {
+    const recommended = def.recommended?.[syllableKey(syl)]
+    return recommended ? sequencesOf([recommended]) : []
+  }
+
+  function compatOf(syl: SyllableSpec): string[][] {
+    return sequencesOf(def.compatCodes?.[syllableKey(syl)])
+  }
+
+  function compositionOf(syl: SyllableSpec): string[][] {
+    if (isZeroSyllable(syl)) return sequencesOf(zeroInitial[syl.final])
     const initialKeys = lowerKeys(initials[syl.initial])
     const finalKeys = lowerKeys(finals[syl.final])
     if (initialKeys.length === 0 || finalKeys.length === 0) return []
-    const sequences = combinationOf(initialKeys, finalKeys)
-    // j/q/x/y + ü：全拼写作 u，主键用 U；方案 ü 键（finals.v）作为容忍多解
-    if (JQXY.has(syl.initial) && syl.final === 'u') {
-      sequences.push(...combinationOf(initialKeys, lowerKeys(finals['v'])))
-    }
-    return sequencesOf(sequences.map((sequence) => sequence.join('')))
+    return sequencesOf(combinationOf(initialKeys, finalKeys).map((sequence) => sequence.join('')))
+  }
+
+  function acceptedSequences(syl: SyllableSpec): string[][] {
+    // 顺序：推荐码 → 额外特殊码 → 基础组合；去重保序。
+    const merged = [
+      ...recommendedOf(syl),
+      ...compatOf(syl),
+      ...compositionOf(syl),
+    ]
+    return sequencesOf(merged.map((sequence) => sequence.join('')))
   }
 
   function primarySequence(syl: SyllableSpec): string[] {
-    const override = overrideFor(syl)
-    if (override) return override[0] ?? []
-    const accepted = acceptedSequences(syl)
-    return accepted[0] ?? []
+    const recommended = recommendedOf(syl)
+    if (recommended[0]) return recommended[0]
+    const compat = compatOf(syl)
+    if (compat[0]) return compat[0]
+    const composition = compositionOf(syl)
+    return composition[0] ?? []
   }
 
   function judge(input: string[] | string, syl: SyllableSpec): boolean {

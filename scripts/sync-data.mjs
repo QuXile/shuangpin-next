@@ -4,7 +4,7 @@
  *
  * 同步规则：
  *   - 先写临时目录，全部成功后再整体替换，失败不会留下半成品；
- *   - 同步 schemes(6) + curriculum(6) + packages + 统一 Lexicon + manifest.json；
+ *   - 同步 schemes/curriculum 源视图 + 统一 Lexicon + 运行时 packages + manifest.json；
  *   - manifest = { generatedAt, versions:{curriculum,lexicon}, defaultScheme, courses, files:[{file,bytes}] }。
  *
  * 用法：node scripts/sync-data.mjs
@@ -12,10 +12,8 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import {
-  CURRICULUM_DIR,
   CURRICULUM_INDEX_FILE,
   LEXICON_FILE,
-  PACKAGES_DIR,
   PUBLIC_DATA_DIR,
   SCHEME_DIR,
   SCHEME_INDEX_FILE,
@@ -36,7 +34,6 @@ function walkFiles(dir, base = '') {
 }
 
 function buildFilePlan() {
-  buildSchemePackages()
   const schemeIndex = readJSON(SCHEME_INDEX_FILE)
   const curriculumIndex = readJSON(CURRICULUM_INDEX_FILE)
   const courses = curriculumIndex.schemes.map((scheme) => scheme.schemeId)
@@ -52,19 +49,16 @@ function buildFilePlan() {
   add(SCHEME_INDEX_FILE, 'schemes/index.json')
   add(CURRICULUM_INDEX_FILE, 'curriculum/index.json')
   for (const schemeId of courses) {
-    add(path.join(SCHEME_DIR, `${schemeId}.json`), `schemes/${schemeId}.json`)
-    add(path.join(CURRICULUM_DIR, `${schemeId}.curriculum.json`), `curriculum/${schemeId}.curriculum.json`)
+    add(path.join(SCHEME_DIR, schemeId, 'scheme.json'), `schemes/${schemeId}.json`)
+    add(path.join(SCHEME_DIR, schemeId, 'curriculum.json'), `curriculum/${schemeId}.curriculum.json`)
   }
   add(LEXICON_FILE, 'lexicon/lexicon.json')
-  for (const rel of walkFiles(PACKAGES_DIR)) {
-    add(path.join(PACKAGES_DIR, rel), `packages/${rel}`)
-  }
   return {
     plan,
     defaultScheme,
     courses,
     versions: {
-      curriculum: readJSON(path.join(CURRICULUM_DIR, 'xiaohe.curriculum.json')).dataVersion,
+      curriculum: readJSON(path.join(SCHEME_DIR, 'xiaohe', 'curriculum.json')).dataVersion,
       lexicon: readJSON(LEXICON_FILE).dataVersion,
     },
   }
@@ -74,13 +68,15 @@ function main() {
   const { plan, defaultScheme, courses, versions } = buildFilePlan()
   let files = []
   replaceDirAtomically(PUBLIC_DATA_DIR, (tmpDir) => {
-    files = []
     for (const entry of plan) {
       const target = path.join(tmpDir, entry.relOut)
       fs.mkdirSync(path.dirname(target), { recursive: true })
       fs.copyFileSync(entry.srcFile, target)
-      files.push({ file: entry.relOut, bytes: fs.statSync(target).size })
     }
+    buildSchemePackages(path.join(tmpDir, 'packages'))
+    files = walkFiles(tmpDir)
+      .filter((file) => file !== 'manifest.json')
+      .map((file) => ({ file, bytes: fs.statSync(path.join(tmpDir, file)).size }))
     writeJSON(path.join(tmpDir, 'manifest.json'), {
       generatedAt: new Date().toISOString(),
       versions,

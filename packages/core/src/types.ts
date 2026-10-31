@@ -77,8 +77,10 @@ export interface SchemeDef {
   finals: Record<string, string[]>
   /** 12 个零声母音节 → 完整键序列 */
   zeroInitial: Record<string, string[]>
-  /** 整音节覆盖（键道等特殊拼写、C 双拼整音节码） */
-  overrides?: Record<string, string[]>
+  /** 音节的推荐/标答键序列（完整音节 key → 完整键序列） */
+  recommended?: Record<string, string>
+  /** 推荐码之外的额外接受序列（完整音节 key → 完整键序列数组） */
+  compatCodes?: Record<string, string[]>
   umlautNote?: string
   sameKeyGroups?: SameKeyGroup[]
   source?: { repo?: string; file?: string; note?: string }
@@ -318,6 +320,8 @@ export interface SessionStats {
 
 export interface SessionState {
   words: SessionWordState[]
+  /** true：Hero/课程只接受主键序列；练习场保持多解容错 */
+  strictPrimary?: boolean
   index: number
   phase: SessionPhase
   startedAt: number
@@ -328,6 +332,8 @@ export interface SessionState {
 export interface SessionOptions {
   words: PracticeWord[]
   now?: number
+  /** true：只接受主键序列，不接受特殊/组合别名 */
+  strictPrimary?: boolean
 }
 
 export interface KeyResult {
@@ -395,7 +401,8 @@ export interface SchemeSummary {
     initials?: { total?: number; free?: number; learn?: number }
     finals?: { total?: number; free?: number; learn?: number }
     zeroInitial?: { total?: number; free?: number; learn?: number }
-    overrides?: { total?: number; free?: number; learn?: number }
+    recommended?: { total?: number; free?: number; learn?: number }
+    compatCodes?: { total?: number; free?: number; learn?: number }
     total?: { total?: number; free?: number; learn?: number }
   }
   course?: { supportsGuidedCourse?: boolean; courseTier?: string; reason?: string }

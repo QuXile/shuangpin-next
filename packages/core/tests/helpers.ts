@@ -38,7 +38,7 @@ const engineCache = new Map<string, SchemeEngine>()
 export function loadSchemeDef(id: string): SchemeDef {
   const cached = schemeCache.get(id)
   if (cached) return cached
-  const def = readDataJSON<SchemeDef>('schemes', `${id}.json`)
+  const def = readDataJSON<SchemeDef>('schemes', id, 'scheme.json')
   schemeCache.set(id, def)
   return def
 }
@@ -56,11 +56,11 @@ export function loadSchemeIndex(): SchemeIndexFile {
 }
 
 export function loadCurriculum(schemeId: string): Curriculum {
-  return readDataJSON<Curriculum>('curriculum', `${schemeId}.curriculum.json`)
+  return readDataJSON<Curriculum>('schemes', schemeId, 'curriculum.json')
 }
 
 export function loadCurriculumIndex(): CurriculumIndexFile {
-  return readDataJSON<CurriculumIndexFile>('curriculum', 'index.json')
+  return readDataJSON<CurriculumIndexFile>('schemes', 'curriculum-index.json')
 }
 
 export interface LexiconFile {

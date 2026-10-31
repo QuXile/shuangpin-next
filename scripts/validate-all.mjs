@@ -24,10 +24,8 @@ import {
   ZERO_INITIALS,
 } from '../packages/core/src/index.ts'
 import {
-  CURRICULUM_DIR,
   CURRICULUM_INDEX_FILE,
   DATA_DIR,
-  PACKAGES_DIR,
   PUBLIC_DATA_DIR,
   ROOT,
   SCHEME_DIR,
@@ -81,14 +79,15 @@ function validateSchemes() {
   ok(!!schemeIndex, '缺少 data/schemes/index.json')
   if (!schemeIndex) return
   const schemeFiles = fs
-    .readdirSync(SCHEME_DIR)
-    .filter((name) => name.endsWith('.json') && !['index.json', 'engine-cases.json'].includes(name))
-  ok(schemeFiles.length === 19, `方案文件数 = ${schemeFiles.length}，期望 19`)
+    .readdirSync(SCHEME_DIR, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+  ok(schemeFiles.length === 19, `方案目录数 = ${schemeFiles.length}，期望 19`)
   ok((schemeIndex.courseSupported ?? []).length === 5, `courseSupported 数量 = ${(schemeIndex.courseSupported ?? []).length}，期望 5`)
 
   const engines = new Map()
   for (const name of schemeFiles) {
-    const scheme = readDataJSON(`data/schemes/${name}`)
+    const scheme = readDataJSON(`data/schemes/${name}/scheme.json`)
     if (!scheme) continue
     try {
       const engine = createSchemeEngine(scheme)
@@ -120,8 +119,8 @@ const LESSON_FORBIDDEN = [
 ]
 
 function validateCurriculum(schemeIndex, engines) {
-  const index = readDataJSON('data/curriculum/index.json')
-  ok(!!index, '缺少 data/curriculum/index.json')
+  const index = readDataJSON('data/schemes/curriculum-index.json')
+  ok(!!index, '缺少 data/schemes/curriculum-index.json')
   if (!index) return null
   ok(index.templateVersion === TEMPLATE_VERSION, `curriculum index templateVersion = ${index.templateVersion}`)
   const supported = schemeIndex?.courseSupported ?? []
@@ -130,14 +129,14 @@ function validateCurriculum(schemeIndex, engines) {
   const totalMinutesByFile = new Map()
 
   for (const schemeId of supported) {
-    const curriculum = readDataJSON(`data/curriculum/${schemeId}.curriculum.json`)
+    const curriculum = readDataJSON(`data/schemes/${schemeId}/curriculum.json`)
     if (!curriculum) continue
     curricula.set(schemeId, curriculum)
     const fileMeta = (index.schemes ?? []).find((item) => item.schemeId === schemeId)
     ok(!!fileMeta, `课程索引缺 ${schemeId}`)
     if (fileMeta) {
       ok(fileMeta.lessonCount === curriculum.lessons.length, `${schemeId}: 索引 lessonCount 不一致`)
-      ok(fileMeta.file === `${schemeId}.curriculum.json`, `${schemeId}: 索引 file 不一致`)
+      ok(fileMeta.file === `data/schemes/${schemeId}/curriculum.json`, `${schemeId}: 索引 file 不一致`)
     }
     ok(curriculum.templateVersion === TEMPLATE_VERSION, `${schemeId}: templateVersion = ${curriculum.templateVersion}`)
     ok(curriculum.dataVersion === curriculumVersionOf(curriculum.chapters, curriculum.lessons), `${schemeId}: dataVersion 与内容不匹配`)
@@ -282,7 +281,7 @@ function validateCurriculum(schemeIndex, engines) {
         if (newAtoms.length > 1) {
           const umlautFamily = new Set(['final:v', 'final:ve', 'final:ue'])
           const allUmlaut = newAtoms.every((atom) => umlautFamily.has(atom))
-          const scheme = readDataJSON(`data/schemes/${schemeId}.json`)
+          const scheme = readDataJSON(`data/schemes/${schemeId}/scheme.json`)
           const keySets = newAtoms.map((atomId) => {
             const [type, key] = atomId.split(':')
             const table = type === 'initial' ? scheme?.initials : scheme?.finals
@@ -432,8 +431,17 @@ function validatePublicSync(versions) {
   ok(publicFiles.size === manifestFiles.size, `public 文件数 = ${publicFiles.size}，manifest 记录 ${manifestFiles.size}`)
   for (const file of manifestFiles) {
     ok(publicFiles.has(file), `manifest 记录的文件不存在：${file}`)
+    // packages 是 sync 时从 data/schemes/<id>/ 生成到 public 的产物，不要求在 data/ 有同名来源。
+    if (file.startsWith('packages/')) continue
     const publicFile = path.join(PUBLIC_DATA_DIR, file)
-    const sourceFile = path.join(DATA_DIR, file)
+    let sourceFile = path.join(DATA_DIR, file)
+    if (file === 'curriculum/index.json') sourceFile = CURRICULUM_INDEX_FILE
+    else if (file.startsWith('schemes/') && file !== 'schemes/index.json' && file.endsWith('.json')) {
+      sourceFile = path.join(SCHEME_DIR, file.slice('schemes/'.length, -'.json'.length), 'scheme.json')
+    } else if (file.startsWith('curriculum/') && file.endsWith('.curriculum.json')) {
+      const id = file.slice('curriculum/'.length, -'.curriculum.json'.length)
+      sourceFile = path.join(SCHEME_DIR, id, 'curriculum.json')
+    }
     if (!fs.existsSync(sourceFile)) {
       failures.push(`public 文件在 data/ 中无来源：${file}`)
       continue
@@ -446,18 +454,20 @@ function validatePublicSync(versions) {
   for (const file of publicFiles) {
     if (!manifestFiles.has(file)) failures.push(`public 存在未登记文件：${file}`)
   }
-  const packageIndex = readDataJSON('data/packages/index.json')
-  ok(!!packageIndex, '缺少 data/packages/index.json')
+  const packageRoot = path.join(PUBLIC_DATA_DIR, 'packages')
+  const packageIndexFile = path.join(packageRoot, 'index.json')
+  ok(exists(packageIndexFile), '缺少 public/data/packages/index.json')
+  const packageIndex = exists(packageIndexFile) ? JSON.parse(fs.readFileSync(packageIndexFile, 'utf8')) : null
   if (packageIndex) {
     const manifests = packageIndex.packages ?? []
     ok(manifests.length === 19, `方案包数 = ${manifests.length}，期望 19`)
     ok((packageIndex.courseSupported ?? []).length === 5, `方案包课程能力数 = ${(packageIndex.courseSupported ?? []).length}，期望 5`)
     for (const item of manifests) {
-      const dir = path.join(PACKAGES_DIR, item.id)
+      const dir = path.join(packageRoot, item.id)
       const packedScheme = path.join(dir, 'scheme.json')
       ok(fs.existsSync(packedScheme), `方案包缺 scheme：${item.id}`)
       ok(fs.existsSync(path.join(dir, 'manifest.json')), `方案包缺 manifest：${item.id}`)
-      const flatScheme = path.join(SCHEME_DIR, `${item.id}.json`)
+      const flatScheme = path.join(SCHEME_DIR, `${item.id}`, 'scheme.json')
       if (fs.existsSync(packedScheme) && fs.existsSync(flatScheme)) {
         ok(
           fs.readFileSync(packedScheme).equals(fs.readFileSync(flatScheme)),
@@ -467,7 +477,7 @@ function validatePublicSync(versions) {
       if (item.capabilities?.course) {
         const packedCurriculum = path.join(dir, 'curriculum.json')
         ok(fs.existsSync(packedCurriculum), `课程方案包缺 curriculum：${item.id}`)
-        const flatCurriculum = path.join(CURRICULUM_DIR, `${item.id}.curriculum.json`)
+        const flatCurriculum = path.join(SCHEME_DIR, item.id, 'curriculum.json')
         if (fs.existsSync(packedCurriculum) && fs.existsSync(flatCurriculum)) {
           ok(
             fs.readFileSync(packedCurriculum).equals(fs.readFileSync(flatCurriculum)),
@@ -508,6 +518,7 @@ const REQUIRED_DOCS = [
   'docs/SCREENSHOTS.md',
   'docs/ARCHITECTURE.md',
   'docs/DATA.md',
+  'docs/SCHEMES.md',
   'docs/RELEASE.md',
 ]
 

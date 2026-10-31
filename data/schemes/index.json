@@ -51,15 +51,16 @@
       "id": "xiaohe",
       "name": "小鹤双拼",
       "type": "compositional",
-      "file": "data/schemes/xiaohe.json",
+      "file": "data/schemes/xiaohe/scheme.json",
       "keys": {
         "initials": 23,
         "finals": 33,
         "zeroInitial": 12,
-        "overrides": 0,
         "flyingInitials": [],
         "multiKeyFinals": [],
-        "sameKeyGroups": 7
+        "sameKeyGroups": 7,
+        "recommended": 4,
+        "compatCodes": 4
       },
       "atoms": {
         "initials": {
@@ -76,11 +77,6 @@
           "total": 12,
           "free": 7,
           "learn": 5
-        },
-        "overrides": {
-          "total": 0,
-          "free": 0,
-          "learn": 0
         },
         "total": {
           "free": 33,
@@ -120,15 +116,16 @@
       "id": "ziranma",
       "name": "自然码",
       "type": "compositional",
-      "file": "data/schemes/ziranma.json",
+      "file": "data/schemes/ziranma/scheme.json",
       "keys": {
         "initials": 23,
         "finals": 33,
         "zeroInitial": 12,
-        "overrides": 0,
         "flyingInitials": [],
         "multiKeyFinals": [],
-        "sameKeyGroups": 7
+        "sameKeyGroups": 7,
+        "recommended": 4,
+        "compatCodes": 4
       },
       "atoms": {
         "initials": {
@@ -145,11 +142,6 @@
           "total": 12,
           "free": 7,
           "learn": 5
-        },
-        "overrides": {
-          "total": 0,
-          "free": 0,
-          "learn": 0
         },
         "total": {
           "free": 33,
@@ -189,17 +181,18 @@
       "id": "weiruan",
       "name": "微软双拼",
       "type": "compositional",
-      "file": "data/schemes/weiruan.json",
+      "file": "data/schemes/weiruan/scheme.json",
       "keys": {
         "initials": 23,
         "finals": 33,
         "zeroInitial": 12,
-        "overrides": 0,
         "flyingInitials": [],
         "multiKeyFinals": [
           "ue"
         ],
-        "sameKeyGroups": 6
+        "sameKeyGroups": 6,
+        "recommended": 8,
+        "compatCodes": 4
       },
       "atoms": {
         "initials": {
@@ -216,11 +209,6 @@
           "total": 12,
           "free": 0,
           "learn": 12
-        },
-        "overrides": {
-          "total": 0,
-          "free": 0,
-          "learn": 0
         },
         "total": {
           "free": 25,
@@ -260,15 +248,16 @@
       "id": "sougou",
       "name": "搜狗双拼",
       "type": "compositional",
-      "file": "data/schemes/sougou.json",
+      "file": "data/schemes/sougou/scheme.json",
       "keys": {
         "initials": 23,
         "finals": 33,
         "zeroInitial": 12,
-        "overrides": 0,
         "flyingInitials": [],
         "multiKeyFinals": [],
-        "sameKeyGroups": 6
+        "sameKeyGroups": 6,
+        "recommended": 4,
+        "compatCodes": 4
       },
       "atoms": {
         "initials": {
@@ -285,11 +274,6 @@
           "total": 12,
           "free": 0,
           "learn": 12
-        },
-        "overrides": {
-          "total": 0,
-          "free": 0,
-          "learn": 0
         },
         "total": {
           "free": 25,
@@ -329,18 +313,19 @@
       "id": "zhinengabc",
       "name": "智能ABC",
       "type": "compositional",
-      "file": "data/schemes/zhinengabc.json",
+      "file": "data/schemes/zhinengabc/scheme.json",
       "keys": {
         "initials": 23,
         "finals": 33,
         "zeroInitial": 12,
-        "overrides": 0,
         "flyingInitials": [],
         "multiKeyFinals": [
           "ve",
           "ue"
         ],
-        "sameKeyGroups": 7
+        "sameKeyGroups": 7,
+        "recommended": 10,
+        "compatCodes": 4
       },
       "atoms": {
         "initials": {
@@ -357,11 +342,6 @@
           "total": 12,
           "free": 0,
           "learn": 12
-        },
-        "overrides": {
-          "total": 0,
-          "free": 0,
-          "learn": 0
         },
         "total": {
           "free": 26,
@@ -443,15 +423,16 @@
       "id": "pinyinjiajia",
       "name": "拼音加加",
       "type": "compositional",
-      "file": "data/schemes/pinyinjiajia.json",
+      "file": "data/schemes/pinyinjiajia/scheme.json",
       "keys": {
         "initials": 23,
         "finals": 33,
         "zeroInitial": 12,
-        "overrides": 0,
         "flyingInitials": [],
         "multiKeyFinals": [],
-        "sameKeyGroups": 6
+        "sameKeyGroups": 6,
+        "recommended": 4,
+        "compatCodes": 4
       },
       "atoms": {
         "initials": {
@@ -468,11 +449,6 @@
           "total": 12,
           "free": 0,
           "learn": 12
-        },
-        "overrides": {
-          "total": 0,
-          "free": 0,
-          "learn": 0
         },
         "total": {
           "free": 26,
@@ -512,15 +488,16 @@
       "id": "ziguang",
       "name": "紫光双拼",
       "type": "compositional",
-      "file": "data/schemes/ziguang.json",
+      "file": "data/schemes/ziguang/scheme.json",
       "keys": {
         "initials": 23,
         "finals": 33,
         "zeroInitial": 12,
-        "overrides": 0,
         "flyingInitials": [],
         "multiKeyFinals": [],
-        "sameKeyGroups": 6
+        "sameKeyGroups": 6,
+        "recommended": 4,
+        "compatCodes": 4
       },
       "atoms": {
         "initials": {
@@ -537,11 +514,6 @@
           "total": 12,
           "free": 0,
           "learn": 12
-        },
-        "overrides": {
-          "total": 0,
-          "free": 0,
-          "learn": 0
         },
         "total": {
           "free": 26,
@@ -581,15 +553,16 @@
       "id": "lantian",
       "name": "蓝天双拼",
       "type": "compositional",
-      "file": "data/schemes/lantian.json",
+      "file": "data/schemes/lantian/scheme.json",
       "keys": {
         "initials": 23,
         "finals": 33,
         "zeroInitial": 12,
-        "overrides": 0,
         "flyingInitials": [],
         "multiKeyFinals": [],
-        "sameKeyGroups": 7
+        "sameKeyGroups": 7,
+        "recommended": 4,
+        "compatCodes": 4
       },
       "atoms": {
         "initials": {
@@ -606,11 +579,6 @@
           "total": 12,
           "free": 7,
           "learn": 5
-        },
-        "overrides": {
-          "total": 0,
-          "free": 0,
-          "learn": 0
         },
         "total": {
           "free": 33,
@@ -650,15 +618,16 @@
       "id": "baiyun",
       "name": "白云双拼",
       "type": "compositional",
-      "file": "data/schemes/baiyun.json",
+      "file": "data/schemes/baiyun/scheme.json",
       "keys": {
         "initials": 23,
         "finals": 33,
         "zeroInitial": 12,
-        "overrides": 0,
         "flyingInitials": [],
         "multiKeyFinals": [],
-        "sameKeyGroups": 8
+        "sameKeyGroups": 8,
+        "recommended": 4,
+        "compatCodes": 4
       },
       "atoms": {
         "initials": {
@@ -675,11 +644,6 @@
           "total": 12,
           "free": 7,
           "learn": 5
-        },
-        "overrides": {
-          "total": 0,
-          "free": 0,
-          "learn": 0
         },
         "total": {
           "free": 33,
@@ -719,15 +683,16 @@
       "id": "xiaoyue",
       "name": "小月双拼",
       "type": "compositional",
-      "file": "data/schemes/xiaoyue.json",
+      "file": "data/schemes/xiaoyue/scheme.json",
       "keys": {
         "initials": 23,
         "finals": 33,
         "zeroInitial": 12,
-        "overrides": 0,
         "flyingInitials": [],
         "multiKeyFinals": [],
-        "sameKeyGroups": 7
+        "sameKeyGroups": 7,
+        "recommended": 4,
+        "compatCodes": 4
       },
       "atoms": {
         "initials": {
@@ -744,11 +709,6 @@
           "total": 12,
           "free": 7,
           "learn": 5
-        },
-        "overrides": {
-          "total": 0,
-          "free": 0,
-          "learn": 0
         },
         "total": {
           "free": 33,
@@ -788,15 +748,16 @@
       "id": "guobiao",
       "name": "国标双拼",
       "type": "compositional",
-      "file": "data/schemes/guobiao.json",
+      "file": "data/schemes/guobiao/scheme.json",
       "keys": {
         "initials": 23,
         "finals": 33,
         "zeroInitial": 12,
-        "overrides": 0,
         "flyingInitials": [],
         "multiKeyFinals": [],
-        "sameKeyGroups": 7
+        "sameKeyGroups": 7,
+        "recommended": 4,
+        "compatCodes": 4
       },
       "atoms": {
         "initials": {
@@ -813,11 +774,6 @@
           "total": 12,
           "free": 0,
           "learn": 12
-        },
-        "overrides": {
-          "total": 0,
-          "free": 0,
-          "learn": 0
         },
         "total": {
           "free": 26,
@@ -857,17 +813,18 @@
       "id": "xiaoguan",
       "name": "开源小鹳",
       "type": "compositional",
-      "file": "data/schemes/xiaoguan.json",
+      "file": "data/schemes/xiaoguan/scheme.json",
       "keys": {
         "initials": 23,
         "finals": 33,
         "zeroInitial": 12,
-        "overrides": 0,
         "flyingInitials": [],
         "multiKeyFinals": [
           "ue"
         ],
-        "sameKeyGroups": 8
+        "sameKeyGroups": 8,
+        "recommended": 19,
+        "compatCodes": 4
       },
       "atoms": {
         "initials": {
@@ -884,11 +841,6 @@
           "total": 12,
           "free": 7,
           "learn": 5
-        },
-        "overrides": {
-          "total": 0,
-          "free": 0,
-          "learn": 0
         },
         "total": {
           "free": 33,
@@ -928,15 +880,16 @@
       "id": "xiaolang",
       "name": "小浪双拼",
       "type": "compositional",
-      "file": "data/schemes/xiaolang.json",
+      "file": "data/schemes/xiaolang/scheme.json",
       "keys": {
         "initials": 23,
         "finals": 33,
         "zeroInitial": 12,
-        "overrides": 0,
         "flyingInitials": [],
         "multiKeyFinals": [],
-        "sameKeyGroups": 8
+        "sameKeyGroups": 8,
+        "recommended": 4,
+        "compatCodes": 4
       },
       "atoms": {
         "initials": {
@@ -953,11 +906,6 @@
           "total": 12,
           "free": 4,
           "learn": 8
-        },
-        "overrides": {
-          "total": 0,
-          "free": 0,
-          "learn": 0
         },
         "total": {
           "free": 29,
@@ -1025,15 +973,16 @@
       "id": "yunbiaokuaipin",
       "name": "韵标块拼",
       "type": "compositional",
-      "file": "data/schemes/yunbiaokuaipin.json",
+      "file": "data/schemes/yunbiaokuaipin/scheme.json",
       "keys": {
         "initials": 23,
         "finals": 33,
         "zeroInitial": 12,
-        "overrides": 0,
         "flyingInitials": [],
         "multiKeyFinals": [],
-        "sameKeyGroups": 6
+        "sameKeyGroups": 6,
+        "recommended": 0,
+        "compatCodes": 0
       },
       "atoms": {
         "initials": {
@@ -1050,11 +999,6 @@
           "total": 12,
           "free": 2,
           "learn": 10
-        },
-        "overrides": {
-          "total": 0,
-          "free": 0,
-          "learn": 0
         },
         "total": {
           "free": 27,
@@ -1108,18 +1052,19 @@
       "id": "xingkong",
       "name": "星空双拼",
       "type": "compositional",
-      "file": "data/schemes/xingkong.json",
+      "file": "data/schemes/xingkong/scheme.json",
       "keys": {
         "initials": 23,
         "finals": 33,
         "zeroInitial": 12,
-        "overrides": 0,
         "flyingInitials": [],
         "multiKeyFinals": [
           "ve",
           "ue"
         ],
-        "sameKeyGroups": 8
+        "sameKeyGroups": 8,
+        "recommended": 10,
+        "compatCodes": 4
       },
       "atoms": {
         "initials": {
@@ -1136,11 +1081,6 @@
           "total": 12,
           "free": 0,
           "learn": 12
-        },
-        "overrides": {
-          "total": 0,
-          "free": 0,
-          "learn": 0
         },
         "total": {
           "free": 26,
@@ -1229,12 +1169,11 @@
       "id": "daniu",
       "name": "大牛双拼",
       "type": "hybrid",
-      "file": "data/schemes/daniu.json",
+      "file": "data/schemes/daniu/scheme.json",
       "keys": {
         "initials": 23,
         "finals": 33,
         "zeroInitial": 12,
-        "overrides": 8,
         "flyingInitials": [
           "zh",
           "sh"
@@ -1244,7 +1183,9 @@
           "ian",
           "ue"
         ],
-        "sameKeyGroups": 9
+        "sameKeyGroups": 9,
+        "recommended": 74,
+        "compatCodes": 12
       },
       "atoms": {
         "initials": {
@@ -1262,15 +1203,10 @@
           "free": 0,
           "learn": 12
         },
-        "overrides": {
-          "total": 8,
-          "free": 0,
-          "learn": 8
-        },
         "total": {
           "free": 26,
-          "learn": 50,
-          "total": 76
+          "learn": 42,
+          "total": 68
         }
       },
       "zeroInitialFamily": "e+键",
@@ -1305,18 +1241,19 @@
       "id": "jiandao3",
       "name": "键道双拼3",
       "type": "hybrid",
-      "file": "data/schemes/jiandao3.json",
+      "file": "data/schemes/jiandao3/scheme.json",
       "keys": {
         "initials": 23,
         "finals": 33,
         "zeroInitial": 12,
-        "overrides": 4,
         "flyingInitials": [
           "zh",
           "ch"
         ],
         "multiKeyFinals": [],
-        "sameKeyGroups": 10
+        "sameKeyGroups": 10,
+        "recommended": 43,
+        "compatCodes": 4
       },
       "atoms": {
         "initials": {
@@ -1334,15 +1271,10 @@
           "free": 0,
           "learn": 12
         },
-        "overrides": {
-          "total": 4,
-          "free": 0,
-          "learn": 4
-        },
         "total": {
           "free": 20,
-          "learn": 52,
-          "total": 72
+          "learn": 48,
+          "total": 68
         }
       },
       "zeroInitialFamily": "x+键",
@@ -1426,12 +1358,11 @@
       "id": "jiandao6",
       "name": "键道双拼6",
       "type": "hybrid",
-      "file": "data/schemes/jiandao6.json",
+      "file": "data/schemes/jiandao6/scheme.json",
       "keys": {
         "initials": 23,
         "finals": 33,
         "zeroInitial": 12,
-        "overrides": 37,
         "flyingInitials": [
           "zh",
           "ch"
@@ -1439,7 +1370,9 @@
         "multiKeyFinals": [
           "uang"
         ],
-        "sameKeyGroups": 11
+        "sameKeyGroups": 11,
+        "recommended": 47,
+        "compatCodes": 4
       },
       "atoms": {
         "initials": {
@@ -1457,15 +1390,10 @@
           "free": 0,
           "learn": 12
         },
-        "overrides": {
-          "total": 37,
-          "free": 0,
-          "learn": 37
-        },
         "total": {
           "free": 21,
-          "learn": 84,
-          "total": 105
+          "learn": 47,
+          "total": 68
         }
       },
       "zeroInitialFamily": "x+键",
@@ -1549,12 +1477,11 @@
       "id": "c",
       "name": "C双拼",
       "type": "compositional",
-      "file": "data/schemes/c.json",
+      "file": "data/schemes/c/scheme.json",
       "keys": {
         "initials": 23,
         "finals": 33,
         "zeroInitial": 11,
-        "overrides": 163,
         "flyingInitials": [
           "zh",
           "ch"
@@ -1563,7 +1490,9 @@
           "ua",
           "uo"
         ],
-        "sameKeyGroups": 6
+        "sameKeyGroups": 6,
+        "recommended": 190,
+        "compatCodes": 32
       },
       "atoms": {
         "initials": {
@@ -1581,15 +1510,10 @@
           "free": 6,
           "learn": 5
         },
-        "overrides": {
-          "total": 163,
-          "free": 0,
-          "learn": 163
-        },
         "total": {
           "free": 32,
-          "learn": 198,
-          "total": 230
+          "learn": 35,
+          "total": 67
         }
       },
       "zeroInitialFamily": "原表（与组合规则无关）",

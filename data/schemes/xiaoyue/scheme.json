@@ -1,0 +1,298 @@
+{
+  "id": "xiaoyue",
+  "name": "小月双拼",
+  "type": "compositional",
+  "initials": {
+    "b": [
+      "b"
+    ],
+    "p": [
+      "p"
+    ],
+    "m": [
+      "m"
+    ],
+    "f": [
+      "f"
+    ],
+    "d": [
+      "d"
+    ],
+    "t": [
+      "t"
+    ],
+    "n": [
+      "n"
+    ],
+    "l": [
+      "l"
+    ],
+    "g": [
+      "g"
+    ],
+    "k": [
+      "k"
+    ],
+    "h": [
+      "h"
+    ],
+    "j": [
+      "j"
+    ],
+    "q": [
+      "q"
+    ],
+    "x": [
+      "x"
+    ],
+    "zh": [
+      "v"
+    ],
+    "ch": [
+      "i"
+    ],
+    "sh": [
+      "u"
+    ],
+    "r": [
+      "r"
+    ],
+    "z": [
+      "z"
+    ],
+    "c": [
+      "c"
+    ],
+    "s": [
+      "s"
+    ],
+    "y": [
+      "y"
+    ],
+    "w": [
+      "w"
+    ]
+  },
+  "finals": {
+    "a": [
+      "a"
+    ],
+    "o": [
+      "o"
+    ],
+    "e": [
+      "e"
+    ],
+    "i": [
+      "i"
+    ],
+    "u": [
+      "u"
+    ],
+    "v": [
+      "v"
+    ],
+    "ai": [
+      "n"
+    ],
+    "ei": [
+      "w"
+    ],
+    "ui": [
+      "v"
+    ],
+    "ao": [
+      "c"
+    ],
+    "ou": [
+      "z"
+    ],
+    "iu": [
+      "q"
+    ],
+    "ie": [
+      "p"
+    ],
+    "ve": [
+      "y"
+    ],
+    "an": [
+      "s"
+    ],
+    "en": [
+      "f"
+    ],
+    "in": [
+      "b"
+    ],
+    "un": [
+      "t"
+    ],
+    "ang": [
+      "d"
+    ],
+    "eng": [
+      "g"
+    ],
+    "ing": [
+      "k"
+    ],
+    "ong": [
+      "h"
+    ],
+    "ia": [
+      "x"
+    ],
+    "iao": [
+      "m"
+    ],
+    "ian": [
+      "j"
+    ],
+    "iang": [
+      "l"
+    ],
+    "iong": [
+      "h"
+    ],
+    "ua": [
+      "x"
+    ],
+    "uo": [
+      "o"
+    ],
+    "uai": [
+      "k"
+    ],
+    "uan": [
+      "r"
+    ],
+    "uang": [
+      "l"
+    ],
+    "ue": [
+      "y"
+    ]
+  },
+  "zeroInitial": {
+    "a": [
+      "aa"
+    ],
+    "ai": [
+      "ai"
+    ],
+    "an": [
+      "an"
+    ],
+    "ang": [
+      "ad"
+    ],
+    "ao": [
+      "ao"
+    ],
+    "e": [
+      "ee"
+    ],
+    "ei": [
+      "ei"
+    ],
+    "en": [
+      "en"
+    ],
+    "eng": [
+      "eg"
+    ],
+    "er": [
+      "er"
+    ],
+    "o": [
+      "oo"
+    ],
+    "ou": [
+      "ou"
+    ]
+  },
+  "umlautNote": "j/q/x/y 与 ü 相拼时：除 initials[声母]×finals[u] 的组合外，另接受 initials[声母]×finals[v] 的组合（对应参考实现 core.js 的 jqxy+ü 补充规则）；数据结构上仍把音节记为 u/ue/un/uan 归属，ü 语义由 UI 标注。",
+  "sameKeyGroups": [
+    {
+      "key": "h",
+      "finals": [
+        "ong",
+        "iong"
+      ]
+    },
+    {
+      "key": "k",
+      "finals": [
+        "ing",
+        "uai"
+      ]
+    },
+    {
+      "key": "l",
+      "finals": [
+        "iang",
+        "uang"
+      ]
+    },
+    {
+      "key": "o",
+      "finals": [
+        "o",
+        "uo"
+      ]
+    },
+    {
+      "key": "v",
+      "finals": [
+        "v",
+        "ui"
+      ]
+    },
+    {
+      "key": "x",
+      "finals": [
+        "ia",
+        "ua"
+      ]
+    },
+    {
+      "key": "y",
+      "finals": [
+        "ve",
+        "ue"
+      ]
+    }
+  ],
+  "source": {
+    "repo": "BlueSky-07/Shuang",
+    "file": "src/scheme/xiaoyue.js",
+    "note": "从 https://github.com/BlueSky-07/Shuang（v6.0.0，commit 5a5e71e）提取键位事实；仅做数据比对与规范化，未复制其实现代码（原项目 GPL-3.0）。"
+  },
+  "notes": [
+    "参考 yun 表含非规范项 er→r，已忽略（er 属零声母音节，按 zeroInitial 的 er 键序列判题）。",
+    "同键多韵均为音位互补。",
+    "参考 yun 表含非规范项 er→[\"r\"]，已忽略（规范化只保留 33 个规范韵母）。",
+    "参考项目提示：舒适手感；常用输入法不内置。"
+  ],
+  "recommended": {
+    "ju": "ju",
+    "qu": "qu",
+    "xu": "xu",
+    "yu": "yu"
+  },
+  "compatCodes": {
+    "ju": [
+      "jv"
+    ],
+    "qu": [
+      "qv"
+    ],
+    "xu": [
+      "xv"
+    ],
+    "yu": [
+      "yv"
+    ]
+  }
+}

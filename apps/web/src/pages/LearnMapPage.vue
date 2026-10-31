@@ -318,6 +318,7 @@ useGlobalKeys(bindings)
           :rows="engine?.keyMap() ?? []"
           :special-initials="engine?.diff().learnInitials ?? []"
           :zero-initials="course.scheme?.zeroInitial"
+          :compat-codes="course.scheme?.compatCodes"
           :scheme-name="schemeName"
           @key="pressHeroKey"
         />

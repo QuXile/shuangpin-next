@@ -126,12 +126,21 @@ describe('方案引擎 · 主键与判题口径', () => {
     expect(engine.judge('a', { initial: '', final: 'a', zeroInitial: true })).toBe(false)
   })
 
-  it('键道3：jqxy+ü override 收窄组合展开（ju→jl）', () => {
+  it('键道3：ju 只有兼容编码 jl，无组合兜底', () => {
     const engine = loadEngine('jiandao3')
     const ju: SyllableSpec = { initial: 'j', final: 'u' }
     expect(engine.primarySequence(ju)).toEqual(['j', 'l'])
     expect(engine.judge('jl', ju)).toBe(true)
     expect(engine.judge('ju', ju)).toBe(false)
+  })
+
+  it('C 双拼：整音节兼容编码与组合回退同时接受（zhu → of/vf/ou/vu）', () => {
+    const engine = loadEngine('c')
+    const zhu: SyllableSpec = { initial: 'zh', final: 'u' }
+    expect(engine.primarySequence(zhu)).toEqual(['o', 'f'])
+    const accepted = engine.acceptedSequences(zhu).map((sequence) => sequence.join(''))
+    expect(accepted).toEqual(expect.arrayContaining(['of', 'vf', 'ou', 'vu']))
+    for (const sequence of ['of', 'vf', 'ou', 'vu']) expect(engine.judge(sequence, zhu), sequence).toBe(true)
   })
 
   it('大牛：飞键声母多解（sh→u/v），任一命中即正确，主键取第一个', () => {
