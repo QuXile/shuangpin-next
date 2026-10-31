@@ -16,4 +16,8 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Fetch build-time jieba dictionary
+        run: |
+          mkdir -p data/raw
+          curl -fsSL https://raw.githubusercontent.com/fxsjy/jieba/master/jieba/dict.txt -o data/raw/jieba-dict.txt
       - run: pnpm verify
