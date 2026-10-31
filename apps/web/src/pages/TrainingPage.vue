@@ -51,6 +51,7 @@ const {
   keyErrors: sessionKeyErrors,
   completedWords,
   accuracy,
+  hasStarted,
   inError,
   cpm,
   start: startSession,
@@ -1046,9 +1047,10 @@ onScopeDispose(() => {
             </button>
           </template>
 
-          <span class="session-item">已练 {{ completedWords }} {{ countUnit }}</span>
+          <span class="session-item">已练 {{ hasStarted ? completedWords : '--' }} {{ countUnit }}</span>
           <span class="session-sep" aria-hidden="true">·</span>
-          <span class="session-item">正确率 {{ accuracyPercent }}%</span>
+          <span v-if="hasStarted" class="session-item">正确率 {{ accuracyPercent }}%</span>
+          <span v-else class="session-item">正确率 --%</span>
           <template v-if="sessionHiddenCount">
             <span class="session-sep" aria-hidden="true">·</span>
             <span class="session-item session-danger" :title="sessionHiddenTitle" role="status">
@@ -1056,7 +1058,8 @@ onScopeDispose(() => {
             </span>
           </template>
           <span class="session-sep" aria-hidden="true">·</span>
-          <span class="session-item session-speed">速度 {{ liveSpeed }} WPM</span>
+          <span v-if="hasStarted" class="session-item session-speed">速度 {{ liveSpeed }} WPM</span>
+          <span v-else class="session-item">速度 -- WPM</span>
         </SessionBar>
 
         <template v-if="kind === 'drill' && session">

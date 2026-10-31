@@ -4,6 +4,7 @@
  */
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import type { MetricTier } from '@shuangpin/core'
 import IntroLesson from '@/components/intro/IntroLesson.vue'
 import StateCard from '@/components/common/StateCard.vue'
 import KeyboardDock from '@/components/keyboard/KeyboardDock.vue'
@@ -39,8 +40,10 @@ const {
   liveMessage,
   progressLabel,
   cpm,
+  hasStarted,
   accuracyPercent,
-  accuracyTarget,
+  accuracyTier,
+  speedTier,
   keyMapRows,
   highlightAtomIds,
   specialInitials,
@@ -64,9 +67,15 @@ watch(
 )
 onBeforeUnmount(() => layout.clearStageLabel())
 
-const accuracyBelowTarget = computed(
-  () => accuracyTarget.value !== null && accuracyPercent.value < accuracyTarget.value,
-)
+const accuracyBelowTarget = computed(() => hasStarted.value && accuracyTier.value?.min === null)
+const speedBelowTarget = computed(() => hasStarted.value && speedTier.value?.min === null)
+
+/** 档位 + 对应星级；只作通过底线的档位没有星级。 */
+function tierText(tier: MetricTier | null): string {
+  if (!tier) return ''
+  if (tier.stars === null) return tier.label
+  return `${tier.label} · ${tier.stars === 0 ? '0★' : '★'.repeat(tier.stars)}`
+}
 
 const introRef = ref<InstanceType<typeof IntroLesson> | null>(null)
 function onKeymapKey(letter: string): void {
@@ -151,11 +160,24 @@ function onDockBackspace(): void {
 
           <span class="session-item">{{ progressLabel }}</span>
           <span class="session-sep" aria-hidden="true">·</span>
-          <span class="session-item" :class="{ 'session-danger': accuracyBelowTarget }">
-            正确率 {{ accuracyPercent }}%<template v-if="accuracyBelowTarget"> &lt; {{ accuracyTarget }}%</template>
+          <span
+            v-if="hasStarted"
+            class="session-item"
+            :class="{ 'session-danger': accuracyBelowTarget }"
+          >
+            正确率 {{ accuracyPercent }}%<template v-if="accuracyTier">（{{ tierText(accuracyTier) }}）</template>
           </span>
+          <span v-else class="session-item">正确率 --%</span>
           <span class="session-sep" aria-hidden="true">·</span>
-          <span class="session-item session-speed">速度 {{ cpm }} WPM</span>
+          <template v-if="hasStarted">
+            <span
+              class="session-item"
+              :class="{ 'session-danger': speedBelowTarget, 'session-speed': !speedBelowTarget }"
+            >
+              速度 {{ cpm }}<template v-if="speedTier">（{{ tierText(speedTier) }}）</template><template v-else> WPM</template>
+            </span>
+          </template>
+          <span v-else class="session-item">速度 -- WPM</span>
 
           <template #right>
             <button class="session-btn" type="button" @click="retryStage">

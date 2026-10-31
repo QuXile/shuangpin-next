@@ -856,7 +856,7 @@ function validateDocsAndEntries() {
     'packages/core/src/index.ts',
   ]
   for (const rel of required) ok(exists(path.join(ROOT, rel)), `缺少入口/文档：${rel}`)
-  const screenshots = ['map-1440.png', 'tutorial-1440.png', 'live-speed.png', 'lesson-rating.png']
+  const screenshots = ['map-1440.png', 'tutorial-1440.png', 'word-practice.png', 'live-speed.png', 'lesson-rating.png']
   for (const name of screenshots) ok(exists(path.join(ROOT, 'docs/assets/impl', name)), `缺少截图 docs/assets/impl/${name}`)
   ok(!exists(path.join(ROOT, 'scripts/word-pipeline/selector.mjs')), 'selector.mjs 应已删除')
   ok(!exists(path.join(ROOT, 'scripts/schemes/extract.mjs')), 'extract.mjs 应已删除')

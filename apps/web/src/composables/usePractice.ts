@@ -14,6 +14,7 @@
 import { computed, onMounted, onScopeDispose, ref, shallowRef } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
+  accuracyTiers,
   appendSessionWords,
   buildSingleCharWords,
   buildTutorialWords,
@@ -27,7 +28,9 @@ import {
   lessonStages,
   resumeSession,
   sessionMetrics,
+  speedTiers,
   stageGate,
+  tierOf,
   type LessonDef,
   type LessonPool,
   type PassCriteriaLine,
@@ -175,6 +178,20 @@ export function usePractice() {
     return state ? sessionMetrics(state, performance.now()) : null
   })
 
+  /** 用户是否已经产生过输入；未输入时顶栏显示占位符而不是 0。 */
+  const hasStarted = computed(() => {
+    const state = session.value
+    if (!state) return false
+    const stats = state.stats
+    return (
+      state.phase === 'finished' ||
+      stats.keystrokes > 0 ||
+      stats.errors > 0 ||
+      stats.correctChars > 0 ||
+      stats.wordsCompleted > 0
+    )
+  })
+
   const gate = computed<StageGate | null>(() => {
     const currentLesson = lesson.value
     const currentStage = stage.value
@@ -188,15 +205,25 @@ export function usePractice() {
   /** 进度「已练 X/Y 词」：Y=阶段目标词数，X 封顶为 Y；无目标回退「已练 X 词」 */
   const progressLabel = computed(() => {
     const value = metrics.value
-    if (!value) return '已练 0 词'
+    if (!value) return '已练 -- 词'
     const target = gate.value?.minWords ?? 0
-    if (target <= 0) return `已练 ${value.completedWords} 词`
-    return `已练 ${Math.min(value.completedWords, target)}/${target} 词`
+    const completed = hasStarted.value ? Math.min(value.completedWords, target) : '--'
+    if (target <= 0) return `已练 ${completed} 词`
+    return `已练 ${completed}/${target} 词`
   })
   const accuracyPercent = computed(() => Math.round((metrics.value?.accuracy ?? 0) * 100))
-  const accuracyTarget = computed(() =>
-    lesson.value?.passCriteria ? Math.round(lesson.value.passCriteria.accuracy * 100) : null,
-  )
+  const accuracyTier = computed(() => {
+    if (!hasStarted.value) return null
+    const criteria = lesson.value?.passCriteria
+    return criteria ? tierOf(accuracyTiers(criteria), accuracyPercent.value) : null
+  })
+  const speedTier = computed(() => {
+    if (!hasStarted.value) return null
+    const criteria = lesson.value?.passCriteria
+    if (!criteria) return null
+    const tiers = speedTiers(criteria)
+    return tiers ? tierOf(tiers, liveCpm.cpm.value) : null
+  })
 
   /** 有限目标完成后的总结卡：统计、错误分布、评分规则；最后一场考核额外显示本次星级 */
   const endPrompt = computed<EndPromptView | null>(() => {
@@ -709,8 +736,10 @@ export function usePractice() {
     endPrompt,
     liveMessage,
     progressLabel,
+    hasStarted,
     accuracyPercent,
-    accuracyTarget,
+    accuracyTier,
+    speedTier,
     cpm: liveCpm.cpm,
     keyMapRows,
     highlightAtomIds,

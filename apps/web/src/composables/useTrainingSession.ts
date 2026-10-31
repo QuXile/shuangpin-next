@@ -52,6 +52,18 @@ export function useTrainingSession() {
   })
   const completedWords = computed(() => metrics.value?.completedWords ?? 0)
   const accuracy = computed(() => metrics.value?.accuracy ?? 0)
+  const hasStarted = computed(() => {
+    const state = session.value
+    if (!state) return false
+    const stats = state.stats
+    return (
+      state.phase === 'finished' ||
+      stats.keystrokes > 0 ||
+      stats.errors > 0 ||
+      stats.correctChars > 0 ||
+      stats.wordsCompleted > 0
+    )
+  })
   const currentCell = computed(() => currentCellKey(session.value))
   const inError = computed(() =>
     session.value ? hasInputError(session.value, tracker.value) : false,
@@ -93,6 +105,7 @@ export function useTrainingSession() {
     metrics,
     completedWords,
     accuracy,
+    hasStarted,
     currentCell,
     inError,
     cpm: liveCpm.cpm,

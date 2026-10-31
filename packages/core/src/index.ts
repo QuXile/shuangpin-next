@@ -47,7 +47,14 @@ export {
 } from './stages.ts'
 export type { StageInput, WordStageInput, TutorialInput } from './stages.ts'
 
-export { evaluateLesson, describePassCriteria } from './scoring.ts'
+export {
+  evaluateLesson,
+  describePassCriteria,
+  accuracyTiers,
+  speedTiers,
+  tierOf,
+} from './scoring.ts'
+export type { MetricTier } from './scoring.ts'
 
 export {
   filterTrainingEntries,

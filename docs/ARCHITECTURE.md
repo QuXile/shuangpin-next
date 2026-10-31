@@ -42,7 +42,7 @@ packages/core/                 纯 TS 领域层（无 Vue/DOM/Node 依赖）
   src/scoring.ts               通过标准与星级
   src/atoms.ts                 知识点 ↔ 词匹配谓词
   src/random.ts                确定性 RNG / 洗牌
-  tests/                       192 个 vitest 测试（含数据契约测试，读根 data/）
+  tests/                       196 个 vitest 测试（含数据契约测试，读根 data/）
 data/schemes/                  19 套方案 + index + 判题用例（冻结事实来源）
 data/curriculum/               5 套课程（每套 40 课，模板 1.0.0）
 data/pools/                    40 课词池 + index
@@ -64,7 +64,7 @@ docs/assets/impl/              界面截图
 ```bash
 pnpm install
 pnpm dev       # http://127.0.0.1:5199/ （dev 会先 sync 数据）
-pnpm verify    # core typecheck + web typecheck + 192 tests + build + validate
+pnpm verify    # core typecheck + web typecheck + 196 tests + build + validate
 pnpm validate  # node scripts/validate-all.mjs
 ```
 
@@ -229,7 +229,7 @@ dataVersion = "words-"      + sha256(dictSha | pinyin-pro 版本 | 过滤参数 
 
 - 单字 / 半遮挡词阶段：完成词数达到 `stageMinWords` 即可继续（只作最低量要求，不卡正确率）；
 - 全遮挡考核阶段：除词数门槛外，还必须达到本课 `passCriteria`（正确率 ≥85%；复习课附加最低速度 20 WPM，速度课/通关课再加各自的速度门槛）。达标后可自由选择继续练习或完成本课。
-- 顶层操作条中央是练习数据胶囊：`已练 X/Y 词 · 正确率 N%（低于门槛时显示 < M%）· 速度 N WPM`；左右分别为上一阶段、重新开始与主操作；阶段名不再重复在操作条中。
+- 顶层操作条中央是练习数据胶囊：`已练 X/Y 词 · 正确率 N%（当前档位）· 速度 N（当前档位 WPM）`；未产生任何输入时三段都显示 `--`，不会先显示 0。档位由 core `accuracyTiers` / `speedTiers` 与评分配置同源计算：每档同时显示对应星级：`<85% · 0★`、`85–90% · ★`、`90–95% · ★★`、`≥95% · ★★★`。速度课/准确率+速度课按速度星级门槛四档；只有速度底线的课显示 `<20 WPM · 0★` / `≥20 WPM · ★` 两档；无速度要求则只显示原始 WPM，不给星级。左右分别为上一阶段、重新开始与主操作；阶段名不再重复在操作条中。
 
 **阶段切换与按钮语义**：
 
@@ -352,7 +352,7 @@ pnpm validate          # 版本链/同步/规模/文档入口校验
 
 ## 11. 测试
 
-`pnpm test`（`packages/core`，192 个）：
+`pnpm test`（`packages/core`，196 个）：
 
 ```text
 engine.test.ts        19 套方案 golden cases + 主键/判题/keyMap/diff

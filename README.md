@@ -4,7 +4,9 @@
 
 给已经会用全拼、想学会双拼的人。
 
-![学习地图](docs/assets/impl/map-1440.png)
+![课程详情：本课教学与评分规则](docs/assets/impl/tutorial-1440.png)
+
+![词语半遮挡练习](docs/assets/impl/word-practice.png)
 
 ## 它解决什么问题
 
