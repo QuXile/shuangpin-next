@@ -6,7 +6,7 @@
 
 - 领域规则集中在 `packages/core`：拼音、方案、判题、展示模型、选词、阶段、评分、统计；Web 只做编排与渲染。
 - 数据驱动：键位与 free / learn 划分来自 `data/schemes/*.json`（`SchemeEngine.diff()`），代码不硬编码某套方案。
-- 契约与校验：数据契约类型在 core，生成器与校验器共用 `scripts/lib/data-contract.mjs` 的 hash / 原子写工具。
+- 契约与校验：数据契约类型在 core，数据与校验器共用 `scripts/lib/data-contract.mjs` 的 hash / 原子写工具。
 
 ## 仓库结构
 
@@ -16,7 +16,7 @@ packages/core/src/    types / pinyin / scheme / practice / selector / balancedSa
                       stages / session / scoring / atoms / random / training
 packages/core/tests/  领域与数据契约测试
 apps/web/tests/       progress / trainingConfig / trainingGroups
-data/                 schemes / curriculum / packages / lexicon / raw（pools/words/training 为迁移期构建输入）
+data/                 schemes / curriculum / packages / lexicon
 scripts/              数据构建、方案打包、同步、校验、静态包启动器
 docs/                文档与 assets/impl 截图
 ```
@@ -91,8 +91,8 @@ kind      intro（入门）/ drill（新课）/ review（复习、期中、综�
 
 ## 教学备注与来源
 
-- `scripts/curriculum/content.mjs` 的 `buildLessonTips` 按课程类型、focus、方案键位与家族动态生成 tips；`data/words/anchors.json` 提供锚点（每键 8 个常用字），用于生成 `atomMeta.anchors/mnemonic`。
-- `scripts/lib/pool-examples.mjs` 仍供迁移期 build-pools / validate-all 共用；运行期示例由 `apps/web/src/lib/lessonPool.ts` 从 Lexicon 派生。
+- 课程 `atomMeta.anchors/mnemonic` 和教学示例已冻结在 curriculum 数据中；运行期示例由 `apps/web/src/lib/lessonPool.ts` 从 Lexicon 的 `syllableExamples` 派生。
+- 不再保留词表/课程生成器；Lexicon 与 curriculum 是权威数据，修改后直接校验并同步。
 
 教学备注来源（调研整理）：[shuangpin.xyz 四步学习路线](https://shuangpin.xyz/blog/start-shuangpin/)、[oroc 七日上手双拼](https://blog.oroc.top/post/double-pinyin-guide/)、[一文搞懂小鹤双拼](https://www.cnblogs.com/PeterJXL/p/18539136)、[普通话测试站前后鼻音对比](https://putonghua.szu.edu.cn/info/1014/2862.htm)。
 
@@ -100,12 +100,10 @@ kind      intro（入门）/ drill（新课）/ review（复习、期中、综�
 
 ```text
 curriculum-<12hex> = sha256(JSON.stringify({ chapters, lessons }))
-pools-<12hex>      = sha256(concat(sorted(fileName + fileContent)))
-words-<12hex>      = sha256(dictSha | pinyin-pro 版本 | 过滤参数 | count | 词条内容)
-training-<12hex>   = sha256({ schemaVersion, chars })
+lexicon-<12hex>    = sha256(Lexicon 内容)
 ```
 
-课程索引、统一 Lexicon、方案包索引与 `apps/web/public/data/manifest.json` 保存对应版本；文件格式与重建流程见[数据说明](DATA.md)。
+课程索引、统一 Lexicon、方案包索引与 `apps/web/public/data/manifest.json` 保存对应版本；数据格式与校验流程见[数据说明](DATA.md)。
 
 ## Web 应用层
 
@@ -133,7 +131,7 @@ shuangpin-next:map-scroll:<schemeId>       学习地图滚动位置（sessionSto
 
 ```text
 data/packages/<scheme>/manifest.json     能力声明（course/training/article/zeroInitial/customStages）
-                                        curriculum profile、共享字词库引用
+                                        curriculum profile、统一 Lexicon 引用
 data/packages/<scheme>/scheme.json       方案键位映射
 data/packages/<scheme>/curriculum.json   仅课程方案（standard-40）
 data/packages/index.json                 19 个包的索引

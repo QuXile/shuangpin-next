@@ -9,7 +9,6 @@
 | 安装、运行、构建 | **Node.js ≥ 24**、**pnpm 11.28.5** |
 | 本地启动 / 自测静态包 | Python 3（只用标准库） |
 | 本地打 ZIP | 系统 `zip` / 7-Zip（CI 已内置） |
-| 重新生成词库 | 可选，`data/raw/jieba-dict.txt` 缺失时构建脚本会自动下载 |
 
 Node.js 24 是硬性要求：数据脚本以 Node 原生 TypeScript 类型擦除直接 `import` `packages/core/src/*.ts`，与运行时共用同一份逻辑。用 Corepack 启用仓库声明的 pnpm：
 
@@ -25,7 +24,7 @@ pnpm install --frozen-lockfile
 pnpm dev          # http://127.0.0.1:5199
 ```
 
-`pnpm dev` 会先重建方案包并同步 `data/` 到 `apps/web/public/data/`，再启动 Vite。`apps/web/public/data/` 与 `data/raw/` 是生成物 / 原始下载文件，已在 `.gitignore` 中忽略。
+`pnpm dev` 会先重建方案包并同步 `data/` 到 `apps/web/public/data/`，再启动 Vite。`apps/web/public/data/` 是生成物，已在 `.gitignore` 中忽略。
 
 ## 常用命令
 
@@ -39,9 +38,6 @@ pnpm dev          # http://127.0.0.1:5199
 | `pnpm lint:ui` | UI 约定静态检查 |
 | `pnpm validate` | 数据 / 版本链 / 同步 / 文档校验 |
 | `pnpm verify` | typecheck + lint:ui + data:sync + test + build + validate |
-| `pnpm data:words` | 生成公共词库与记忆锚点 |
-| `pnpm data:curriculum` | 由课程模板生成 5 套课程 JSON |
-| `pnpm data:pools` | 生成 40 课词池 |
 | `pnpm data:packages` | 由扁平数据组装方案包 |
 | `pnpm data:sync` | 原子同步 `data/` 到 `apps/web/public/data/` 并写 manifest |
 
@@ -58,7 +54,7 @@ pnpm dev          # http://127.0.0.1:5199
 | 判题 / 选词 / 阶段 / 评分 | `packages/core/src/` | 领域规则只放在 core |
 | 页面与交互 | `apps/web/src/pages/`、`composables/`、`stores/` | 页面只做编排；快捷键走 `useGlobalKeys` |
 | 视觉样式 | `apps/web/src/styles/tokens.css` + `base.css` | 只用 token / `color-mix`，禁止裸 hex / rgba |
-| 词库 / 课程数据 | `data/` + `scripts/` | 重建后 `pnpm validate` |
+| 词表 / 课程数据 | `data/lexicon/`、`data/curriculum/` | 修改后 `pnpm data:sync` + `pnpm validate` |
 | 快捷键 | `apps/web/src/lib/shortcuts.ts` + 各页 `useGlobalKeys` | 帮助面板与[快捷键](SHORTCUTS.md)同步 |
 
 ## 提交前检查
@@ -78,9 +74,10 @@ CI 工作流见[发布说明](RELEASE.md)。
 
 生成数据的提交规则：
 
-- `apps/web/public/data/`、`data/raw/`、`dist/`、`release/`、`tmp/` 不入库；
-- `data/` 下的方案、课程、词池、方案包、词库、训练库入库，改动后提交重新生成的结果；
-- `data/packages/` 由 `scripts/scheme-packages/build.mjs` 生成，不要手改。
+- `apps/web/public/data/`、`dist/`、`release/`、`tmp/` 不入库；
+- `data/` 下的方案、课程、Lexicon、方案包入库；Lexicon 与 curriculum 是权威数据，改动后直接运行校验与同步；
+- `data/packages/` 由 `scripts/scheme-packages/build.mjs` 生成，不要手改；
+- 不再保留旧词池 / words.sample / training bank 或对应生成器。
 
 ## 贡献流程
 

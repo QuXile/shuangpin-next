@@ -18,12 +18,8 @@
     "typecheck": "pnpm --filter @shuangpin/core typecheck && pnpm --filter @shuangpin/web typecheck",
     "verify": "pnpm typecheck && pnpm lint:ui && pnpm data:sync && pnpm test && pnpm build && pnpm validate",
     "validate": "node scripts/validate-all.mjs",
-    "data:words": "node scripts/word-pipeline/build.mjs",
-    "data:curriculum": "node scripts/curriculum/build-curriculum.mjs",
-    "data:pools": "node scripts/word-pipeline/build-pools.mjs",
     "data:sync": "node scripts/sync-data.mjs",
     "data:packages": "node scripts/scheme-packages/build.mjs",
-    "data:lexicon": "node scripts/lexicon/build.mjs",
     "lint:ui": "node scripts/check-ui-conventions.mjs"
   },
   "devDependencies": {

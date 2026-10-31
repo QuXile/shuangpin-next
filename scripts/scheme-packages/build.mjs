@@ -1,15 +1,14 @@
 #!/usr/bin/env node
 /**
- * 方案包构建（过渡层）：
+ * 方案包构建：
  *   data/ 下的扁平生成数据 → data/packages/<scheme>/ 运行时方案包。
  *
  * 每个包包含：
- *   manifest.json    方案能力 / 课程 profile / 共享字词库引用
+ *   manifest.json    方案能力 / 课程 profile / 统一 Lexicon 引用
  *   scheme.json      方案键位映射
  *   curriculum.json  仅课程方案；完整 lessons / tips / atomMeta
  *
- * 课程词池、公共字词库、训练库保持共享，由 manifest.shared 引用，不重复打包。
- * 当前是过渡层：生成器仍写扁平文件；后续批次可把生成目标直接切到包目录。
+ * 方案包引用共享的 Lexicon，不重复打包字词数据。
  */
 import fs from 'node:fs'
 import path from 'node:path'

@@ -10,7 +10,6 @@ import type {
   CurriculumIndexFile,
   LessonDef,
   LessonPool,
-  PoolIndexFile,
   SchemeDef,
   SchemeEngine,
   SchemeIndexFile,
@@ -20,7 +19,7 @@ import type {
   WordEntry,
 } from '../src/types.ts'
 import { createSchemeEngine } from '../src/scheme.ts'
-import { splitPinyin } from '../src/pinyin.ts'
+import { FINALS, INITIALS, splitPinyin, toToneMarks } from '../src/pinyin.ts'
 import { buildPracticeWord } from '../src/practice.ts'
 
 // ── 数据读取 ──────────────────────────────────────────────────
@@ -64,16 +63,59 @@ export function loadCurriculumIndex(): CurriculumIndexFile {
   return readDataJSON<CurriculumIndexFile>('curriculum', 'index.json')
 }
 
-export function loadPoolIndex(): PoolIndexFile {
-  return readDataJSON<PoolIndexFile>('pools', 'index.json')
+export interface LexiconFile {
+  dataVersion: string
+  words: WordEntry[]
+  chars: WordEntry[]
+  syllableExamples: Record<string, { char: string; pinyin: string; pinyinTone: string; initial: string; final: string; tone?: number }>
 }
 
+export function loadLexicon(): LexiconFile {
+  return readDataJSON<LexiconFile>('lexicon', 'lexicon.json')
+}
+
+/** 与 Web 层一致的“从 Lexicon 派生当前课视图”，测试不再依赖每课词池文件。 */
 export function loadPool(lessonId: string): LessonPool {
-  return readDataJSON<LessonPool>('pools', `${lessonId}.json`)
+  const lesson = findLesson(loadCurriculum('xiaohe'), lessonId)
+  const lexicon = loadLexicon()
+  const examples: LessonPool['examples'] = []
+  const seen = new Set<string>()
+  const zeroBySyllable = new Map((lesson.zeroExamples ?? []).map((item) => [item.syllable, item]))
+  const add = (syllable: string, isZero: boolean) => {
+    if (seen.has(syllable)) return
+    const example = lexicon.syllableExamples[syllable]
+    if (example) {
+      examples.push(example as LessonPool['examples'][number])
+      seen.add(syllable)
+      return
+    }
+    if (!isZero) return
+    const zero = zeroBySyllable.get(syllable)
+    if (!zero) return
+    examples.push({
+      char: zero.char,
+      pinyin: syllable,
+      pinyinTone: zero.tone === undefined ? syllable : toToneMarks(syllable, zero.tone as 1 | 2 | 3 | 4 | 5),
+      initial: '' as LessonPool['examples'][number]['initial'],
+      final: syllable as LessonPool['examples'][number]['final'],
+      ...(zero.tone !== undefined ? { tone: zero.tone as 1 | 2 | 3 | 4 | 5 } : {}),
+    })
+    seen.add(syllable)
+  }
+  for (const atom of lesson.focusAtoms) {
+    if (atom.startsWith('initial:')) {
+      const initial = atom.slice('initial:'.length)
+      for (const final of [...FINALS, 'er']) add(`${initial}${final}`, false)
+    } else if (atom.startsWith('final:')) {
+      const final = atom.slice('final:'.length)
+      for (const initial of ['', ...INITIALS]) add(`${initial}${final}`, initial === '')
+    } else if (atom.startsWith('zero:')) add(atom.slice('zero:'.length), true)
+  }
+  return { lessonId, words: lexicon.words, chars: lexicon.chars, examples }
 }
 
 export function loadWordBank(): WordEntry[] {
-  return readDataJSON<{ words: WordEntry[] }>('words', 'words.sample.json').words
+  return loadLexicon().words
 }
 
 export function findLesson(curriculum: Curriculum, lessonId: string): LessonDef {

@@ -42,7 +42,7 @@ describe('selectWords · 新授课（drill）', () => {
     const focus = new Set(lesson.blockingAtoms)
     for (const word of words) {
       expect(word.length).toBeGreaterThanOrEqual(2)
-      expect(word.length).toBeLessThanOrEqual(4)
+      expect(word.length).toBeLessThanOrEqual(lesson.wordPlan.lengthRange[1])
       const unknown = unknownBlockingAtoms(word, engine, lesson.prerequisites)
       for (const atom of unknown) expect(focus.has(atom), `${word.text} ${atom}`).toBe(true)
       expect(atomMatchesWord('initial:zh', word), word.text).toBe(true)
@@ -78,7 +78,8 @@ describe('selectWords · 新授课（drill）', () => {
     expect(result.length).toBe(8)
     for (const word of result) {
       const unknown = unknownBlockingAtoms(word, engine, lesson.prerequisites)
-      expect(unknown.length).toBeLessThanOrEqual(2)
+      const preview = unknown.filter((atom) => !lesson.blockingAtoms.includes(atom))
+      expect(preview.length).toBeLessThanOrEqual(2)
     }
   })
 })

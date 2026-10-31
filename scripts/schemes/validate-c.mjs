@@ -191,8 +191,9 @@ function main() {
     trainingFree.initials.length > 0 && trainingFree.finals.length > 0 && trainingFree.zeroFinals.length > 0,
     'free atoms 为空，训练场不会出现范围',
   )
-  const words = read('data/words/words.sample.json').words
-  const chars = read('data/training/bank.json').chars
+  const lexicon = read('data/lexicon/lexicon.json')
+  const words = lexicon.words
+  const chars = lexicon.chars
   const allScope = { initials: [...INITIALS], finals: [...FINALS], zeroFinals: zeroKeys }
   const sampleScope = {
     initials: ['zh', 'ch', 'sh', 'b', 'p', 'm'],
