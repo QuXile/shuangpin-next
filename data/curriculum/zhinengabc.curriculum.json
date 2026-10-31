@@ -4,9 +4,9 @@
   "schemeType": "compositional",
   "version": "1.0.0",
   "templateVersion": "1.0.0",
-  "generatedAt": "2026-10-31T05:19:45.848Z",
+  "generatedAt": "2026-10-31T07:19:35.577Z",
   "supportLevel": "full",
-  "dataVersion": "curriculum-dc3ada9e9829",
+  "dataVersion": "curriculum-3e0737cec43c",
   "chapters": [
     {
       "id": "ch-intro",
@@ -799,7 +799,7 @@
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy",
-        "minCpm": 20
+        "minCpm": 45
       },
       "stageMinWords": {
         "exam": 50
@@ -1283,7 +1283,7 @@
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy",
-        "minCpm": 20
+        "minCpm": 45
       },
       "stageMinWords": {
         "exam": 50
@@ -2151,7 +2151,7 @@
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy",
-        "minCpm": 20
+        "minCpm": 45
       },
       "stageMinWords": {
         "exam": 50
@@ -2609,7 +2609,7 @@
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy",
-        "minCpm": 20
+        "minCpm": 45
       },
       "stageMinWords": {
         "exam": 50
@@ -3220,7 +3220,7 @@
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy",
-        "minCpm": 20
+        "minCpm": 45
       },
       "stageMinWords": {
         "exam": 50
@@ -3831,11 +3831,11 @@
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "speed",
-        "minCpm": 30,
+        "minCpm": 45,
         "starCpm": [
-          30,
           45,
-          60
+          60,
+          75
         ]
       },
       "stageMinWords": {
@@ -4296,7 +4296,7 @@
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy",
-        "minCpm": 20
+        "minCpm": 45
       },
       "stageMinWords": {
         "exam": 50
@@ -4823,7 +4823,7 @@
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy",
-        "minCpm": 20
+        "minCpm": 45
       },
       "stageMinWords": {
         "exam": 50
@@ -5308,7 +5308,7 @@
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy",
-        "minCpm": 20
+        "minCpm": 45
       },
       "stageMinWords": {
         "exam": 50
@@ -6155,7 +6155,7 @@
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy",
-        "minCpm": 20
+        "minCpm": 45
       },
       "stageMinWords": {
         "exam": 50
@@ -7002,11 +7002,11 @@
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "speed",
-        "minCpm": 30,
+        "minCpm": 45,
         "starCpm": [
-          30,
           45,
-          60
+          60,
+          75
         ]
       },
       "stageMinWords": {

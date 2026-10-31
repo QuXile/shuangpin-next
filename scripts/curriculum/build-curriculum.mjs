@@ -252,11 +252,11 @@ function wordPlanFor(t) {
 function passCriteriaFor(t) {
   if (t.kind === 'intro') return undefined
   // 期中/综合速度使用相同速度专题标准；通关考核另用准确率+速度双门槛
-  if (t.speed === 'mid') return { accuracy: 0.85, mode: 'speed', minCpm: 30, starCpm: [30, 45, 60] }
-  if (t.speed === 'full') return { accuracy: 0.85, mode: 'speed', minCpm: 30, starCpm: [30, 45, 60] }
+  if (t.speed === 'mid') return { accuracy: 0.85, mode: 'speed', minCpm: 45, starCpm: [45, 60, 75] }
+  if (t.speed === 'full') return { accuracy: 0.85, mode: 'speed', minCpm: 45, starCpm: [45, 60, 75] }
   if (t.kind === 'exam') return { accuracy: 0.85, mode: 'accuracy-speed', minCpm: 30, starCpm: [30, 40, 50] }
-  // 普通复习课：正确率之外，速度至少 20 WPM
-  if (t.kind === 'review') return { accuracy: 0.85, mode: 'accuracy', minCpm: 20 }
+  // 普通复习课：正确率之外，速度至少 45 WPM
+  if (t.kind === 'review') return { accuracy: 0.85, mode: 'accuracy', minCpm: 45 }
   return { accuracy: 0.85, mode: 'accuracy' }
 }
 

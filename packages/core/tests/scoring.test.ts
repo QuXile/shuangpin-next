@@ -50,36 +50,36 @@ describe('evaluateLesson · 普通准确率课（完成即通过）', () => {
 })
 
 describe('evaluateLesson · 带速度底线的复习准确率课', () => {
-  const lesson = lessonWith({ accuracy: 0.85, mode: 'accuracy', minCpm: 20 })
+  const lesson = lessonWith({ accuracy: 0.85, mode: 'accuracy', minCpm: 45 })
 
-  it('速度低于 20 WPM时不通过', () => {
-    const result = evaluateLesson(lesson, { accuracy: 1, cpm: 19, revealed: false })
+  it('速度低于 45 WPM 时不通过', () => {
+    const result = evaluateLesson(lesson, { accuracy: 1, cpm: 44, revealed: false })
     expect(result.passed).toBe(false)
     expect(result.stars).toBe(0)
     expect(result.reasons.join()).toMatch(/速度/)
-    expect(evaluateLesson(lesson, { accuracy: 1, cpm: 20, revealed: false }).passed).toBe(true)
+    expect(evaluateLesson(lesson, { accuracy: 1, cpm: 45, revealed: false }).passed).toBe(true)
   })
 
   it('达到速度底线后，星级仍按正确率', () => {
-    expect(evaluateLesson(lesson, { accuracy: 0.86, cpm: 25, revealed: false }).stars).toBe(1)
-    expect(evaluateLesson(lesson, { accuracy: 0.9, cpm: 25, revealed: false }).stars).toBe(2)
-    expect(evaluateLesson(lesson, { accuracy: 0.95, cpm: 25, revealed: false }).stars).toBe(3)
+    expect(evaluateLesson(lesson, { accuracy: 0.86, cpm: 50, revealed: false }).stars).toBe(1)
+    expect(evaluateLesson(lesson, { accuracy: 0.9, cpm: 50, revealed: false }).stars).toBe(2)
+    expect(evaluateLesson(lesson, { accuracy: 0.95, cpm: 50, revealed: false }).stars).toBe(3)
   })
 })
 
 describe('evaluateLesson · 速度训练', () => {
-  const lesson = lessonWith({ accuracy: 0.85, mode: 'speed', minCpm: 30, starCpm: [30, 45, 60] })
+  const lesson = lessonWith({ accuracy: 0.85, mode: 'speed', minCpm: 45, starCpm: [45, 60, 75] })
 
   it('通过需正确率与速度双达标（最低正确率 85%）', () => {
-    expect(evaluateLesson(lesson, { accuracy: 0.85, cpm: 30, revealed: false }).passed).toBe(true)
-    expect(evaluateLesson(lesson, { accuracy: 0.85, cpm: 29, revealed: false }).passed).toBe(false)
-    expect(evaluateLesson(lesson, { accuracy: 0.84, cpm: 60, revealed: false }).passed).toBe(false)
+    expect(evaluateLesson(lesson, { accuracy: 0.85, cpm: 45, revealed: false }).passed).toBe(true)
+    expect(evaluateLesson(lesson, { accuracy: 0.85, cpm: 44, revealed: false }).passed).toBe(false)
+    expect(evaluateLesson(lesson, { accuracy: 0.84, cpm: 75, revealed: false }).passed).toBe(false)
   })
 
-  it('星级按 starCpm：30/45/60', () => {
-    expect(evaluateLesson(lesson, { accuracy: 0.9, cpm: 30, revealed: false }).stars).toBe(1)
-    expect(evaluateLesson(lesson, { accuracy: 0.9, cpm: 45, revealed: false }).stars).toBe(2)
-    expect(evaluateLesson(lesson, { accuracy: 0.9, cpm: 60, revealed: false }).stars).toBe(3)
+  it('星级按 starCpm：45/60/75', () => {
+    expect(evaluateLesson(lesson, { accuracy: 0.9, cpm: 45, revealed: false }).stars).toBe(1)
+    expect(evaluateLesson(lesson, { accuracy: 0.9, cpm: 60, revealed: false }).stars).toBe(2)
+    expect(evaluateLesson(lesson, { accuracy: 0.9, cpm: 75, revealed: false }).stars).toBe(3)
   })
 })
 
@@ -128,21 +128,21 @@ describe('describePassCriteria', () => {
   })
 
   it('accuracy 模式带速度底线时，每档都会显示速度要求', () => {
-    const lines = describePassCriteria({ accuracy: 0.85, mode: 'accuracy', minCpm: 20 })
-    expect(lines[0]?.text).toContain('速度 ≥20 WPM')
-    expect(lines[1]?.text).toContain('速度 ≥20 WPM')
-    expect(lines[2]?.text).toContain('速度 ≥20 WPM')
+    const lines = describePassCriteria({ accuracy: 0.85, mode: 'accuracy', minCpm: 45 })
+    expect(lines[0]?.text).toContain('速度 ≥45 WPM')
+    expect(lines[1]?.text).toContain('速度 ≥45 WPM')
+    expect(lines[2]?.text).toContain('速度 ≥45 WPM')
   })
 
   it('speed 模式：1–3 星三档', () => {
     const lines = describePassCriteria({
       accuracy: 0.9,
       mode: 'speed',
-      minCpm: 30,
-      starCpm: [30, 45, 60],
+      minCpm: 45,
+      starCpm: [45, 60, 75],
     })
     expect(lines.map((line) => line.label)).toEqual(['★', '★★', '★★★'])
-    expect(lines[2]?.text).toContain('60')
+    expect(lines[2]?.text).toContain('75')
   })
 
   it('accuracy-speed 模式：1–3 星三档', () => {
@@ -159,7 +159,7 @@ describe('describePassCriteria', () => {
 
 describe('指标档位', () => {
   it('普通准确率课：正确率四档，速度底线两档', () => {
-    const criteria: PassCriteria = { accuracy: 0.85, mode: 'accuracy', minCpm: 20 }
+    const criteria: PassCriteria = { accuracy: 0.85, mode: 'accuracy', minCpm: 45 }
     const accuracy = accuracyTiers(criteria)
     expect(accuracy.map((tier) => tier.label)).toEqual(['<85%', '85–90%', '90–95%', '≥95%'])
     expect(accuracy.map((tier) => tier.stars)).toEqual([0, 1, 2, 3])
@@ -167,19 +167,19 @@ describe('指标档位', () => {
     expect(tierOf(accuracy, 85)?.label).toBe('85–90%')
     expect(tierOf(accuracy, 90)?.label).toBe('90–95%')
     expect(tierOf(accuracy, 95)?.label).toBe('≥95%')
-    expect(speedTiers(criteria)?.map((tier) => tier.label)).toEqual(['<20 WPM', '≥20 WPM'])
+    expect(speedTiers(criteria)?.map((tier) => tier.label)).toEqual(['<45 WPM', '≥45 WPM'])
     expect(speedTiers(criteria)?.map((tier) => tier.stars)).toEqual([0, 1])
   })
 
   it('速度课：正确率只保留通过底线，速度四档', () => {
-    const criteria: PassCriteria = { accuracy: 0.85, mode: 'speed', minCpm: 30, starCpm: [30, 45, 60] }
+    const criteria: PassCriteria = { accuracy: 0.85, mode: 'speed', minCpm: 45, starCpm: [45, 60, 75] }
     expect(accuracyTiers(criteria).map((tier) => tier.label)).toEqual(['<85%', '≥85%'])
     expect(accuracyTiers(criteria).map((tier) => tier.stars)).toEqual([0, 1])
     expect(speedTiers(criteria)?.map((tier) => tier.label)).toEqual([
-      '<30 WPM',
-      '30–45 WPM',
+      '<45 WPM',
       '45–60 WPM',
-      '≥60 WPM',
+      '60–75 WPM',
+      '≥75 WPM',
     ])
     expect(speedTiers(criteria)?.map((tier) => tier.stars)).toEqual([0, 1, 2, 3])
   })
