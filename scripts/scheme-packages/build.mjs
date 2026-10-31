@@ -27,9 +27,7 @@ import {
 
 const SCHEMA_VERSION = 1
 const SHARED_REFS = {
-  pools: 'shared:pools',
-  words: 'shared:words',
-  training: 'shared:training',
+  lexicon: 'shared:lexicon',
 }
 
 function buildManifest(schemeIndex, summary, curriculum) {
@@ -44,8 +42,8 @@ function buildManifest(schemeIndex, summary, curriculum) {
     id: summary.id,
     name: scheme.name ?? summary.name,
     version: '1.0.0',
-    license: 'GPL-3.0',
-    source: schemeIndex.reference ?? null,
+    license: scheme.source?.license ?? 'GPL-3.0',
+    source: scheme.source ?? schemeIndex.reference ?? null,
     capabilities: {
       course: hasCourse,
       training: true,

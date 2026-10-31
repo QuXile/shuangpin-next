@@ -12,11 +12,10 @@ const props = withDefaults(
   defineProps<{
     scheme: SchemeDef
     text: string
-    columns?: number
-    /** Hero 预留的高度行数；练习场固定 1 行，路线固定 2 行 */
-    fixedRows?: number
+    /** 练习页强制单行展示（不参与优先分行）。 */
+    singleRow?: boolean
   }>(),
-  { columns: undefined, fixedRows: 2 },
+  {},
 )
 const sound = useSoundStore()
 
@@ -68,31 +67,55 @@ const engine = computed(() => createSchemeEngine(props.scheme))
 
 const FALLBACK_CAPS = ['E', 'R', 'R', 'O', 'R'] as const
 
-const caps = computed<string[]>(() => {
-  const out: string[] = []
-  let mappedChinese = false
+interface CapSpec {
+  key: string
+  /** 同一个汉字的声母键 + 韵母键：不能在中间断开。 */
+  chineseGroup?: number
+  /** 连续英文属于同一 run：尽量不在中间断开。 */
+  latinRun?: number
+  error?: boolean
+}
+
+const MAX_CAPS = 10
+const MAX_PER_ROW = 5
+
+const capSpecs = computed<CapSpec[]>(() => {
+  const groups: CapSpec[][] = []
+  let chineseGroup = 0
+  let latinRun = 0
+  let inLatinRun = false
   for (const char of props.text) {
     if (/^[A-Za-z]$/.test(char)) {
-      out.push(char.toUpperCase())
+      if (!inLatinRun) latinRun += 1
+      inLatinRun = true
+      groups.push([{ key: char.toUpperCase(), latinRun }])
       continue
     }
+    inLatinRun = false
     const pinyin = CHAR_PINYIN[char]
     if (!pinyin) continue
     const [initial, final] = pinyin
+    const group: CapSpec[] = []
     for (const id of [atomId('initial', initial), atomId('final', final)]) {
       const key = engine.value.keysForAtom(id)[0]
-      if (key) {
-        out.push(key.toUpperCase())
-        mappedChinese = true
-      }
-      if (out.length >= 8) break
+      if (key) group.push({ key: key.toUpperCase(), chineseGroup })
     }
-    if (out.length >= 8) break
+    if (group.length > 0) {
+      chineseGroup += 1
+      groups.push(group)
+    }
   }
-  // C 双拼这类 syllable-code 方案没有可展开的声母/韵母，
-  // 若方案名里的汉字一个键都生成不出来，用 5 个 ERROR 键帽兜底。
-  return mappedChinese ? out : [...FALLBACK_CAPS]
+
+  // 最多 10 个键帽；汉字组只能整组保留，不能为了凑满 10 而劈开。
+  const out: CapSpec[] = []
+  for (const group of groups) {
+    if (out.length + group.length > MAX_CAPS) break
+    out.push(...group)
+  }
+  return out.length > 0 ? out : FALLBACK_CAPS.map((key) => ({ key, error: true }))
 })
+
+const caps = computed<string[]>(() => capSpecs.value.map((spec) => spec.key))
 
 const roundCaps = ref<string[]>([])
 const doneFlags = ref<boolean[]>([])
@@ -101,22 +124,57 @@ const leaving = ref(false)
 const roundNonce = ref(0)
 const IDLE_REFRESH_MS = 8000
 
-const isErrorCaps = computed(() => roundCaps.value.join('|') === FALLBACK_CAPS.join('|'))
+const isErrorCaps = computed(() => capSpecs.value.every((spec) => spec.error === true))
+
+/**
+ * 在 capSpecs 的相邻键之间找断点（只分两行，每行最多 5 个）：
+ * 1. 汉字两键内部绝不断；连续英文内部尽量不断。
+ * 2. 优先分行：只要存在「不切断汉字组、且不切断连续英文」的断点，就分行；
+ *    在候选里选左右差最小的位置。
+ * 3. 不允许切断连续英文时若没有候选，可退一步；若仍找不到合法断点，
+ *    不超过 5 个时保持单行，超过 5 个时从中间兜底。
+ */
+function chooseBreakIndex(
+  specs: readonly CapSpec[],
+  requirePreferred: boolean,
+): number | null {
+  const n = specs.length
+  const candidates: Array<{ index: number; soft: boolean; balance: number }> = []
+  for (let i = 1; i < n; i += 1) {
+    if (i > MAX_PER_ROW || n - i > MAX_PER_ROW) continue
+    const left = specs[i - 1]
+    const right = specs[i]
+    if (left?.chineseGroup !== undefined && left.chineseGroup === right?.chineseGroup) continue
+    const soft = left?.latinRun !== undefined && left.latinRun === right?.latinRun
+    candidates.push({ index: i, soft, balance: Math.abs(i - (n - i)) })
+  }
+  const preferred = candidates.filter((item) => !item.soft)
+  if (preferred.length === 0 && requirePreferred) return null
+  const pool = preferred.length > 0 ? preferred : candidates
+  pool.sort((a, b) => a.balance - b.balance || a.index - b.index)
+  return pool[0]?.index ?? null
+}
 
 const rows = computed<Array<{ offset: number; caps: string[] }>>(() => {
   const list = roundCaps.value
   if (list.length === 0) return []
-  const perRow = isErrorCaps.value
-    ? list.length
-    : props.columns && props.columns > 0
-      ? props.columns
-      : list.length <= 4
-        ? 2
-        : 4
-  return Array.from({ length: Math.ceil(list.length / perRow) }, (_, row) => ({
-    offset: row * perRow,
-    caps: list.slice(row * perRow, row * perRow + perRow),
-  }))
+  if (props.singleRow || isErrorCaps.value || list.length <= 1) return [{ offset: 0, caps: list }]
+
+  // 1–5 个键帽也优先分行；只有找不到不破坏约束的断点时才保持单行。
+  if (list.length <= MAX_PER_ROW) {
+    const preferredBreak = chooseBreakIndex(capSpecs.value, true)
+    if (preferredBreak === null) return [{ offset: 0, caps: list }]
+    return [
+      { offset: 0, caps: list.slice(0, preferredBreak) },
+      { offset: preferredBreak, caps: list.slice(preferredBreak) },
+    ]
+  }
+
+  const breakIndex = chooseBreakIndex(capSpecs.value, false) ?? Math.floor(list.length / 2)
+  return [
+    { offset: 0, caps: list.slice(0, breakIndex) },
+    { offset: breakIndex, caps: list.slice(breakIndex) },
+  ]
 })
 
 interface CapLayout {
@@ -264,7 +322,7 @@ defineExpose({ refreshKeycaps, pressKey })
 <template>
   <div
     class="scheme-keycaps"
-    :class="{ 'is-leaving': leaving, 'is-single-row': fixedRows <= 1 }"
+    :class="{ 'is-leaving': leaving, 'is-single-row': rows.length <= 1 }"
     :aria-label="`${text}键帽`"
   >
     <div v-for="(row, rowIndex) in rows" :key="`${rowIndex}-${roundNonce}`" class="cap-row">
@@ -293,7 +351,7 @@ defineExpose({ refreshKeycaps, pressKey })
   gap: var(--cap-gap);
   width: 100%;
   min-width: calc(var(--cap) * 3 + 24px);
-  /* 默认预留两行高度；练习场通过 fixedRows=1 固定为一行。 */
+  /* 最多两行（10 个键帽）；单行时由 .is-single-row 收紧。 */
   min-height: calc(var(--cap) * 2.16 + var(--cap-gap));
   padding: 10px;
 }

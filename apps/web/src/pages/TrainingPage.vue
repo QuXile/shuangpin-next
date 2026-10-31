@@ -38,7 +38,7 @@ import { useLayoutStore } from '@/stores/layout'
 import { useSoundStore } from '@/stores/sound'
 import { useGlobalKeys, type KeyBinding } from '@/composables/useGlobalKeys'
 import { useTrainingSession } from '@/composables/useTrainingSession'
-import { loadCommonWords, loadTrainingBank, type CommonWordsFile, type TrainingBank } from '@/lib/data'
+import { loadLexicon, type CommonWordsFile, type TrainingBank } from '@/lib/data'
 import {
   groupAllChecked,
   groupIndeterminate,
@@ -88,6 +88,7 @@ const {
 
 const tab = ref<Tab>('drill')
 const drillMode = ref<DrillMode>('word')
+const articleInputMode = ref<'input' | 'import'>('input')
 const bank = shallowRef<TrainingBank | null>(null)
 const commonWords = shallowRef<CommonWordsFile | null>(null)
 const bankStatus = ref<'loading' | 'ready' | 'error'>('loading')
@@ -128,9 +129,12 @@ const courseLoading = computed(
 const courseFailed = computed(() => !course.scheme && course.status === 'error')
 
 async function chooseScheme(id: string): Promise<void> {
-  // 与课程页方案按钮一致：重复点击也重新散落一次。
-  heroKeycapsRef.value?.refreshKeycaps()
-  if (id === course.schemeId || schemeBusy.value) return
+  // 重复点击当前方案时重新散落；真正切换方案由 SchemeKeycaps 的 watch 启动新一轮。
+  if (id === course.schemeId) {
+    heroKeycapsRef.value?.refreshKeycaps()
+    return
+  }
+  if (schemeBusy.value) return
   sound.playKey()
   schemeBusy.value = true
   schemeError.value = ''
@@ -271,6 +275,7 @@ function applyTrainingConfig(config: TrainingConfigSnapshot): void {
   const allowedZeros = new Set(options.zeroFinals)
   tab.value = config.tab
   drillMode.value = config.drillMode
+  articleInputMode.value = config.articleInputMode
   selectedInitials.value = new Set(config.selectedInitials.filter((item) => allowedInitials.has(item)))
   selectedFinals.value = new Set(config.selectedFinals.filter((item) => allowedFinals.has(item)))
   selectedZeroFinals.value = new Set(config.selectedZeroFinals.filter((item) => allowedZeros.has(item)))
@@ -425,9 +430,17 @@ async function loadBank(): Promise<void> {
   bankStatus.value = 'loading'
   bankError.value = ''
   try {
-    const [chars, words] = await Promise.all([loadTrainingBank(), loadCommonWords()])
-    bank.value = chars
-    commonWords.value = words
+    const lexicon = await loadLexicon()
+    bank.value = {
+      schemaVersion: '1',
+      dataVersion: lexicon.dataVersion,
+      chars: lexicon.chars,
+    }
+    commonWords.value = {
+      dataVersion: lexicon.dataVersion,
+      count: lexicon.words.length,
+      words: lexicon.words,
+    }
     bankStatus.value = 'ready'
   } catch (cause) {
     bankStatus.value = 'error'
@@ -440,10 +453,33 @@ onMounted(async () => {
   await loadBank()
 })
 
+function currentTrainingConfig(): TrainingConfigSnapshot {
+  return {
+    tab: tab.value,
+    drillMode: drillMode.value,
+    articleInputMode: articleInputMode.value,
+    selectedInitials: [...selectedInitials.value],
+    selectedFinals: [...selectedFinals.value],
+    selectedZeroFinals: [...selectedZeroFinals.value],
+    hiddenInitials: [...hiddenInitials.value],
+    hiddenFinals: [...hiddenFinals.value],
+    hiddenZeroFinals: [...hiddenZeroFinals.value],
+    articleHiddenInitials: [...articleHiddenInitials.value],
+    articleHiddenFinals: [...articleHiddenFinals.value],
+    articleHiddenZeroFinals: [...articleHiddenZeroFinals.value],
+  }
+}
+
+function persistTrainingConfig(): void {
+  if (!readyToPersist || !schemeId.value || !atomOptions.value) return
+  writeTrainingConfig(window.localStorage, schemeId.value, currentTrainingConfig())
+}
+
 watch(
   [
     tab,
     drillMode,
+    articleInputMode,
     selectedInitials,
     selectedFinals,
     selectedZeroFinals,
@@ -455,21 +491,7 @@ watch(
     articleHiddenZeroFinals,
   ],
   () => {
-    if (!readyToPersist || !schemeId.value || !atomOptions.value) return
-    const config: TrainingConfigSnapshot = {
-      tab: tab.value,
-      drillMode: drillMode.value,
-      selectedInitials: [...selectedInitials.value],
-      selectedFinals: [...selectedFinals.value],
-      selectedZeroFinals: [...selectedZeroFinals.value],
-      hiddenInitials: [...hiddenInitials.value],
-      hiddenFinals: [...hiddenFinals.value],
-      hiddenZeroFinals: [...hiddenZeroFinals.value],
-      articleHiddenInitials: [...articleHiddenInitials.value],
-      articleHiddenFinals: [...articleHiddenFinals.value],
-      articleHiddenZeroFinals: [...articleHiddenZeroFinals.value],
-    }
-    writeTrainingConfig(window.localStorage, schemeId.value, config)
+    persistTrainingConfig()
   },
   { flush: 'post' },
 )
@@ -1023,8 +1045,6 @@ function onFileChange(event: Event): void {
   input.value = ''
 }
 
-type ArticleInputMode = 'input' | 'import'
-const articleInputMode = ref<ArticleInputMode>('input')
 const articleFileName = ref('')
 const articleDragActive = ref(false)
 
@@ -1138,6 +1158,8 @@ useGlobalKeys(bindings)
 
 onScopeDispose(() => {
   if (pressTimer !== undefined) window.clearTimeout(pressTimer)
+  // 路由切换/离开页面时兜底写入，避免最后一次设置只停在 debounce 队列里。
+  persistTrainingConfig()
 })
 </script>
 
@@ -1157,9 +1179,8 @@ onScopeDispose(() => {
               v-if="course.scheme"
               ref="heroKeycapsRef"
               :scheme="course.scheme"
-              text="练习场"
-              :columns="6"
-              :fixed-rows="1"
+              text="训练场"
+              single-row
             />
           </template>
           <template #bottom>

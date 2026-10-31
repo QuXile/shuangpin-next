@@ -466,7 +466,13 @@ export interface LessonPool {
 
 export interface DataManifest {
   generatedAt: string
-  versions: { curriculum: string; pools: string; words: string }
+  versions: {
+    curriculum: string
+    lexicon: string
+    pools?: string
+    words?: string
+    training?: string
+  }
   defaultScheme: string
   courses: string[]
   files: { file: string; bytes: number }[]

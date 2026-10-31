@@ -730,9 +730,7 @@ function validatePublicSync(versions) {
   if (!exists(publicManifestFile)) return
   const manifest = JSON.parse(fs.readFileSync(publicManifestFile, 'utf8'))
   ok(manifest.versions?.curriculum === versions.curriculum, `manifest.versions.curriculum = ${manifest.versions?.curriculum}`)
-  ok(manifest.versions?.pools === versions.pools, `manifest.versions.pools = ${manifest.versions?.pools}`)
-  ok(manifest.versions?.words === versions.words, `manifest.versions.words = ${manifest.versions?.words}`)
-  ok(manifest.versions?.training === versions.training, `manifest.versions.training = ${manifest.versions?.training}`)
+  ok(manifest.versions?.lexicon === versions.lexicon, `manifest.versions.lexicon = ${manifest.versions?.lexicon}`)
   ok((manifest.courses ?? []).length === 5, `manifest.courses = ${(manifest.courses ?? []).length}，期望 5`)
   const schemeIndex = readDataJSON('data/schemes/index.json')
   ok(manifest.defaultScheme === schemeIndex?.defaultScheme, `manifest.defaultScheme = ${manifest.defaultScheme}`)
@@ -764,17 +762,47 @@ function validatePublicSync(versions) {
     ok((packageIndex.courseSupported ?? []).length === 5, `方案包课程能力数 = ${(packageIndex.courseSupported ?? []).length}，期望 5`)
     for (const item of manifests) {
       const dir = path.join(PACKAGES_DIR, item.id)
-      ok(fs.existsSync(path.join(dir, 'scheme.json')), `方案包缺 scheme：${item.id}`)
+      const packedScheme = path.join(dir, 'scheme.json')
+      ok(fs.existsSync(packedScheme), `方案包缺 scheme：${item.id}`)
       ok(fs.existsSync(path.join(dir, 'manifest.json')), `方案包缺 manifest：${item.id}`)
+      const flatScheme = path.join(SCHEME_DIR, `${item.id}.json`)
+      if (fs.existsSync(packedScheme) && fs.existsSync(flatScheme)) {
+        ok(
+          fs.readFileSync(packedScheme).equals(fs.readFileSync(flatScheme)),
+          `方案包与扁平 scheme 不一致：${item.id}`,
+        )
+      }
       if (item.capabilities?.course) {
-        ok(fs.existsSync(path.join(dir, 'curriculum.json')), `课程方案包缺 curriculum：${item.id}`)
+        const packedCurriculum = path.join(dir, 'curriculum.json')
+        ok(fs.existsSync(packedCurriculum), `课程方案包缺 curriculum：${item.id}`)
+        const flatCurriculum = path.join(CURRICULUM_DIR, `${item.id}.curriculum.json`)
+        if (fs.existsSync(packedCurriculum) && fs.existsSync(flatCurriculum)) {
+          ok(
+            fs.readFileSync(packedCurriculum).equals(fs.readFileSync(flatCurriculum)),
+            `方案包与扁平 curriculum 不一致：${item.id}`,
+          )
+        }
         ok(item.curriculum?.profile === 'standard-40', `课程方案 profile 异常：${item.id}`)
       } else {
         ok(item.curriculum === null, `practice-only 包不应带 curriculum：${item.id}`)
       }
     }
   }
-  ok((manifest.files ?? []).length >= 55, `manifest.files = ${(manifest.files ?? []).length}，至少应包含基础 55 个文件`)
+  const lexicon = readDataJSON('data/lexicon/lexicon.json')
+  ok(!!lexicon, '缺少 data/lexicon/lexicon.json')
+  if (lexicon) {
+    ok(lexicon.dataVersion === versions.lexicon, `lexicon.dataVersion = ${lexicon.dataVersion}`)
+    ok((lexicon.words ?? []).length >= 20000, `lexicon.words = ${(lexicon.words ?? []).length}，至少 20000 词`)
+    ok((lexicon.chars ?? []).length >= 4000, `lexicon.chars = ${(lexicon.chars ?? []).length}，至少 4000 字`)
+    ok(Object.keys(lexicon.syllableExamples ?? {}).length >= 390, 'lexicon.syllableExamples 少于 390 个音节')
+    const seen = new Set()
+    for (const word of lexicon.words ?? []) {
+      if (seen.has(word.text)) failures.push(`lexicon 词重复：${word.text}`)
+      seen.add(word.text)
+      ok(word.length >= 2 && word.length <= 5, `lexicon 词长度异常：${word.text}`)
+    }
+  }
+  ok((manifest.files ?? []).length >= 45, `manifest.files = ${(manifest.files ?? []).length}，至少应包含基础文件`)
   notes.push(`同步：public/data ${manifestFiles.size} 文件与 data/ 逐字节一致；versions=${JSON.stringify(manifest.versions)}`)
 }
 
@@ -956,9 +984,7 @@ function main() {
   const training = validateTrainingBank(anchorsDoc)
   const versions = {
     curriculum: curriculum?.xiaohe?.dataVersion,
-    pools: pools?.poolsIndex?.dataVersion,
-    words: wordsDoc?.dataVersion,
-    training: training?.dataVersion,
+    lexicon: readDataJSON('data/lexicon/lexicon.json')?.dataVersion,
   }
   validatePublicSync(versions)
   validateDocsAndEntries()

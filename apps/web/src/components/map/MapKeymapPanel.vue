@@ -121,10 +121,6 @@ onBeforeUnmount(() => {
 .keymap-stage {
   min-width: 0;
 }
-.keymap-stage :deep(.kbd-key:focus),
-.keymap-stage :deep(.kbd-key:focus-visible) {
-  outline: none;
-}
 .keymap-stage :deep(.keyboard-map) {
   width: 100%;
   max-width: 100%;

@@ -1,9 +1,183 @@
 {
   "id": "c",
   "name": "C双拼",
-  "type": "syllable-code",
-  "initials": {},
-  "finals": {},
+  "type": "compositional",
+  "initials": {
+    "b": [
+      "b"
+    ],
+    "p": [
+      "p"
+    ],
+    "m": [
+      "m"
+    ],
+    "f": [
+      "f"
+    ],
+    "d": [
+      "d"
+    ],
+    "t": [
+      "t"
+    ],
+    "n": [
+      "n"
+    ],
+    "l": [
+      "l"
+    ],
+    "g": [
+      "g"
+    ],
+    "k": [
+      "k"
+    ],
+    "h": [
+      "h"
+    ],
+    "j": [
+      "j"
+    ],
+    "q": [
+      "q"
+    ],
+    "x": [
+      "x"
+    ],
+    "zh": [
+      "o",
+      "v"
+    ],
+    "ch": [
+      "u",
+      ";"
+    ],
+    "sh": [
+      "i"
+    ],
+    "r": [
+      "r"
+    ],
+    "z": [
+      "z"
+    ],
+    "c": [
+      "c"
+    ],
+    "s": [
+      "s"
+    ],
+    "y": [
+      "y"
+    ],
+    "w": [
+      "w"
+    ]
+  },
+  "finals": {
+    "a": [
+      "a"
+    ],
+    "o": [
+      "o"
+    ],
+    "e": [
+      "e"
+    ],
+    "i": [
+      "i"
+    ],
+    "u": [
+      "u"
+    ],
+    "v": [
+      "v"
+    ],
+    "ai": [
+      "h"
+    ],
+    "ei": [
+      "s"
+    ],
+    "ui": [
+      ";"
+    ],
+    "ao": [
+      "j"
+    ],
+    "ou": [
+      "o"
+    ],
+    "iu": [
+      "q"
+    ],
+    "ie": [
+      "y"
+    ],
+    "ve": [
+      ";"
+    ],
+    "an": [
+      "n"
+    ],
+    "en": [
+      "k"
+    ],
+    "in": [
+      "t"
+    ],
+    "un": [
+      "c"
+    ],
+    "ang": [
+      "g"
+    ],
+    "eng": [
+      "d"
+    ],
+    "ing": [
+      "f"
+    ],
+    "ong": [
+      "l"
+    ],
+    "ia": [
+      "l"
+    ],
+    "iao": [
+      "j"
+    ],
+    "ian": [
+      "w"
+    ],
+    "iang": [
+      "g"
+    ],
+    "iong": [
+      "l"
+    ],
+    "ua": [
+      "a",
+      "m"
+    ],
+    "uo": [
+      "p",
+      "b"
+    ],
+    "uai": [
+      "x"
+    ],
+    "uan": [
+      "r"
+    ],
+    "uang": [
+      "z"
+    ],
+    "ue": [
+      ";"
+    ]
+  },
   "zeroInitial": {
     "a": [
       "ah"
@@ -40,671 +214,224 @@
     ]
   },
   "overrides": {
-    "fa": [
-      "fj"
-    ],
     "bang": [
       "bm"
     ],
     "bei": [
       "b;"
     ],
-    "ji": [
-      "jd"
+    "bian": [
+      "bl"
+    ],
+    "biao": [
+      "bb"
     ],
     "bin": [
       "bk"
     ],
-    "cou": [
-      "co"
-    ],
-    "cuan": [
-      "cm"
-    ],
-    "gun": [
-      "g;"
-    ],
-    "wa": [
-      "wj"
-    ],
-    "cang": [
-      "cg"
-    ],
-    "fei": [
-      "fi"
-    ],
-    "li": [
-      "ld"
-    ],
-    "jin": [
-      "jt"
-    ],
-    "chou": [
-      "uq"
-    ],
-    "chuan": [
-      "ur"
-    ],
-    "qun": [
-      "q;"
-    ],
-    "za": [
-      "zm"
-    ],
-    "tang": [
-      "tm"
-    ],
-    "gei": [
-      "gs"
-    ],
-    "mi": [
-      "mz"
-    ],
-    "lin": [
-      "lt"
-    ],
-    "dou": [
-      "do"
-    ],
-    "duan": [
-      "dm"
-    ],
-    "run": [
-      "r;"
-    ],
-    "da": [
-      "da"
-    ],
-    "wang": [
-      "wg"
-    ],
-    "hei": [
-      "hs"
-    ],
-    "ni": [
-      "nz"
-    ],
-    "min": [
-      "mt"
-    ],
-    "fou": [
-      "fo"
-    ],
-    "guan": [
-      "gm"
-    ],
-    "sun": [
-      "s;"
-    ],
-    "chang": [
-      "ug"
-    ],
-    "lei": [
-      "ls"
-    ],
-    "pi": [
-      "pe"
-    ],
-    "nin": [
-      "nt"
-    ],
-    "gou": [
-      "go"
-    ],
-    "huan": [
-      "hr"
-    ],
-    "tun": [
-      "t;"
-    ],
-    "ba": [
-      "ba"
-    ],
-    "dang": [
-      "dg"
-    ],
-    "mei": [
-      "ms"
-    ],
-    "qi": [
-      "qi"
-    ],
-    "pin": [
-      "pt"
-    ],
-    "hou": [
-      "hq"
-    ],
-    "juan": [
-      "jr"
-    ],
-    "cun": [
-      "cc"
-    ],
-    "ca": [
-      "ca"
-    ],
-    "fang": [
-      "fh"
-    ],
-    "nei": [
-      "ns"
-    ],
-    "ri": [
-      "ri"
-    ],
-    "qin": [
-      "qk"
-    ],
-    "kou": [
-      "kq"
-    ],
-    "kuan": [
-      "kr"
-    ],
-    "chun": [
-      "uc"
-    ],
-    "cha": [
-      "ua"
-    ],
-    "gang": [
-      "gg"
-    ],
-    "pei": [
-      "ps"
-    ],
-    "si": [
-      "si"
-    ],
-    "xin": [
-      "xk"
-    ],
-    "lou": [
-      "lq"
-    ],
-    "luan": [
-      "lr"
-    ],
-    "dun": [
-      "dc"
-    ],
-    "ga": [
-      "ga"
-    ],
-    "hang": [
-      "hg"
-    ],
-    "wei": [
-      "wi"
-    ],
-    "shi": [
-      "is"
-    ],
-    "yin": [
-      "ek"
-    ],
-    "mou": [
-      "mq"
-    ],
-    "nuan": [
-      "nr"
-    ],
-    "hun": [
-      "hc"
-    ],
-    "ha": [
-      "ha"
-    ],
-    "kang": [
-      "kg"
-    ],
-    "zei": [
-      "z;"
-    ],
-    "ti": [
-      "ti"
-    ],
     "bing": [
       "bp"
     ],
-    "nou": [
-      "nq"
-    ],
-    "quan": [
-      "qm"
-    ],
-    "jun": [
-      "jc"
-    ],
-    "ka": [
-      "ka"
-    ],
-    "lang": [
-      "lg"
-    ],
-    "ben": [
-      "bk"
-    ],
-    "xi": [
-      "xi"
-    ],
-    "ding": [
-      "df"
-    ],
-    "pou": [
-      "pq"
-    ],
-    "ruan": [
-      "rm"
-    ],
-    "kun": [
-      "kc"
-    ],
-    "la": [
-      "la"
-    ],
-    "mang": [
-      "mg"
-    ],
-    "cen": [
-      "ck"
-    ],
-    "yi": [
-      "ei"
-    ],
-    "jing": [
-      "jf"
-    ],
-    "rou": [
-      "ro"
-    ],
-    "suan": [
-      "sm"
-    ],
-    "lun": [
-      "lc"
-    ],
-    "ma": [
-      "ma"
-    ],
-    "nang": [
-      "ng"
-    ],
-    "chen": [
-      "ut"
-    ],
-    "zi": [
-      "zi"
-    ],
-    "ling": [
-      "lf"
-    ],
-    "sou": [
-      "so"
-    ],
-    "shuan": [
-      "ir"
-    ],
-    "shun": [
-      "ic"
-    ],
-    "na": [
-      "na"
-    ],
-    "pang": [
-      "pg"
-    ],
-    "fen": [
-      "fk"
-    ],
-    "zhi": [
-      "vi"
-    ],
-    "ming": [
-      "mf"
-    ],
-    "shou": [
-      "iq"
-    ],
-    "tuan": [
-      "tm"
-    ],
-    "xun": [
-      "xc"
-    ],
-    "pa": [
-      "pa"
-    ],
-    "rang": [
-      "rh"
-    ],
-    "gen": [
-      "gk"
-    ],
-    "dia": [
-      "dx"
-    ],
-    "ning": [
-      "nf"
-    ],
-    "tou": [
-      "to"
-    ],
-    "xuan": [
-      "xm"
-    ],
-    "yun": [
-      "yc"
-    ],
-    "sa": [
-      "sa"
-    ],
-    "sang": [
-      "sg"
-    ],
-    "hen": [
-      "hd"
-    ],
-    "xia": [
-      "xl"
-    ],
-    "ping": [
-      "pf"
-    ],
-    "you": [
-      "eo"
-    ],
-    "yuan": [
-      "em"
-    ],
-    "zun": [
-      "zc"
-    ],
-    "sha": [
-      "ia"
-    ],
-    "shang": [
-      "ig"
-    ],
-    "ken": [
-      "kd"
-    ],
-    "lia": [
-      "lx"
-    ],
-    "qing": [
-      "qp"
-    ],
-    "zou": [
-      "zo"
-    ],
-    "zuan": [
-      "zm"
-    ],
-    "zhun": [
-      "oc"
-    ],
-    "ta": [
-      "ta"
-    ],
-    "yang": [
-      "eg"
-    ],
-    "men": [
-      "md"
-    ],
-    "jia": [
-      "ja"
-    ],
-    "ting": [
-      "tp"
-    ],
-    "zhou": [
-      "oq"
-    ],
-    "zhuan": [
-      "or"
-    ],
-    "cuo": [
-      "cp"
-    ],
-    "ya": [
-      "ya"
-    ],
-    "zang": [
-      "zg"
-    ],
-    "nen": [
-      "nk"
-    ],
-    "qia": [
-      "ql"
-    ],
-    "xing": [
-      "xp"
-    ],
-    "chuang": [
-      "uz"
-    ],
-    "chuo": [
-      "up"
-    ],
-    "zha": [
-      "oa"
-    ],
-    "zhang": [
-      "og"
-    ],
-    "pen": [
-      "pk"
-    ],
-    "bian": [
-      "bl"
-    ],
-    "ying": [
-      "ep"
-    ],
-    "bu": [
-      "bu"
-    ],
-    "guang": [
-      "gz"
-    ],
-    "duo": [
-      "dp"
-    ],
-    "bai": [
-      "bh"
-    ],
-    "bao": [
-      "bj"
-    ],
-    "ren": [
-      "rk"
-    ],
-    "tian": [
-      "tk"
-    ],
-    "jiong": [
-      "js"
-    ],
-    "cu": [
-      "cu"
-    ],
-    "huang": [
-      "hz"
-    ],
-    "guo": [
-      "gp"
-    ],
-    "cai": [
-      "ch"
-    ],
-    "cao": [
-      "cj"
-    ],
-    "sen": [
-      "sk"
-    ],
-    "dian": [
-      "dw"
-    ],
-    "qiong": [
-      "ql"
-    ],
-    "chu": [
-      "uf"
-    ],
-    "kuang": [
-      "kz"
-    ],
-    "huo": [
-      "hb"
-    ],
-    "chai": [
-      "ux"
-    ],
-    "chao": [
-      "ub"
-    ],
-    "shen": [
-      "it"
-    ],
-    "jian": [
-      "jw"
-    ],
-    "xiong": [
-      "xl"
-    ],
-    "du": [
-      "du"
-    ],
-    "shuang": [
-      "iz"
-    ],
-    "kuo": [
-      "kb"
-    ],
-    "dai": [
-      "dh"
-    ],
-    "dao": [
-      "dj"
-    ],
-    "wen": [
-      "wk"
-    ],
-    "lian": [
-      "lw"
-    ],
-    "diu": [
-      "dq"
-    ],
-    "fu": [
-      "fu"
-    ],
-    "zhuang": [
-      "oz"
-    ],
-    "luo": [
-      "lb"
-    ],
-    "gai": [
-      "gh"
-    ],
-    "gao": [
-      "gj"
-    ],
-    "zen": [
-      "zk"
-    ],
-    "mian": [
-      "mw"
-    ],
-    "jiu": [
-      "jq"
-    ],
-    "gu": [
-      "gu"
-    ],
-    "jue": [
-      "jb"
-    ],
-    "nuo": [
-      "np"
-    ],
-    "hai": [
-      "hh"
-    ],
-    "hao": [
-      "hj"
-    ],
-    "zhen": [
-      "ot"
-    ],
-    "nian": [
-      "nw"
-    ],
-    "liu": [
-      "lq"
-    ],
-    "hu": [
-      "hf"
-    ],
-    "lve": [
-      "lb"
-    ],
-    "ruo": [
-      "rp"
-    ],
-    "kai": [
-      "kh"
-    ],
-    "kao": [
-      "kj"
-    ],
-    "beng": [
-      "bd"
-    ],
-    "pian": [
-      "pw"
-    ],
-    "miu": [
-      "mq"
-    ],
-    "ju": [
-      "jv"
-    ],
-    "nve": [
-      "n;"
-    ],
-    "suo": [
-      "sp"
-    ],
-    "lai": [
-      "lh"
-    ],
-    "lao": [
-      "lj"
+    "ce": [
+      "cy"
     ],
     "ceng": [
       "ck"
     ],
-    "qian": [
-      "qn"
+    "chai": [
+      "ux"
     ],
-    "niu": [
-      "nq"
+    "chan": [
+      "uw"
+    ],
+    "chao": [
+      "ub"
+    ],
+    "chen": [
+      "ut"
+    ],
+    "chi": [
+      ";i",
+      "ui"
+    ],
+    "chong": [
+      "us"
+    ],
+    "chou": [
+      "uq"
+    ],
+    "chu": [
+      "uf"
+    ],
+    "chui": [
+      "uv"
+    ],
+    "cuan": [
+      "cm"
+    ],
+    "cui": [
+      "c;",
+      "cv"
+    ],
+    "cun": [
+      "cc",
+      "c;"
+    ],
+    "de": [
+      "dk"
+    ],
+    "deng": [
+      "dd",
+      "dv"
+    ],
+    "dia": [
+      "dx",
+      "dl"
+    ],
+    "diao": [
+      "db"
+    ],
+    "duan": [
+      "dm"
+    ],
+    "dun": [
+      "dc",
+      "d;"
+    ],
+    "fa": [
+      "fj",
+      "f;"
+    ],
+    "fang": [
+      "fh"
+    ],
+    "fei": [
+      "fi"
+    ],
+    "ge": [
+      "gi"
+    ],
+    "geng": [
+      "gk"
+    ],
+    "gua": [
+      "ga"
+    ],
+    "guai": [
+      "gh"
+    ],
+    "guan": [
+      "gm"
+    ],
+    "guang": [
+      "gz",
+      "gf"
+    ],
+    "gun": [
+      "g;"
+    ],
+    "han": [
+      "hw"
+    ],
+    "hen": [
+      "hd"
+    ],
+    "hou": [
+      "hq"
+    ],
+    "hu": [
+      "hf"
+    ],
+    "hua": [
+      "ha",
+      "ht"
+    ],
+    "hui": [
+      "hv"
+    ],
+    "huo": [
+      "hb",
+      "hp"
+    ],
+    "ji": [
+      "jd"
+    ],
+    "jia": [
+      "ja"
+    ],
+    "jie": [
+      "je"
+    ],
+    "jiong": [
+      "js"
+    ],
+    "ju": [
+      "jv"
+    ],
+    "jue": [
+      "jb"
+    ],
+    "kan": [
+      "kw"
+    ],
+    "ken": [
+      "kd"
+    ],
+    "kong": [
+      "ks"
+    ],
+    "kou": [
+      "kq"
     ],
     "ku": [
       "kf"
     ],
-    "que": [
-      "q;"
+    "kua": [
+      "km",
+      "ka",
+      "kt"
     ],
-    "shuo": [
-      "ib"
+    "kui": [
+      "kv"
+    ],
+    "kuo": [
+      "kb",
+      "kp"
+    ],
+    "lai": [
+      "lh",
+      "lx"
+    ],
+    "leng": [
+      "lk"
+    ],
+    "li": [
+      "ld"
+    ],
+    "lia": [
+      "lx"
+    ],
+    "liao": [
+      "lz"
+    ],
+    "lie": [
+      "lz"
+    ],
+    "lou": [
+      "lq"
+    ],
+    "lu": [
+      "lv"
+    ],
+    "lue": [
+      "lb"
+    ],
+    "luo": [
+      "lb",
+      "lp"
+    ],
+    "lve": [
+      "lb"
     ],
     "mai": [
       "mx"
@@ -712,23 +439,27 @@
     "mao": [
       "mb"
     ],
-    "cheng": [
-      "ud"
+    "men": [
+      "md"
     ],
-    "xian": [
-      "xn"
+    "mi": [
+      "mz"
     ],
-    "qiu": [
-      "qo"
+    "miao": [
+      "mb"
     ],
-    "lu": [
-      "lv"
+    "mie": [
+      "me"
     ],
-    "xue": [
-      "x;"
+    "mo": [
+      "mq",
+      "mc"
     ],
-    "tuo": [
-      "tp"
+    "mou": [
+      "mq"
+    ],
+    "mu": [
+      "mv"
     ],
     "nai": [
       "nx"
@@ -736,507 +467,339 @@
     "nao": [
       "nb"
     ],
-    "deng": [
-      "dd"
-    ],
-    "jiang": [
-      "jg"
-    ],
-    "xiu": [
-      "xo"
-    ],
-    "mu": [
-      "mv"
-    ],
-    "yue": [
-      "e;"
-    ],
-    "zuo": [
-      "zp"
-    ],
-    "pai": [
-      "ph"
-    ],
-    "pao": [
-      "pj"
-    ],
-    "feng": [
-      "fd"
-    ],
-    "liang": [
-      "lg"
-    ],
-    "nu": [
-      "nv"
-    ],
-    "cui": [
-      "c;"
-    ],
-    "zhuo": [
-      "ob"
-    ],
-    "sai": [
-      "sh"
-    ],
-    "rao": [
-      "rj"
-    ],
-    "geng": [
-      "gk"
-    ],
-    "niang": [
-      "ng"
-    ],
-    "sui": [
-      "s;"
-    ],
-    "jv": [
-      "jv"
-    ],
-    "shai": [
-      "ix"
-    ],
-    "sao": [
-      "sj"
-    ],
-    "heng": [
-      "hd"
-    ],
-    "qiang": [
-      "qh"
-    ],
-    "pu": [
-      "pv"
-    ],
-    "zui": [
-      "z;"
-    ],
-    "lv": [
-      "lv"
-    ],
-    "tai": [
-      "th"
-    ],
-    "shao": [
-      "aj"
-    ],
-    "keng": [
-      "kd"
-    ],
-    "xiang": [
-      "xh"
-    ],
-    "mo": [
-      "mq"
-    ],
-    "qu": [
-      "qu"
-    ],
-    "chui": [
-      "uv"
-    ],
-    "wai": [
-      "wh"
-    ],
-    "tao": [
-      "tj"
-    ],
-    "leng": [
-      "lk"
-    ],
-    "biao": [
-      "bb"
-    ],
-    "po": [
-      "pq"
-    ],
-    "ru": [
-      "ru"
-    ],
-    "dui": [
-      "d;"
-    ],
-    "zai": [
-      "zh"
-    ],
-    "yao": [
-      "ej"
-    ],
-    "meng": [
-      "md"
-    ],
-    "diao": [
-      "db"
-    ],
-    "su": [
-      "su"
-    ],
-    "gui": [
-      "g;"
-    ],
-    "zhai": [
-      "ox"
-    ],
-    "zao": [
-      "zj"
-    ],
-    "neng": [
-      "nd"
-    ],
-    "jiao": [
-      "jj"
-    ],
-    "bo": [
-      "bo"
-    ],
-    "shu": [
-      "if"
-    ],
-    "hui": [
-      "hv"
-    ],
-    "ban": [
-      "bn"
-    ],
-    "zhao": [
-      "oj"
-    ],
-    "peng": [
-      "pd"
-    ],
-    "liao": [
-      "lz"
-    ],
-    "tu": [
-      "tu"
-    ],
-    "kui": [
-      "kv"
-    ],
-    "can": [
-      "cn"
-    ],
-    "ge": [
-      "gi"
-    ],
-    "reng": [
-      "rd"
-    ],
-    "miao": [
-      "mb"
-    ],
-    "wo": [
-      "wo"
-    ],
-    "wu": [
-      "wu"
-    ],
-    "rui": [
-      "r;"
-    ],
-    "chan": [
-      "uw"
-    ],
-    "ce": [
-      "cy"
-    ],
-    "seng": [
-      "sk"
+    "ni": [
+      "nz"
     ],
     "niao": [
       "nb"
     ],
-    "yo": [
-      "eo"
-    ],
-    "xu": [
-      "xu"
-    ],
-    "shui": [
-      "iv"
-    ],
-    "dan": [
-      "dn"
-    ],
-    "che": [
-      "ue"
-    ],
-    "sheng": [
-      "id"
-    ],
-    "piao": [
-      "pj"
-    ],
-    "cong": [
-      "cl"
-    ],
-    "yu": [
-      "eu"
-    ],
-    "tui": [
-      "t;"
-    ],
-    "fan": [
-      "fn"
-    ],
-    "de": [
-      "dk"
-    ],
-    "teng": [
-      "td"
-    ],
-    "qiao": [
-      "qj"
-    ],
-    "chong": [
-      "us"
-    ],
-    "zu": [
-      "zu"
-    ],
-    "zhui": [
-      "ov"
-    ],
-    "gan": [
-      "gn"
-    ],
-    "weng": [
-      "wd"
-    ],
-    "tiao": [
-      "tj"
-    ],
-    "dong": [
-      "dl"
-    ],
-    "zhu": [
-      "of"
-    ],
-    "han": [
-      "hw"
-    ],
-    "he": [
-      "he"
-    ],
-    "zeng": [
-      "zk"
-    ],
-    "xiao": [
-      "xj"
-    ],
-    "gong": [
-      "gl"
-    ],
-    "gua": [
-      "ga"
-    ],
-    "kan": [
-      "kw"
-    ],
-    "ke": [
-      "ke"
-    ],
-    "zheng": [
-      "od"
-    ],
-    "bie": [
-      "by"
-    ],
-    "hong": [
-      "hl"
-    ],
-    "hua": [
-      "ha"
-    ],
-    "lan": [
-      "ln"
-    ],
-    "le": [
-      "le"
-    ],
-    "die": [
-      "dy"
-    ],
-    "kong": [
-      "ks"
-    ],
-    "kua": [
-      "km"
-    ],
-    "man": [
-      "mn"
-    ],
-    "me": [
-      "me"
-    ],
-    "bi": [
-      "bi"
-    ],
-    "jie": [
-      "je"
-    ],
-    "long": [
-      "ll"
-    ],
-    "shua": [
-      "im"
-    ],
-    "nan": [
-      "nn"
-    ],
-    "ne": [
-      "ne"
-    ],
-    "ci": [
-      "ci"
-    ],
-    "lie": [
-      "lz"
-    ],
-    "nong": [
-      "nl"
-    ],
-    "zhua": [
-      "om"
-    ],
-    "pan": [
-      "pn"
-    ],
-    "re": [
-      "ry"
-    ],
-    "chi": [
-      ";i"
-    ],
-    "mie": [
-      "me"
-    ],
-    "rong": [
-      "rl"
-    ],
-    "chuai": [
-      "ux"
-    ],
-    "ran": [
-      "rn"
-    ],
-    "se": [
-      "sy"
-    ],
-    "di": [
-      "di"
-    ],
     "nie": [
       "ne"
     ],
-    "song": [
-      "sl"
+    "nou": [
+      "nq"
     ],
-    "guai": [
-      "gh"
+    "nu": [
+      "nv"
     ],
-    "san": [
-      "sn"
+    "pai": [
+      "ph",
+      "px"
     ],
-    "she": [
-      "ie"
+    "pi": [
+      "pe"
+    ],
+    "pia": [
+      "pa"
     ],
     "pie": [
       "pz"
     ],
-    "tong": [
-      "tl"
+    "po": [
+      "pq",
+      "pb",
+      "pc"
     ],
-    "huai": [
-      "hx"
+    "pou": [
+      "pq"
+    ],
+    "pu": [
+      "pv"
+    ],
+    "qian": [
+      "qn"
+    ],
+    "qiang": [
+      "qh"
+    ],
+    "qin": [
+      "qk"
+    ],
+    "qing": [
+      "qp"
+    ],
+    "qiu": [
+      "qo"
+    ],
+    "quan": [
+      "qm"
+    ],
+    "qun": [
+      "q;"
+    ],
+    "rang": [
+      "rh"
+    ],
+    "re": [
+      "ry"
+    ],
+    "ruan": [
+      "rm"
+    ],
+    "rui": [
+      "r;",
+      "rv"
+    ],
+    "run": [
+      "r;"
+    ],
+    "se": [
+      "sy"
+    ],
+    "seng": [
+      "sk"
+    ],
+    "shai": [
+      "ix"
     ],
     "shan": [
       "iw"
     ],
+    "shao": [
+      "aj"
+    ],
+    "shen": [
+      "it",
+      "ak"
+    ],
+    "shi": [
+      "is",
+      "ih"
+    ],
+    "shou": [
+      "iq"
+    ],
+    "shu": [
+      "if"
+    ],
+    "shua": [
+      "im",
+      "it"
+    ],
+    "shui": [
+      "iv"
+    ],
+    "shuo": [
+      "ib",
+      "ip"
+    ],
+    "suan": [
+      "sm"
+    ],
+    "sui": [
+      "s;",
+      "sv"
+    ],
+    "sun": [
+      "s;"
+    ],
+    "tang": [
+      "tm"
+    ],
     "te": [
       "ty"
     ],
-    "qie": [
-      "qy"
+    "tian": [
+      "tk"
+    ],
+    "ting": [
+      "tp"
+    ],
+    "tuan": [
+      "tm"
+    ],
+    "tun": [
+      "t;"
+    ],
+    "wa": [
+      "wj",
+      "w;"
+    ],
+    "wei": [
+      "wi"
+    ],
+    "xian": [
+      "xn"
+    ],
+    "xiang": [
+      "xh"
+    ],
+    "xin": [
+      "xk"
+    ],
+    "xing": [
+      "xp"
+    ],
+    "xiu": [
+      "xo"
+    ],
+    "xuan": [
+      "xm"
+    ],
+    "xun": [
+      "xc",
+      "x;"
+    ],
+    "yan": [
+      "en",
+      "yw"
+    ],
+    "yang": [
+      "eg"
+    ],
+    "yao": [
+      "ej"
+    ],
+    "yi": [
+      "ei"
+    ],
+    "yin": [
+      "ek"
+    ],
+    "ying": [
+      "ep"
+    ],
+    "yo": [
+      "eo"
     ],
     "yong": [
       "el"
     ],
-    "kuai": [
-      "kx"
+    "you": [
+      "eo",
+      "yq"
     ],
-    "tan": [
-      "tn"
+    "yu": [
+      "eu"
     ],
-    "ye": [
-      "ye"
+    "yuan": [
+      "em"
     ],
-    "tie": [
-      "ty"
+    "yue": [
+      "e;",
+      "yb"
     ],
-    "zong": [
-      "zl"
-    ],
-    "shuai": [
-      "ix"
-    ],
-    "wan": [
-      "wn"
+    "za": [
+      "zm"
     ],
     "ze": [
       "zy"
     ],
-    "xie": [
-      "xy"
+    "zei": [
+      "z;"
     ],
-    "zhong": [
-      "os"
+    "zeng": [
+      "zk"
     ],
-    "zhuai": [
+    "zhai": [
       "ox"
-    ],
-    "yan": [
-      "en"
-    ],
-    "zhe": [
-      "oe"
-    ],
-    "zan": [
-      "zn"
     ],
     "zhan": [
       "ow"
     ],
-    "dei": [
-      "ds"
+    "zhen": [
+      "ot"
     ],
-    "fo": [
-      "fo"
+    "zhi": [
+      "vi",
+      "oh"
     ],
-    "lo": [
-      "lo"
+    "zhong": [
+      "os"
     ],
-    "nv": [
-      "nv"
+    "zhou": [
+      "oq"
     ],
-    "chua": [
-      "ua"
+    "zhu": [
+      "of"
+    ],
+    "zhua": [
+      "om",
+      "ot"
+    ],
+    "zhuan": [
+      "or",
+      "vm"
+    ],
+    "zhui": [
+      "ov"
+    ],
+    "zhuo": [
+      "ob",
+      "op",
+      "vp",
+      "vb"
+    ],
+    "zuan": [
+      "zm"
+    ],
+    "zui": [
+      "z;",
+      "zv"
+    ],
+    "zun": [
+      "zc",
+      "z;"
     ]
   },
-  "umlautNote": "不适用：整音节码方案没有「声母×韵母」组合规则。",
-  "sameKeyGroups": [],
+  "umlautNote": "j/q/x/y + u：组合式默认主键 U；配置中的 [音节] 条目（如 ju=jv）会收窄为该整段码。",
+  "sameKeyGroups": [
+    {
+      "key": ";",
+      "finals": [
+        "ui",
+        "ve",
+        "ue"
+      ]
+    },
+    {
+      "key": "a",
+      "finals": [
+        "a",
+        "ua"
+      ]
+    },
+    {
+      "key": "g",
+      "finals": [
+        "ang",
+        "iang"
+      ]
+    },
+    {
+      "key": "j",
+      "finals": [
+        "ao",
+        "iao"
+      ]
+    },
+    {
+      "key": "l",
+      "finals": [
+        "ong",
+        "ia",
+        "iong"
+      ]
+    },
+    {
+      "key": "o",
+      "finals": [
+        "o",
+        "ou"
+      ]
+    }
+  ],
   "source": {
-    "repo": "BlueSky-07/Shuang",
-    "file": "src/scheme/c.js",
-    "note": "从 https://github.com/BlueSky-07/Shuang（v6.0.0，commit 5a5e71e）提取键位事实；仅做数据比对与规范化，未复制其实现代码（原项目 GPL-3.0）。"
+    "repo": "fcitx/fcitx5-chinese-addons",
+    "file": "im/pinyin/sp.dat.example",
+    "note": "按 commit e8d930f402e359cfd76a101ee3e46815d1331d83 的 sp.dat.example 重建（LGPL-2.1-or-later；本地快照 scripts/schemes/fcitx-c-sp.dat，仅解析键位事实，未复制实现代码）。旧整音节码回归基线来自 BlueSky-07/Shuang v6.0.0 commit 5a5e71e（GPL-3.0，仅键位事实）。",
+    "license": "LGPL-2.1-or-later"
   },
   "notes": [
-    "type=syllable-code：整音节码方案，无组合式声母/韵母表，判题完全按整音节码查表。",
-    "零声母缺 eng：参考项目未收录（dict.js 亦将「鞥」注释掉），属数据缺口而非本工程遗漏。",
-    "保留参考表中的非规范条目 jv、nou（原始数据事实，已标注）。",
-    "表内存在大量同码（不同音节共用同一键序列），仅适合自由练习/实验，不能用于「键序列→唯一音节」的逆向解码。",
-    "整音节 override 394 条（示例：fa、bang、bei、ji、bin、cou、cuan、gun、wa、cang、fei、li、jin、chou、chuan、qun…）；override 命中时替代组合展开。",
-    "参考项目提示：常用输入法不内置；查看介绍。",
-    "数据缺口：zeroInitial.eng 缺失：参考项目 BlueSky-07/Shuang src/scheme/c.js 未收录该零声母音节。"
+    "type=compositional：以 core 的 23 声母 / 33 韵母恒等映射为底，叠加 sp.dat 的非恒等映射；一音多键保留为数组（ch=u/;、zh=o/v、ua=a/m、uo=p/b）。",
+    "整音节 overrides 由 sp.dat [音节] 条目与旧整音节码回归共同决定：与组合展开等价者省略，旧 recommended 码优先并作为主键。",
+    "零声母沿用旧表 11 条（a/ai/an/ang/ao/e/ei/en/er/o/ou）；eng 暂缺，core 测试与练习侧按数据缺口处理（sp.dat 中的 eng=eg 未启用）。",
+    "旧表非规范条目 jv 由组合 j+v 自然命中；nou 保留 override（旧码 nq）；参考表中 394 条旧 override 已全部回归校验通过。",
+    "表内仍有同码（约 49 组），只建议用于自由练习 / 实验，不能用于「键序列 → 唯一音节」逆向解码。"
   ]
 }

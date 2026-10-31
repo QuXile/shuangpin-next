@@ -292,6 +292,10 @@ const keyViews = computed<KeyView[][]>(() =>
   background: var(--surface);
   border-color: var(--brand-line);
 }
+.kbd-key:focus-visible {
+  outline: 2px solid var(--brand-line);
+  outline-offset: 2px;
+}
 .kbd-key.is-pressed {
   transform: translateY(1.5px) scale(0.985);
   background: var(--pressed-bg);

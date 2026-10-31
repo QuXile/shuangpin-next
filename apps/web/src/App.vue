@@ -86,7 +86,10 @@ useGlobalKeys(() => [
     </main>
     <footer v-if="!isPractice" class="footer">
       <span>双拼 NEXT · 实现预览</span>
-      <span v-if="course.scheme">当前方案：{{ course.scheme.name }} · 课程 {{ course.lessons.length }} 节</span>
+      <span v-if="course.scheme">
+        当前方案：{{ course.scheme.name }}
+        <template v-if="!course.previewMode"> · 课程 {{ course.lessons.length }} 节</template>
+      </span>
       <span>设计文档见仓库 docs/ · 数据由 data/ 生成</span>
     </footer>
     <ShortcutHelp />

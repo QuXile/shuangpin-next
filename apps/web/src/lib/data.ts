@@ -6,14 +6,11 @@
  */
 import type {
   Curriculum,
-  LessonPool,
-  PoolIndexFile,
+  PoolExample,
   SchemeDef,
   SchemeIndexFile,
   WordEntry,
 } from '@shuangpin/core'
-
-export type { LessonPool }
 
 export interface SchemePackageManifest {
   schemaVersion: number
@@ -30,7 +27,7 @@ export interface SchemePackageManifest {
   }
   curriculum: { profile: string; version: string; file: string } | null
   data: { scheme: string }
-  shared: { pools: string; words: string; training: string }
+  shared: { lexicon?: string; pools?: string; words?: string; training?: string }
 }
 
 const cache = new Map<string, Promise<unknown>>()
@@ -68,11 +65,19 @@ export const loadCurriculum = (id: string): Promise<Curriculum> =>
 export const loadSchemePackage = (id: string): Promise<SchemePackageManifest> =>
   cached(`package:${id}`, () => getJSON<SchemePackageManifest>(`packages/${id}/manifest.json`))
 
-export const loadPoolIndex = (): Promise<PoolIndexFile> =>
-  cached('pools-index', () => getJSON<PoolIndexFile>('pools/index.json'))
+/** 统一公共词表：课程与练习场共用。 */
+export interface LexiconFile {
+  schemaVersion: number
+  dataVersion: string
+  description?: string
+  source?: Record<string, string>
+  words: WordEntry[]
+  chars: WordEntry[]
+  syllableExamples: Record<string, PoolExample>
+}
 
-export const loadLessonPool = (id: string): Promise<LessonPool> =>
-  cached(`lesson-pool:${id}`, () => getJSON<LessonPool>(`pools/${id}.json`))
+export const loadLexicon = (): Promise<LexiconFile> =>
+  cached('lexicon', () => getJSON<LexiconFile>('lexicon/lexicon.json'))
 
 /** 练习场训练库（字/词，一次加载缓存） */
 export interface TrainingBank {

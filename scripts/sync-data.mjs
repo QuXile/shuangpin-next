@@ -4,8 +4,8 @@
  *
  * 同步规则：
  *   - 先写临时目录，全部成功后再整体替换，失败不会留下半成品；
- *   - 同步 schemes(6) + curriculum(6) + pools(42) + manifest.json；
- *   - manifest = { generatedAt, versions:{curriculum,pools,words}, defaultScheme, courses, files:[{file,bytes}] }。
+ *   - 同步 schemes(6) + curriculum(6) + packages + 统一 Lexicon + manifest.json；
+ *   - manifest = { generatedAt, versions:{curriculum,lexicon}, defaultScheme, courses, files:[{file,bytes}] }。
  *
  * 用法：node scripts/sync-data.mjs
  */
@@ -14,14 +14,11 @@ import path from 'node:path'
 import {
   CURRICULUM_DIR,
   CURRICULUM_INDEX_FILE,
+  LEXICON_FILE,
   PACKAGES_DIR,
-  POOLS_DIR,
-  POOLS_INDEX_FILE,
   PUBLIC_DATA_DIR,
   SCHEME_DIR,
   SCHEME_INDEX_FILE,
-  TRAINING_BANK_FILE,
-  WORDS_FILE,
   readJSON,
   writeJSON,
   replaceDirAtomically,
@@ -42,7 +39,6 @@ function buildFilePlan() {
   buildSchemePackages()
   const schemeIndex = readJSON(SCHEME_INDEX_FILE)
   const curriculumIndex = readJSON(CURRICULUM_INDEX_FILE)
-  const poolIndex = readJSON(POOLS_INDEX_FILE)
   const courses = curriculumIndex.schemes.map((scheme) => scheme.schemeId)
   if (courses.length !== 5) throw new Error(`课程索引应为 5 套，实际 ${courses.length}`)
   const defaultScheme = schemeIndex.defaultScheme ?? courses[0]
@@ -59,25 +55,17 @@ function buildFilePlan() {
     add(path.join(SCHEME_DIR, `${schemeId}.json`), `schemes/${schemeId}.json`)
     add(path.join(CURRICULUM_DIR, `${schemeId}.curriculum.json`), `curriculum/${schemeId}.curriculum.json`)
   }
-  add(POOLS_INDEX_FILE, 'pools/index.json')
-  for (const lesson of poolIndex.lessons ?? []) {
-    add(path.join(POOLS_DIR, lesson.file), `pools/${lesson.file}`)
-  }
-  add(WORDS_FILE, 'words/words.sample.json')
-  add(TRAINING_BANK_FILE, 'training/bank.json')
+  add(LEXICON_FILE, 'lexicon/lexicon.json')
   for (const rel of walkFiles(PACKAGES_DIR)) {
     add(path.join(PACKAGES_DIR, rel), `packages/${rel}`)
   }
-  const trainingVersion = readJSON(TRAINING_BANK_FILE).dataVersion
   return {
     plan,
     defaultScheme,
     courses,
     versions: {
       curriculum: readJSON(path.join(CURRICULUM_DIR, 'xiaohe.curriculum.json')).dataVersion,
-      pools: poolIndex.dataVersion,
-      words: readJSON(WORDS_FILE).dataVersion,
-      training: trainingVersion,
+      lexicon: readJSON(LEXICON_FILE).dataVersion,
     },
   }
 }

@@ -4,10 +4,12 @@
  */
 export type TrainingTab = 'drill' | 'article'
 export type TrainingDrillMode = 'char' | 'word'
+export type TrainingArticleInputMode = 'input' | 'import'
 
 export interface TrainingConfigSnapshot {
   tab: TrainingTab
   drillMode: TrainingDrillMode
+  articleInputMode: TrainingArticleInputMode
   selectedInitials: string[]
   selectedFinals: string[]
   selectedZeroFinals: string[]
@@ -35,6 +37,7 @@ export function emptyTrainingConfig(): TrainingConfigSnapshot {
   return {
     tab: 'drill',
     drillMode: 'word',
+    articleInputMode: 'input',
     selectedInitials: [],
     selectedFinals: [],
     selectedZeroFinals: [],
@@ -60,6 +63,7 @@ export function readTrainingConfig(
     return {
       tab: value.tab === 'article' ? 'article' : 'drill',
       drillMode: value.drillMode === 'char' ? 'char' : 'word',
+      articleInputMode: value.articleInputMode === 'import' ? 'import' : 'input',
       selectedInitials: strings(value.selectedInitials),
       selectedFinals: strings(value.selectedFinals),
       selectedZeroFinals: strings(value.selectedZeroFinals),

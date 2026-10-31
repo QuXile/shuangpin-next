@@ -9,13 +9,12 @@ import {
   type Curriculum,
   type LessonDef,
   type LessonResult,
-  type PoolIndexFile,
   type SchemeDef,
   type SchemeEngine,
   type SchemeIndexFile,
   type SchemeSummary,
 } from '@shuangpin/core'
-import { loadCurriculum, loadPoolIndex, loadScheme, loadSchemeIndex } from '@/lib/data'
+import { loadCurriculum, loadLexicon, loadScheme, loadSchemeIndex } from '@/lib/data'
 import {
   canStartLesson,
   currentLessonId,
@@ -74,7 +73,7 @@ export const useCourseStore = defineStore('course', () => {
   const previewMode = ref(false)
   const scheme = shallowRef<SchemeDef | null>(null)
   const curriculum = shallowRef<Curriculum | null>(null)
-  const poolIndex = shallowRef<PoolIndexFile | null>(null)
+  const lexiconWordCount = ref(0)
   const engine = computed<SchemeEngine | null>(() => (scheme.value ? createSchemeEngine(scheme.value) : null))
 
   let bootPromise: Promise<void> | null = null
@@ -95,7 +94,7 @@ export const useCourseStore = defineStore('course', () => {
   }
 
   const lessons = computed<LessonDef[]>(() => curriculum.value?.lessons ?? [])
-  const wordCount = computed<number>(() => poolIndex.value?.uniqueWords ?? 0)
+  const wordCount = computed<number>(() => lexiconWordCount.value)
   const ready = computed<boolean>(() => status.value === 'ready')
   const progress = computed(() => progressStore.records)
   const passedCount = computed(() => passedLessonCount(lessons.value, progress.value))
@@ -130,17 +129,17 @@ export const useCourseStore = defineStore('course', () => {
   })
 
   async function applyScheme(id: string, epoch: number): Promise<void> {
-    const [def, curriculumFile, pools] = await Promise.all([
+    const [def, curriculumFile, lexicon] = await Promise.all([
       loadScheme(id),
       loadCurriculum(id),
-      loadPoolIndex(),
+      loadLexicon(),
     ])
     // 已被更新的请求取代：不提交数据，交给最后一次请求决定最终方案。
     if (!isCurrentLoad(epoch)) return
     schemeId.value = id
     scheme.value = def
     curriculum.value = curriculumFile
-    poolIndex.value = pools
+    lexiconWordCount.value = lexicon.words.length
     previewMode.value = false
     progressStore.load(id)
     saveScheme(id)
@@ -153,12 +152,12 @@ export const useCourseStore = defineStore('course', () => {
     status.value = 'loading'
     error.value = ''
     try {
-      const [def, pools] = await Promise.all([loadScheme(id), loadPoolIndex()])
+      const [def, lexicon] = await Promise.all([loadScheme(id), loadLexicon()])
       if (!isCurrentLoad(epoch)) return
       schemeId.value = id
       scheme.value = def
       curriculum.value = null
-      poolIndex.value = pools
+      lexiconWordCount.value = lexicon.words.length
       previewMode.value = true
       progressStore.load('')
       status.value = 'ready'

@@ -27,6 +27,7 @@ export const TRAINING_DIR = path.join(DATA_DIR, 'training')
 export const TRAINING_BANK_FILE = path.join(TRAINING_DIR, 'bank.json')
 export const TRAINING_SCHEMA_VERSION = '1.0.0'
 export const WORDS_FILE = path.join(WORDS_DIR, 'words.sample.json')
+export const LEXICON_FILE = path.join(DATA_DIR, 'lexicon', 'lexicon.json')
 export const ANCHORS_FILE = path.join(WORDS_DIR, 'anchors.json')
 export const SYLLABLE_PATCH_FILE = path.join(WORDS_DIR, 'syllable-patches.json')
 export const WORD_POLICY_FILE = path.join(WORDS_DIR, 'word-policy.json')

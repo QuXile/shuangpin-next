@@ -31,9 +31,9 @@ const schemeName = computed(
 const keycapsRef = ref<InstanceType<typeof SchemeKeycaps> | null>(null)
 
 function chooseScheme(id: string): void {
-  // 重复点击同一个方案也要重新随机排布；切换方案则同时通知课程 store。
-  keycapsRef.value?.refreshKeycaps()
-  if (id !== props.schemeId) emit('change-scheme', id)
+  // 重复点击同一个方案重新随机排布；切换方案交给 SchemeKeycaps 的 watch。
+  if (id === props.schemeId) keycapsRef.value?.refreshKeycaps()
+  else emit('change-scheme', id)
 }
 
 function pressKey(key: string): void {

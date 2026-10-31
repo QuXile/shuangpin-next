@@ -3,14 +3,12 @@
   "id": "c",
   "name": "C双拼",
   "version": "1.0.0",
-  "license": "GPL-3.0",
+  "license": "LGPL-2.1-or-later",
   "source": {
-    "repo": "BlueSky-07/Shuang",
-    "url": "https://github.com/BlueSky-07/Shuang",
-    "version": "6.0.0",
-    "commit": "5a5e71e1ebeab2894f40121d680b9942e30609bb",
-    "commitShort": "5a5e71e",
-    "license": "GPL-3.0（仅提取事实键位映射，未复制实现代码）"
+    "repo": "fcitx/fcitx5-chinese-addons",
+    "file": "im/pinyin/sp.dat.example",
+    "note": "按 commit e8d930f402e359cfd76a101ee3e46815d1331d83 的 sp.dat.example 重建（LGPL-2.1-or-later；本地快照 scripts/schemes/fcitx-c-sp.dat，仅解析键位事实，未复制实现代码）。旧整音节码回归基线来自 BlueSky-07/Shuang v6.0.0 commit 5a5e71e（GPL-3.0，仅键位事实）。",
+    "license": "LGPL-2.1-or-later"
   },
   "capabilities": {
     "course": false,
@@ -24,8 +22,6 @@
     "scheme": "scheme.json"
   },
   "shared": {
-    "pools": "shared:pools",
-    "words": "shared:words",
-    "training": "shared:training"
+    "lexicon": "shared:lexicon"
   }
 }

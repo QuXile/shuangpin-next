@@ -23,6 +23,7 @@ describe('trainingConfig', () => {
       ...emptyTrainingConfig(),
       tab: 'article' as const,
       drillMode: 'word' as const,
+      articleInputMode: 'import' as const,
       selectedInitials: ['zh', 1, null, 'ch'],
       selectedFinals: ['ai', 'ei'],
     }
@@ -31,6 +32,7 @@ describe('trainingConfig', () => {
     expect(readTrainingConfig(storage, 'xiaohe')).toMatchObject({
       tab: 'article',
       drillMode: 'word',
+      articleInputMode: 'import',
       selectedInitials: ['zh', 'ch'],
       selectedFinals: ['ai', 'ei'],
     })

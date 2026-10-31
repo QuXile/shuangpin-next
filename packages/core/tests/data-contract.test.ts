@@ -555,15 +555,13 @@ describe('基础词表与同步产物', () => {
     const manifestPath = join(publicRoot, 'manifest.json')
     expect(statSync(manifestPath).isFile()).toBe(true)
     const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as DataManifest
-    expect(manifest.versions.pools).toBe(poolIndex.dataVersion)
+    expect(manifest.versions.lexicon).toMatch(/^lexicon-[0-9a-f]{12}$/)
     expect(manifest.versions.curriculum).toBe(loadCurriculum('xiaohe').dataVersion)
     expect(manifest.defaultScheme).toBe(schemeIndex.defaultScheme)
     expect(manifest.courses).toEqual(curriculumIds)
-    for (const lesson of poolIndex.lessons) {
-      const source = readFileSync(join(dataPath('pools'), lesson.file))
-      const synced = readFileSync(join(publicRoot, 'pools', lesson.file))
-      expect(Buffer.compare(source, synced), `${lesson.id} 未同步`).toBe(0)
-    }
+    const lexiconSource = readFileSync(join(dataPath('lexicon'), 'lexicon.json'))
+    const lexiconSynced = readFileSync(join(publicRoot, 'lexicon', 'lexicon.json'))
+    expect(Buffer.compare(lexiconSource, lexiconSynced), 'lexicon 未同步').toBe(0)
     for (const id of curriculumIds) {
       const file = `${id}.curriculum.json`
       expect(

@@ -39,7 +39,8 @@ import {
   type SessionState,
   type StageGate,
 } from '@shuangpin/core'
-import { loadLessonPool } from '@/lib/data'
+import { loadLexicon } from '@/lib/data'
+import { buildLessonPool } from '@/lib/lessonPool'
 import {
   applySessionKey,
   backspaceSession,
@@ -326,8 +327,11 @@ export function usePractice() {
 
   const conceal = computed(() => stage.value === 'word' || stage.value === 'exam')
   const highlightAtomIds = computed(() => {
-    const blocking = lesson.value?.blockingAtoms ?? []
-    return blocking.length <= 3 ? blocking : []
+    const focus = lesson.value?.focusAtoms ?? []
+    const blocking = focus.filter((atom) => atom.startsWith('initial:') || atom.startsWith('final:'))
+    const zeros = focus.filter((atom) => atom.startsWith('zero:'))
+    // 声母/韵母太多时字母键只保留零声母行的聚焦，不把整张图铺满。
+    return blocking.length <= 3 ? [...blocking, ...zeros] : zeros
   })
   const specialInitials = computed(() => engine.value?.diff().learnInitials ?? [])
   const keyMapRows = computed(() => engine.value?.keyMap() ?? [])
@@ -727,7 +731,8 @@ export function usePractice() {
     }
     engine.value = createSchemeEngine(course.scheme)
     try {
-      pool.value = await loadLessonPool(currentLesson.id)
+      const lexicon = await loadLexicon()
+      pool.value = buildLessonPool(currentLesson, lexicon)
     } catch (cause) {
       status.value = 'error'
       errorMessage.value = cause instanceof Error ? cause.message : String(cause)

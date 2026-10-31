@@ -23,6 +23,7 @@
     "data:pools": "node scripts/word-pipeline/build-pools.mjs",
     "data:sync": "node scripts/sync-data.mjs",
     "data:packages": "node scripts/scheme-packages/build.mjs",
+    "data:lexicon": "node scripts/lexicon/build.mjs",
     "lint:ui": "node scripts/check-ui-conventions.mjs"
   },
   "devDependencies": {

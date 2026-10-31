@@ -1548,27 +1548,33 @@
     {
       "id": "c",
       "name": "C双拼",
-      "type": "syllable-code",
+      "type": "compositional",
       "file": "data/schemes/c.json",
       "keys": {
-        "initials": 0,
-        "finals": 0,
+        "initials": 23,
+        "finals": 33,
         "zeroInitial": 11,
-        "overrides": 394,
-        "flyingInitials": [],
-        "multiKeyFinals": [],
-        "sameKeyGroups": 0
+        "overrides": 163,
+        "flyingInitials": [
+          "zh",
+          "ch"
+        ],
+        "multiKeyFinals": [
+          "ua",
+          "uo"
+        ],
+        "sameKeyGroups": 6
       },
       "atoms": {
         "initials": {
-          "total": 0,
-          "free": 0,
-          "learn": 0
+          "total": 23,
+          "free": 20,
+          "learn": 3
         },
         "finals": {
-          "total": 0,
-          "free": 0,
-          "learn": 0
+          "total": 33,
+          "free": 6,
+          "learn": 27
         },
         "zeroInitial": {
           "total": 11,
@@ -1576,21 +1582,21 @@
           "learn": 5
         },
         "overrides": {
-          "total": 394,
-          "free": 47,
-          "learn": 347
+          "total": 163,
+          "free": 0,
+          "learn": 163
         },
         "total": {
-          "free": 53,
-          "learn": 352,
-          "total": 405
+          "free": 32,
+          "learn": 198,
+          "total": 230
         }
       },
-      "zeroInitialFamily": "整音节表",
-      "zeroInitialRule": "整音节码方案：零声母直接取整表条目（双字母音节多为直出，a/ang/e/er/o 为特例），不适用统一规则",
+      "zeroInitialFamily": "原表（与组合规则无关）",
+      "zeroInitialRule": "零声母沿用原表：双字母直出；a/ang/e/er/o 为特例；eng 暂缺。",
       "ambiguity": {
         "codes": 355,
-        "ambiguousCodes": 47,
+        "ambiguousCodes": 49,
         "examples": [
           {
             "code": "bk",
@@ -1656,15 +1662,15 @@
       "course": {
         "supportsGuidedCourse": false,
         "courseTier": "free-practice",
-        "reason": "整音节码方案（405 条整表，无组合规则），无法套用「声母/韵母 atom」课程骨架；表内同码多，只适合实验。",
-        "courseNotes": "若后续做课程：需按整音节码表重新设计记忆课程（可按频次/韵母聚类），并为 49 组同码设计候选词练习。"
+        "reason": "已重建为组合式数据，但本期仍无课程模板：保持纯练习方案，不伪造 curriculum。",
+        "courseNotes": "若后续做课程，可按「声母改造 → 韵母家族 → 音节特例」设计；需要课程生成器支持该方案。"
       },
       "recommendation": {
         "rank": 19,
-        "reason": "整音节码方案（405 条整表，无组合规则），无法套用「声母/韵母 atom」课程骨架；表内同码多，只适合实验。"
+        "reason": "组合式方案（含整音节特例与较多同码），本期无课程，仅建议自由练习 / 实验。"
       },
       "dataGaps": [
-        "zeroInitial.eng 缺失：参考项目 BlueSky-07/Shuang src/scheme/c.js 未收录该零声母音节"
+        "zeroInitial.eng 缺失：旧参考表未收录且现有 core 测试按数据缺口处理；sp.dat 中的 eng=eg 未启用。"
       ]
     }
   ],
