@@ -15,7 +15,7 @@
     "test": "pnpm --filter @shuangpin/core test && pnpm --filter @shuangpin/web test",
     "test:watch": "pnpm --filter @shuangpin/core test:watch",
     "typecheck": "pnpm --filter @shuangpin/core typecheck && pnpm --filter @shuangpin/web typecheck",
-    "verify": "pnpm typecheck && pnpm lint:ui && pnpm test && pnpm build && pnpm validate",
+    "verify": "pnpm typecheck && pnpm lint:ui && pnpm data:sync && pnpm test && pnpm build && pnpm validate",
     "validate": "node scripts/validate-all.mjs",
     "data:words": "node scripts/word-pipeline/build.mjs",
     "data:curriculum": "node scripts/curriculum/build-curriculum.mjs",
