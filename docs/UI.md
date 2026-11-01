@@ -37,7 +37,7 @@
 |---|---|
 | `.panel` / `.panel-title` / `.panel-head` / `.eyebrow` | 卡片表面、16px/850 卡标题、卡头行、10px 英文眉题 |
 | `.page` / `.state-card` / `.spinner` | 页面容器、加载 / 错误状态卡、加载指示 |
-| `.segmented` / `.segmented-btn` / `.segmented--sm` | 分段控件：顶栏导航、练习场页签、字 / 词切换、文章输入 / 导入 |
+| `.segmented` / `.segmented-btn` / `.segmented--sm` | 分段控件：顶栏导航、练习场页签、文章输入 / 导入 |
 | `.meta-btn` / `.count-badge` / `.chip` / `.common-capsule` | 卡片小操作、计数徽标、练习范围标签、「全拼沿用」胶囊 |
 | `.btn` / `.btn--primary` | 主次按钮，主按钮使用品牌填充与辉光 |
 | `kbd` / `.icon` / `.mono` / `.sr-only` / `.thin-scroll` | 快捷键提示、图标、等宽数字、屏读文本、细滚动条 |

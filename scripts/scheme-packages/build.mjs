@@ -61,6 +61,7 @@ function buildManifest(schemeIndex, summary, scheme, curriculum) {
 
 export function buildSchemePackages(outputDir = PUBLIC_PACKAGES_DIR) {
   const schemeIndex = readJSON(SCHEME_INDEX_FILE)
+  const courseSupported = new Set(schemeIndex.courseSupported ?? [])
   const packages = []
   replaceDirAtomically(outputDir, (tmp) => {
     for (const summary of schemeIndex.schemes ?? []) {
@@ -72,6 +73,16 @@ export function buildSchemePackages(outputDir = PUBLIC_PACKAGES_DIR) {
       fs.copyFileSync(source, path.join(packageDir, 'scheme.json'))
       const curriculumFile = curriculumSourceFile(summary.id)
       const curriculum = fs.existsSync(curriculumFile) ? readJSON(curriculumFile) : null
+      // 课程能力与课程索引/方案索引保持一致：登记为课程方案就必须有 curriculum.json。
+      if (courseSupported.has(summary.id) && !curriculum) {
+        throw new Error(`课程方案 ${summary.id} 缺少 curriculum.json（请先运行 node scripts/generate-universal-curriculum.mjs）`)
+      }
+      if (!courseSupported.has(summary.id) && curriculum) {
+        throw new Error(`方案 ${summary.id} 有 curriculum.json 但未登记到 courseSupported`)
+      }
+      if (curriculum && !summary.course?.supportsGuidedCourse) {
+        throw new Error(`课程方案 ${summary.id} 的方案索引缺少 course.supportsGuidedCourse`)
+      }
       if (curriculum) fs.copyFileSync(curriculumFile, path.join(packageDir, 'curriculum.json'))
       const manifest = buildManifest(schemeIndex, summary, scheme, curriculum)
       writeJSON(path.join(packageDir, 'manifest.json'), manifest)

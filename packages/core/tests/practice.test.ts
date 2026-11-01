@@ -9,14 +9,14 @@ const xiaohe = loadEngine('xiaohe')
 const words = loadWordBank()
 
 describe('buildPracticeWord · 真实词库', () => {
-  it('重庆（chóng qìng）：键帽 i,s / q,k；多音标记保留', () => {
-    const entry = findWord(words, '重庆')
+  it('银行（yín háng）：键帽 y,b / h,h；多音标记保留', () => {
+    const entry = findWord(words, '银行')
     const word = buildPracticeWord(xiaohe, entry)
-    expect(word.text).toBe('重庆')
-    expect(word.chars).toEqual(['重', '庆'])
+    expect(word.text).toBe('银行')
+    expect(word.chars).toEqual(['银', '行'])
     expect(word.syllables.map((syllable) => syllable.caps.map((cap) => cap.key))).toEqual([
-      ['i', 's'],
-      ['q', 'k'],
+      ['y', 'b'],
+      ['h', 'h'],
     ])
     expect(word.polyphone).toBe(true)
     expect(word.caps).toHaveLength(4)
@@ -82,7 +82,7 @@ describe('buildPracticeWord · 单字与结构不变量', () => {
   })
 
   it('每个音节键帽数 = 主键长度，caps 与 syllables 对齐，accepted 全小写', () => {
-    for (const text of ['重庆', '女人', '爱情', '学习', '战略']) {
+    for (const text of ['银行', '女人', '爱情', '学习', '战略']) {
       const word = buildPracticeWord(xiaohe, findWord(words, text))
       expect(word.caps).toEqual(word.syllables.flatMap((syllable) => syllable.caps))
       for (const syllable of word.syllables) {

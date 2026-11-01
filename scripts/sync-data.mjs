@@ -37,7 +37,15 @@ function buildFilePlan() {
   const schemeIndex = readJSON(SCHEME_INDEX_FILE)
   const curriculumIndex = readJSON(CURRICULUM_INDEX_FILE)
   const courses = curriculumIndex.schemes.map((scheme) => scheme.schemeId)
-  if (courses.length !== 5) throw new Error(`课程索引应为 5 套，实际 ${courses.length}`)
+  const supported = schemeIndex.courseSupported ?? []
+  if (courses.length === 0) throw new Error('课程索引为空，请先运行 node scripts/generate-universal-curriculum.mjs')
+  if (new Set(courses).size !== courses.length) throw new Error('课程索引有重复方案')
+  for (const schemeId of supported) {
+    if (!courses.includes(schemeId)) throw new Error(`courseSupported ${schemeId} 缺少课程文件`)
+  }
+  for (const schemeId of courses) {
+    if (!supported.includes(schemeId)) throw new Error(`课程 ${schemeId} 未登记在 courseSupported 中`)
+  }
   const defaultScheme = schemeIndex.defaultScheme ?? courses[0]
   if (!courses.includes(defaultScheme)) throw new Error(`defaultScheme ${defaultScheme} 不在课程列表中`)
 

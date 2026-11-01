@@ -34,7 +34,6 @@ export {
 } from './practice.ts'
 
 export { selectWords, countFocusHits } from './selector.ts'
-export { sampleBalancedTargets, calibrateBalancedTargets } from './balancedSampling.ts'
 
 export {
   lessonStages,

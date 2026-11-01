@@ -15,7 +15,7 @@ data/schemes/
   engine-cases.json          全部方案的判题用例
   xiaohe/
     scheme.json              键位、推荐码、兼容编码
-    curriculum.json          仅课程方案
+    curriculum.json          课程（19 套方案均有）
   c/
     scheme.json
   ...
@@ -167,8 +167,8 @@ pnpm data:sync
 pnpm validate
 ```
 
-6. 若需要课程，在 `data/schemes/<id>/curriculum.json` 放课程，并在方案索引标记课程能力；
-7. 只做练习场时保持 `course: false`，不要伪造 curriculum。
+6. 课程推荐用 `pnpm data:curriculum` 生成通用课程，或手写自有路线；不要伪造 curriculum。
+7. 新增方案默认由生成器接入通用课程。
 
 ## 验收清单
 

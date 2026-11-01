@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-31T07:30:16.097Z",
+  "generatedAt": "2026-11-01T18:07:24.248Z",
   "templateVersion": "1.0.0",
   "schemes": [
     {
@@ -31,6 +31,90 @@
       "schemeName": "智能ABC",
       "supportLevel": "full",
       "file": "data/schemes/zhinengabc/curriculum.json"
+    },
+    {
+      "schemeId": "pinyinjiajia",
+      "schemeName": "拼音加加",
+      "supportLevel": "simplified",
+      "file": "data/schemes/pinyinjiajia/curriculum.json"
+    },
+    {
+      "schemeId": "ziguang",
+      "schemeName": "紫光双拼",
+      "supportLevel": "simplified",
+      "file": "data/schemes/ziguang/curriculum.json"
+    },
+    {
+      "schemeId": "lantian",
+      "schemeName": "蓝天双拼",
+      "supportLevel": "simplified",
+      "file": "data/schemes/lantian/curriculum.json"
+    },
+    {
+      "schemeId": "baiyun",
+      "schemeName": "白云双拼",
+      "supportLevel": "simplified",
+      "file": "data/schemes/baiyun/curriculum.json"
+    },
+    {
+      "schemeId": "xiaoyue",
+      "schemeName": "小月双拼",
+      "supportLevel": "simplified",
+      "file": "data/schemes/xiaoyue/curriculum.json"
+    },
+    {
+      "schemeId": "guobiao",
+      "schemeName": "国标双拼",
+      "supportLevel": "simplified",
+      "file": "data/schemes/guobiao/curriculum.json"
+    },
+    {
+      "schemeId": "xiaoguan",
+      "schemeName": "开源小鹳",
+      "supportLevel": "simplified",
+      "file": "data/schemes/xiaoguan/curriculum.json"
+    },
+    {
+      "schemeId": "xiaolang",
+      "schemeName": "小浪双拼",
+      "supportLevel": "simplified",
+      "file": "data/schemes/xiaolang/curriculum.json"
+    },
+    {
+      "schemeId": "yunbiaokuaipin",
+      "schemeName": "韵标块拼",
+      "supportLevel": "simplified",
+      "file": "data/schemes/yunbiaokuaipin/curriculum.json"
+    },
+    {
+      "schemeId": "xingkong",
+      "schemeName": "星空双拼",
+      "supportLevel": "simplified",
+      "file": "data/schemes/xingkong/curriculum.json"
+    },
+    {
+      "schemeId": "daniu",
+      "schemeName": "大牛双拼",
+      "supportLevel": "simplified",
+      "file": "data/schemes/daniu/curriculum.json"
+    },
+    {
+      "schemeId": "jiandao3",
+      "schemeName": "键道双拼3",
+      "supportLevel": "simplified",
+      "file": "data/schemes/jiandao3/curriculum.json"
+    },
+    {
+      "schemeId": "jiandao6",
+      "schemeName": "键道双拼6",
+      "supportLevel": "simplified",
+      "file": "data/schemes/jiandao6/curriculum.json"
+    },
+    {
+      "schemeId": "c",
+      "schemeName": "C双拼",
+      "supportLevel": "simplified",
+      "file": "data/schemes/c/curriculum.json"
     }
   ]
 }

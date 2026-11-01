@@ -79,7 +79,7 @@ export interface LexiconFile {
 export const loadLexicon = (): Promise<LexiconFile> =>
   cached('lexicon', () => getJSON<LexiconFile>('lexicon/lexicon.json'))
 
-/** 练习场训练库（字/词，一次加载缓存） */
+/** 练习场训练库（词语，一次加载缓存） */
 export interface TrainingBank {
   schemaVersion: string
   dataVersion: string

@@ -12,7 +12,7 @@
 
 ```text
 apps/web/src/         App / router / pages / composables / components / stores / lib / styles
-packages/core/src/    types / pinyin / scheme / practice / selector / balancedSampling /
+packages/core/src/    types / pinyin / scheme / practice / selector /
                       stages / session / scoring / atoms / random / training
 packages/core/tests/  领域与数据契约测试
 apps/web/tests/       progress / trainingConfig / trainingGroups
@@ -49,7 +49,7 @@ freeAtomsOf(def)             与全拼一致的 free 原子（练习场「全拼
 
 ## 课程与阶段
 
-课程数据位于 `data/schemes/<id>/curriculum.json`，每个课程方案各有一份。
+课程数据位于 `data/schemes/<id>/curriculum.json`，19 套方案各有一份；`supportLevel` 区分手写 full 与生成 simplified。
 
 ```text
 LessonDef { id, chapterId, kind, title, desc, focusAtoms, blockingAtoms,
@@ -59,7 +59,7 @@ kind      intro（入门）/ drill（新课）/ review（复习、期中、综�
 ```
 
 - 只有 `initial/final` 阻塞选词；`prerequisites` 是此前 focus 的累计集合，复习范围直接取 `prerequisites`。
-- 同键双韵合并成一课（`ia/ua`、`iang/uang`、`ong/iong`、`ue/ve`）；零声母 12 音节在一课内一次教完。
+- 5 套 full 课程使用手写路线（含同键双韵合并、零声母整表课）；14 套 simplified 由 `scripts/generate-universal-curriculum.mjs` 生成：learn 原子逐课、free 原子归入全拼复习、逐章复习、期中、最终章。
 - `stageMinWords` 定义各阶段最低词数；`passCriteria` 定义正确率与可选速度门槛；`tips`、`atomMeta` 由内容库与锚点数据生成。
 - `lessonStages` 给出阶段；`hintTierFor` 决定提示档位；`stageGate` 判定阶段是否达标。每阶段保留独立 `SessionState`，切换时用 `resumeSession` 恢复，已达标阶段记录在进度 `clearedStages` 中。
 
@@ -80,15 +80,20 @@ kind      intro（入门）/ drill（新课）/ review（复习、期中、综�
 - 正确率 / 准确率+速度模式下 `revealed` 阻止最高星；速度模式只看速度分档。
 - `describePassCriteria` 生成教学页评分文案。星级与门槛由课程数据 `passCriteria` 决定，用户规则见[学习指南](LEARNING.md)。
 
-## 概率均衡选词
+## 确定性选词
 
-`selector.ts` + `balancedSampling.ts` 为词语 / 考核阶段组卷：
+`selector.ts` 为词语 / 考核阶段组卷：
 
-- `newFocus = blockingAtoms - prerequisites`，free 原子视为已学；候选分层 S（未知 ⊆ newFocus）/ A（额外预习 ≤ `maxUnfamiliar`）/ B（无未知）。
-- 零声母逐音节门禁；候选记录每个 focus 音的出现次数，按出现次数加权。
-- 用 θ 做音级校准，使各 focus 期望出现次数相等；再按不等概率系统抽样选出不重复词。
-- 候选不足时以 `pool.chars` 单字补充；同 seed 完全可复现（`mulberry32`）。
+- `newFocus = blockingAtoms - prerequisites`，free 原子视为已学；
+- 候选词必须包含当前 focus，并符合已学 / 预习约束；
+- 按 focus 槽位轮转，每轮 focus 顺序 seeded shuffle；
+- 多命中（一个词同时覆盖多个 focus）是收益，作用在加权随机上，不扣分；
+- 同轮不重复用词；候选不足时用字符兜底；
+- 词频不参与运行时权重，只作为词库入库门槛。
 
+**单字阶段**：从每音 top10 字符库按整音轮转，每轮每个整音最多取一字，超过整音数时重新洗牌继续。
+
+## 课程 Hero 与练习场
 ## 课程 Hero 与练习场
 
 - 课程、入门试打与练习场使用同一套 PracticeStream / CharacterCard 渲染；

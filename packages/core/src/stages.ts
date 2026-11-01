@@ -18,14 +18,11 @@ import type {
   StageGate,
   StageGateMetrics,
   Syllable,
-  SyllableFinal,
   WordEntry,
 } from './types.ts'
 import { atomMatchesWord, focusHitsOf } from './atoms.ts'
-import { sampleBalancedTargets } from './balancedSampling.ts'
-import { parseAtomId } from './pinyin.ts'
 import { buildPracticeWord, buildPracticeWordFromSyllable } from './practice.ts'
-import { shuffleSeeded } from './random.ts'
+import { mulberry32, shuffle } from './random.ts'
 import { selectWords, targetCountsOf } from './selector.ts'
 
 /**
@@ -141,44 +138,15 @@ export interface TutorialInput {
   pool: LessonPool
 }
 
-function isKnownBlockingAtom(
-  atom: AtomId,
-  learned: ReadonlySet<AtomId>,
-  freeInitials: ReadonlySet<string>,
-  freeFinals: ReadonlySet<string>,
-): boolean {
-  const ref = parseAtomId(atom)
-  if (!ref) return false
-  if (ref.type === 'initial') return freeInitials.has(ref.key) || learned.has(atom)
-  if (ref.type === 'final') return freeFinals.has(ref.key) || learned.has(atom)
-  return learned.has(atom)
-}
 
-function syllableOfWord(word: WordEntry): Syllable | null {
-  const source = word.syllables[0]
-  if (!source) return null
-  const syllable: Syllable = {
-    text: source.text,
-    pinyin: source.pinyin,
-    initial: source.initial,
-    final: source.final as SyllableFinal,
-    zeroInitial: source.initial === '',
-  }
-  if (source.tone !== undefined) syllable.tone = source.tone
-  return syllable
-}
 
-function keySetOf(engine: SchemeEngine, atoms: readonly AtomId[]): Set<string> {
-  const keys = new Set<string>()
-  for (const atom of atoms) {
-    for (const key of engine.keysForAtom(atom)) keys.add(key.toLowerCase())
-  }
-  return keys
-}
 
 /**
- * 单字阶段：从课程词池 chars 中挑「本课 focus + 已学/free」的单字，不足时用同键位已学字补齐。
- * 结果可能少于 count（该课单字确实不足），由调用方以实际字数作为阶段目标。
+ * 单字阶段：对当前可学的整音做轮转抽取。
+ * - 每轮每个整音最多取一个单字；
+ * - 每轮按 seed 打乱整音顺序；
+ * - 每个整音从 top10 字符中得到一个字；
+ * - 目标数超过整音数时重新洗牌进入下一轮。
  */
 export function buildSingleCharWords(input: StageInput): PracticeWord[] {
   const { engine, lesson, pool, learnedAtoms } = input
@@ -188,76 +156,50 @@ export function buildSingleCharWords(input: StageInput): PracticeWord[] {
   const freeFinals = new Set(diff.freeFinals)
   const focusAtoms = lesson.focusAtoms
   const focusSet = new Set(focusAtoms)
-  const focusKeys = keySetOf(engine, lesson.blockingAtoms)
-  const needSameKeyFallback = true
-
-  const hitsFocus = (word: WordEntry) => focusHitsOf(word, focusAtoms).length > 0
-  const allAtomsKnown = (word: WordEntry) =>
-    word.syllables.every((syllable) => {
-      if (syllable.initial === '') {
-        const zeroAtom = `zero:${syllable.final}` as AtomId
-        return focusSet.has(zeroAtom) || learned.has(zeroAtom)
-      }
-      const atoms: AtomId[] = [
-        `initial:${syllable.initial}` as AtomId,
-        `final:${syllable.final}` as AtomId,
-      ]
-      return atoms.every((atom) =>
-        isKnownBlockingAtom(atom, learned, freeInitials, freeFinals) ||
-        focusSet.has(atom),
-      )
-    })
-  const sharesFocusKey = (word: WordEntry) =>
-    word.syllables.some((syllable) => {
-      const keys: string[] = []
-      if (syllable.initial !== '') {
-        keys.push(...engine.keysForAtom(`initial:${syllable.initial}` as AtomId))
-        keys.push(...engine.keysForAtom(`final:${syllable.final}` as AtomId))
-      } else {
-        keys.push(...engine.keysForAtom(`zero:${syllable.final}` as AtomId))
-      }
-      return keys.some((key) => focusKeys.has(key.toLowerCase()))
-    })
-
-  const primary: WordEntry[] = []
-  const sameKey: WordEntry[] = []
-  const known: WordEntry[] = []
-  const seen = new Set<string>()
-  // 单字池可能很薄（稀有韵母课尤其明显）；词语中的字也作为单字候选兜底。
-  for (const entry of [...pool.chars, ...pool.words]) {
-    for (const source of entry.syllables) {
-      if (seen.has(source.text)) continue
-      const syllable = syllableOfWord({ ...entry, text: source.text, length: 1, syllables: [source], chars: [source.text] })
-      if (!syllable) continue
-      const word: WordEntry = { ...entry, text: source.text, length: 1, syllables: [source], chars: [source.text] }
-      if (!allAtomsKnown(word)) continue
-      // 零声母字只在本课直接教授它们时入选，不占用其它课的单字填充额度
-      if (syllable.initial === '' && !hitsFocus(word)) continue
-      seen.add(source.text)
-      if (hitsFocus(word)) primary.push(word)
-      else if (needSameKeyFallback && sharesFocusKey(word)) sameKey.push(word)
-      else known.push(word)
-    }
-  }
-
-  // 目标音概率均衡：单字池中的 focus 字按音校准后抽样；不足部分用同键/已学字补齐。
   const seed = input.seed ?? 1
   const target = Math.max(1, input.count)
-  const balanced = primary
-    .map((word) => ({
-      item: word,
-      counts: targetCountsOf(word, focusAtoms),
-      quality: 0.5 + Math.log1p(Math.max(0, word.freq)) / 10,
-    }))
-    .filter((candidate) => candidate.counts.size > 0)
-  const sampled = sampleBalancedTargets(balanced, Math.min(target, balanced.length), seed)
-  const sampledTexts = new Set(sampled.map((word) => word.text))
-  const rest = [
-    ...shuffleSeeded(primary.filter((word) => !sampledTexts.has(word.text)), seed),
-    ...shuffleSeeded(sameKey, seed + 1),
-    ...shuffleSeeded(known, seed + 2),
-  ].filter((word) => !sampledTexts.has(word.text))
-  return [...sampled, ...rest].slice(0, target).map((word) => buildPracticeWord(engine, word))
+
+  const groups = new Map<string, WordEntry[]>()
+  for (const entry of pool.chars) {
+    const source = entry.syllables[0]
+    if (!source) continue
+    if (source.initial === '') {
+      if (!focusSet.has(`zero:${source.final}` as AtomId) && !learned.has(`zero:${source.final}` as AtomId)) continue
+    } else {
+      if (!freeInitials.has(source.initial) && !learned.has(`initial:${source.initial}` as AtomId) && !focusSet.has(`initial:${source.initial}` as AtomId)) continue
+      if (!freeFinals.has(source.final) && !learned.has(`final:${source.final}` as AtomId) && !focusSet.has(`final:${source.final}` as AtomId)) continue
+    }
+    const key = source.initial ? `${source.initial}${source.final}` : source.final
+    const list = groups.get(key) ?? []
+    if (!list.some((word) => word.text === entry.text)) list.push(entry)
+    groups.set(key, list)
+  }
+
+  const focusKeys: string[] = []
+  const otherKeys: string[] = []
+  for (const [key, list] of groups) {
+    const isFocus = list.some((word) => focusHitsOf(word, focusAtoms).length > 0)
+    if (isFocus) focusKeys.push(key)
+    else otherKeys.push(key)
+  }
+  const order = focusKeys.length > 0 ? focusKeys : otherKeys
+  if (order.length === 0) return []
+
+  const result: WordEntry[] = []
+  let round = 0
+  while (result.length < target) {
+    const shuffledKeys = shuffle(order, mulberry32(seed + round * 104729))
+    const rng = mulberry32(seed * 31 + round)
+    for (const key of shuffledKeys) {
+      if (result.length >= target) break
+      const list = groups.get(key) ?? []
+      if (list.length === 0) continue
+      result.push(list[Math.floor(rng() * list.length)] ?? list[0]!)
+    }
+    round += 1
+    if (round > target * 2 + 10) break
+  }
+  return result.map((word) => buildPracticeWord(engine, word))
 }
 
 /** 词语/考核阶段：概率均衡抽词；词池不足的目标音用单字候选补足。 */

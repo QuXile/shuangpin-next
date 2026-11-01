@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * 练习场（/training）：专项练习（字/词，声母×韵母自由组合，无尽练习）
+ * 练习场（/training）：专项词语练习（声母×韵母自由组合，无尽练习）
  * 与文章练习（粘贴/.txt 导入，core parseArticleText 断行，逐字练习 + 汇总）。
  *
  * 判题、错误锁定、退格、清空、按下高亮复用 useTrainingSession（内部共享 lib/sessionInput），
@@ -60,7 +60,6 @@ import {
 } from '@/lib/training'
 
 type Tab = 'drill' | 'article'
-type DrillMode = 'char' | 'word'
 type SessionKind = 'drill' | 'article' | null
 
 const course = useCourseStore()
@@ -87,7 +86,7 @@ const {
 // ── 数据 / 配置 ──────────────────────────────────────────────
 
 const tab = ref<Tab>('drill')
-const drillMode = ref<DrillMode>('word')
+const drillMode = ref<'word'>('word')
 const articleInputMode = ref<'input' | 'import'>('input')
 const bank = shallowRef<TrainingBank | null>(null)
 const commonWords = shallowRef<CommonWordsFile | null>(null)
@@ -274,7 +273,6 @@ function applyTrainingConfig(config: TrainingConfigSnapshot): void {
   const allowedFinals = new Set(options.finals)
   const allowedZeros = new Set(options.zeroFinals)
   tab.value = config.tab
-  drillMode.value = config.drillMode
   articleInputMode.value = config.articleInputMode
   selectedInitials.value = new Set(config.selectedInitials.filter((item) => allowedInitials.has(item)))
   selectedFinals.value = new Set(config.selectedFinals.filter((item) => allowedFinals.has(item)))
@@ -375,7 +373,8 @@ function applyCoursePreset(): void {
   const nextZeros = new Set(learnedZeros)
 
   tab.value = 'drill'
-  drillMode.value = stage === 'single' ? 'char' : 'word'
+  // 训练场只保留词语练习
+
   selectedInitials.value = new Set([...nextInitials].filter((item) => options.initials.includes(item)))
   selectedFinals.value = new Set([...nextFinals].filter((item) => options.finals.includes(item)))
   selectedZeroFinals.value = new Set([...nextZeros].filter((item) => options.zeroFinals.includes(item)))
@@ -409,7 +408,6 @@ watch(
     schemeId.value = id
     readyToPersist = false
     tab.value = 'drill'
-    drillMode.value = 'word'
     hiddenInitials.value = new Set()
     hiddenFinals.value = new Set()
     hiddenZeroFinals.value = new Set()
@@ -503,7 +501,6 @@ const scope = computed<TrainingScope>(() => ({
 }))
 
 const baseEntries = computed<readonly WordEntry[]>(() => {
-  if (drillMode.value === 'char') return bank.value?.chars ?? []
   return commonWords.value?.words ?? []
 })
 const availableEntries = computed<readonly WordEntry[]>(() =>
@@ -871,7 +868,7 @@ const playing = computed(() => kind.value !== null && session.value !== null)
 function makeDrillBatch(): ReturnType<typeof entriesToPracticeWords> {
   const schemeEngine = engine.value
   if (!schemeEngine) return []
-  return buildTrainingBatch(schemeEngine, availableEntries.value, drillMode.value === 'char' ? 20 : 10)
+  return buildTrainingBatch(schemeEngine, availableEntries.value, 10)
 }
 
 function startDrill(): void {
@@ -894,7 +891,7 @@ function startDrill(): void {
 const keyMapRows = computed(() => (engine.value ? engine.value.keyMap() : []))
 const specialInitials = computed(() => engine.value?.diff().learnInitials ?? [])
 const sessionTitle = computed(() =>
-  kind.value === 'article' ? '文章练习' : `专项练习 · ${drillMode.value === 'char' ? '单字' : '词语'}`,
+  kind.value === 'article' ? '文章练习' : '专项练习 · 词语',
 )
 watch(
   [playing, sessionTitle],
@@ -905,7 +902,7 @@ onBeforeUnmount(() => {
   layout.clearStageLabel()
 })
 const countUnit = computed(() =>
-  kind.value === 'article' || (kind.value === 'drill' && drillMode.value === 'char') ? '字' : '词',
+  kind.value === 'article' ? '字' : '词',
 )
 const accuracyPercent = computed(() => Math.round(accuracy.value * 100))
 const liveSpeed = computed(() => Math.round(cpm.value))
@@ -1119,14 +1116,6 @@ const bindings = computed<KeyBinding[]>(() => {
         alt: true,
         run: () => switchTab('article'),
       },
-      {
-        key: 'm',
-        alt: true,
-        when: () => tab.value === 'drill',
-        run: () => {
-          drillMode.value = drillMode.value === 'char' ? 'word' : 'char'
-        },
-      },
       ...primarySchemeOptions.value.map((option, index) => ({
         key: String(index + 1),
         alt: true,
@@ -1227,38 +1216,7 @@ onScopeDispose(() => {
                 </button>
               </div>
 
-              <div
-                v-if="tab === 'drill'"
-                class="segmented training-mode"
-                role="group"
-                aria-label="练习类型"
-              >
-                <button
-                  type="button"
-                  class="segmented-btn"
-                  :class="{ 'is-active': drillMode === 'char' }"
-                  :aria-pressed="drillMode === 'char'"
-                  aria-keyshortcuts="Alt+M"
-                  title="单字模式（Alt+M 切换）"
-                  @click="drillMode = 'char'"
-                >
-                  字
-                  <kbd>Alt+M</kbd>
-                </button>
-                <button
-                  type="button"
-                  class="segmented-btn"
-                  :class="{ 'is-active': drillMode === 'word' }"
-                  :aria-pressed="drillMode === 'word'"
-                  aria-keyshortcuts="Alt+M"
-                  title="词语模式（Alt+M 切换）"
-                  @click="drillMode = 'word'"
-                >
-                  词
-                  <kbd>Alt+M</kbd>
-                </button>
-              </div>
-            </div>
+</div>
           </div>
 
           <div v-if="schemeError" class="side-error" role="alert">
@@ -1283,8 +1241,8 @@ onScopeDispose(() => {
                 <span class="side-info-sub is-warning">请重试加载练习字库。</span>
               </template>
               <template v-else-if="tab === 'drill'">
-                <strong>可用{{ drillMode === 'char' ? '字' : '词' }} {{ availableCount }} 条</strong>
-                <span v-if="availableCount === 0" class="side-info-sub is-warning">当前选择下没有匹配的{{ drillMode === 'char' ? '字' : '词' }}，请调整声母 / 韵母选择。</span>
+                <strong>可用词 {{ availableCount }} 条</strong>
+                <span v-if="availableCount === 0" class="side-info-sub is-warning">当前选择下没有匹配的词，请调整声母 / 韵母选择。</span>
               </template>
               <template v-else>
                 <strong v-if="parsed">将练习 {{ articleMappedCount }} 字 · 跳过 {{ articleSkippedCount }} 字</strong>
@@ -1734,7 +1692,7 @@ onScopeDispose(() => {
           <PracticeStream
             :session="session"
             :live-message="liveMessage"
-            :mode="drillMode === 'char' ? 'grid' : 'list'"
+            mode="list"
             :tier="1"
             :wrong-inputs="wrongInputs"
             :revealed="revealed"

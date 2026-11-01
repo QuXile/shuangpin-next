@@ -63,7 +63,6 @@ export const SHORTCUT_GROUPS: ShortcutGroup[] = [
     items: [
       { keys: ['Alt', 'D'], label: '专项练习' },
       { keys: ['Alt', 'A'], label: '文章练习' },
-      { keys: ['Alt', 'M'], label: '字 / 词模式切换' },
       { keys: ['Alt', '1–5'], label: '切换主要双拼方案' },
       { keys: ['Alt', '6'], label: '打开「其他方案」选择器' },
       { keys: ['←', '→'], label: '在方案按钮 / 其他方案之间移动' },
