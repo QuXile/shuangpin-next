@@ -196,4 +196,4 @@ pnpm validate
 
 - [数据说明](DATA.md)
 - [架构说明](ARCHITECTURE.md)
-- [训练场](TRAINING.md)
+- [练习场](TRAINING.md)

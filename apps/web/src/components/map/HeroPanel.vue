@@ -36,11 +36,7 @@ function chooseScheme(id: string): void {
   else emit('change-scheme', id)
 }
 
-function pressKey(key: string): void {
-  keycapsRef.value?.pressKey(key)
-}
-
-defineExpose({ pressKey, selectScheme: chooseScheme })
+defineExpose({ selectScheme: chooseScheme })
 </script>
 
 <template>

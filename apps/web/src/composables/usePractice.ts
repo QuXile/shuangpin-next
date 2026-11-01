@@ -11,7 +11,7 @@
  * - 主按钮文案只由阶段位置决定：非最后「下一阶段」、最后「完成本课」；仅 enabled 变化；
  * - 达标即自动记录本课通过；课程本身不提供无尽练习，需要时跳转练习场。
  */
-import { computed, onMounted, onScopeDispose, ref, shallowRef, watch } from 'vue'
+import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   accuracyTiers,
@@ -167,7 +167,6 @@ export function usePractice() {
     return runtime ? hasErrorOf(runtime.session, trackerOf(runtime)) : false
   })
 
-  const pressedKeys = ref<string[]>([])
   const introRecorded = ref(false)
   const liveCpm = useLiveCpm(() => session.value)
 
@@ -338,15 +337,6 @@ export function usePractice() {
   const showDock = computed(() => status.value === 'ready')
   const nextLesson = computed(() => (lesson.value ? course.nextLesson(lesson.value.id) : undefined))
 
-  function showPressed(key: string): void {
-    pressedKeys.value = [key.toLowerCase()]
-    if (pressTimer !== undefined) window.clearTimeout(pressTimer)
-    pressTimer = window.setTimeout(() => {
-      pressedKeys.value = []
-    }, 160)
-  }
-  let pressTimer: number | undefined
-
   // ── 批次生成器 ──────────────────────────────────────────────
 
   function stageMinWords(target: PracticeStage): number {
@@ -486,8 +476,6 @@ export function usePractice() {
   // ── 输入 ───────────────────────────────────────────────────
 
   function handleKey(raw: string): void {
-    // 只要事件在页面被处理（练习/tutorial/锁定/完成态），键位图都显示按下反馈
-    showPressed(raw)
     const currentStage = stage.value
     if (currentStage === 'tutorial') {
       // 教学页没有判题，但键位图仍会响应按键；保持与练习阶段一致的敲击声。
@@ -532,7 +520,6 @@ export function usePractice() {
   }
 
   function handleBackspace(): void {
-    showPressed('backspace')
     sound.playKey()
     const runtime = currentRuntime.value
     if (!runtime || runtime.session.phase === 'finished') return
@@ -603,7 +590,7 @@ export function usePractice() {
         JSON.stringify({ from: current.id, stage: stage.value, scheme: course.schemeId }),
       )
     } catch {
-      /* 隐私模式下仍然跳转，训练场使用当前/默认设置 */
+      /* 隐私模式下仍然跳转，练习场使用当前/默认设置 */
     }
     void router.push('/training')
   }
@@ -666,15 +653,6 @@ export function usePractice() {
     ]
     if (isIntro.value || status.value !== 'ready') return list
     list.push(
-      {
-        letter: true,
-        run: (event) => {
-          // 教学页没有判题，但物理按键也必须稳定发声，不能依赖深层分支。
-          if (stage.value === 'tutorial') sound.playKey()
-          handleKey(event.key)
-        },
-      },
-      { key: 'Backspace', run: () => handleBackspace() },
       { key: ' ', when: () => hasInputError.value, run: () => clearCurrentInput() },
       {
         key: 'Enter',
@@ -748,10 +726,6 @@ export function usePractice() {
     status.value = 'ready'
   })
 
-  onScopeDispose(() => {
-    if (pressTimer !== undefined) window.clearTimeout(pressTimer)
-  })
-
   return {
     // 状态
     status,
@@ -789,7 +763,6 @@ export function usePractice() {
     keyMapRows,
     highlightAtomIds,
     specialInitials,
-    pressedKeys,
     showDock,
     primary,
     // 动作
@@ -799,7 +772,6 @@ export function usePractice() {
     previousStage,
     goEndlessPractice,
     goNext,
-    showPressed,
     handleKey,
     handleBackspace,
     onIntroFinished,

@@ -13,6 +13,7 @@ import PracticeStream from '@/components/practice/PracticeStream.vue'
 import SessionBar from '@/components/layout/SessionBar.vue'
 import TutorialStage from '@/components/practice/TutorialStage.vue'
 import { usePractice } from '@/composables/usePractice'
+import { useKeyInput } from '@/composables/useKeyInput'
 import { useLayoutStore } from '@/stores/layout'
 import { useSoundStore } from '@/stores/sound'
 const router = useRouter()
@@ -51,7 +52,6 @@ const {
   keyMapRows,
   highlightAtomIds,
   specialInitials,
-  pressedKeys,
   showDock,
   primary,
   retryStage,
@@ -60,7 +60,7 @@ const {
   handleBackspace,
   onIntroFinished,
 } = practice
-const { goNext, handleKey, startFirstStage, showPressed } = practice
+const { goNext, handleKey, startFirstStage } = practice
 
 watch(
   [stageTitleText, isIntro],
@@ -85,7 +85,6 @@ function tierText(tier: MetricTier | null): string {
 
 const introRef = ref<InstanceType<typeof IntroLesson> | null>(null)
 function onKeymapKey(letter: string): void {
-  showPressed(letter)
   if (isIntro.value) {
     introRef.value?.pressKey(letter)
     return
@@ -106,6 +105,11 @@ function onDockBackspace(): void {
   }
   handleBackspace()
 }
+
+useKeyInput((input) => {
+  if (input.type === 'backspace') onDockBackspace()
+  else onKeymapKey(input.key)
+})
 </script>
 
 <template>
@@ -132,7 +136,6 @@ function onDockBackspace(): void {
           :passed="alreadyPassed"
           @finished="onIntroFinished"
           @next="goNext"
-          @key-pressed="showPressed"
         />
         <StateCard v-else loading message="正在准备入门课…" />
       </div>
@@ -231,10 +234,7 @@ function onDockBackspace(): void {
         :special-initials="specialInitials"
         :zero-initials="scheme?.zeroInitial"
         :compat-codes="scheme?.compatCodes"
-        :pressed="pressedKeys"
         :conceal="conceal"
-        @key="onKeymapKey"
-        @backspace="onDockBackspace"
       />
     </DockReveal>
   </div>

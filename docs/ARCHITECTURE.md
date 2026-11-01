@@ -94,6 +94,22 @@ kind      intro（入门）/ drill（新课）/ review（复习、期中、综�
 - 课程、入门试打与练习场使用同一套 PracticeStream / CharacterCard 渲染；
 - 判题接受 `accepted` 全部合法序列；显示仍使用 `primarySequence` 作为标答键帽。
 
+## 键输入管线
+
+字符输入只有一条链路：
+
+```text
+物理键盘 keydown ─┐
+                  ├─→ useKeyInput.dispatch → pressedKeys + 订阅者
+键位图点击 ───────┘
+```
+
+- `useKeyInput` 在应用根节点安装唯一的字符输入监听，统一处理字母、`;` 与退格；过滤组合键、IME、repeat 和输入框焦点；
+- `KeyboardMap` 是独立交互组件，点击按键直接向输入层派发，不再由各页面维护 `pressed`；
+- `SchemeKeycaps` 订阅同一输入层，物理按键和键位图点击都会触发键帽动画；
+- 练习页/练习场只订阅自己的判题处理器，不再各自注册字符快捷键；
+- 输入层不播放声音：有 Hero 键帽的页面由键帽负责，练习会话由页面处理器负责，保证一次输入只有一次声音。
+
 ## 方案判题
 
 音节判题只有两层：

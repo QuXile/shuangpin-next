@@ -50,6 +50,19 @@ ok(baseCss.includes('var(--setup-accent'), '全局 chip 选中样式必须消费
 ok(!/\.chip\.is-hidden-chip/.test(training), 'TrainingPage 不应再维护隐藏 chip 独立红色选择器')
 ok(!/\.chip \{/.test(training), 'TrainingPage 不应重复定义 .chip 基础样式')
 
+// ── 键盘输入守卫：字符输入只能经 useKeyInput 管线，禁止组件各自监听 ──────
+const rawKeyboardListeners = walk(WEB_SRC, (name) => name.endsWith('.vue')).filter((file) => {
+  const rel = path.relative(WEB_SRC, file).replaceAll('\\', '/')
+  if (rel === 'App.vue' || rel === 'pages/LearnMapPage.vue') return false
+  return /window\.addEventListener\(\s*['"]keydown/.test(fs.readFileSync(file, 'utf8'))
+})
+ok(
+  rawKeyboardListeners.length === 0,
+  `禁止在组件内直接监听 window keydown（应使用 useKeyInput/useGlobalKeys）：${rawKeyboardListeners
+    .map((file) => path.relative(ROOT, file).replaceAll('\\', '/'))
+    .join(', ')}`,
+)
+
 // ── 主题化守卫：组件样式只引用 token，设计 token 不得有未使用项 ──────────
 const tokensCss = read('apps/web/src/styles/tokens.css')
 const tokenNames = [...new Set(

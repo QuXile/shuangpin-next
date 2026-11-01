@@ -37,6 +37,7 @@ import { useCourseStore } from '@/stores/course'
 import { useLayoutStore } from '@/stores/layout'
 import { useSoundStore } from '@/stores/sound'
 import { useGlobalKeys, type KeyBinding } from '@/composables/useGlobalKeys'
+import { useKeyInput } from '@/composables/useKeyInput'
 import { useTrainingSession } from '@/composables/useTrainingSession'
 import { loadLexicon, type CommonWordsFile, type TrainingBank } from '@/lib/data'
 import {
@@ -868,16 +869,6 @@ function hiddenLabelsFor(
 
 const kind = ref<SessionKind>(null)
 const playing = computed(() => kind.value !== null && session.value !== null)
-const pressedKeys = ref<string[]>([])
-let pressTimer: number | undefined
-function showPressed(key: string): void {
-  pressedKeys.value = [key.toLowerCase()]
-  if (pressTimer !== undefined) window.clearTimeout(pressTimer)
-  pressTimer = window.setTimeout(() => {
-    pressedKeys.value = []
-  }, 160)
-}
-
 function makeDrillBatch(): ReturnType<typeof entriesToPracticeWords> {
   const schemeEngine = engine.value
   if (!schemeEngine) return []
@@ -911,7 +902,7 @@ watch(
   () => layout.setStageLabel(playing.value ? sessionTitle.value : ''),
   { immediate: true },
 )
-watch(playing, (value) => layout.setKeyboardAvailable(value), { immediate: true })
+watch([playing, () => course.scheme], () => layout.setKeyboardAvailable(Boolean(course.scheme)), { immediate: true })
 onBeforeUnmount(() => {
   layout.clearStageLabel()
   layout.setKeyboardAvailable(false)
@@ -941,7 +932,6 @@ function restartSession(): void {
 
 function onLetter(raw: string): void {
   if (!playing.value) return
-  showPressed(raw)
   const feedback = apply(raw)
   if (feedback?.kind === 'wrong') sound.playError()
   else if (feedback?.kind === 'word-complete') sound.playComplete()
@@ -949,7 +939,6 @@ function onLetter(raw: string): void {
 }
 function onBackspace(): void {
   if (!playing.value) return
-  showPressed('backspace')
   sound.playKey()
   sessionBackspace()
 }
@@ -958,9 +947,12 @@ function onClearInput(): void {
   sound.playKey()
   clearInput()
 }
-function onDockKey(letter: string): void {
-  onLetter(letter)
-}
+useKeyInput((input) => {
+  // 配置页只让键位图/键帽响应；开始练习后才把输入送入判题。
+  if (!playing.value) return
+  if (input.type === 'backspace') onBackspace()
+  else onLetter(input.key)
+})
 
 // ── 文章 ──────────────────────────────────────────────────────
 
@@ -1139,8 +1131,6 @@ const bindings = computed<KeyBinding[]>(() => {
     ]
   }
   return [
-    { letter: true, run: (event) => onLetter(event.key) },
-    { key: 'Backspace', run: () => onBackspace() },
     { key: ' ', when: () => inError.value, run: () => onClearInput() },
     {
       key: 'Enter',
@@ -1157,7 +1147,6 @@ const bindings = computed<KeyBinding[]>(() => {
 useGlobalKeys(bindings)
 
 onScopeDispose(() => {
-  if (pressTimer !== undefined) window.clearTimeout(pressTimer)
   // 路由切换/离开页面时兜底写入，避免最后一次设置只停在 debounce 队列里。
   persistTrainingConfig()
 })
@@ -1179,7 +1168,7 @@ onScopeDispose(() => {
               v-if="course.scheme"
               ref="heroKeycapsRef"
               :scheme="course.scheme"
-              text="训练场"
+              text="练习场"
               single-row
             />
           </template>
@@ -1696,6 +1685,16 @@ onScopeDispose(() => {
           </div>
         </section>
       </div>
+
+      <DockReveal :open="keyMapRows.length > 0 && layout.keyboardVisible">
+        <KeyboardDock
+          :rows="keyMapRows"
+          :scheme-name="course.scheme?.name"
+          :special-initials="specialInitials"
+          :zero-initials="course.scheme?.zeroInitial"
+          :compat-codes="course.scheme?.compatCodes"
+        />
+      </DockReveal>
     </template>
 
     <!-- 练习会话 -->
@@ -1783,9 +1782,6 @@ onScopeDispose(() => {
           :zero-initials="course.scheme?.zeroInitial"
           :compat-codes="course.scheme?.compatCodes"
           :hidden-atom-ids="sessionHiddenAtomIds"
-          :pressed="pressedKeys"
-          @key="onDockKey"
-          @backspace="onBackspace"
         />
       </DockReveal>
     </template>

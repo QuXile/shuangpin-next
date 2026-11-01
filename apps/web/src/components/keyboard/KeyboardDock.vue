@@ -7,7 +7,6 @@ withDefaults(
     rows: LetterKey[][]
     schemeName?: string
     highlightAtomIds?: readonly AtomId[]
-    pressed?: readonly string[]
     conceal?: boolean
     specialInitials?: readonly string[]
     legend?: boolean
@@ -18,7 +17,6 @@ withDefaults(
   {
     schemeName: '',
     highlightAtomIds: () => [],
-    pressed: () => [],
     conceal: false,
     specialInitials: () => [],
     legend: true,
@@ -27,11 +25,6 @@ withDefaults(
     compatCodes: () => ({}),
   },
 )
-
-const emit = defineEmits<{
-  key: [letter: string]
-  backspace: []
-}>()
 </script>
 
 <template>
@@ -40,15 +33,12 @@ const emit = defineEmits<{
       :rows="rows"
       :scheme-name="schemeName"
       :highlight-atom-ids="highlightAtomIds"
-      :pressed="pressed"
       :conceal="conceal"
       :special-initials="specialInitials"
       :legend="legend"
       :hidden-atom-ids="hiddenAtomIds"
       :zero-initials="zeroInitials"
       :compat-codes="compatCodes"
-      @key="emit('key', $event)"
-      @backspace="emit('backspace')"
     />
   </div>
 </template>

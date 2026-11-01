@@ -36,7 +36,6 @@ const props = withDefaults(
 const emit = defineEmits<{
   finished: []
   next: []
-  'key-pressed': [key: string]
 }>()
 
 const sound = useSoundStore()
@@ -186,20 +185,17 @@ function resetTry(): void {
 }
 function handleKey(raw: string): void {
   if (step.value !== 'try') {
-    emit('key-pressed', raw)
     sound.playKey()
     return
   }
   const state = session.value
   if (!state || state.phase === 'finished') {
     // 试打完成后仍保留键位图反馈，不能只有退格有声音。
-    emit('key-pressed', raw)
     sound.playKey()
     return
   }
   const charIndex = state.words[0]?.charIndex ?? 0
   const cellKey = `0:${charIndex}`
-  emit('key-pressed', raw)
   const result = applyKey(state, raw, performance.now())
   if (result.feedback.kind === 'wrong') {
     sound.playError()
@@ -235,7 +231,6 @@ function handleKey(raw: string): void {
 }
 
 function handleBackspace(): void {
-  emit('key-pressed', 'backspace')
   sound.playKey()
   if (step.value !== 'try') return
   if (!session.value || session.value.phase === 'finished') return
@@ -331,24 +326,6 @@ const bindings = computed<KeyBinding[]>(() => {
     },
     { key: 'ArrowLeft', alt: true, run: () => previous() },
   ]
-  // 键位图从第一页起常驻；非试打步骤也显示按键按下反馈
-  list.push(
-    {
-      letter: true,
-      run: (event) => {
-        if (step.value === 'try') handleKey(event.key)
-        else {
-          emit('key-pressed', event.key)
-          sound.playKey()
-        }
-      },
-    },
-    {
-      key: 'Backspace',
-      // 非试打页也要有敲击声与键位图反馈；handleBackspace 内部已按步骤分支处理。
-      run: () => handleBackspace(),
-    },
-  )
   if (step.value === 'try') {
     list.push({ key: ' ', when: () => hasInputError.value, run: () => clearCurrentInput() })
   }

@@ -1,10 +1,12 @@
 <script setup lang="ts">
 /**
- * 键位图（纯展示）：视图模型在 setup 里一次性预计算，渲染时不再重复遍历 atomIds。
+ * 键位图（独立交互组件）：点击按键与物理键盘走同一套 useKeyInput 输入管线。
+ * 视图模型在 setup 里一次性预计算，渲染时不再重复遍历 atomIds。
  */
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { AtomId, LetterKey } from '@shuangpin/core'
 import { parseAtomId } from '@shuangpin/core'
+import { useKeyInput } from '@/composables/useKeyInput'
 
 const props = withDefaults(
   defineProps<{
@@ -13,7 +15,6 @@ const props = withDefaults(
     schemeName?: string
     /** 本课 focus：对应声母/韵母文字反白 + 底色强调 */
     highlightAtomIds?: readonly AtomId[]
-    pressed?: readonly string[]
     /** true = 词语/考核阶段：隐藏全部映射，只保留按键与按下反馈 */
     conceal?: boolean
     /** 需要显示在键位图上的「改造声母」（由 engine.diff().learnInitials 传入） */
@@ -29,7 +30,6 @@ const props = withDefaults(
   {
     schemeName: '',
     highlightAtomIds: () => [],
-    pressed: () => [],
     conceal: false,
     specialInitials: () => [],
     legend: true,
@@ -39,10 +39,7 @@ const props = withDefaults(
   },
 )
 
-const emit = defineEmits<{
-  key: [letter: string]
-  backspace: []
-}>()
+const { pressedKeys, pressKey, pressBackspace } = useKeyInput()
 
 interface MappingPartView {
   text: string
@@ -60,7 +57,7 @@ interface KeyView {
 }
 
 const highlightSet = computed(() => new Set(props.highlightAtomIds))
-const pressedSet = computed(() => new Set(props.pressed.map((key) => key.toLowerCase())))
+const pressedSet = computed(() => new Set(pressedKeys.value.map((key) => key.toLowerCase())))
 const specialSet = computed(() => new Set(props.specialInitials))
 const hiddenAtomSet = computed(() => new Set(props.hiddenAtomIds))
 
@@ -187,7 +184,7 @@ const keyViews = computed<KeyView[][]>(() =>
         }"
         :title="key.title"
         :aria-label="key.title"
-        @click="emit('key', key.letter)"
+        @click="pressKey(key.letter)"
       >
         <span class="key-letter">{{ key.letter.toUpperCase() }}</span>
         <span v-if="!conceal" class="key-initials">
@@ -215,7 +212,7 @@ const keyViews = computed<KeyView[][]>(() =>
         :class="{ 'is-pressed': pressedSet.has('backspace') }"
         title="退格"
         aria-label="退格"
-        @click="emit('backspace')"
+        @click="pressBackspace()"
       >
         <span class="key-backspace" aria-hidden="true">⌫</span>
         <span class="key-backspace-label" aria-hidden="true">退格</span>

@@ -6,6 +6,7 @@ import Topbar from '@/components/layout/Topbar.vue'
 import ShortcutHelp from '@/components/layout/ShortcutHelp.vue'
 import { useCourseBootstrap } from '@/composables/useCourseBootstrap'
 import { useGlobalKeys } from '@/composables/useGlobalKeys'
+import { useKeyInput } from '@/composables/useKeyInput'
 import { usePointerBlur } from '@/composables/usePointerBlur'
 import { useCourseStore } from '@/stores/course'
 import { useLayoutStore } from '@/stores/layout'
@@ -20,6 +21,7 @@ const course = useCourseStore()
 const layout = useLayoutStore()
 useCourseBootstrap()
 usePointerBlur()
+useKeyInput()
 
 onMounted(() => {
   const unlockAudio = (): void => sound.unlock()

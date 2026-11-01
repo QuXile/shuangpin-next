@@ -2,11 +2,12 @@
 /**
  * 文本 → 双拼键帽（方案名 / 练习场等）。
  * 文本中的汉字先取声母/韵母，再通过当前方案 engine 求实际按键；字母原样作为键帽。
- * 键帽可直接用物理键盘敲击：正确键变绿，全部完成后退场并换一组新的随机排布。
+ * 键帽订阅统一输入管线：物理键盘和键位图点击都会驱动；正确键变绿，全部完成后退场并换一组新的随机排布。
  */
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { atomId, createSchemeEngine, type SchemeDef } from '@shuangpin/core'
 import { useSoundStore } from '@/stores/sound'
+import { useKeyInput } from '@/composables/useKeyInput'
 
 const props = withDefaults(
   defineProps<{
@@ -226,31 +227,6 @@ function armIdleRefresh(): void {
   }, IDLE_REFRESH_MS)
 }
 
-/** 外部刷新键帽：重新随机排布，同时清空尚未完成的输入进度。 */
-function refreshKeycaps(): void {
-  clearTimers()
-  leaving.value = false
-  errorIndex.value = null
-  doneFlags.value = roundCaps.value.map(() => false)
-  randomizeLayout()
-}
-
-function startRound(): void {
-  clearTimers()
-  leaving.value = false
-  errorIndex.value = null
-  roundCaps.value = [...caps.value]
-  doneFlags.value = caps.value.map(() => false)
-  randomizeLayout()
-}
-
-watch(() => caps.value.join(','), () => startRound(), { immediate: true })
-
-function isEditableTarget(target: EventTarget | null): boolean {
-  const el = target as HTMLElement | null
-  return Boolean(el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable))
-}
-
 function scheduleRestart(): void {
   if (idleTimer !== undefined) window.clearTimeout(idleTimer)
   idleTimer = undefined
@@ -293,11 +269,38 @@ function pressKey(key: string): void {
   }
 }
 
-function onWindowKeydown(event: KeyboardEvent): void {
-  if (event.ctrlKey || event.metaKey || event.altKey) return
-  if (isEditableTarget(event.target)) return
-  pressKey(event.key)
+/** 外部刷新键帽：重新随机排布，同时清空尚未完成的输入进度。 */
+function refreshKeycaps(): void {
+  clearTimers()
+  leaving.value = false
+  errorIndex.value = null
+  doneFlags.value = roundCaps.value.map(() => false)
+  randomizeLayout()
 }
+
+function startRound(): void {
+  clearTimers()
+  leaving.value = false
+  errorIndex.value = null
+  roundCaps.value = [...caps.value]
+  doneFlags.value = caps.value.map(() => false)
+  randomizeLayout()
+}
+
+watch(
+  () => [props.scheme.id, props.text, caps.value.join(',')] as const,
+  () => startRound(),
+  { immediate: true },
+)
+
+useKeyInput((input) => {
+  if (input.type === 'backspace') {
+    // 地图/配置页没有判题处理器，退格仍保留按键反馈。
+    sound.playKey()
+    return
+  }
+  pressKey(input.key)
+})
 
 let resizeTimer: number | undefined
 function onResize(): void {
@@ -306,17 +309,15 @@ function onResize(): void {
 }
 
 onMounted(() => {
-  window.addEventListener('keydown', onWindowKeydown)
   window.addEventListener('resize', onResize)
 })
 onBeforeUnmount(() => {
-  window.removeEventListener('keydown', onWindowKeydown)
   window.removeEventListener('resize', onResize)
   clearTimers()
   if (resizeTimer !== undefined) window.clearTimeout(resizeTimer)
 })
 
-defineExpose({ refreshKeycaps, pressKey })
+defineExpose({ refreshKeycaps })
 </script>
 
 <template>

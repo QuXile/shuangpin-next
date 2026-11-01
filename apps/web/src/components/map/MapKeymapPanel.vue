@@ -1,9 +1,7 @@
 <script setup lang="ts">
-/** 地图键位图：直接复用课程 KeyboardMap，保留相同键位、图例、退格与按下反馈。 */
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+/** 地图键位图：直接复用课程 KeyboardMap；输入与按下反馈由 KeyboardMap 自己处理。 */
 import type { LetterKey } from '@shuangpin/core'
 import KeyboardMap from '@/components/keyboard/KeyboardMap.vue'
-import { useSoundStore } from '@/stores/sound'
 import CardHeader from '@/components/common/CardHeader.vue'
 
 withDefaults(
@@ -16,52 +14,6 @@ withDefaults(
   }>(),
   { specialInitials: () => [], zeroInitials: () => ({}), compatCodes: () => ({}) },
 )
-
-const emit = defineEmits<{ key: [letter: string] }>()
-const sound = useSoundStore()
-const pressedKeys = ref<string[]>([])
-let pressTimer: number | undefined
-
-function onMapKey(key: string): void {
-  sound.playKey()
-  showPressed(key)
-  emit('key', key)
-}
-
-function onBackspace(): void {
-  sound.playKey()
-  showPressed('backspace')
-}
-
-function showPressed(key: string): void {
-  pressedKeys.value = [key.toLowerCase()]
-  if (pressTimer !== undefined) window.clearTimeout(pressTimer)
-  pressTimer = window.setTimeout(() => {
-    pressedKeys.value = []
-  }, 160)
-}
-
-function onWindowKeydown(event: KeyboardEvent): void {
-  if (event.ctrlKey || event.metaKey || event.altKey) return
-  const target = event.target as HTMLElement | null
-  if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable)) return
-  if (event.key === 'Backspace') {
-    sound.playKey()
-    showPressed('backspace')
-    return
-  }
-  const key = event.key.toLowerCase()
-  if (/^[a-z;]$/.test(key)) {
-    sound.playKey()
-    showPressed(key)
-  }
-}
-
-onMounted(() => window.addEventListener('keydown', onWindowKeydown))
-onBeforeUnmount(() => {
-  window.removeEventListener('keydown', onWindowKeydown)
-  if (pressTimer !== undefined) window.clearTimeout(pressTimer)
-})
 </script>
 
 <template>
@@ -81,10 +33,7 @@ onBeforeUnmount(() => {
         :special-initials="specialInitials"
         :zero-initials="zeroInitials"
         :compat-codes="compatCodes"
-        :pressed="pressedKeys"
         :legend="false"
-        @key="onMapKey"
-        @backspace="onBackspace"
       />
     </div>
   </section>

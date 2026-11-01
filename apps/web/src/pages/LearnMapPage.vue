@@ -232,10 +232,6 @@ function clearProgress(): void {
   progress.clear()
 }
 
-function pressHeroKey(key: string): void {
-  heroPanelRef.value?.pressKey(key)
-}
-
 const schemeOptions = computed(() => course.allSchemeOptions)
 const primarySchemeIds = computed(() => course.schemeOptions.map((option) => option.id))
 
@@ -364,7 +360,6 @@ useGlobalKeys(bindings)
           :zero-initials="course.scheme?.zeroInitial"
           :compat-codes="course.scheme?.compatCodes"
           :scheme-name="schemeName"
-          @key="pressHeroKey"
         />
         <LearningProgressCard
           :progress-percent="course.progressPercent"
