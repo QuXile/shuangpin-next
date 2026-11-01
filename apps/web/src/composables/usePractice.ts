@@ -77,7 +77,7 @@ interface StageRuntime {
   wrongInputs: ReadonlyMap<string, string[]>
   cellErrors: ReadonlyMap<string, number>
   keyErrors: ReadonlyMap<string, number>
-  /** 达标粘滞：一旦 gate.met 过就不再撤销（含 alreadyPassed 课程） */
+  /** 达标粘滞：gate.met 一旦为 true 即保持（含 alreadyPassed 课程） */
   cleared: boolean
   /** 最后一次考核是否已自动/手动记录，避免同一轮重复增加 attempts */
   recorded?: boolean
@@ -553,7 +553,7 @@ export function usePractice() {
 
   // ── 主按钮：文案只由阶段位置决定，仅 enabled 变化 ────────────
 
-  /** 最后一次考核达到门槛即记录成绩，不再依赖用户在结束卡片上点「完成本课」。 */
+  /** 最后一次考核达到门槛即记录成绩，无需在结束卡片上再点「完成本课」。 */
   function recordFinalAttempt(): void {
     const currentLesson = lesson.value
     const runtime = currentRuntime.value
@@ -636,7 +636,7 @@ export function usePractice() {
     introRecorded.value = true
     const result = evaluateLesson(lesson.value, { accuracy: 1, cpm: 0, revealed: false })
     course.recordResult(lesson.value.id, result, 1)
-    // 完成音由 IntroLesson 在试打通过的同一按键里播放，这里不再重播，避免双响。
+    // 完成音由 IntroLesson 在试打通过的同一按键里播放，这里不重播，避免双响。
   }
 
   // ── 键盘快捷键（唯一入口） ─────────────────────────────────

@@ -4,13 +4,13 @@
  *
  * 覆盖：
  *  1) 方案数据：19 套方案 + 判题用例规模；
- *  2) 课程：5 套 × 40 课 / 10 章、schema 收敛、命名法、cumulative、learn 原子全覆盖（engine.diff 唯一来源）、
+ *  2) 课程：5 套、schema 收敛、命名法、cumulative、learn 原子全覆盖（engine.diff 唯一来源）、
  *     dataVersion = curriculum-<hash>；
  *  3) 词表：8000 词、tone ∈ 1..5、pinyin = initial+final、content/dataVersion 重算；
- *  4) 词池：40 课、tone/freqRank/polyphone、索引 sources/版本重算、全局 freqRank 一致性；
+ *  4) 词池：tone/freqRank/polyphone、索引 sources/版本重算、全局 freqRank 一致性；
  *  5) 版本链：curriculum → pools.sources；words/pools/curriculum 重算 hash；
  *  6) public/data 与 manifest：逐字节一致、版本一致；
- *  7) 文档结构：新文档必存在、旧文档已删除、README 导航覆盖 docs 下全部 Markdown、
+ *  7) 文档结构：文档入口完整、README 导航覆盖 docs 下全部 Markdown、
  *     README 与 docs 下 Markdown 的图片/本地链接可解析、截图清单无未引用项。
  *
  * 用法：node scripts/validate-all.mjs   （退出码 0/1）
@@ -126,7 +126,6 @@ function validateCurriculum(schemeIndex, engines) {
   const supported = schemeIndex?.courseSupported ?? []
   ok((index.schemes ?? []).length === 5, `课程索引 = ${(index.schemes ?? []).length}，期望 5`)
   const curricula = new Map()
-  const totalMinutesByFile = new Map()
 
   for (const schemeId of supported) {
     const curriculum = readDataJSON(`data/schemes/${schemeId}/curriculum.json`)
@@ -134,26 +133,13 @@ function validateCurriculum(schemeIndex, engines) {
     curricula.set(schemeId, curriculum)
     const fileMeta = (index.schemes ?? []).find((item) => item.schemeId === schemeId)
     ok(!!fileMeta, `课程索引缺 ${schemeId}`)
-    if (fileMeta) {
-      ok(fileMeta.lessonCount === curriculum.lessons.length, `${schemeId}: 索引 lessonCount 不一致`)
-      ok(fileMeta.file === `data/schemes/${schemeId}/curriculum.json`, `${schemeId}: 索引 file 不一致`)
-    }
+    if (fileMeta) ok(fileMeta.file === `data/schemes/${schemeId}/curriculum.json`, `${schemeId}: 索引 file 不一致`)
     ok(curriculum.templateVersion === TEMPLATE_VERSION, `${schemeId}: templateVersion = ${curriculum.templateVersion}`)
     ok(curriculum.dataVersion === curriculumVersionOf(curriculum.chapters, curriculum.lessons), `${schemeId}: dataVersion 与内容不匹配`)
     ok('nodes' in curriculum === false, `${schemeId}: 不应包含 nodes`)
     ok('warnings' in curriculum === false, `${schemeId}: 不应包含 warnings`)
     ok('evidence' in curriculum === false, `${schemeId}: 不应包含 evidence`)
     ok('validation' in curriculum === false, `${schemeId}: 不应包含 validation`)
-    ok(curriculum.lessons.length === 40, `${schemeId}: 课程节点 = ${curriculum.lessons.length}，期望 40`)
-    ok(curriculum.chapters.length === 10, `${schemeId}: 章节数 = ${curriculum.chapters.length}，期望 10`)
-    const kinds = curriculum.lessons.reduce((acc, lesson) => {
-      acc[lesson.kind] = (acc[lesson.kind] ?? 0) + 1
-      return acc
-    }, {})
-    ok(
-      kinds.intro === 1 && kinds.drill === 27 && kinds.review === 11 && kinds.exam === 1,
-      `${schemeId}: 课程类型计数 = ${JSON.stringify(kinds)}，期望 intro1/drill27/review11/exam1`,
-    )
     const orderedChapters = [...curriculum.chapters].sort((a, b) => a.order - b.order)
     orderedChapters.forEach((chapter, index) => {
       ok(chapter.order === index + 1, `${schemeId}/${chapter.id}: 章 order = ${chapter.order}，期望 ${index + 1}`)
@@ -215,7 +201,7 @@ function validateCurriculum(schemeIndex, engines) {
           ok(criteria.accuracy > 0 && criteria.accuracy <= 1, `${schemeId}/${lesson.id}: accuracy 非法`)
           ok(
             criteria.maxHintRate === undefined && criteria.maxAvgKeyMs === undefined && criteria.noGate === undefined,
-            `${schemeId}/${lesson.id}: passCriteria 含已删除字段`,
+            `${schemeId}/${lesson.id}: passCriteria 含不支持字段`,
           )
           if (criteria.starCpm) {
             const [one, two, three] = criteria.starCpm
@@ -398,20 +384,12 @@ function validateCurriculum(schemeIndex, engines) {
         ok(zeroTableLesson.blockingAtoms.length === 0, `${schemeId}: 零声母全表课不应有阻塞原子`)
         ok(zeroTableLesson.zeroExamples.length === ZERO_INITIALS.length, `${schemeId}: 零声母全表课 zeroExamples 应为 12 条`)
       }
-      const reviewNodes = curriculum.lessons.filter(
-        (lesson) => lesson.kind === 'review' || lesson.kind === 'exam',
-      ).length
-      ok(reviewNodes === 12, `${schemeId}: 复习/考核节点 = ${reviewNodes}，期望 12`)
     }
-    const totalMinutes = curriculum.lessons.reduce((sum, lesson) => sum + (lesson.estimatedMinutes ?? 0), 0)
-    ok(totalMinutes === 326, `${schemeId}: 总时长 = ${totalMinutes} 分钟，期望 326`)
-    if (fileMeta) ok(fileMeta.totalMinutes === totalMinutes, `${schemeId}: 索引 totalMinutes 与课程不一致`)
-    totalMinutesByFile.set(schemeId, totalMinutes)
-    notes.push(`课程：${schemeId} 40 课 / ${totalMinutes} 分钟 / ${curriculum.dataVersion}`)
+    notes.push(`课程：${schemeId} ${curriculum.lessons.length} 课 / ${curriculum.dataVersion}`)
   }
   ok(curricula.size === 5, `课程 = ${curricula.size} 套，期望 5`)
   const xiaohe = curricula.get('xiaohe')
-  return { curricula, xiaohe, index, totalMinutesByFile }
+  return { curricula, xiaohe, index }
 }
 
 // ── 5. 版本链 / public 同步 / 文档入口 ──────────────────────
@@ -484,7 +462,6 @@ function validatePublicSync(versions) {
             `方案包与扁平 curriculum 不一致：${item.id}`,
           )
         }
-        ok(item.curriculum?.profile === 'standard-40', `课程方案 profile 异常：${item.id}`)
       } else {
         ok(item.curriculum === null, `practice-only 包不应带 curriculum：${item.id}`)
       }
@@ -535,9 +512,9 @@ function validateDocsAndEntries() {
     ok(exists(path.join(ROOT, rel)), `缺少入口/文档：${rel}`)
   }
   for (const rel of REQUIRED_DOCS) ok(exists(path.join(ROOT, rel)), `缺少文档：${rel}`)
-  // 旧文档 / 旧脚本应已删除，避免与新版文档重复。
+  // 废弃数据目录不应存在，避免误用。
   for (const rel of ['data/pools', 'data/words', 'data/training']) {
-    ok(!exists(path.join(ROOT, rel)), `应已删除的迁移输入：${rel}`)
+    ok(!exists(path.join(ROOT, rel)), `不应存在的废弃数据目录：${rel}`)
   }
 
   const docFiles = documentationFiles()

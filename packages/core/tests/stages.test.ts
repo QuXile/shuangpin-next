@@ -221,7 +221,7 @@ describe('同键双韵课（L3.6 ia/ua）', () => {
 })
 
 describe('buildTutorialWords', () => {
-  it('L2.1：全量展示该课所有含 zh 的音节（每音一张，不截断）', () => {
+  it('L2.1：展示该课所有含 zh 的音节（每音一张）', () => {
     const lesson = findLesson(curriculum, 'L2.1')
     const pool = loadPool('L2.1')
     const words = buildTutorialWords({ engine, lesson, pool })
@@ -238,7 +238,7 @@ describe('buildTutorialWords', () => {
     expect(words.map((word) => word.syllables[0]?.final)).toEqual([...ZERO_INITIALS])
   })
 
-  it('L9.1：综合课示例全量（>300 张），不再受 48 上限', () => {
+  it('L9.1：综合课示例覆盖全部音节', () => {
     const lesson = findLesson(curriculum, 'L9.1')
     const pool = loadPool('L9.1')
     const words = buildTutorialWords({ engine, lesson, pool })

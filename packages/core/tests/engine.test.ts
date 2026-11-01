@@ -159,16 +159,21 @@ describe('方案引擎 · 主键与判题口径', () => {
     expect(engine.judge('xv', spec)).toBe(true)
   })
 
-  it('C 双拼：syllable-code 整音节码查表', () => {
+  it('C 双拼：组合式声韵查表与 fcitx 零声母', () => {
     const engine = loadEngine('c')
     expect(engine.primarySequence({ initial: 'b', final: 'a' })).toEqual(['b', 'a'])
     expect(engine.primarySequence({ initial: 'b', final: 'ai' })).toEqual(['b', 'h'])
     expect(engine.primarySequence({ initial: '', final: 'a', zeroInitial: true })).toEqual(['a', 'h'])
+    expect(engine.acceptedSequences({ initial: '', final: 'a', zeroInitial: true }).map((x) => x.join(''))).toEqual(['ah', 'a;'])
+    expect(engine.primarySequence({ initial: '', final: 'eng', zeroInitial: true })).toEqual(['e', 'g'])
   })
 
-  it('C 双拼缺 zero:eng 数据时显式返回空序列（不静默兜底）', () => {
+  it('C 双拼：fcitx sp.dat 零声母 eng=eg 已可用', () => {
     const engine = loadEngine('c')
-    expect(engine.acceptedSequences({ initial: '', final: 'eng', zeroInitial: true })).toEqual([])
+    expect(engine.judge('eg', { initial: '', final: 'eng', zeroInitial: true })).toBe(true)
+    expect(engine.acceptedSequences({ initial: '', final: 'e', zeroInitial: true }).map((x) => x.join(''))).toEqual(['ee', 'e;'])
+    expect(engine.acceptedSequences({ initial: '', final: 'er', zeroInitial: true }).map((x) => x.join(''))).toEqual(['er', 'eh'])
+    expect(engine.acceptedSequences({ initial: '', final: 'o', zeroInitial: true }).map((x) => x.join(''))).toEqual(['oh', 'o;'])
   })
 })
 

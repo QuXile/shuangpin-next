@@ -180,7 +180,8 @@
   },
   "zeroInitial": {
     "a": [
-      "ah"
+      "ah",
+      "a;"
     ],
     "ai": [
       "ai"
@@ -195,6 +196,7 @@
       "ao"
     ],
     "e": [
+      "ee",
       "e;"
     ],
     "ei": [
@@ -203,11 +205,16 @@
     "en": [
       "en"
     ],
+    "eng": [
+      "eg"
+    ],
     "er": [
+      "er",
       "eh"
     ],
     "o": [
-      "oh"
+      "oh",
+      "o;"
     ],
     "ou": [
       "ou"
@@ -263,15 +270,15 @@
   "source": {
     "repo": "fcitx/fcitx5-chinese-addons",
     "file": "im/pinyin/sp.dat.example",
-    "note": "按 commit e8d930f402e359cfd76a101ee3e46815d1331d83 的 sp.dat.example 重建（LGPL-2.1-or-later；仅解析键位事实，未复制实现代码）。旧整音节码回归基线来自 BlueSky-07/Shuang v6.0.0 commit 5a5e71e（GPL-3.0，仅键位事实）。"
+    "note": "按 fcitx/fcitx5-chinese-addons commit e8d930f402e359cfd76a101ee3e46815d1331d83 的 sp.dat.example 重建（LGPL-2.1-or-later；仅解析键位事实，未复制实现代码）。零声母取 sp.dat [音节] 表；推荐码 / 兼容码补充参考 BlueSky-07/Shuang v6.0.0（GPL-3.0，仅键位事实）。"
   },
   "notes": [
     "type=compositional：以 core 的 23 声母 / 33 韵母恒等映射为底，叠加 sp.dat 的非恒等映射；一音多键保留为数组（ch=u/;、zh=o/v、ua=a/m、uo=p/b）。",
     "recommended 只在多码音节上保存推荐/标答码；compatCodes 只保存无法由声母/韵母组合得到的额外兼容码；键位图只展示 compatCodes。",
-    "j/q/x/y + u 的 V 键兼容码（ju/jv、qu/qv、xu/xv、yu/yv）显式写入 compatCodes，不再由核心引擎隐式处理。",
+    "j/q/x/y + u 的 V 键兼容码（ju/jv、qu/qv、xu/xv、yu/yv）写入 compatCodes。",
     "兼容别名：zhu 的 vf 进入 compatCodes，推荐码仍为 of；chua 的 UM/;A/;M 是组合多解，不进入兼容表。",
-    "零声母沿用旧表 11 条（a/ai/an/ang/ao/e/ei/en/er/o/ou）；eng 暂缺，core 测试与练习侧按数据缺口处理（sp.dat 中的 eng=eg 未启用）。",
-    "旧表 394 条旧 override 已迁移为推荐/兼容码并回归校验通过。",
+    "零声母按 fcitx sp.dat [音节] 表：a/e/er/o 各有两条合法码，eng=eg。",
+    "推荐/兼容码已通过回归校验。",
     "表内仍有同码（约 49 组），只建议用于自由练习 / 实验，不能用于「键序列 → 唯一音节」逆向解码。"
   ],
   "recommended": {
@@ -464,7 +471,9 @@
     "zuan": "zm",
     "zui": "z;",
     "zun": "zc",
-    "zuo": "zp"
+    "zuo": "zp",
+    "pia": "pa",
+    "lue": "lb"
   },
   "compatCodes": {
     "cui": [

@@ -69,7 +69,7 @@ export const useCourseStore = defineStore('course', () => {
   const unlockedAll = ref(readUnlockedAll())
   const schemeIndex = shallowRef<SchemeIndexFile | null>(null)
   const schemeId = ref('')
-  /** 当前是「纯练习方案」预览：有 scheme 与键位图，但无课程/进度。 */
+  /** 当前是「仅支持练习」预览：有 scheme 与键位图，但无课程/进度。 */
   const previewMode = ref(false)
   const scheme = shallowRef<SchemeDef | null>(null)
   const curriculum = shallowRef<Curriculum | null>(null)

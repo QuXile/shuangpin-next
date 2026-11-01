@@ -77,7 +77,7 @@ CI 工作流见[发布说明](RELEASE.md)。
 - `apps/web/public/data/`、`dist/`、`release/`、`tmp/` 不入库；
 - `data/` 下的方案、课程、Lexicon、方案包入库；Lexicon 与 curriculum 是权威数据，改动后直接运行校验与同步；
 - `apps/web/public/data/packages/` 由 `scripts/scheme-packages/build.mjs` 生成，不要手改；
-- 不再保留旧词池 / words.sample / training bank 或对应生成器。
+- 词池与课程内容以 Lexicon 和 curriculum 为源数据。
 
 ## 贡献流程
 

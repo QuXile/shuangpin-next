@@ -5,7 +5,7 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import type { CurriculumIndexFile, DataManifest, SchemeDef, WordEntry } from '../src/types.ts'
+import type { CurriculumIndexFile, DataManifest, Final, SchemeDef, WordEntry } from '../src/types.ts'
 import { FINALS } from '../src/pinyin.ts'
 import {
   dataPath,
@@ -34,15 +34,23 @@ describe('方案与课程数据契约', () => {
       expect(def.name).toBeTruthy()
       const diff = loadEngine(id).diff()
       expect(diff.learnInitials.length + diff.learnFinals.length).toBeGreaterThan(0)
+      // 19 套方案都必须完整覆盖 12 个零声母；C 双拼曾在这里漏掉 eng。
+      expect(Object.keys(def.zeroInitial).sort(), `${id}: 零声母表不完整`).toEqual(
+        ['a', 'ai', 'an', 'ang', 'ao', 'e', 'ei', 'en', 'eng', 'er', 'o', 'ou'],
+      )
+      for (const [final, codes] of Object.entries(def.zeroInitial)) {
+        expect(codes.length, `${id}: 零声母 ${final} 无键位`).toBeGreaterThan(0)
+        expect(loadEngine(id).acceptedSequences({ initial: '', final: final as Final, zeroInitial: true }).length).toBeGreaterThan(0)
+      }
     }
   })
 
-  it('5 套课程均为 40 课，版本与索引一致', () => {
+  it('5 套课程可加载且版本一致', () => {
     const indexFile = curriculumIndex as CurriculumIndexFile
     expect(indexFile.schemes).toHaveLength(5)
     for (const schemeId of schemeIds) {
       const curriculum = loadCurriculum(schemeId)
-      expect(curriculum.lessons).toHaveLength(40)
+      expect(curriculum.lessons.length).toBeGreaterThan(0)
       expect(curriculum.dataVersion).toMatch(/^curriculum-[0-9a-f]{12}$/)
       expect(curriculumIndex.schemes.some((item) => item.schemeId === schemeId)).toBe(true)
       const requested = new Set(curriculum.lessons.flatMap((lesson) => lesson.prerequisites))

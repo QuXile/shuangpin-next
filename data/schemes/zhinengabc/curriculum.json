@@ -6,7 +6,7 @@
   "templateVersion": "1.0.0",
   "generatedAt": "2026-10-31T07:30:16.094Z",
   "supportLevel": "full",
-  "dataVersion": "curriculum-32a71a1c61db",
+  "dataVersion": "curriculum-9c6985cf8133",
   "chapters": [
     {
       "id": "ch-intro",
@@ -76,7 +76,6 @@
       "kind": "intro",
       "title": "入门 · 认识双拼",
       "desc": "一声母一韵母两键；键位图；三行卡；先看单字、再练词语",
-      "estimatedMinutes": 4,
       "focusAtoms": [],
       "blockingAtoms": [],
       "nonBlockingAtoms": [],
@@ -102,7 +101,6 @@
       "kind": "drill",
       "title": "声母 · zh",
       "desc": "新键：zh。先练单字，再练词语",
-      "estimatedMinutes": 6,
       "focusAtoms": [
         "initial:zh"
       ],
@@ -158,7 +156,6 @@
       "kind": "drill",
       "title": "声母 · ch",
       "desc": "新键：ch。注意 i/u/v 键的双重身份",
-      "estimatedMinutes": 6,
       "focusAtoms": [
         "initial:ch"
       ],
@@ -215,7 +212,6 @@
       "kind": "drill",
       "title": "声母 · sh",
       "desc": "新键：sh。声母部分完成，先单字后词语",
-      "estimatedMinutes": 6,
       "focusAtoms": [
         "initial:sh"
       ],
@@ -275,7 +271,6 @@
       "kind": "drill",
       "title": "零声母 · 12 个音节",
       "desc": "逐个列出 12 个零声母音节的两键映射（字母式 / o+ 式由方案决定）",
-      "estimatedMinutes": 8,
       "focusAtoms": [
         "zero:a",
         "zero:ai",
@@ -510,7 +505,6 @@
       "kind": "review",
       "title": "复习 · 声母与零声母",
       "desc": "范围：声母改造 + 零声母全表（按学习顺序累计复习）",
-      "estimatedMinutes": 12,
       "focusAtoms": [
         "initial:zh",
         "initial:ch",
@@ -811,7 +805,6 @@
       "kind": "drill",
       "title": "韵母 · ai",
       "desc": "新键：韵母 ai",
-      "estimatedMinutes": 6,
       "focusAtoms": [
         "final:ai"
       ],
@@ -882,7 +875,6 @@
       "kind": "drill",
       "title": "韵母 · ao",
       "desc": "新键：韵母 ao",
-      "estimatedMinutes": 6,
       "focusAtoms": [
         "final:ao"
       ],
@@ -954,7 +946,6 @@
       "kind": "drill",
       "title": "韵母 · an",
       "desc": "新键：韵母 an（前鼻音）",
-      "estimatedMinutes": 6,
       "focusAtoms": [
         "final:an"
       ],
@@ -1029,7 +1020,6 @@
       "kind": "drill",
       "title": "韵母 · ang",
       "desc": "新键：韵母 ang（后鼻音）",
-      "estimatedMinutes": 6,
       "focusAtoms": [
         "final:ang"
       ],
@@ -1102,7 +1092,6 @@
       "kind": "review",
       "title": "复习 · a 家族开口组",
       "desc": "范围：ai/ao/an/ang + 本组零声母",
-      "estimatedMinutes": 12,
       "focusAtoms": [
         "final:ai",
         "final:ao",
@@ -1296,7 +1285,6 @@
       "kind": "drill",
       "title": "同键 · ia / ua",
       "desc": "新键：ia / ua（同键双韵）",
-      "estimatedMinutes": 8,
       "focusAtoms": [
         "final:ia",
         "final:ua"
@@ -1388,7 +1376,6 @@
       "kind": "drill",
       "title": "韵母 · iao",
       "desc": "新键：韵母 iao",
-      "estimatedMinutes": 6,
       "focusAtoms": [
         "final:iao"
       ],
@@ -1467,7 +1454,6 @@
       "kind": "drill",
       "title": "韵母 · ian",
       "desc": "新键：韵母 ian",
-      "estimatedMinutes": 6,
       "focusAtoms": [
         "final:ian"
       ],
@@ -1547,7 +1533,6 @@
       "kind": "drill",
       "title": "同键 · iang / uang",
       "desc": "新键：iang / uang（同键双韵）",
-      "estimatedMinutes": 8,
       "focusAtoms": [
         "final:iang",
         "final:uang"
@@ -1647,7 +1632,6 @@
       "kind": "drill",
       "title": "韵母 · uai",
       "desc": "新键：韵母 uai",
-      "estimatedMinutes": 6,
       "focusAtoms": [
         "final:uai"
       ],
@@ -1730,7 +1714,6 @@
       "kind": "drill",
       "title": "韵母 · uan",
       "desc": "新键：韵母 uan",
-      "estimatedMinutes": 6,
       "focusAtoms": [
         "final:uan"
       ],
@@ -1814,7 +1797,6 @@
       "kind": "review",
       "title": "复习 · a 家族",
       "desc": "范围：a 家族全部韵母 + 本家族零声母",
-      "estimatedMinutes": 13,
       "focusAtoms": [
         "final:ai",
         "final:ao",
@@ -2164,7 +2146,6 @@
       "kind": "drill",
       "title": "韵母 · uo",
       "desc": "新键：韵母 uo",
-      "estimatedMinutes": 6,
       "focusAtoms": [
         "final:uo"
       ],
@@ -2249,7 +2230,6 @@
       "kind": "drill",
       "title": "韵母 · ou",
       "desc": "新键：韵母 ou",
-      "estimatedMinutes": 6,
       "focusAtoms": [
         "final:ou"
       ],
@@ -2335,7 +2315,6 @@
       "kind": "drill",
       "title": "同键 · ong / iong",
       "desc": "新键：ong / iong（同键双韵）",
-      "estimatedMinutes": 8,
       "focusAtoms": [
         "final:ong",
         "final:iong"
@@ -2441,7 +2420,6 @@
       "kind": "review",
       "title": "复习 · o 家族",
       "desc": "范围：o 家族 + 本家族零声母",
-      "estimatedMinutes": 12,
       "focusAtoms": [
         "final:uo",
         "final:ou",
@@ -2622,7 +2600,6 @@
       "kind": "review",
       "title": "期中 · 混合练习",
       "desc": "检验：前四章混合练习，准确率优先",
-      "estimatedMinutes": 12,
       "focusAtoms": [
         "initial:zh",
         "initial:ch",
@@ -3232,7 +3209,6 @@
       "kind": "review",
       "title": "期中 · 速度练习",
       "desc": "检验：前四章速度练习，正确率 ≥85%，速度按 45/60/75 WPM 分档",
-      "estimatedMinutes": 14,
       "focusAtoms": [
         "initial:zh",
         "initial:ch",
@@ -3848,7 +3824,6 @@
       "kind": "drill",
       "title": "韵母 · ei",
       "desc": "新键：韵母 ei",
-      "estimatedMinutes": 6,
       "focusAtoms": [
         "final:ei"
       ],
@@ -3937,7 +3912,6 @@
       "kind": "drill",
       "title": "韵母 · en",
       "desc": "新键：韵母 en",
-      "estimatedMinutes": 6,
       "focusAtoms": [
         "final:en"
       ],
@@ -4027,7 +4001,6 @@
       "kind": "drill",
       "title": "韵母 · eng",
       "desc": "新键：韵母 eng（与 en 对比）",
-      "estimatedMinutes": 6,
       "focusAtoms": [
         "final:eng"
       ],
@@ -4115,7 +4088,6 @@
       "kind": "review",
       "title": "复习 · e 家族",
       "desc": "范围：e 家族 + 零声母 er",
-      "estimatedMinutes": 13,
       "focusAtoms": [
         "final:ei",
         "final:en",
@@ -4309,7 +4281,6 @@
       "kind": "drill",
       "title": "韵母 · in",
       "desc": "新键：韵母 in",
-      "estimatedMinutes": 6,
       "focusAtoms": [
         "final:in"
       ],
@@ -4401,7 +4372,6 @@
       "kind": "drill",
       "title": "韵母 · ing",
       "desc": "新键：韵母 ing（与 in 对比）",
-      "estimatedMinutes": 6,
       "focusAtoms": [
         "final:ing"
       ],
@@ -4494,7 +4464,6 @@
       "kind": "drill",
       "title": "韵母 · ie",
       "desc": "新键：韵母 ie",
-      "estimatedMinutes": 6,
       "focusAtoms": [
         "final:ie"
       ],
@@ -4588,7 +4557,6 @@
       "kind": "drill",
       "title": "韵母 · iu",
       "desc": "新键：韵母 iu",
-      "estimatedMinutes": 6,
       "focusAtoms": [
         "final:iu"
       ],
@@ -4683,7 +4651,6 @@
       "kind": "review",
       "title": "复习 · i 家族",
       "desc": "范围：i 家族",
-      "estimatedMinutes": 13,
       "focusAtoms": [
         "final:in",
         "final:ing",
@@ -4836,7 +4803,6 @@
       "kind": "drill",
       "title": "韵母 · ui",
       "desc": "新键：韵母 ui",
-      "estimatedMinutes": 6,
       "focusAtoms": [
         "final:ui"
       ],
@@ -4932,7 +4898,6 @@
       "kind": "drill",
       "title": "韵母 · un",
       "desc": "新键：韵母 un",
-      "estimatedMinutes": 6,
       "focusAtoms": [
         "final:un"
       ],
@@ -5029,7 +4994,6 @@
       "kind": "drill",
       "title": "韵母 · ü / üe / ve",
       "desc": "新键：üe 的 ue / ve 两种拼写",
-      "estimatedMinutes": 8,
       "focusAtoms": [
         "final:ue",
         "final:ve",
@@ -5164,7 +5128,6 @@
       "kind": "review",
       "title": "复习 · u 与 ü 家族",
       "desc": "范围：u 与 ü 家族（ui/un/ue/ve）",
-      "estimatedMinutes": 12,
       "focusAtoms": [
         "final:ui",
         "final:un",
@@ -5321,7 +5284,6 @@
       "kind": "review",
       "title": "综合 · 混合练习",
       "desc": "综合：全量混合练习",
-      "estimatedMinutes": 11,
       "focusAtoms": [
         "initial:zh",
         "initial:ch",
@@ -6167,7 +6129,6 @@
       "kind": "review",
       "title": "综合 · 速度练习",
       "desc": "速度：全量速度冲刺，目标 ≥45 WPM",
-      "estimatedMinutes": 12,
       "focusAtoms": [
         "initial:zh",
         "initial:ch",
@@ -7019,7 +6980,6 @@
       "kind": "exam",
       "title": "通关 · 最终考核",
       "desc": "全遮挡 + 限时；正确率与速度同时分档（准确率 85/90/95，速度 45/60/75 WPM）",
-      "estimatedMinutes": 14,
       "focusAtoms": [
         "initial:zh",
         "initial:ch",

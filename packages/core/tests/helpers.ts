@@ -74,7 +74,7 @@ export function loadLexicon(): LexiconFile {
   return readDataJSON<LexiconFile>('lexicon', 'lexicon.json')
 }
 
-/** 与 Web 层一致的“从 Lexicon 派生当前课视图”，测试不再依赖每课词池文件。 */
+/** 与 Web 层一致的“从 Lexicon 派生当前课视图”。 */
 export function loadPool(lessonId: string): LessonPool {
   const lesson = findLesson(loadCurriculum('xiaohe'), lessonId)
   const lexicon = loadLexicon()

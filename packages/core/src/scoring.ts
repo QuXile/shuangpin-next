@@ -56,7 +56,7 @@ function buildTiers(thresholds: readonly number[], unit: string, graded: boolean
 /**
  * 正确率档位：
  * - 普通/准确率+速度：通过线、90%、95% 四档；
- * - 速度模式：正确率只作为通过底线，不再拆 90/95 星级档；
+ * - 速度模式：正确率作为通过底线；
  */
 export function accuracyTiers(criteria: PassCriteria): MetricTier[] {
   const mode = criteria.mode ?? 'accuracy'
@@ -157,7 +157,7 @@ export function evaluateLesson(lesson: LessonDef, metrics: LessonMetrics): Lesso
 
 /**
  * 生成「评分规则」展示文案（与 evaluateLesson 同一份门槛数据）。
- * 只展示 1–3 星三档：1★ 即最低限度的通过，不再单列「通过」等级。
+ * 只展示 1–3 星三档，1★ 即最低通过。
  */
 export function describePassCriteria(criteria: PassCriteria): PassCriteriaLine[] {
   const mode = criteria.mode ?? 'accuracy'

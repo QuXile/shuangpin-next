@@ -137,7 +137,7 @@ juan → juan 标准
 jun  → jun 标准
 ```
 
-`j/q/x/y + u` 的 V 键兼容码现在显式写入各方案的 `compatCodes`（如 `ju → jv`），键位图会显示；核心引擎不再内置隐式容错。
+`j/q/x/y + u` 的 V 键兼容码写入各方案的 `compatCodes`（如 `ju → jv`），键位图会显示；核心引擎只读取方案数据。
 
 例如：
 

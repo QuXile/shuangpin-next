@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * 统一会话顶栏（50px 平铺操作条）：课程练习、入门课、练习场共用。
- * 左/右插槽放操作按钮，中间直接平铺当前场景的数据/文案，不再套「卡中卡」胶囊。
+ * 左/右插槽放操作按钮，中间平铺当前场景的数据/文案。
  */
 withDefaults(
   defineProps<{
@@ -55,7 +55,7 @@ withDefaults(
 .session-side--right {
   justify-self: end;
 }
-/* 统计直接平铺：与操作条同底色，不再有第二层背景 / 边框 */
+/* 统计直接平铺：与操作条同底色，无第二层背景 / 边框 */
 .session-center {
   justify-self: center;
   min-width: 0;

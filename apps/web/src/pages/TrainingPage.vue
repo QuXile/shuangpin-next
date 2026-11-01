@@ -144,7 +144,7 @@ async function chooseScheme(id: string): Promise<void> {
     schemeBusy.value = false
   }
   if (course.status === 'error') {
-    // 课程方案 / 纯练习方案加载失败：记录失败方案并提示重试（当前方案仍可用）。
+    // 课程方案 / 仅支持练习方案加载失败：记录失败方案并提示重试（当前方案仍可用）。
     schemeError.value = course.error || '方案加载失败'
     schemeRetryId.value = id
   }
@@ -398,7 +398,7 @@ function applyCoursePreset(): void {
     ),
   )
 
-  // 一次性预设从 sessionStorage 取出后已删除，刷新不会再次覆盖用户后续修改。
+  // 一次性预设从 sessionStorage 取出后立即清除，刷新不会覆盖后续修改。
 }
 
 watch(

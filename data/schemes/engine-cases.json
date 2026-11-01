@@ -14555,7 +14555,8 @@
           "final": "a",
           "zeroInitial": true,
           "accepted": [
-            "ah"
+            "ah",
+            "a;"
           ]
         },
         {
@@ -14605,6 +14606,7 @@
           "final": "e",
           "zeroInitial": true,
           "accepted": [
+            "ee",
             "e;"
           ]
         },
@@ -14629,12 +14631,23 @@
           ]
         },
         {
+          "pinyin": "eng",
+          "kind": "zeroInitial",
+          "initial": "",
+          "final": "eng",
+          "zeroInitial": true,
+          "accepted": [
+            "eg"
+          ]
+        },
+        {
           "pinyin": "er",
           "kind": "zeroInitial",
           "initial": "",
           "final": "er",
           "zeroInitial": true,
           "accepted": [
+            "er",
             "eh"
           ]
         },
@@ -14645,7 +14658,8 @@
           "final": "o",
           "zeroInitial": true,
           "accepted": [
-            "oh"
+            "oh",
+            "o;"
           ]
         },
         {
@@ -18586,6 +18600,26 @@
             "zp"
           ],
           "note": "整音节码（表驱动方案）"
+        },
+        {
+          "pinyin": "pia",
+          "kind": "syllable-code",
+          "initial": "p",
+          "final": "ia",
+          "zeroInitial": false,
+          "accepted": [
+            "pa"
+          ]
+        },
+        {
+          "pinyin": "lue",
+          "kind": "syllable-code",
+          "initial": "l",
+          "final": "ue",
+          "zeroInitial": false,
+          "accepted": [
+            "lb"
+          ]
         }
       ],
       "negative": [
@@ -18603,7 +18637,7 @@
             "bh"
           ],
           "kind": "wrong-key",
-          "reason": "键位错误：bh 不是 a 的合法键序列（合法：ah）"
+          "reason": "键位错误：bh 不是 a 的合法键序列（合法：ah / a;）"
         },
         {
           "pinyin": "a",
@@ -18611,7 +18645,7 @@
             "oh"
           ],
           "kind": "wrong-zero-family",
-          "reason": "零声母前缀族错误（a 合法序列：ah）"
+          "reason": "零声母前缀族错误（a 合法序列：ah / a;）"
         },
         {
           "pinyin": "ai",
@@ -18671,13 +18705,13 @@
         }
       ],
       "coverage": {
-        "positiveCount": 405,
+        "positiveCount": 408,
         "negativeCount": 10,
         "kinds": {
-          "zeroInitial": 11,
+          "zeroInitial": 12,
           "jqxy-umlaut": 16,
           "retroflex": 11,
-          "syllable-code": 367
+          "syllable-code": 369
         },
         "initialsCovered": [
           "j",
@@ -18748,14 +18782,13 @@
           "e",
           "ei",
           "en",
+          "eng",
           "er",
           "o",
           "ou"
         ],
         "overridesCovered": true,
-        "gaps": [
-          "零声母 eng 无键位数据（参考项目未收录）"
-        ]
+        "gaps": []
       }
     },
     "baiyun": {
@@ -19591,10 +19624,5 @@
       }
     }
   },
-  "dataGaps": [
-    {
-      "scheme": "c",
-      "gap": "zeroInitial.eng 缺失：参考项目 BlueSky-07/Shuang src/scheme/c.js 未收录该零声母音节"
-    }
-  ]
+  "dataGaps": []
 }

@@ -282,7 +282,7 @@ useBottomDockContent(() => dockContent.value)
   .practice-scroll { padding: 12px var(--page-pad-x) 20px; }
   .intro-scroll { padding: 12px var(--page-pad-x) 18px; }
   .practice-stage { padding: 10px var(--page-pad-x) 0; }
-  /* 教学页在移动端改为自然滚动，避免固定高度把示例/评分裁切 */
+  /* 教学页在移动端使用自然滚动，避免固定高度把示例/评分裁切 */
   .practice-page.is-tutorial .practice-scroll {
     overflow-y: auto;
     scrollbar-gutter: stable;

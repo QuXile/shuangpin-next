@@ -97,7 +97,7 @@ describe('selectWords · 复习/考核课', () => {
     })
   }
 
-  it('L2.5 复习课不再因 B 层门控而落空', () => {
+  it('L2.5 复习课可稳定产出题目', () => {
     const { words } = select('L2.5', 12)
     expect(words.length).toBe(12)
   })

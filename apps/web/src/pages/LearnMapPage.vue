@@ -83,7 +83,7 @@ function onScroll(): void {
   })
 }
 
-/** 用户点击/按键前先记住当前位置；导航后布局切换可能把 window.scrollY 归零，短时间内不再覆盖 */
+/** 用户点击/按键前先记住当前位置；导航后短时间内保持该位置，避免布局切换把 window.scrollY 归零 */
 function captureScrollBeforeNavigate(): void {
   if (status.value !== 'ready') return
   lastScrollY = Math.max(0, Math.round(window.scrollY))
@@ -347,7 +347,7 @@ useGlobalKeys(bindings)
           :current-title="currentTitle"
           :passed-count="course.passedCount"
           :lesson-total="course.lessons.length"
-          :empty-message="course.previewMode ? '当前方案是纯练习方案，暂无课程路线。' : undefined"
+          :empty-message="course.previewMode ? '当前方案仅支持练习，暂无课程路线。' : undefined"
           :style="heroHeight ? { height: `${heroHeight}px` } : undefined"
           @start="startCurrent"
         />
@@ -394,7 +394,7 @@ useGlobalKeys(bindings)
           </div>
           <div>
             <strong>{{ course.scheme?.name ?? '当前方案' }} 暂无学习路线</strong>
-            <p>这是一个纯练习方案：没有课程、章节和学习进度。键位图仍按该方案完整显示，可前往练习场自由练习。</p>
+            <p>这是一个仅支持练习的方案：没有课程、章节和学习进度。键位图仍按该方案完整显示，可前往练习场练习。</p>
           </div>
           <button class="btn btn--primary route-placeholder-action" type="button" @click="router.push('/training')">
             去练习场

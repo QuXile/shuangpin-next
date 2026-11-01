@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * 入门课「认识双拼」：5 步讲解 + 试打。
- * - 试打复用 core createSession/applyKey/backspace（不再写第二套判题）；
+ * - 试打复用 core createSession/applyKey/backspace；
  * - 所有键位/改造声母/韵母/零声母示例都从 engine/scheme 动态生成，不写死方案；
  * - 完成试打 emit('finished') 由页面记录通过，emit('next') 进入第 1 课。
  */
@@ -27,7 +27,7 @@ const props = withDefaults(
   defineProps<{
     scheme: SchemeDef
     words: WordEntry[]
-    /** 以前已通过入门课：不再要求重做最后的试打 */
+    /** 已通过入门课：跳过最后的试打 */
     passed?: boolean
   }>(),
   { passed: false },

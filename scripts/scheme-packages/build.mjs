@@ -3,11 +3,11 @@
  * 方案包构建：data/schemes/<id>/ 的源数据 → 运行时方案包目录。
  *
  * 每个包包含：
- *   manifest.json    方案能力 / 课程 profile / 统一 Lexicon 引用
+ *   manifest.json    方案能力 / 课程信息 / 统一 Lexicon 引用
  *   scheme.json      方案键位映射
  *   curriculum.json  仅课程方案
  *
- * 源数据采用「一个方案一个文件夹」，运行时包不再写回 data/。
+ * 源数据采用「一个方案一个文件夹」，运行时包生成到 public。
  */
 import fs from 'node:fs'
 import path from 'node:path'
@@ -50,7 +50,6 @@ function buildManifest(schemeIndex, summary, scheme, curriculum) {
     },
     curriculum: curriculum
       ? {
-          profile: 'standard-40',
           version: curriculum.dataVersion,
           file: 'curriculum.json',
         }

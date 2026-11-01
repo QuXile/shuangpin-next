@@ -12,7 +12,7 @@
 | `data/schemes/index.json` / `curriculum-index.json` | 方案与课程索引 |
 | `data/lexicon/lexicon.json` | 课程与练习场共用的唯一词表 |
 
-运行时方案包只在 `apps/web/public/data/packages/` 生成，不再写回 `data/packages/`；`apps/web/public/data/` 由 `pnpm data:sync` 从上述数据生成，不手工编辑。
+运行时方案包生成到 `apps/web/public/data/packages/`；`apps/web/public/data/` 由 `pnpm data:sync` 从源数据生成，不手工编辑。
 
 ## 统一 Lexicon
 
@@ -22,13 +22,13 @@
 - `chars`：5,022 个常用单字；
 - `syllableExamples`：405 个音节的代表字示例。
 
-课程按 lesson 的已学原子/focus 在 core 选词器中筛选；练习场按当前选择范围筛选。每课不再有独立词池。
+课程按 lesson 的已学原子 / focus 在 core 选词器中筛选；练习场按当前选择范围筛选。题目统一来自 Lexicon。
 
-Lexicon 是权威数据：修改词表意味着直接编辑并校验 `lexicon.json`，不再从 `words.sample` / 每课词池合并生成。
+Lexicon 是权威数据：修改词表直接编辑并校验 `lexicon.json`。
 
 ## 课程
 
-`data/schemes/<id>/curriculum.json` 是课程方案的标准课程，包含章节、40 课、focus / blocking / prerequisites、wordPlan、passCriteria 与教学示例元信息。
+`data/schemes/<id>/curriculum.json` 是课程方案的标准课程，包含章节、课程节点、focus / blocking / prerequisites、wordPlan、passCriteria 与教学示例元信息。
 
 课程数据是权威数据；C 双拼保持 practice-only，没有课程。修改课程时直接编辑对应 curriculum，再运行 `pnpm data:sync` 与 `pnpm verify`。
 
@@ -37,7 +37,7 @@ Lexicon 是权威数据：修改词表意味着直接编辑并校验 `lexicon.js
 | 数据 | 版本 |
 |---|---|
 | Lexicon | `lexicon-fe0e0bd32c56` |
-| 课程（xiaohe / ziranma / weiruan / sougou / zhinengabc） | `curriculum-8c11b27afd64` / `curriculum-7315038dab09` / `curriculum-577f9f01f258` / `curriculum-8fd0acef60f6` / `curriculum-32a71a1c61db` |
+| 课程（xiaohe / ziranma / weiruan / sougou / zhinengabc） | `curriculum-e9aea6cd5fd3` / `curriculum-be4a8fb23d2a` / `curriculum-e7ccb68d065f` / `curriculum-e13751ee90b9` / `curriculum-9c6985cf8133` |
 
 `apps/web/public/data/manifest.json` 的 `versions` 只记录 `curriculum` 与 `lexicon`；`manifest.files` 登记全部同步文件。
 
@@ -50,7 +50,11 @@ Lexicon 是权威数据：修改词表意味着直接编辑并校验 `lexicon.js
 - 课程与练习场都接受推荐码、兼容编码和组合码；显示仍使用推荐码/主键。
 - `apps/web/public/data/packages/`：由 `scripts/scheme-packages/build.mjs` 生成，不手改；源在 `data/schemes/<id>/`。
 
-C 双拼的规则参考 [fcitx5-chinese-addons 的 C双拼配置](https://github.com/fcitx/fcitx5-chinese-addons/blob/e8d930f402e359cfd76a101ee3e46815d1331d83/im/pinyin/sp.dat.example)（LGPL-2.1），仅作规则与映射比对，不复制代码。
+方案规则来源：
+
+- [fcitx/libime](https://github.com/fcitx/libime) 内建规则 `Xiaohe`、`Ziranma`、`MS`、`ABC`、`PinyinJiaJia`、`Ziguang`、`GB` 分别对应小鹤、自然码、微软、智能 ABC、拼音加加、紫光、国标；
+- C 双拼使用 [fcitx5-chinese-addons 的 sp.dat.example](https://github.com/fcitx/fcitx5-chinese-addons/blob/e8d930f402e359cfd76a101ee3e46815d1331d83/im/pinyin/sp.dat.example)；
+- fcitx 无对应规则的搜狗、蓝天、白云、小月、开源小鹳、小浪、韵标块拼、星空、大牛、键道双拼 3、键道双拼 6 及推荐码 / 兼容编码补充数据来自 [BlueSky-07/Shuang](https://github.com/BlueSky-07/Shuang)（GPL-3.0）。
 
 ## 命令
 
@@ -67,7 +71,7 @@ pnpm verify        # typecheck + lint + sync + test + build + validate
 `scripts/validate-all.mjs` 覆盖：
 
 - 19 套方案与判题用例规模；
-- 5 套课程 × 40 课、命名法、cumulative、learn 原子覆盖、版本重算；
+- 5 套课程、章节/课程结构、命名法、cumulative、learn 原子覆盖、版本重算；
 - 统一 Lexicon 的词/字/音节示例数量、唯一性、字段与版本；
 - 方案包与 `data/schemes/<id>/` 源数据一致；
 - `manifest` 版本链与 `data/` ↔ `public/data/` 逐字节一致；

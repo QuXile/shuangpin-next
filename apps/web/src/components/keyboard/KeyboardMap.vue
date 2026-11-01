@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * 键位图（独立交互组件）：点击按键与物理键盘走同一套 useKeyInput 输入管线。
- * 视图模型在 setup 里一次性预计算，渲染时不再重复遍历 atomIds。
+ * 视图模型在 setup 里一次性预计算。
  */
 import { computed } from 'vue'
 import type { AtomId, LetterKey } from '@shuangpin/core'

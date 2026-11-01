@@ -195,7 +195,6 @@ export interface LessonDef {
   wordPlan: WordPlan
   /** 入门课无评分门槛（完成即通过） */
   passCriteria?: PassCriteria
-  estimatedMinutes: number
   atomMeta: Record<string, AtomMeta>
   zeroExamples?: ZeroExample[]
   /** 本课备注与技巧（教学中展示；1 条以上，由内容库 + 方案键位生成） */
@@ -422,8 +421,6 @@ export interface CurriculumSummary {
   schemeId: string
   schemeName: string
   supportLevel: string
-  lessonCount: number
-  totalMinutes: number
   file: string
 }
 

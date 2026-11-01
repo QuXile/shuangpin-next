@@ -5,7 +5,7 @@
  * - drill：single → word；review：word；exam：word（混合练习）→ exam；
  * - 每课目标由课程数据 `stageTargets` 给出（缺省按课程类型用 KIND_STAGE_TARGETS）；
  * - 阶段实际目标 = 生成词的总字数（整词对齐）；
- * - 教学页示例：课程数据生成的 examples（每个合法音节一张卡、学习顺序），全量展示、不截断。
+ * - 教学页示例：课程数据生成的 examples（每个合法音节一张卡、学习顺序）按原顺序展示。
  */
 import type {
   AtomId,
@@ -311,7 +311,7 @@ function fallbackCharsForSparseFocus(
 
 /**
  * 教学页示例：课程数据已按「focus 原子学习顺序 × 该知识点包含的音节」生成 examples，
- * 这里按原顺序转成展示模型，并按音节（pinyin）去重：每个音一张卡，全量不截断。
+ * 这里按原顺序转成展示模型，并按音节（pinyin）去重：每个音一张卡。
  */
 export function buildTutorialWords(input: TutorialInput): PracticeWord[] {
   const { engine, pool } = input

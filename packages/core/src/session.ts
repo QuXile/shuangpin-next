@@ -98,7 +98,7 @@ export function createSession(options: SessionOptions): SessionState {
   }
 }
 
-/** 延伸批次选项：批次末词完成后调用，返回空数组表示不再延伸（会话结束） */
+/** 延伸批次选项：批次末词完成后调用，返回空数组表示结束延伸（会话结束） */
 export interface ExtendWordsOptions {
   extendWords?: () => PracticeWord[]
 }

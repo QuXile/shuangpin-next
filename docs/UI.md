@@ -76,7 +76,7 @@
 ## 顶栏
 
 
-- **品牌**：SVG 圆角方块使用 `var(--brand)` → `var(--brand-fill-hover)` 渐变，四个白色方块保持白色；旁边是「双拼」与 `NEXT` 标签。
+- **品牌**：SVG 圆角方块使用 `var(--brand)` → `var(--brand-fill-hover)` 渐变，四个白色方块保持白色；旁边是「双拼」与 `NEXT` 标签。hover / focus 品牌展示项目信息浮层（作者、开源协议、开源地址、在线体验），可从浮层直接打开链接。
 - **主导航**：`.segmented` + `.segmented-btn`，课程 / 练习切换带 `aria-current="page"`，按钮内显示 `Alt+H` / `Alt+P`。
 - **上下文**：练习页显示返回路线、课名与阶段标签；课程 / 练习场显示品牌与当前方案徽标。
 - **操作区**：快捷键帮助（`?`）、底部键盘显隐（`Ctrl+K`，仅支持的页面出现）、音效（`Alt+B`）、主题（`Alt+T`），统一为 34px 高 surface 卡片（`--line`、`--shadow-sm`、`--r-control`）。

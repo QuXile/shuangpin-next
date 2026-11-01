@@ -60,7 +60,7 @@ onBeforeUnmount(() => observer?.disconnect())
 <template>
   <aside class="learning-card panel" aria-label="学习进度">
     <CardHeader title="学习进度">
-      <span v-if="preview" class="count-badge">纯练习方案</span>
+      <span v-if="preview" class="count-badge">仅支持练习</span>
       <div v-else class="progress-actions">
         <button
           class="meta-btn"

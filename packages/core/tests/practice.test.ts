@@ -92,18 +92,18 @@ describe('buildPracticeWord · 单字与结构不变量', () => {
     }
   })
 
-  it('方案缺音节键位数据时显式报错（C 双拼 zero:eng）', () => {
+  it('C 双拼 zero:eng 按 fcitx sp.dat 构建为 eg', () => {
     const c = loadEngine('c')
-    expect(() =>
-      buildPracticeWordFromSyllable(c, {
-        text: '鞥',
-        pinyin: 'eng',
-        initial: '',
-        final: 'eng',
-        tone: 1,
-        zeroInitial: true,
-      }),
-    ).toThrow(/键位数据/)
+    const word = buildPracticeWordFromSyllable(c, {
+      text: '鞥',
+      pinyin: 'eng',
+      initial: '',
+      final: 'eng',
+      tone: 1,
+      zeroInitial: true,
+    })
+    expect(word.caps.map((cap) => cap.key)).toEqual(['e', 'g'])
+    expect(word.syllables[0]?.accepted).toEqual(['eg'])
   })
 })
 

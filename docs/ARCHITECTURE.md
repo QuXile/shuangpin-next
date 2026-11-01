@@ -49,10 +49,10 @@ freeAtomsOf(def)             与全拼一致的 free 原子（练习场「全拼
 
 ## 课程与阶段
 
-课程数据 `data/schemes/<id>/curriculum.json`：5 套方案 × 40 课 / 10 章，模板 1.0.0。
+课程数据位于 `data/schemes/<id>/curriculum.json`，每个课程方案各有一份。
 
 ```text
-LessonDef { id, chapterId, kind, title, desc, estimatedMinutes, focusAtoms, blockingAtoms,
+LessonDef { id, chapterId, kind, title, desc, focusAtoms, blockingAtoms,
             nonBlockingAtoms, prerequisites, wordPlan, passCriteria?, atomMeta,
             zeroExamples?, tips, stageMinWords?, reviewFamily? }
 kind      intro（入门）/ drill（新课）/ review（复习、期中、综合）/ exam（通关）
@@ -105,19 +105,19 @@ kind      intro（入门）/ drill（新课）/ review（复习、期中、综�
 ```
 
 - `useKeyInput` 在应用根节点安装唯一的字符输入监听，统一处理字母、`;` 与退格；过滤组合键、IME、repeat 和输入框焦点；
-- `KeyboardMap` 是独立交互组件，点击按键直接向输入层派发，不再由各页面维护 `pressed`；
+- `KeyboardMap` 是独立交互组件，点击按键直接向输入层派发，按下状态由输入层维护；
 - `SchemeKeycaps` 订阅同一输入层，物理按键和键位图点击都会触发键帽动画；
-- 练习页/练习场只订阅自己的判题处理器，不再各自注册字符快捷键；
+- 练习页 / 练习场订阅自己的判题处理器；
 - 输入层不播放声音：有 Hero 键帽的页面由键帽负责，练习会话由页面处理器负责，保证一次输入只有一次声音。
 
 ## 底部键位图宿主
 
-底部键位图的挂载、显隐和高度动效集中在 App 级 `BottomDockHost`，不再由各页面分别挂载 `DockReveal`：
+底部键位图的挂载、显隐和高度动效集中在 App 级 `BottomDockHost`：
 
 - 页面只通过 `useBottomDockContent` 注册键位图内容；
 - `BottomDockHost` 负责路由能力、`Ctrl+K` 显隐、内容测量与开合过渡；
 - 练习场配置页 → 练习会话、课程下一阶段都复用同一个宿主实例，不重播底栏动效；
-- 页面不再用异步加载状态切换底栏打开状态。
+- 底栏显隐由路由能力和用户偏好决定。
 
 ## 方案判题
 
@@ -131,7 +131,7 @@ kind      intro（入门）/ drill（新课）/ review（复习、期中、综�
 ## 教学备注与来源
 
 - 课程 `atomMeta.anchors/mnemonic` 和教学示例已冻结在 curriculum 数据中；运行期示例由 `apps/web/src/lib/lessonPool.ts` 从 Lexicon 的 `syllableExamples` 派生。
-- 不再保留词表/课程生成器；Lexicon 与 curriculum 是权威数据，修改后直接校验并同步。
+- Lexicon 与 curriculum 是权威数据，修改后直接校验并同步。
 
 教学备注来源（调研整理）：[shuangpin.xyz 四步学习路线](https://shuangpin.xyz/blog/start-shuangpin/)、[oroc 七日上手双拼](https://blog.oroc.top/post/double-pinyin-guide/)、[一文搞懂小鹤双拼](https://www.cnblogs.com/PeterJXL/p/18539136)、[普通话测试站前后鼻音对比](https://putonghua.szu.edu.cn/info/1014/2862.htm)。
 

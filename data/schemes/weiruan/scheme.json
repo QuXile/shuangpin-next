@@ -260,9 +260,9 @@
     }
   ],
   "source": {
-    "repo": "BlueSky-07/Shuang",
-    "file": "src/scheme/weiruan.js",
-    "note": "从 https://github.com/BlueSky-07/Shuang（v6.0.0，commit 5a5e71e）提取键位事实；仅做数据比对与规范化，未复制其实现代码（原项目 GPL-3.0）。"
+    "repo": "fcitx/libime",
+    "file": "src/libime/pinyin/shuangpindata.h (MS)",
+    "note": "内建双拼表与零声母规则来自 fcitx/libime commit 6fec3054d8a65fc8a6942a467a42f2c0dac20eb8（LGPL-2.1-or-later）。推荐码 / 兼容编码等额外多码补充参考 BlueSky-07/Shuang v6.0.0（GPL-3.0，仅键位事实）。"
   },
   "notes": [
     "参考判题表 ue 接受 [t,v] 两键（键盘展示表只标 T）；展示表口径：R=er/uan、T=ue、Y=uai/ü、V=zh/ui/üe。",

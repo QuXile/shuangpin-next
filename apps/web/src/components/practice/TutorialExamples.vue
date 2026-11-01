@@ -54,7 +54,7 @@ withDefaults(
   aspect-ratio: 340 / 392;
   padding-top: 7px;
   padding-bottom: 7px;
-  /* 全量示例（综合课可达 400+ 张）按需渲染，滚动时不卡顿 */
+  /* 示例按需渲染，滚动流畅 */
   content-visibility: auto;
   contain-intrinsic-size: 190px;
 }
