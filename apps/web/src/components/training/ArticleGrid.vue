@@ -81,7 +81,8 @@ const lines = computed<CellView[][]>(() => {
       const completed = finished || wordIndex < session.index
       const active = !finished && wordIndex === session.index
       const wrong = active ? props.wrongInputs.get(key) : undefined
-      const input = wrong ?? (active ? wordState.input : completed ? syllable.caps.map((cap) => cap.key) : [])
+      const historyInput = wordState.charInputs?.[0]
+      const input = wrong ?? (active ? wordState.input : completed ? (historyInput ?? syllable.caps.map((cap) => cap.key)) : [])
       const inputState: CellView['inputState'] = wrong ? 'wrong' : completed ? 'correct' : 'idle'
       return {
         wordIndex,

@@ -304,6 +304,8 @@ export interface SessionWordState {
   charIndex: number
   /** 当前字已输入的键 */
   input: string[]
+  /** 已完成字的实际输入（保留别名，不强行改写成主键） */
+  charInputs?: string[][]
 }
 
 export interface SessionStats {

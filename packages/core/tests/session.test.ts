@@ -258,6 +258,18 @@ describe('backspace', () => {
   })
 })
 
+describe('一字多码的输入保留', () => {
+  it('接受别名时保留实际输入，不强行改成主键', () => {
+    const qu = makePracticeWord('区', ['qu'])
+    let state = createSession({ words: [qu], now: 0 })
+    state = applyKey(state, 'q', 10).state
+    state = applyKey(state, 'v', 20).state
+    expect(state.words[0].charInputs).toEqual([['q', 'v']])
+    expect(state.words[0].word.syllables[0].caps.map((cap) => cap.key)).toEqual(['q', 'u'])
+    expect(state.words[0].input).toEqual([])
+  })
+})
+
 describe('sessionMetrics', () => {
   it('进行中会话按 now 计算 cpm；结束后冻结', () => {
     let state = createSession({ words: [nvRen], now: 1000 })

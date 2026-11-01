@@ -74,7 +74,7 @@ function setRowEl(el: Element | null, index: number): void {
   if (el instanceof HTMLElement) rowEls.value[index] = el
 }
 
-function cellView(wordIndex: number, charIndex: number, capKeys: readonly string[]): CellView {
+function cellView(wordIndex: number, charIndex: number, capKeys: readonly string[], wordState: SessionState['words'][number]): CellView {
   const session = props.session
   const finished = session.phase === 'finished'
   const currentWord = session.words[session.index]
@@ -84,7 +84,8 @@ function cellView(wordIndex: number, charIndex: number, capKeys: readonly string
   const completed = finished || wordBefore || (wordIndex === session.index && charIndex < currentChar)
   const active = !finished && wordIndex === session.index && charIndex === currentChar
   const wrong = active ? props.wrongInputs.get(key) : undefined
-  const input = wrong ?? (active ? (currentWord?.input ?? []) : completed ? [...capKeys] : [])
+  const historyInput = wordState.charInputs?.[charIndex]
+  const input = wrong ?? (active ? (currentWord?.input ?? []) : completed ? (historyInput ? [...historyInput] : [...capKeys]) : [])
   const inputState: CellView['inputState'] = wrong ? 'wrong' : completed ? 'correct' : 'idle'
   return {
     active,
@@ -99,7 +100,7 @@ function cellView(wordIndex: number, charIndex: number, capKeys: readonly string
 const cellRows = computed<CellView[][]>(() =>
   props.session.words.map((wordState, wordIndex) =>
     wordState.word.syllables.map((syllable, charIndex) =>
-      cellView(wordIndex, charIndex, syllable.caps.map((cap) => cap.key)),
+      cellView(wordIndex, charIndex, syllable.caps.map((cap) => cap.key), wordState),
     ),
   ),
 )

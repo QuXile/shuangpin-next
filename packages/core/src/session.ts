@@ -80,6 +80,7 @@ export function createSession(options: SessionOptions): SessionState {
     word,
     charIndex: 0,
     input: [],
+    charInputs: [],
   }))
   const totalChars = words.reduce((sum, item) => sum + item.word.syllables.length, 0)
   const finished = words.length === 0
@@ -171,14 +172,15 @@ export function applyKey(
   const charIndex = wordState.charIndex + 1
   const wordFinished = charIndex >= wordState.word.syllables.length
 
+  const charInputs = [...(wordState.charInputs ?? []), [...input]]
   if (!wordFinished) {
-    const words = replaceWord(initialState.words, initialState.index, { ...wordState, charIndex, input: [] })
+    const words = replaceWord(initialState.words, initialState.index, { ...wordState, charIndex, input: [], charInputs })
     const feedback: SessionFeedback = { kind: 'char-complete', wordText: wordState.word.text }
     return { state: { ...initialState, words, stats, lastFeedback: feedback }, feedback }
   }
 
   stats.wordsCompleted = initialState.stats.wordsCompleted + 1
-  const completed = { ...wordState, charIndex, input: [] }
+  const completed = { ...wordState, charIndex, input: [], charInputs }
   const nextIndex = initialState.index + 1
   let words = replaceWord(initialState.words, initialState.index, completed)
 
@@ -205,7 +207,7 @@ export function applyKey(
       }
     }
     // 追加延伸批次，继续练习（无限练习由调用方决定何时停止）
-    const extraWords: SessionWordState[] = extra.map((word) => ({ word, charIndex: 0, input: [] }))
+    const extraWords: SessionWordState[] = extra.map((word) => ({ word, charIndex: 0, input: [], charInputs: [] }))
     stats.totalChars += extraWords.reduce((sum, item) => sum + item.word.syllables.length, 0)
     words = [...words, ...extraWords]
   }
@@ -227,7 +229,7 @@ export function applyKey(
  */
 export function appendSessionWords(state: SessionState, words: PracticeWord[]): SessionState {
   if (words.length === 0) return state
-  const extra: SessionWordState[] = words.map((word) => ({ word, charIndex: 0, input: [] }))
+  const extra: SessionWordState[] = words.map((word) => ({ word, charIndex: 0, input: [], charInputs: [] }))
   const totalChars =
     state.stats.totalChars + words.reduce((sum, word) => sum + word.syllables.length, 0)
   const stats: SessionStats = { ...state.stats, totalChars }
