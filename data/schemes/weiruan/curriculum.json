@@ -6,7 +6,7 @@
   "templateVersion": "1.0.0",
   "generatedAt": "2026-10-31T07:30:16.082Z",
   "supportLevel": "full",
-  "dataVersion": "curriculum-e7ccb68d065f",
+  "dataVersion": "curriculum-5eb47cfe179b",
   "chapters": [
     {
       "id": "ch-intro",
@@ -66,7 +66,7 @@
       "id": "ch-exam",
       "order": 10,
       "title": "通关考核",
-      "subtitle": "全遮挡考核 · 与入门呼应"
+      "subtitle": "无提示考核 · 与入门呼应"
     }
   ],
   "lessons": [
@@ -6953,7 +6953,7 @@
       "chapterId": "ch-exam",
       "kind": "exam",
       "title": "通关 · 最终考核",
-      "desc": "全遮挡 + 限时；正确率与速度同时分档（准确率 85/90/95，速度 45/60/75 WPM）",
+      "desc": "无提示 + 限时；正确率与速度同时分档（准确率 85/90/95，速度 45/60/75 WPM）",
       "focusAtoms": [
         "initial:zh",
         "initial:ch",
@@ -7774,7 +7774,7 @@
       ],
       "tips": [
         "本课零声母：a = OA、ai = OL、an = OJ、ang = OH、ao = OK、e = OE 等（没有声母的音节也要按满两键）。",
-        "全遮挡时按音节整组出键：先声母键、再韵母键，不要逐字母找。",
+        "无提示时按音节整组出键：先声母键、再韵母键，不要逐字母找。",
         "速度目标 30 WPM起；稳定比冲快更重要。",
         "第三颗星要求全程不揭示答案：不确定时宁可放慢。"
       ],

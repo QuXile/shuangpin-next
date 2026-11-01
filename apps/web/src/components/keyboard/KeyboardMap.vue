@@ -16,7 +16,7 @@ const props = withDefaults(
     schemeName?: string
     /** 本课 focus：对应声母/韵母文字反白 + 底色强调 */
     highlightAtomIds?: readonly AtomId[]
-    /** true = 全遮挡：隐藏全部映射、图例、零声母与兼容编码，只保留按键与按下反馈 */
+    /** true = 无提示：隐藏全部映射、图例、零声母与兼容编码，只保留按键与按下反馈 */
     conceal?: boolean
     /** 需要显示在键位图上的「改造声母」（由 engine.diff().learnInitials 传入） */
     specialInitials?: readonly string[]
@@ -247,7 +247,7 @@ const keyViews = computed<KeyView[][]>(() =>
   user-select: none;
   overflow: hidden;
 }
-/* 遮挡阶段只隐藏映射文字，不改变键帽外观。 */
+/* 无提示阶段只隐藏映射文字，不改变键帽外观。 */
 .kbd-key:hover {
   background: var(--surface);
   border-color: var(--brand-line);
@@ -368,7 +368,7 @@ const keyViews = computed<KeyView[][]>(() =>
 .kbd-head .kbd-legend {
   margin: 0;
 }
-/* 遮挡阶段图例隐藏，但方案胶囊必须仍然靠右，不能掉到左上角。 */
+/* 无提示阶段图例隐藏，但方案胶囊必须仍然靠右，不能掉到左上角。 */
 .kbd-head > .count-badge {
   margin-left: auto;
 }
@@ -400,7 +400,7 @@ const keyViews = computed<KeyView[][]>(() =>
   background: var(--focus-final);
   border-color: var(--focus-final);
 }
-/* 全遮挡模式也要显示按下反馈（覆盖 conceal 的默认底色/边框） */
+/* 无提示模式也要显示按下反馈（覆盖 conceal 的默认底色/边框） */
 .is-concealed .kbd-key.is-pressed,
 .is-concealed .kbd-key--backspace.is-pressed {
   background: var(--pressed-bg);

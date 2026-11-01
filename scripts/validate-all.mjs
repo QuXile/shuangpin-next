@@ -290,7 +290,7 @@ function validateCurriculum(schemeIndex, engines) {
       )
       if (lesson.stageMinWords) {
         const stages = Object.keys(lesson.stageMinWords)
-        if (lesson.kind !== 'intro') ok(stages[stages.length - 1] === 'exam', `${schemeId}/${lesson.id}: 最后阶段必须为 exam（全遮挡考核）`)
+        if (lesson.kind !== 'intro') ok(stages[stages.length - 1] === 'exam', `${schemeId}/${lesson.id}: 最后阶段必须为 exam（无提示考核）`)
         if (lesson.kind === 'drill') ok(JSON.stringify(stages) === JSON.stringify(['single', 'word', 'exam']), `${schemeId}/${lesson.id}: drill 阶段应为 single → word → exam`)
         if (lesson.kind === 'review' || lesson.kind === 'exam') ok(JSON.stringify(stages) === JSON.stringify(['exam']), `${schemeId}/${lesson.id}: ${lesson.kind} 阶段应只有 exam`)
         for (const [stage, value] of Object.entries(lesson.stageMinWords)) {

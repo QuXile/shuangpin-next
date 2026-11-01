@@ -24,11 +24,11 @@
 
 ![练习会话顶栏的进度、正确率与实时速度](assets/impl/live-speed.png)
 
-![全遮挡考核未达标时的阶段总结](assets/impl/failed-exam.png)
+![无提示考核未达标时的阶段总结](assets/impl/failed-exam.png)
 
 ![入门课完成试打](assets/impl/intro-complete.png)
 
-![词语半遮挡阶段与底部键位图实时高亮](assets/impl/word-practice.png)
+![词语部分提示阶段与底部键位图实时高亮](assets/impl/word-practice.png)
 
 ## 练习场
 

@@ -19,7 +19,7 @@ const curriculum = loadCurriculum('xiaohe')
 const engine = loadEngine('xiaohe')
 
 describe('lessonStages / lessonStageMinWords（三阶段词口径）', () => {
-  it('按课程类型给出阶段：每课最后一场都是全遮挡考核', () => {
+  it('按课程类型给出阶段：每课最后一场都是无提示考核', () => {
     expect(lessonStages(findLesson(curriculum, 'L1.1'))).toEqual([])
     expect(lessonStages(findLesson(curriculum, 'L2.1'))).toEqual(['single', 'word', 'exam'])
     expect(lessonStages(findLesson(curriculum, 'L2.4'))).toEqual(['single', 'word', 'exam'])
@@ -49,7 +49,7 @@ describe('lessonStages / lessonStageMinWords（三阶段词口径）', () => {
     expect(lessonStageMinWords(findLesson(curriculum, 'L10.1'))).toEqual({ exam: 100 })
   })
 
-  it('阶段门槛：字/半遮挡词只看词数，全遮挡考核还要达到考核标准', () => {
+  it('阶段门槛：字 / 词语部分提示只看词数，无提示考核还要达到考核标准', () => {
     const drill = findLesson(curriculum, 'L2.1')
     expect(
       stageGate(drill, 'single', { accuracy: 1, cpm: 0, completedWords: 14 }),
@@ -97,7 +97,7 @@ describe('lessonStages / lessonStageMinWords（三阶段词口径）', () => {
 })
 
 describe('hintTierFor', () => {
-  it('提示档位由阶段唯一决定：单字 1、半遮挡词 2、全遮挡 3', () => {
+  it('提示档位由阶段唯一决定：单字 1、词语部分提示 2、无提示 3', () => {
     expect(hintTierFor('single')).toBe(1)
     expect(hintTierFor('word')).toBe(2)
     expect(hintTierFor('exam')).toBe(3)
@@ -157,7 +157,7 @@ describe('buildSingleCharWords', () => {
 })
 
 describe('buildWordStageWords（按词数）', () => {
-  it('L2.1 半遮挡词：≥10 词且每词命中 zh', () => {
+  it('L2.1 词语部分提示：≥10 词且每词命中 zh', () => {
     const lesson = findLesson(curriculum, 'L2.1')
     const words = buildWordStageWords({
       engine,

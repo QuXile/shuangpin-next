@@ -37,7 +37,7 @@ Lexicon 是权威数据：修改词表直接编辑并校验 `lexicon.json`。
 | 数据 | 版本 |
 |---|---|
 | Lexicon | `lexicon-fe0e0bd32c56` |
-| 课程（xiaohe / ziranma / weiruan / sougou / zhinengabc） | `curriculum-e9aea6cd5fd3` / `curriculum-be4a8fb23d2a` / `curriculum-e7ccb68d065f` / `curriculum-e13751ee90b9` / `curriculum-9c6985cf8133` |
+| 课程（xiaohe / ziranma / weiruan / sougou / zhinengabc） | `curriculum-aff0dea8ad0c` / `curriculum-3486f1cddf26` / `curriculum-5eb47cfe179b` / `curriculum-2c66869fe861` / `curriculum-8addbb9b5f04` |
 
 `apps/web/public/data/manifest.json` 的 `versions` 只记录 `curriculum` 与 `lexicon`；`manifest.files` 登记全部同步文件。
 

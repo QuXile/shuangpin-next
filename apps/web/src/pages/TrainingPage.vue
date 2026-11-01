@@ -303,7 +303,7 @@ function applyTrainingConfig(config: TrainingConfigSnapshot): void {
   )
 }
 
-/** 从课程总结卡跳转过来的无尽练习：把本课 focus 与当前阶段的遮挡档位映射成训练设置。 */
+/** 从课程总结卡跳转过来的无尽练习：把本课 focus 与当前阶段的提示档位映射成训练设置。 */
 function applyCoursePreset(): void {
   if (coursePresetApplied || course.previewMode) return
   const presetKey = 'shuangpin-next:training-preset'

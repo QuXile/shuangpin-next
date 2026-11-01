@@ -7,7 +7,7 @@
  * 练习模型：
  * - 每阶段有限目标：完成目标词数后显示总结卡，不自动追加词卡；
  * - 每阶段独立 SessionState（Map 保存），离开/回来用 resumeSession 恢复计时；
- * - 阶段门槛由 stageGate 决定：普通阶段看最低字数，全遮挡严格阶段还要正确率/速度；
+ * - 阶段门槛由 stageGate 决定：普通阶段看最低字数，无提示严格阶段还要正确率/速度；
  * - 主按钮文案只由阶段位置决定：非最后「下一阶段」、最后「完成本课」；仅 enabled 变化；
  * - 达标即自动记录本课通过；课程本身不提供无尽练习，需要时跳转练习场。
  */
@@ -109,7 +109,7 @@ export interface EndPromptView {
   }
   keyErrors: EndPromptKeyError[]
   rules: PassCriteriaLine[]
-  /** 仅最后一场全遮挡考核显示：本次尝试的星级评分 */
+  /** 仅最后一场无提示考核显示：本次尝试的星级评分 */
   rating: EndPromptRating | null
 }
 
@@ -245,7 +245,7 @@ export function usePractice() {
     const durationSec = Math.max(1, Math.round((finishedAt - rawStats.startedAt) / 1000))
     const rules = currentLesson.passCriteria ? describePassCriteria(currentLesson.passCriteria) : []
 
-    // 最后一场全遮挡考核：显示本次评分（未达标则记未通过）
+    // 最后一场无提示考核：显示本次评分（未达标则记未通过）
     const isFinalExam = isLastStage.value && stage.value === 'exam'
     let rating: EndPromptRating | null = null
     if (isFinalExam) {
@@ -394,7 +394,7 @@ export function usePractice() {
     runtimes.value = next
   }
 
-  /** 逐字 / 半遮挡词阶段曾完成过：重进时直接允许继续；全遮挡考核不跳过 */
+  /** 逐字 / 词语部分提示阶段曾完成过：重进时直接允许继续；无提示考核不跳过 */
   function stageWasCleared(target: PracticeStage): boolean {
     if (target === 'exam') return false
     return Boolean(course.progress[lessonId.value]?.clearedStages?.includes(target))

@@ -163,8 +163,8 @@ export function stageTitle(lesson: LessonDef, stage: PracticeStage): string {
   if (stage === 'single') return '单字练习'
   if (stage === 'word') return '词语练习'
   if (lesson.kind === 'exam') return '通关考核'
-  if (lesson.kind === 'review') return '全遮挡练习'
-  return '全遮挡考核'
+  if (lesson.kind === 'review') return '无提示练习'
+  return '无提示考核'
 }
 
 export function lessonKindLabel(kind: LessonKind): string {

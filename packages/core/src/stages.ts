@@ -30,9 +30,9 @@ import { selectWords, targetCountsOf } from './selector.ts'
 
 /**
  * 各课程类型的阶段最低词数：
- * - drill：字 15 → 半遮挡词 15 → 全遮挡考核 25；
- * - review：全遮挡 50；
- * - exam：全遮挡 100。
+ * - drill：字 15 → 词语部分提示 15 → 无提示考核 25；
+ * - review：无提示 50；
+ * - exam：无提示 100。
  * 数据里的 stageMinWords 覆盖优先。
  */
 export const KIND_STAGE_MIN_WORDS: Record<LessonKind, Partial<Record<PracticeStage, number>>> = {
@@ -60,7 +60,7 @@ export function lessonStageMinWords(lesson: LessonDef): Partial<Record<PracticeS
 }
 
 /**
- * 阶段门槛：字/半遮挡词阶段只看最低词数；全遮挡考核阶段（每课最后一场）
+ * 阶段门槛：字 / 词语部分提示阶段只看最低词数；无提示考核阶段（每课最后一场）
  * 还要求达到本课考核标准（正确率 ≥ criteria.accuracy，速度课再加 minCpm）。
  * 返回未达标原因，供工具栏展示。
  */
@@ -106,7 +106,7 @@ export function stageGate(
   }
 }
 
-/** 提示档位由阶段唯一决定：单字全显、半遮挡词隐藏本课 focus、考核全遮挡 */
+/** 提示级别由阶段唯一决定：单字完整提示、词语部分提示、考核无提示 */
 export function hintTierFor(stage: PracticeStage): 1 | 2 | 3 {
   if (stage === 'single') return 1
   if (stage === 'word') return 2

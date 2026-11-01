@@ -365,7 +365,7 @@ export interface StageGateMetrics {
   completedWords: number
 }
 
-/** 阶段门槛：最低词数（+ 全遮挡考核阶段的考核标准）与未达标原因 */
+/** 阶段门槛：最低词数（+ 无提示考核阶段的考核标准）与未达标原因 */
 export interface StageGate {
   stage: PracticeStage
   minWords: number
