@@ -7,14 +7,13 @@ import { useRouter } from 'vue-router'
 import type { MetricTier } from '@shuangpin/core'
 import IntroLesson from '@/components/intro/IntroLesson.vue'
 import StateCard from '@/components/common/StateCard.vue'
-import KeyboardDock from '@/components/keyboard/KeyboardDock.vue'
-import DockReveal from '@/components/keyboard/DockReveal.vue'
 import PracticeStream from '@/components/practice/PracticeStream.vue'
 import SessionBar from '@/components/layout/SessionBar.vue'
 import TutorialStage from '@/components/practice/TutorialStage.vue'
 import { usePractice } from '@/composables/usePractice'
 import { useKeyInput } from '@/composables/useKeyInput'
-import { useLayoutStore } from '@/stores/layout'
+import { useBottomDockContent } from '@/composables/useBottomDockContent'
+import { useLayoutStore, type DockContent } from '@/stores/layout'
 import { useSoundStore } from '@/stores/sound'
 const router = useRouter()
 const practice = usePractice()
@@ -52,7 +51,6 @@ const {
   keyMapRows,
   highlightAtomIds,
   specialInitials,
-  showDock,
   primary,
   retryStage,
   previousStage,
@@ -67,10 +65,8 @@ watch(
   () => layout.setStageLabel(isIntro.value ? '入门课' : stageTitleText.value),
   { immediate: true },
 )
-watch(showDock, (available) => layout.setKeyboardAvailable(available), { immediate: true })
 onBeforeUnmount(() => {
   layout.clearStageLabel()
-  layout.setKeyboardAvailable(false)
 })
 
 const accuracyBelowTarget = computed(() => hasStarted.value && accuracyTier.value?.min === null)
@@ -110,6 +106,17 @@ useKeyInput((input) => {
   if (input.type === 'backspace') onDockBackspace()
   else onKeymapKey(input.key)
 })
+
+const dockContent = computed<DockContent>(() => ({
+  rows: keyMapRows.value,
+  schemeName: scheme.value?.name,
+  highlightAtomIds: stage.value === 'tutorial' || stage.value === 'single' ? highlightAtomIds.value : [],
+  specialInitials: specialInitials.value,
+  zeroInitials: scheme.value?.zeroInitial,
+  compatCodes: scheme.value?.compatCodes,
+  conceal: conceal.value,
+}))
+useBottomDockContent(() => dockContent.value)
 </script>
 
 <template>
@@ -226,17 +233,6 @@ useKeyInput((input) => {
       </div>
     </template>
 
-    <DockReveal :open="showDock && layout.keyboardVisible">
-      <KeyboardDock
-        :rows="keyMapRows"
-        :scheme-name="scheme?.name"
-        :highlight-atom-ids="stage === 'tutorial' || stage === 'single' ? highlightAtomIds : []"
-        :special-initials="specialInitials"
-        :zero-initials="scheme?.zeroInitial"
-        :compat-codes="scheme?.compatCodes"
-        :conceal="conceal"
-      />
-    </DockReveal>
   </div>
 </template>
 

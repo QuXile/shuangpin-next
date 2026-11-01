@@ -23,8 +23,6 @@ import {
 import PracticeStream from '@/components/practice/PracticeStream.vue'
 import SessionBar from '@/components/layout/SessionBar.vue'
 import StageSummaryCard from '@/components/practice/StageSummaryCard.vue'
-import KeyboardDock from '@/components/keyboard/KeyboardDock.vue'
-import DockReveal from '@/components/keyboard/DockReveal.vue'
 import SchemeKeycaps from '@/components/keyboard/SchemeKeycaps.vue'
 import SchemeSelector from '@/components/keyboard/SchemeSelector.vue'
 import HeroLayout from '@/components/common/HeroLayout.vue'
@@ -34,10 +32,11 @@ import SetupCard from '@/components/training/SetupCard.vue'
 import SetupGroup from '@/components/training/SetupGroup.vue'
 import CommonCapsule from '@/components/training/CommonCapsule.vue'
 import { useCourseStore } from '@/stores/course'
-import { useLayoutStore } from '@/stores/layout'
+import { useLayoutStore, type DockContent } from '@/stores/layout'
 import { useSoundStore } from '@/stores/sound'
 import { useGlobalKeys, type KeyBinding } from '@/composables/useGlobalKeys'
 import { useKeyInput } from '@/composables/useKeyInput'
+import { useBottomDockContent } from '@/composables/useBottomDockContent'
 import { useTrainingSession } from '@/composables/useTrainingSession'
 import { loadLexicon, type CommonWordsFile, type TrainingBank } from '@/lib/data'
 import {
@@ -902,10 +901,8 @@ watch(
   () => layout.setStageLabel(playing.value ? sessionTitle.value : ''),
   { immediate: true },
 )
-watch([playing, () => course.scheme], () => layout.setKeyboardAvailable(Boolean(course.scheme)), { immediate: true })
 onBeforeUnmount(() => {
   layout.clearStageLabel()
-  layout.setKeyboardAvailable(false)
 })
 const countUnit = computed(() =>
   kind.value === 'article' || (kind.value === 'drill' && drillMode.value === 'char') ? '字' : '词',
@@ -953,6 +950,18 @@ useKeyInput((input) => {
   if (input.type === 'backspace') onBackspace()
   else onLetter(input.key)
 })
+
+const dockContent = computed<DockContent>(() => ({
+  rows: keyMapRows.value,
+  schemeName: course.scheme?.name,
+  specialInitials: specialInitials.value,
+  zeroInitials: course.scheme?.zeroInitial,
+  compatCodes: course.scheme?.compatCodes,
+  hiddenAtomIds: playing.value ? sessionHiddenAtomIds.value : [],
+  // 练习会话一旦设置了隐藏项，就和课程考核阶段一样收起整层映射提示。
+  conceal: playing.value && sessionHiddenAtomIds.value.length > 0,
+}))
+useBottomDockContent(() => dockContent.value)
 
 // ── 文章 ──────────────────────────────────────────────────────
 
@@ -1686,15 +1695,6 @@ onScopeDispose(() => {
         </section>
       </div>
 
-      <DockReveal :open="keyMapRows.length > 0 && layout.keyboardVisible">
-        <KeyboardDock
-          :rows="keyMapRows"
-          :scheme-name="course.scheme?.name"
-          :special-initials="specialInitials"
-          :zero-initials="course.scheme?.zeroInitial"
-          :compat-codes="course.scheme?.compatCodes"
-        />
-      </DockReveal>
     </template>
 
     <!-- 练习会话 -->
@@ -1774,16 +1774,6 @@ onScopeDispose(() => {
         </template>
       </div>
 
-      <DockReveal :open="keyMapRows.length > 0 && layout.keyboardVisible">
-        <KeyboardDock
-          :rows="keyMapRows"
-          :scheme-name="course.scheme?.name"
-          :special-initials="specialInitials"
-          :zero-initials="course.scheme?.zeroInitial"
-          :compat-codes="course.scheme?.compatCodes"
-          :hidden-atom-ids="sessionHiddenAtomIds"
-        />
-      </DockReveal>
     </template>
   </div>
 </template>

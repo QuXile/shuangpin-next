@@ -88,7 +88,7 @@ onBeforeUnmount(() => { resizeObserver?.disconnect() })
   left: 0;
   padding-top: 12px;
   color: var(--brand);
-  background: linear-gradient(transparent, var(--surface) 58%);
+  background: linear-gradient(transparent, var(--mapping-more-bg, var(--surface)) 58%);
   font-size: 10.5px;
   font-weight: 750;
   line-height: 1.4;

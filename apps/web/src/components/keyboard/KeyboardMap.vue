@@ -3,10 +3,11 @@
  * 键位图（独立交互组件）：点击按键与物理键盘走同一套 useKeyInput 输入管线。
  * 视图模型在 setup 里一次性预计算，渲染时不再重复遍历 atomIds。
  */
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed } from 'vue'
 import type { AtomId, LetterKey } from '@shuangpin/core'
 import { parseAtomId } from '@shuangpin/core'
 import { useKeyInput } from '@/composables/useKeyInput'
+import MappingStrip from './MappingStrip.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -15,7 +16,7 @@ const props = withDefaults(
     schemeName?: string
     /** 本课 focus：对应声母/韵母文字反白 + 底色强调 */
     highlightAtomIds?: readonly AtomId[]
-    /** true = 词语/考核阶段：隐藏全部映射，只保留按键与按下反馈 */
+    /** true = 全遮挡：隐藏全部映射、图例、零声母与兼容编码，只保留按键与按下反馈 */
     conceal?: boolean
     /** 需要显示在键位图上的「改造声母」（由 engine.diff().learnInitials 传入） */
     specialInitials?: readonly string[]
@@ -56,6 +57,7 @@ interface KeyView {
   hasBoth: boolean
 }
 
+const showMappings = computed(() => !props.conceal)
 const highlightSet = computed(() => new Set(props.highlightAtomIds))
 const pressedSet = computed(() => new Set(pressedKeys.value.map((key) => key.toLowerCase())))
 const specialSet = computed(() => new Set(props.specialInitials))
@@ -83,45 +85,22 @@ const compatViews = computed(() =>
     }))
     .filter((entry) => entry.codes.length > 0),
 )
-const compatLine = computed(() =>
-  compatViews.value.map((entry) => `${entry.syllable} ${entry.codes.map((code) => code.join('')).join(' ')}`).join('  ·  '),
-)
-const compatContentRef = ref<HTMLElement | null>(null)
-const compatOverflow = ref(false)
-let compatResizeObserver: ResizeObserver | undefined
-
-function measureCompatOverflow(): void {
-  const el = compatContentRef.value
-  if (!el) {
-    compatOverflow.value = false
-    return
-  }
-  compatOverflow.value = el.scrollWidth > el.clientWidth + 1
-}
-
-watch(
-  compatViews,
-  () => {
-    void nextTick(() => {
-      if (compatResizeObserver && compatContentRef.value) {
-        compatResizeObserver.disconnect()
-        compatResizeObserver.observe(compatContentRef.value)
-      }
-      measureCompatOverflow()
-    })
-  },
-  { immediate: true, deep: true },
+const zeroMappingItems = computed(() =>
+  zeroViews.value.map((entry) => ({
+    label: entry.final,
+    codes: [entry.keys],
+    title: `${entry.final} → ${entry.keys.join(' ')}`,
+    emphasized: entry.emphasized,
+  })),
 )
 
-onMounted(() => {
-  compatResizeObserver = new ResizeObserver(measureCompatOverflow)
-  if (compatContentRef.value) compatResizeObserver.observe(compatContentRef.value)
-  window.addEventListener('resize', measureCompatOverflow)
-})
-onBeforeUnmount(() => {
-  compatResizeObserver?.disconnect()
-  window.removeEventListener('resize', measureCompatOverflow)
-})
+const compatMappingItems = computed(() =>
+  compatViews.value.map((entry) => ({
+    label: entry.syllable,
+    codes: entry.codes,
+    title: `${entry.syllable} → ${entry.codes.map((code) => code.join('')).join(' / ')}`,
+  })),
+)
 
 const keyViews = computed<KeyView[][]>(() =>
   props.rows.map((row) =>
@@ -163,8 +142,8 @@ const keyViews = computed<KeyView[][]>(() =>
 
 <template>
   <div class="keyboard-map" :class="{ 'is-concealed': conceal }" aria-label="双拼键位图">
-    <div v-if="(!conceal && legend) || schemeName" class="kbd-head">
-      <div v-if="!conceal && legend" class="kbd-legend">
+    <div v-if="(showMappings && legend) || schemeName" class="kbd-head">
+      <div v-if="showMappings && legend" class="kbd-legend">
         <span class="legend-item"><i class="legend-swatch is-initial" />声母</span>
         <span class="legend-item"><i class="legend-swatch is-final" />韵母</span>
       </div>
@@ -187,7 +166,7 @@ const keyViews = computed<KeyView[][]>(() =>
         @click="pressKey(key.letter)"
       >
         <span class="key-letter">{{ key.letter.toUpperCase() }}</span>
-        <span v-if="!conceal" class="key-initials">
+        <span v-if="showMappings" class="key-initials">
           <span
             v-for="part in key.initialParts"
             :key="part.atomId"
@@ -195,7 +174,7 @@ const keyViews = computed<KeyView[][]>(() =>
             :class="{ 'is-emphasized': part.emphasized }"
           >{{ part.text }}</span>
         </span>
-        <span v-if="!conceal" class="key-finals">
+        <span v-if="showMappings" class="key-finals">
           <span
             v-for="part in key.finalParts"
             :key="part.atomId"
@@ -218,56 +197,16 @@ const keyViews = computed<KeyView[][]>(() =>
         <span class="key-backspace-label" aria-hidden="true">退格</span>
       </button>
     </div>
-    <div v-if="!conceal && zeroViews.length > 0" class="kbd-zero-row" aria-label="零声母">
-      <span class="kbd-zero-title">零声母</span>
-      <div class="kbd-zero-list">
-        <div class="kbd-zero-track">
-          <span
-            v-for="entry in zeroViews"
-            :key="entry.final"
-            class="kbd-zero"
-            :class="{ 'is-emphasized': entry.emphasized }"
-            :title="`${entry.final} → ${entry.keys.join(' ')}`"
-          >
-            <b>{{ entry.final }}</b>
-            <span class="kbd-zero-keys">
-              <kbd v-for="key in entry.keys" :key="key">{{ key }}</kbd>
-            </span>
-          </span>
-        </div>
-      </div>
-    </div>
-    <div
-      v-if="!conceal && compatViews.length > 0"
-      class="kbd-compat-row"
-      tabindex="0"
-      aria-label="兼容编码"
-    >
-      <span class="kbd-compat-title">兼容编码</span>
-      <span ref="compatContentRef" class="kbd-compat-content" :title="compatOverflow ? compatLine : undefined">
-        <span class="kbd-compat-track">
-          <span v-for="entry in compatViews" :key="entry.syllable" class="kbd-zero">
-            <b>{{ entry.syllable }}</b>
-            <span class="kbd-zero-keys">
-              <kbd v-for="(code, codeIndex) in entry.codes" :key="codeIndex" class="kbd-compat-code">
-                <span v-for="(key, keyIndex) in code" :key="keyIndex">{{ key }}</span>
-              </kbd>
-            </span>
-          </span>
-        </span>
-      </span>
-      <span v-if="compatOverflow" class="kbd-compat-count">共 {{ compatViews.length }} 个</span>
-      <span v-if="compatOverflow" class="kbd-compat-popup" aria-hidden="true">
-        <span v-for="entry in compatViews" :key="entry.syllable" class="kbd-zero">
-          <b>{{ entry.syllable }}</b>
-          <span class="kbd-zero-keys">
-            <kbd v-for="(code, codeIndex) in entry.codes" :key="codeIndex" class="kbd-compat-code">
-              <span v-for="(key, keyIndex) in code" :key="keyIndex">{{ key }}</span>
-            </kbd>
-          </span>
-        </span>
-      </span>
-    </div>
+    <MappingStrip
+      v-if="showMappings && zeroMappingItems.length > 0"
+      label="零声母"
+      :items="zeroMappingItems"
+    />
+    <MappingStrip
+      v-if="showMappings && compatMappingItems.length > 0"
+      label="兼容编码"
+      :items="compatMappingItems"
+    />
   </div>
 </template>
 
@@ -281,152 +220,6 @@ const keyViews = computed<KeyView[][]>(() =>
   background: var(--surface);
   border: 1px solid var(--line);
   box-shadow: var(--shadow-sm);
-}
-.kbd-zero-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 8px;
-  padding: 0 2px;
-  min-width: 0;
-}
-.kbd-zero-title {
-  flex: none;
-  color: var(--ink-4);
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-}
-.kbd-zero-list {
-  flex: 1;
-  min-width: 0;
-  overflow-x: auto;
-  scrollbar-width: thin;
-}
-.kbd-zero-track {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  width: max-content;
-  min-width: 100%;
-}
-.kbd-zero {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 2px 5px;
-  border-radius: 5px;
-  background: var(--surface);
-  color: var(--ink-3);
-  font-size: 10px;
-  line-height: 1.4;
-}
-.kbd-zero b {
-  color: var(--ink-2);
-  font-weight: 700;
-}
-.kbd-zero kbd {
-  padding: 0 3px;
-  border: 0;
-  background: var(--surface-3);
-  font-size: 8px;
-  line-height: 1.4;
-}
-.kbd-zero.is-emphasized {
-  background: var(--state-info-bg, var(--brand-soft));
-  color: var(--brand-ink);
-  box-shadow: inset 0 0 0 1px var(--brand-line);
-}
-.kbd-compat-row {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 4px;
-  padding: 3px 2px;
-  min-width: 0;
-  border-radius: 5px;
-}
-.kbd-compat-row:focus-visible {
-  outline: 2px solid var(--brand-line);
-  outline-offset: 2px;
-}
-.kbd-compat-title {
-  flex: none;
-  color: var(--ink-4);
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-}
-.kbd-compat-content {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  color: var(--ink-3);
-  font-size: 10px;
-  line-height: 1.5;
-}
-.kbd-compat-track {
-  display: flex;
-  align-items: center;
-  justify-content: safe center;
-  gap: 6px;
-  width: max-content;
-  min-width: 100%;
-  white-space: nowrap;
-}
-.kbd-compat-content .kbd-zero {
-  gap: 3px;
-}
-.kbd-compat-content .kbd-zero-keys {
-  gap: 2px;
-}
-.kbd-compat-code {
-  display: inline-flex;
-  gap: 1px;
-  padding: 0 2px;
-}
-.kbd-compat-code + .kbd-compat-code {
-  margin-left: 2px;
-}
-.kbd-compat-count {
-  flex: none;
-  color: var(--ink-4);
-  font-size: 10px;
-  white-space: nowrap;
-}
-.kbd-compat-popup {
-  position: absolute;
-  bottom: 100%;
-  left: 0;
-  right: 0;
-  display: none;
-  z-index: 50;
-  padding: 12px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--r-sm);
-  box-shadow: var(--pop-shadow);
-  pointer-events: auto;
-  overscroll-behavior: contain;
-}
-.kbd-compat-popup .kbd-zero {
-  gap: 3px;
-}
-.kbd-compat-row:hover .kbd-compat-popup,
-.kbd-compat-row:focus-within .kbd-compat-popup {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px 12px;
-  align-content: flex-start;
-  max-height: 240px;
-  overflow-y: auto;
-  scrollbar-gutter: stable;
-  scrollbar-width: thin;
 }
 .kbd-row {
   --kbd-gap: 6px;

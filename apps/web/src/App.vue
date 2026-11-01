@@ -3,6 +3,7 @@
 import { computed, onMounted } from 'vue'
 import { RouterView, useRoute, useRouter } from 'vue-router'
 import Topbar from '@/components/layout/Topbar.vue'
+import BottomDockHost from '@/components/keyboard/BottomDockHost.vue'
 import ShortcutHelp from '@/components/layout/ShortcutHelp.vue'
 import { useCourseBootstrap } from '@/composables/useCourseBootstrap'
 import { useGlobalKeys } from '@/composables/useGlobalKeys'
@@ -86,6 +87,7 @@ useGlobalKeys(() => [
         </Transition>
       </RouterView>
     </main>
+    <BottomDockHost />
     <footer v-if="!isPractice" class="footer">
       <span>双拼 NEXT · 实现预览</span>
       <span v-if="course.scheme">

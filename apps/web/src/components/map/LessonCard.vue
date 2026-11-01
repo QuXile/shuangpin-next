@@ -65,6 +65,7 @@ const statusClass = computed(() => {
 
 <style scoped>
 .lesson-card {
+  --mapping-more-bg: var(--surface);
   position: relative;
   display: flex;
   flex-direction: column;
@@ -91,6 +92,7 @@ const statusClass = computed(() => {
   transform: translateY(-1px) scale(0.995);
 }
 .lesson-card.is-done {
+  --mapping-more-bg: var(--success-soft);
   background: var(--success-soft);
   border-color: var(--state-success-line);
 }
@@ -102,6 +104,7 @@ const statusClass = computed(() => {
   box-shadow: 0 0 0 3px var(--brand-soft);
 }
 .lesson-card.is-locked {
+  --mapping-more-bg: var(--surface-2);
   cursor: not-allowed;
   background: var(--surface-2);
 }

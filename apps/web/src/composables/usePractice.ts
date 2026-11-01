@@ -334,7 +334,6 @@ export function usePractice() {
   })
   const specialInitials = computed(() => engine.value?.diff().learnInitials ?? [])
   const keyMapRows = computed(() => engine.value?.keyMap() ?? [])
-  const showDock = computed(() => status.value === 'ready')
   const nextLesson = computed(() => (lesson.value ? course.nextLesson(lesson.value.id) : undefined))
 
   // ── 批次生成器 ──────────────────────────────────────────────
@@ -763,7 +762,6 @@ export function usePractice() {
     keyMapRows,
     highlightAtomIds,
     specialInitials,
-    showDock,
     primary,
     // 动作
     startFirstStage,

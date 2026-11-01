@@ -76,6 +76,7 @@ const emit = defineEmits<{ start: [] }>()
   padding: 0 20px 20px;
 }
 .current-card {
+  --mapping-more-bg: var(--surface);
   flex: 1;
   min-height: 0;
   display: flex;

@@ -4,6 +4,19 @@
  */
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
+import type { AtomId, LetterKey } from '@shuangpin/core'
+
+export interface DockContent {
+  rows: LetterKey[][]
+  schemeName?: string
+  highlightAtomIds?: readonly AtomId[]
+  conceal?: boolean
+  specialInitials?: readonly string[]
+  legend?: boolean
+  hiddenAtomIds?: readonly AtomId[]
+  zeroInitials?: Readonly<Record<string, readonly string[]>>
+  compatCodes?: Readonly<Record<string, readonly string[]>>
+}
 
 export const useLayoutStore = defineStore('layout', () => {
   const stageLabel = ref('')
@@ -13,6 +26,8 @@ export const useLayoutStore = defineStore('layout', () => {
   const keyboardAvailable = ref(false)
   /** 快捷键帮助浮层 */
   const shortcutHelpVisible = ref(false)
+  /** 由练习页注册的底栏内容；App 级 BottomDockHost 只负责生命周期和动效 */
+  const dockContent = ref<DockContent | null>(null)
 
   function setStageLabel(label: string): void {
     stageLabel.value = label
@@ -24,6 +39,10 @@ export const useLayoutStore = defineStore('layout', () => {
 
   function setKeyboardAvailable(available: boolean): void {
     keyboardAvailable.value = available
+  }
+
+  function setDockContent(content: DockContent | null): void {
+    dockContent.value = content
   }
 
   function toggleKeyboard(): void {
@@ -50,6 +69,8 @@ export const useLayoutStore = defineStore('layout', () => {
     keyboardVisible,
     keyboardAvailable,
     setKeyboardAvailable,
+    dockContent,
+    setDockContent,
     toggleKeyboard,
     shortcutHelpVisible,
     openShortcutHelp,

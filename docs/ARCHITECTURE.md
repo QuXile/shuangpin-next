@@ -110,6 +110,15 @@ kind      intro（入门）/ drill（新课）/ review（复习、期中、综�
 - 练习页/练习场只订阅自己的判题处理器，不再各自注册字符快捷键；
 - 输入层不播放声音：有 Hero 键帽的页面由键帽负责，练习会话由页面处理器负责，保证一次输入只有一次声音。
 
+## 底部键位图宿主
+
+底部键位图的挂载、显隐和高度动效集中在 App 级 `BottomDockHost`，不再由各页面分别挂载 `DockReveal`：
+
+- 页面只通过 `useBottomDockContent` 注册键位图内容；
+- `BottomDockHost` 负责路由能力、`Ctrl+K` 显隐、内容测量与开合过渡；
+- 练习场配置页 → 练习会话、课程下一阶段都复用同一个宿主实例，不重播底栏动效；
+- 页面不再用异步加载状态切换底栏打开状态。
+
 ## 方案判题
 
 音节判题只有两层：
@@ -138,7 +147,7 @@ lexicon-<12hex>    = sha256(Lexicon 内容)
 ## Web 应用层
 
 - **路由**：`/`、`/training`、`/practice/:lessonId`；`VITE_ROUTER_MODE=hash` 用 hash 路由（静态包），否则 history 路由；`VITE_BASE` 控制部署子路径。
-- **Store**：`course`（方案索引 / 包加载、当前方案、课程、统一 Lexicon、解锁标记、进度委派）、`progress`（按方案持久化进度与 `clearedStages`）、`settings`（主题）、`sound`（音效）、`layout`（阶段标题、底部键位图显隐、快捷键面板）。
+- **Store**：`course`（方案索引 / 包加载、当前方案、课程、统一 Lexicon、解锁标记、进度委派）、`progress`（按方案持久化进度与 `clearedStages`）、`settings`（主题）、`sound`（音效）、`layout`（阶段标题、底部键位图显隐、底栏内容与快捷键面板）。
 - **方案切换**统一走 `course.selectScheme(id)`；数据加载层 `lib/data.ts` 从 `BASE_URL + data/` 读取方案包、课程与统一 Lexicon，同一数据只加载一次。
 - **页面**：`LearnMapPage`（Hero、继续学习、键位图、进度、章节路线、滚动位置记忆）、`PracticePage`（阶段状态机在 `usePractice`，规则在 core）、`TrainingPage`（配置持久化、范围过滤、文章解析；会话核心在 `useTrainingSession`）。
 
