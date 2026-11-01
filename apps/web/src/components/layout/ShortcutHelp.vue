@@ -184,6 +184,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown, true))
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  scrollbar-gutter: stable;
   padding: 18px 24px 10px;
   display: flex;
   flex-direction: column;

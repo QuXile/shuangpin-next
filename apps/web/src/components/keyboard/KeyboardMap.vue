@@ -428,6 +428,7 @@ const keyViews = computed<KeyView[][]>(() =>
   align-content: flex-start;
   max-height: 240px;
   overflow-y: auto;
+  scrollbar-gutter: stable;
   scrollbar-width: thin;
 }
 .kbd-row {

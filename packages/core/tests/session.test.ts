@@ -258,24 +258,6 @@ describe('backspace', () => {
   })
 })
 
-describe('strictPrimary（Hero 标答限制）', () => {
-  const qu = makePracticeWord('区', ['qu'])
-
-  it('strictPrimary 只接受主键；练习场默认仍接受别名', () => {
-    const strict = createSession({ words: [qu], now: 0, strictPrimary: true })
-    const failed = applyKey(applyKey(strict, 'q', 10).state, 'v', 20)
-    expect(failed.feedback.kind).toBe('wrong')
-    expect(failed.state.stats.errors).toBe(1)
-
-    const primary = applyKey(applyKey(strict, 'q', 10).state, 'u', 20)
-    expect(primary.feedback.kind).toBe('session-complete')
-
-    const loose = createSession({ words: [qu], now: 0 })
-    const alias = applyKey(applyKey(loose, 'q', 10).state, 'v', 20)
-    expect(alias.feedback.kind).toBe('session-complete')
-  })
-})
-
 describe('sessionMetrics', () => {
   it('进行中会话按 now 计算 cpm；结束后冻结', () => {
     let state = createSession({ words: [nvRen], now: 1000 })

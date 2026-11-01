@@ -47,7 +47,7 @@ Lexicon 是权威数据：修改词表意味着直接编辑并校验 `lexicon.js
 - `data/schemes/index.json`：方案索引、默认方案、课程能力；`curriculum-index.json`：课程索引。
 - `data/schemes/engine-cases.json`：判题正反例；
 - `recommended`：仅多码音节需要的推荐/标答序列；`compatCodes`：仅不能由声母/韵母组合出来的特殊序列；C 的 `zhu` 推荐 `of`，`vf` 进入特殊表；`ou/vu` 由组合回退接受，不进入特殊表。
-- 课程 Hero 只接受推荐码；练习场接受推荐码、特殊码和组合码。
+- 课程与练习场都接受推荐码、兼容编码和组合码；显示仍使用推荐码/主键。
 - `apps/web/public/data/packages/`：由 `scripts/scheme-packages/build.mjs` 生成，不手改；源在 `data/schemes/<id>/`。
 
 C 双拼的规则参考 [fcitx5-chinese-addons 的 C双拼配置](https://github.com/fcitx/fcitx5-chinese-addons/blob/e8d930f402e359cfd76a101ee3e46815d1331d83/im/pinyin/sp.dat.example)（LGPL-2.1），仅作规则与映射比对，不复制代码。

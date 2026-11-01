@@ -4,7 +4,7 @@
 
 ## 版本与产物
 
-- 版本以根 `package.json` 的 `version` 为准（当前 `1.3.0`），许可证 GPL-3.0-only。
+- 版本以根 `package.json` 的 `version` 为准（当前 `1.3.1`），许可证 GPL-3.0-only。
 - 发布产物为静态包 ZIP `shuangpin-next-<版本>-static.zip`，另附 `SHA256SUMS`。
 - 手动触发工作流时版本记为 `dev-<commit 前 7 位>`，只上传 Actions 产物，不创建 Release。
 
@@ -60,12 +60,12 @@ sha256sum shuangpin-next-<版本>-static.zip > SHA256SUMS
 ## 发布流程
 
 1. `pnpm verify` 全绿；如改过 UI，重新导出[界面截图](SCREENSHOTS.md)。
-2. 确认根 `package.json` 的版本与要打的 tag 一致（如 `1.3.0` ↔ `v1.3.0`）。
+2. 确认根 `package.json` 的版本与要打的 tag 一致（如 `1.3.1` ↔ `v1.3.1`）。
 3. 打 tag 并推送：
 
    ```bash
-   git tag v1.3.0
-   git push origin v1.3.0
+   git tag v1.3.1
+   git push origin v1.3.1
    ```
 
 4. 观察 `release-static` 与 `deploy-pages` 工作流；下载 ZIP 自测：数据加载、`#/training` 与 `#/practice/<lessonId>` 路由、断网可用、`LICENSE` / `使用说明.txt` / `SHA256SUMS` 齐全。

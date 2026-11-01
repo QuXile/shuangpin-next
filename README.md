@@ -1,6 +1,6 @@
 # 双拼 NEXT
 
-> 版本 1.3.0 · 在线体验：<https://quxile.github.io/shuangpin-next/>
+> 版本 1.3.1 · 在线体验：<https://quxile.github.io/shuangpin-next/>
 
 给已经会用全拼、想学会双拼的人：把「学键位 → 练单字 → 练词语 → 无提示考核」串成一条线，课程之外还有自由练习场和文章练习。
 

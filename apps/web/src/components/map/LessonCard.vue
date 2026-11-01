@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import FocusTagList from '@/components/FocusTagList.vue'
+import { computed } from 'vue'
+import MappingTagArea from './MappingTagArea.vue'
 import { lessonKindLabel, type LessonView } from '@/lib/lessonView'
 
 const props = withDefaults(defineProps<{ lesson: LessonView; current?: boolean }>(), {
@@ -8,39 +8,22 @@ const props = withDefaults(defineProps<{ lesson: LessonView; current?: boolean }
 })
 const emit = defineEmits<{ start: [lessonId: string] }>()
 
-const cardRef = ref<HTMLButtonElement | null>(null)
-const popupDown = ref(false)
-
-/** 映射浮层优先放在空间更大的一侧，避免靠近视口顶部/底部时被裁切。 */
-function updatePopupPlacement(): void {
-  const rect = cardRef.value?.getBoundingClientRect()
-  if (!rect) return
-  const spaceAbove = rect.top
-  const spaceBelow = window.innerHeight - rect.bottom
-  popupDown.value = spaceBelow > spaceAbove
-}
-
 const statusClass = computed(() => {
   if (props.lesson.state === 'passed') return 'is-done'
   if (props.current) return 'is-active'
   if (props.lesson.state === 'locked') return 'is-locked'
   return 'is-pending'
 })
-const manyTags = computed(() => props.lesson.focusKeys.length > 8)
-const tagCount = computed(() => props.lesson.focusKeys.length)
 </script>
 
 <template>
   <button
-    ref="cardRef"
     type="button"
     class="lesson-card"
     :class="statusClass"
     :disabled="lesson.state === 'locked'"
     :title="lesson.state === 'locked' ? '完成前一课后解锁' : '开始练习（Enter）'"
     @click="emit('start', lesson.id)"
-    @mouseenter="updatePopupPlacement"
-    @focusin="updatePopupPlacement"
   >
     <span class="card-top">
       <span class="card-meta">
@@ -66,18 +49,7 @@ const tagCount = computed(() => props.lesson.focusKeys.length)
         </svg>
         <svg v-else viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
       </span>
-      <span class="tags-wrap">
-        <span class="tags-area" :class="{ 'has-many': manyTags }">
-          <FocusTagList :items="lesson.focusKeys" />
-        </span>
-        <span v-if="manyTags" class="more-hint">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /><circle cx="5" cy="12" r="1" /></svg>
-          共 {{ tagCount }} 个映射
-        </span>
-        <span v-if="manyTags" class="mapping-popup" :class="{ 'is-down': popupDown }">
-          <FocusTagList :items="lesson.focusKeys" />
-        </span>
-      </span>
+      <MappingTagArea :items="lesson.focusKeys" />
     </span>
 
     <span v-else class="card-main is-empty">
@@ -98,6 +70,7 @@ const tagCount = computed(() => props.lesson.focusKeys.length)
   flex-direction: column;
   gap: 10px;
   width: 100%;
+  height: 160px;
   min-width: 0;
   padding: 16px 18px;
   text-align: left;
@@ -134,8 +107,7 @@ const tagCount = computed(() => props.lesson.focusKeys.length)
 }
 .lesson-card.is-locked .card-top,
 .lesson-card.is-locked .card-icon,
-.lesson-card.is-locked .tags-area,
-.lesson-card.is-locked .more-hint {
+.lesson-card.is-locked .mapping-tag-area {
   opacity: 0.58;
 }
 .card-top {
@@ -183,9 +155,10 @@ const tagCount = computed(() => props.lesson.focusKeys.length)
 }
 .card-main {
   display: flex;
-  align-items: flex-start;
+  flex: 1;
+  align-items: stretch;
   gap: 12px;
-  min-height: 30px;
+  min-height: 0;
   margin-top: 2px;
 }
 .card-main.is-empty {
@@ -193,6 +166,7 @@ const tagCount = computed(() => props.lesson.focusKeys.length)
 }
 .card-icon {
   flex: none;
+  align-self: flex-start;
   width: 26px;
   height: 26px;
   display: grid;
@@ -215,59 +189,6 @@ const tagCount = computed(() => props.lesson.focusKeys.length)
   border-color: transparent;
   background: var(--brand-soft);
 }
-.tags-wrap {
-  min-width: 0;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.tags-area {
-  display: block;
-  min-width: 0;
-  max-height: 84px;
-  overflow: hidden;
-}
-.tags-area.has-many {
-  mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
-}
-.more-hint {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--brand);
-  font-size: 11px;
-  font-weight: 750;
-}
-.more-hint svg {
-  width: 12px;
-  height: 12px;
-}
-.mapping-popup {
-  position: absolute;
-  bottom: calc(100% + 8px);
-  left: 0;
-  right: 0;
-  display: none;
-  z-index: 50;
-  padding: 14px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--r-sm);
-  box-shadow: var(--pop-shadow);
-  pointer-events: none;
-  animation: ui-pop-in 160ms var(--ease);
-}
-/* 靠近视口顶部时向下展开；靠近底部时保持向上 */
-.mapping-popup.is-down {
-  top: calc(100% + 8px);
-  bottom: auto;
-}
-.lesson-card:hover .mapping-popup,
-.lesson-card:focus-visible .mapping-popup {
-  display: block;
-}
 @media (max-width: 640px) {
   .lesson-card {
     padding: 14px;
@@ -277,9 +198,6 @@ const tagCount = computed(() => props.lesson.focusKeys.length)
   }
   .card-title {
     font-size: 14px;
-  }
-  .tags-area {
-    max-height: 74px;
   }
 }
 </style>

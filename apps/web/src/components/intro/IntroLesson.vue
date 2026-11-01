@@ -18,7 +18,7 @@ import {
   type SessionState,
   type WordEntry,
 } from '@shuangpin/core'
-import CharacterCard from '@/components/practice/CharacterCard.vue'
+import PracticeStream from '@/components/practice/PracticeStream.vue'
 import SessionBar from '@/components/layout/SessionBar.vue'
 import { useGlobalKeys, type KeyBinding } from '@/composables/useGlobalKeys'
 import { useSoundStore } from '@/stores/sound'
@@ -172,12 +172,6 @@ const hasInputError = computed(() => {
 })
 
 const completed = computed(() => session.value?.phase === 'finished')
-const currentChar = computed(() => {
-  const state = session.value
-  if (!state) return 0
-  if (state.phase === 'finished') return state.words[0]?.word.syllables.length ?? 0
-  return state.words[0]?.charIndex ?? 0
-})
 
 function resetTry(): void {
   const word = trialWord.value
@@ -185,46 +179,11 @@ function resetTry(): void {
     session.value = null
     return
   }
-  session.value = createSession({ words: [word], now: performance.now(), strictPrimary: true })
+  session.value = createSession({ words: [word], now: performance.now() })
   wrongInputs.value = new Map()
   revealed.value = new Set()
   cellErrors.value = new Map()
 }
-
-function inputFor(charIndex: number, capKeys: readonly string[]): string[] {
-  const state = session.value
-  const wordState = state?.words[0]
-  if (!state || !wordState) return []
-  const key = `0:${charIndex}`
-  if (state.phase === 'finished' || charIndex < wordState.charIndex) return [...capKeys]
-  if (charIndex === wordState.charIndex) {
-    return wrongInputs.value.get(key) ?? wordState.input
-  }
-  return []
-}
-
-function inputStateFor(charIndex: number): 'idle' | 'wrong' | 'correct' {
-  const state = session.value
-  if (!state) return 'idle'
-  if (wrongInputs.value.has(`0:${charIndex}`)) return 'wrong'
-  if (state.phase === 'finished' || charIndex < state.words[0]!.charIndex) return 'correct'
-  return 'idle'
-}
-
-function isActive(charIndex: number): boolean {
-  return !completed.value && charIndex === currentChar.value
-}
-
-function isCompleted(charIndex: number): boolean {
-  const state = session.value
-  if (!state) return false
-  return state.phase === 'finished' || charIndex < (state.words[0]?.charIndex ?? 0)
-}
-
-function isRevealed(charIndex: number): boolean {
-  return revealed.value.has(`0:${charIndex}`)
-}
-
 function handleKey(raw: string): void {
   if (step.value !== 'try') {
     emit('key-pressed', raw)
@@ -492,7 +451,7 @@ defineExpose({ pressKey: handleKey, backspace: handleBackspace })
       </p>
     </section>
 
-    <section v-else-if="step === 'principle'" class="intro-card">
+    <section v-else-if="step === 'principle'" class="intro-card intro-card--principle">
       <div class="eyebrow intro-kicker">03 · 双拼原理</div>
       <h1>声母 + 韵母，各按一下</h1>
       <div class="intro-grid">
@@ -526,7 +485,6 @@ defineExpose({ pressKey: handleKey, backspace: handleBackspace })
           <p>每个音节都能拆成「声母 + 韵母」。双拼把声母和韵母各压到一个键，所以无论拼音多长都只按两下。在当前方案「{{ scheme.name }}」里，「双」就是 sh（<b>{{ shKey }}</b>）+ uang（<b>{{ uangKey }}</b>）。</p>
           <p>键位图常驻在页面底部（<kbd>Ctrl+K</kbd> 可显隐），它的作用是查键而不是背表：在当前方案里，蓝色是 {{ learnInitialsCount }} 个改造声母（{{ learnInitialsText }}）；橘色列出全部 {{ totalFinalsCount }} 个韵母键，其中 {{ learnFinalsCount }} 个需要重新记。{{ dualKeyText }}</p>
           <p>零声母音节没有声母，同样固定两键：在「{{ scheme.name }}」里，{{ zeroSentence }}；全部 {{ zeroTotal }} 个零声母音节会在「声母与零声母」章用一课一次学完。</p>
-          <p>开场不需要背完整张表：先记本课要用的键，按下去时键位图会亮起，把键位和熟悉的字绑在一起（例如「双」＝{{ shKey }} + {{ uangKey }}）比背表格更牢。</p>
         </div>
       </div>
     </section>
@@ -561,24 +519,17 @@ defineExpose({ pressKey: handleKey, backspace: handleBackspace })
       </div>
     </section>
 
-    <section v-else class="intro-card">
+    <section v-else class="intro-card intro-card--try">
       <div class="eyebrow intro-kicker">05 · 试一下</div>
       <h1>看键位图，打出「{{ trialWord?.text ?? '双拼' }}」</h1>
       <div class="intro-grid intro-grid--try">
-        <div v-if="trialWord" class="try-cards">
-          <CharacterCard
-            v-for="(syllable, index) in trialWord.syllables"
-            :key="`${trialWord.text}-${index}`"
-            :char="trialWord.chars[index] ?? syllable.text"
-            :pinyin="syllable.pinyinTone"
-            :initial-text="syllable.initial"
-            :caps="syllable.caps"
-            :input="inputFor(index, syllable.caps.map((cap) => cap.key))"
+        <div v-if="session" class="try-stream">
+          <PracticeStream
+            :session="session"
+            mode="grid"
             :tier="3"
-            :active="isActive(index)"
-            :completed="isCompleted(index)"
-            :revealed="isRevealed(index)"
-            :input-state="inputStateFor(index)"
+            :wrong-inputs="wrongInputs"
+            :revealed="revealed"
           />
         </div>
         <div class="intro-prose">
@@ -792,7 +743,26 @@ defineExpose({ pressKey: handleKey, backspace: handleBackspace })
   gap: 14px;
   min-height: 0;
   overflow-y: auto;
+  scrollbar-gutter: stable;
   scrollbar-width: thin;
+}
+.intro-card--principle {
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+.intro-card--principle h1 {
+  margin-bottom: 14px;
+}
+.intro-card--principle .intro-grid {
+  gap: clamp(20px, 2.8vw, 34px);
+}
+.intro-card--principle .intro-visual--principle {
+  gap: 8px;
+  padding: 14px 12px;
 }
 .scheme-choose {
   display: flex;
@@ -965,14 +935,23 @@ defineExpose({ pressKey: handleKey, backspace: handleBackspace })
 }
 .intro-grid--try {
   grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
+  align-items: start;
 }
-.try-cards {
+.intro-grid--try .intro-prose {
+  padding-top: 20px;
+}
+.intro-card--try {
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+}
+.try-stream {
   display: flex;
-  justify-content: center;
-  gap: 12px;
-}
-.try-cards :deep(.char-card) {
-  width: 140px;
+  width: 100%;
+  min-height: 250px;
+  height: clamp(250px, 28vh, 340px);
+  min-width: 0;
 }
 .try-tip {
   color: var(--ink-3);
@@ -1023,8 +1002,9 @@ defineExpose({ pressKey: handleKey, backspace: handleBackspace })
   .visual-word {
     font-size: 64px;
   }
-  .try-cards :deep(.char-card) {
-    width: 120px;
+  .try-stream {
+    height: auto;
+    min-height: 330px;
   }
 }
 </style>

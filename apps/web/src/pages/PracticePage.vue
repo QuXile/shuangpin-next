@@ -289,6 +289,7 @@ function onDockBackspace(): void {
   /* 教学页在移动端改为自然滚动，避免固定高度把示例/评分裁切 */
   .practice-page.is-tutorial .practice-scroll {
     overflow-y: auto;
+    scrollbar-gutter: stable;
     overscroll-behavior: contain;
   }
   .practice-page.is-tutorial .practice-inner {

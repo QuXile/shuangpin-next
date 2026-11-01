@@ -154,6 +154,49 @@ watch(
 )
 const currentId = computed(() => course.currentLesson())
 const heroPanelRef = ref<InstanceType<typeof HeroPanel> | null>(null)
+/** 继续学习卡固定跟随 Hero 高度，避免映射多时反向撑高 Hero。 */
+const heroHeight = ref<number | null>(null)
+let heroResizeObserver: ResizeObserver | undefined
+
+function updateHeroHeight(): void {
+  if (window.innerWidth <= 640) {
+    heroHeight.value = null
+    return
+  }
+  const el = heroPanelRef.value?.$el as HTMLElement | undefined
+  if (!el) {
+    heroHeight.value = null
+    return
+  }
+  heroHeight.value = Math.round(el.getBoundingClientRect().height)
+}
+
+async function observeHeroHeight(): Promise<void> {
+  await nextTick()
+  heroResizeObserver?.disconnect()
+  const el = heroPanelRef.value?.$el as HTMLElement | undefined
+  if (el) {
+    heroResizeObserver = new ResizeObserver(updateHeroHeight)
+    heroResizeObserver.observe(el)
+  }
+  updateHeroHeight()
+}
+
+watch(
+  [status, () => course.schemeId, () => course.currentLesson()],
+  () => { void observeHeroHeight() },
+  { immediate: true, flush: 'post' },
+)
+
+onMounted(() => {
+  window.addEventListener('resize', updateHeroHeight)
+  void observeHeroHeight()
+})
+
+onBeforeUnmount(() => {
+  heroResizeObserver?.disconnect()
+  window.removeEventListener('resize', updateHeroHeight)
+})
 const currentLesson = computed(() =>
   currentId.value ? course.getLesson(currentId.value) : undefined,
 )
@@ -309,6 +352,7 @@ useGlobalKeys(bindings)
           :passed-count="course.passedCount"
           :lesson-total="course.lessons.length"
           :empty-message="course.previewMode ? '当前方案是纯练习方案，暂无课程路线。' : undefined"
+          :style="heroHeight ? { height: `${heroHeight}px` } : undefined"
           @start="startCurrent"
         />
       </div>
@@ -390,7 +434,7 @@ useGlobalKeys(bindings)
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(390px, 0.95fr);
   gap: 16px;
-  align-items: stretch;
+  align-items: start;
 }
 .workspace {
   display: grid;

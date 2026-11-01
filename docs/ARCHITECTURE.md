@@ -91,8 +91,8 @@ kind      intro（入门）/ drill（新课）/ review（复习、期中、综�
 
 ## 课程 Hero 与练习场
 
-- 课程 Hero / 入门试打只接受主键序列（`strictPrimary`），防止界面显示与判题不一致；
-- 练习场保持多解容错，兼容编码与组合码都可以练。
+- 课程、入门试打与练习场使用同一套 PracticeStream / CharacterCard 渲染；
+- 判题接受 `accepted` 全部合法序列；显示仍使用 `primarySequence` 作为标答键帽。
 
 ## 方案判题
 

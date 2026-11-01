@@ -55,7 +55,7 @@ accepted = recommended ∪ compatCodes ∪ (initials × finals)
 primary = recommended ?? compatCodes[0] ?? composition[0]
 ```
 
-- 课程 Hero / 入门试打只接受 `primary`；
+- 课程 Hero、入门试打与练习场都接受全部 accepted；显示键帽仍使用 `primary`；
 - 练习场接受全部 accepted；
 - 推荐码不显示在兼容编码 UI；
 - 兼容编码是额外接受，不会禁用基础组合。

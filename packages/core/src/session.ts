@@ -89,7 +89,6 @@ export function createSession(options: SessionOptions): SessionState {
   }
   return {
     words,
-    strictPrimary: options.strictPrimary === true,
     index: 0,
     phase: finished ? 'finished' : 'playing',
     startedAt,
@@ -151,9 +150,7 @@ export function applyKey(
 
   // 打满：判题
   const typed = input.join('')
-  const accepted = initialState.strictPrimary
-    ? typed === expected.join('')
-    : (syllable?.accepted.includes(typed) ?? false)
+  const accepted = syllable?.accepted.includes(typed) ?? false
   if (!accepted) {
     stats.errors = initialState.stats.errors + 1
     stats.accuracy = accuracyOf(stats.correctChars, stats.errors)

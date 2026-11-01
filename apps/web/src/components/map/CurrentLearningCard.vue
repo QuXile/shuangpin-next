@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import type { ChapterView, LessonView } from '@/lib/lessonView'
 import { lessonKindLabel } from '@/lib/lessonView'
-import FocusTagList from '@/components/FocusTagList.vue'
+import MappingTagArea from './MappingTagArea.vue'
 import CardHeader from '@/components/common/CardHeader.vue'
 
 const props = withDefaults(
@@ -19,15 +18,19 @@ const props = withDefaults(
 
 const emit = defineEmits<{ start: [] }>()
 
-const manyTags = computed(() => (props.lesson?.focusKeys.length ?? 0) > 8)
-const tagCount = computed(() => props.lesson?.focusKeys.length ?? 0)
 </script>
 
 <template>
   <section class="practice-card panel">
     <CardHeader title="继续学习" />
 
-    <div v-if="lesson" class="current-card" tabindex="0" @click="emit('start')" @keydown.enter="emit('start')">
+    <div
+      v-if="lesson"
+      class="current-card"
+      tabindex="0"
+      @click="emit('start')"
+      @keydown.enter="emit('start')"
+    >
       <div class="card-top">
         <div class="card-meta">
           <div class="card-type">
@@ -45,15 +48,7 @@ const tagCount = computed(() => props.lesson?.focusKeys.length ?? 0)
         <span class="card-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
         </span>
-        <div v-if="lesson.focusKeys.length" class="current-tags-wrap">
-          <div class="current-tags" :class="{ 'has-many': manyTags }">
-            <FocusTagList :items="lesson.focusKeys" />
-          </div>
-          <div v-if="manyTags" class="current-more">共 {{ tagCount }} 个映射</div>
-          <div v-if="manyTags" class="current-popup">
-            <FocusTagList :items="lesson.focusKeys" />
-          </div>
-        </div>
+        <MappingTagArea :items="lesson.focusKeys" />
       </div>
 
       <div class="current-foot">
@@ -77,10 +72,12 @@ const tagCount = computed(() => props.lesson?.focusKeys.length ?? 0)
   display: flex;
   flex-direction: column;
   min-width: 0;
+  min-height: 0;
   padding: 0 20px 20px;
 }
 .current-card {
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -142,12 +139,14 @@ const tagCount = computed(() => props.lesson?.focusKeys.length ?? 0)
 }
 .card-main {
   display: flex;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 12px;
-  min-height: 42px;
+  min-height: 0;
+  flex: 1;
 }
 .card-icon {
   flex: none;
+  align-self: flex-start;
   width: 28px;
   height: 28px;
   display: grid;
@@ -159,45 +158,6 @@ const tagCount = computed(() => props.lesson?.focusKeys.length ?? 0)
 .card-icon svg {
   width: 14px;
   height: 14px;
-}
-.current-tags-wrap {
-  flex: 1;
-  min-width: 0;
-  position: relative;
-}
-.current-tags {
-  min-width: 0;
-  max-height: 88px;
-  overflow: hidden;
-}
-.current-tags.has-many {
-  mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
-}
-.current-more {
-  margin-top: 3px;
-  color: var(--brand);
-  font-size: 10px;
-  font-weight: 750;
-}
-.current-popup {
-  position: absolute;
-  bottom: calc(100% + 8px);
-  left: -10px;
-  right: -10px;
-  display: none;
-  z-index: 50;
-  padding: 14px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--r-sm);
-  box-shadow: var(--pop-shadow);
-  animation: ui-pop-in 160ms var(--ease);
-}
-
-.current-card:hover .current-popup,
-.current-card:focus-within .current-popup {
-  display: block;
 }
 .current-foot {
   display: flex;
@@ -238,6 +198,8 @@ const tagCount = computed(() => props.lesson?.focusKeys.length ?? 0)
   transform: translateY(0) scale(0.97);
 }
 .current-empty {
+  flex: 1;
+  min-height: 0;
   display: flex;
   align-items: center;
   justify-content: center;

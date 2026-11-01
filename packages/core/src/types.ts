@@ -320,8 +320,6 @@ export interface SessionStats {
 
 export interface SessionState {
   words: SessionWordState[]
-  /** true：Hero/课程只接受主键序列；练习场保持多解容错 */
-  strictPrimary?: boolean
   index: number
   phase: SessionPhase
   startedAt: number
@@ -332,8 +330,6 @@ export interface SessionState {
 export interface SessionOptions {
   words: PracticeWord[]
   now?: number
-  /** true：只接受主键序列，不接受特殊/组合别名 */
-  strictPrimary?: boolean
 }
 
 export interface KeyResult {
