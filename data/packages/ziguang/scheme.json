@@ -1,0 +1,290 @@
+{
+  "id": "ziguang",
+  "name": "紫光双拼",
+  "type": "compositional",
+  "initials": {
+    "b": [
+      "b"
+    ],
+    "p": [
+      "p"
+    ],
+    "m": [
+      "m"
+    ],
+    "f": [
+      "f"
+    ],
+    "d": [
+      "d"
+    ],
+    "t": [
+      "t"
+    ],
+    "n": [
+      "n"
+    ],
+    "l": [
+      "l"
+    ],
+    "g": [
+      "g"
+    ],
+    "k": [
+      "k"
+    ],
+    "h": [
+      "h"
+    ],
+    "j": [
+      "j"
+    ],
+    "q": [
+      "q"
+    ],
+    "x": [
+      "x"
+    ],
+    "zh": [
+      "u"
+    ],
+    "ch": [
+      "a"
+    ],
+    "sh": [
+      "i"
+    ],
+    "r": [
+      "r"
+    ],
+    "z": [
+      "z"
+    ],
+    "c": [
+      "c"
+    ],
+    "s": [
+      "s"
+    ],
+    "y": [
+      "y"
+    ],
+    "w": [
+      "w"
+    ]
+  },
+  "finals": {
+    "a": [
+      "a"
+    ],
+    "o": [
+      "o"
+    ],
+    "e": [
+      "e"
+    ],
+    "i": [
+      "i"
+    ],
+    "u": [
+      "u"
+    ],
+    "v": [
+      "v"
+    ],
+    "ai": [
+      "p"
+    ],
+    "ei": [
+      "k"
+    ],
+    "ui": [
+      "n"
+    ],
+    "ao": [
+      "q"
+    ],
+    "ou": [
+      "z"
+    ],
+    "iu": [
+      "j"
+    ],
+    "ie": [
+      "d"
+    ],
+    "ve": [
+      "n"
+    ],
+    "an": [
+      "r"
+    ],
+    "en": [
+      "w"
+    ],
+    "in": [
+      "y"
+    ],
+    "un": [
+      "m"
+    ],
+    "ang": [
+      "s"
+    ],
+    "eng": [
+      "t"
+    ],
+    "ing": [
+      ";"
+    ],
+    "ong": [
+      "h"
+    ],
+    "ia": [
+      "x"
+    ],
+    "iao": [
+      "b"
+    ],
+    "ian": [
+      "f"
+    ],
+    "iang": [
+      "g"
+    ],
+    "iong": [
+      "h"
+    ],
+    "ua": [
+      "x"
+    ],
+    "uo": [
+      "o"
+    ],
+    "uai": [
+      "y"
+    ],
+    "uan": [
+      "l"
+    ],
+    "uang": [
+      "g"
+    ],
+    "ue": [
+      "n"
+    ]
+  },
+  "zeroInitial": {
+    "a": [
+      "oa"
+    ],
+    "ai": [
+      "op"
+    ],
+    "an": [
+      "or"
+    ],
+    "ang": [
+      "os"
+    ],
+    "ao": [
+      "oq"
+    ],
+    "e": [
+      "oe"
+    ],
+    "ei": [
+      "ok"
+    ],
+    "en": [
+      "ow"
+    ],
+    "eng": [
+      "ot"
+    ],
+    "er": [
+      "oj"
+    ],
+    "o": [
+      "oo"
+    ],
+    "ou": [
+      "oz"
+    ]
+  },
+  "umlautNote": "j/q/x/y 与 ü 相拼时：除 initials[声母]×finals[u] 的组合外，另接受 initials[声母]×finals[v] 的组合（对应参考实现 core.js 的 jqxy+ü 补充规则）；数据结构上仍把音节记为 u/ue/un/uan 归属，ü 语义由 UI 标注。",
+  "sameKeyGroups": [
+    {
+      "key": "g",
+      "finals": [
+        "iang",
+        "uang"
+      ]
+    },
+    {
+      "key": "h",
+      "finals": [
+        "ong",
+        "iong"
+      ]
+    },
+    {
+      "key": "n",
+      "finals": [
+        "ui",
+        "ve",
+        "ue"
+      ]
+    },
+    {
+      "key": "o",
+      "finals": [
+        "o",
+        "uo"
+      ]
+    },
+    {
+      "key": "x",
+      "finals": [
+        "ia",
+        "ua"
+      ]
+    },
+    {
+      "key": "y",
+      "finals": [
+        "in",
+        "uai"
+      ]
+    }
+  ],
+  "source": {
+    "repo": "fcitx/libime",
+    "file": "src/libime/pinyin/shuangpindata.h (Ziguang)",
+    "note": "内建双拼表与零声母规则来自 fcitx/libime commit 6fec3054d8a65fc8a6942a467a42f2c0dac20eb8（LGPL-2.1-or-later）。推荐码 / 兼容编码等额外多码补充参考 BlueSky-07/Shuang v6.0.0（GPL-3.0，仅键位事实）。"
+  },
+  "notes": [
+    "声母改造：ch→a、sh→i、zh→u。",
+    "ing 键为分号「;」；零声母为「o+键」式。"
+  ],
+  "recommended": {
+    "ju": "ju",
+    "qu": "qu",
+    "xu": "xu",
+    "yu": "yu"
+  },
+  "compatCodes": {
+    "ju": [
+      "jv"
+    ],
+    "qu": [
+      "qv"
+    ],
+    "xu": [
+      "xv"
+    ],
+    "yu": [
+      "yv"
+    ]
+  }
+}

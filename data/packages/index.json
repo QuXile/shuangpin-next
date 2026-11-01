@@ -1,0 +1,2122 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "generatedBy": "scripts/scheme-packages/build.mjs",
+  "reference": {
+    "primary": {
+      "repo": "fcitx/libime",
+      "url": "https://github.com/fcitx/libime",
+      "commit": "6fec3054d8a65fc8a6942a467a42f2c0dac20eb8",
+      "license": "LGPL-2.1-or-later（仅提取键位事实，未复制实现代码）"
+    },
+    "custom": {
+      "repo": "fcitx/fcitx5-chinese-addons",
+      "url": "https://github.com/fcitx/fcitx5-chinese-addons",
+      "commit": "e8d930f402e359cfd76a101ee3e46815d1331d83",
+      "file": "im/pinyin/sp.dat.example",
+      "license": "LGPL-2.1-or-later（仅提取键位事实，未复制实现代码）"
+    },
+    "fallback": {
+      "repo": "BlueSky-07/Shuang",
+      "url": "https://github.com/BlueSky-07/Shuang",
+      "version": "6.0.0",
+      "commit": "5a5e71e1ebeab2894f40121d680b9942e30609bb",
+      "commitShort": "5a5e71e",
+      "license": "GPL-3.0（仅提取事实键位映射，未复制实现代码）"
+    }
+  },
+  "semantics": {
+    "judge": "输入小写键序列；零声母读取 zeroInitial 的整段序列；否则 accepted = recommended ∪ compatCodes ∪（initials × finals 组合）；任一 accepted 完全相等即正确。",
+    "arrays": "所有键位值为 string[]；数组语义 = 任一命中即正确（键道飞键、大牛多键、微软 ue 双键等）。",
+    "zeroInitial": "零声母 12 个音节的完整键序列；值数组表示多条合法码，首条为主键。",
+    "atoms": "free = 键位与全拼习惯一致；learn = 需要新学的映射。"
+  },
+  "defaultScheme": "xiaohe",
+  "recommendedOrder": [
+    "xiaohe",
+    "ziranma",
+    "weiruan",
+    "sougou",
+    "zhinengabc",
+    "pinyinjiajia",
+    "ziguang",
+    "lantian",
+    "baiyun",
+    "xiaoyue",
+    "guobiao",
+    "xiaoguan",
+    "xiaolang",
+    "yunbiaokuaipin",
+    "xingkong",
+    "daniu",
+    "jiandao3",
+    "jiandao6",
+    "c"
+  ],
+  "courseSupported": [
+    "xiaohe",
+    "ziranma",
+    "weiruan",
+    "sougou",
+    "zhinengabc"
+  ],
+  "schemes": [
+    {
+      "id": "xiaohe",
+      "name": "小鹤双拼",
+      "type": "compositional",
+      "file": "data/schemes/xiaohe/scheme.json",
+      "keys": {
+        "initials": 23,
+        "finals": 33,
+        "zeroInitial": 12,
+        "flyingInitials": [],
+        "multiKeyFinals": [],
+        "sameKeyGroups": 7,
+        "recommended": 4,
+        "compatCodes": 4
+      },
+      "atoms": {
+        "initials": {
+          "total": 23,
+          "free": 20,
+          "learn": 3
+        },
+        "finals": {
+          "total": 33,
+          "free": 6,
+          "learn": 27
+        },
+        "zeroInitial": {
+          "total": 12,
+          "free": 7,
+          "learn": 5
+        },
+        "total": {
+          "free": 33,
+          "learn": 35,
+          "total": 68
+        }
+      },
+      "zeroInitialFamily": "字母式",
+      "zeroInitialRule": "双字母零声母音节按全拼直出；单字母叠键；带 ng 的音节取「首字母+韵母键」",
+      "ambiguity": {
+        "codes": 407,
+        "ambiguousCodes": 1,
+        "examples": [
+          {
+            "code": "lo",
+            "pinyin": [
+              "lo",
+              "luo"
+            ]
+          }
+        ],
+        "missingSyllables": []
+      },
+      "course": {
+        "supportsGuidedCourse": true,
+        "courseTier": "full",
+        "reason": "v1 默认推荐。iOS ≥12.1.1 内置、社区资料最多；学习成本仅高于「纯字母式」方案（zh/ch/sh 三键改造），键位逻辑清晰。",
+        "courseNotes": "完整课程：声母改造（zh/ch/sh）→ 基础韵母/零声母 → 韵母家族 → 章末考核。"
+      },
+      "recommendation": {
+        "rank": 1,
+        "reason": "v1 默认推荐。iOS ≥12.1.1 内置、社区资料最多；学习成本仅高于「纯字母式」方案（zh/ch/sh 三键改造），键位逻辑清晰。"
+      },
+      "dataGaps": []
+    },
+    {
+      "id": "ziranma",
+      "name": "自然码",
+      "type": "compositional",
+      "file": "data/schemes/ziranma/scheme.json",
+      "keys": {
+        "initials": 23,
+        "finals": 33,
+        "zeroInitial": 12,
+        "flyingInitials": [],
+        "multiKeyFinals": [],
+        "sameKeyGroups": 7,
+        "recommended": 4,
+        "compatCodes": 4
+      },
+      "atoms": {
+        "initials": {
+          "total": 23,
+          "free": 20,
+          "learn": 3
+        },
+        "finals": {
+          "total": 33,
+          "free": 6,
+          "learn": 27
+        },
+        "zeroInitial": {
+          "total": 12,
+          "free": 7,
+          "learn": 5
+        },
+        "total": {
+          "free": 33,
+          "learn": 35,
+          "total": 68
+        }
+      },
+      "zeroInitialFamily": "字母式",
+      "zeroInitialRule": "双字母零声母音节按全拼直出；单字母叠键；带 ng 的音节取「首字母+韵母键」",
+      "ambiguity": {
+        "codes": 407,
+        "ambiguousCodes": 1,
+        "examples": [
+          {
+            "code": "lo",
+            "pinyin": [
+              "lo",
+              "luo"
+            ]
+          }
+        ],
+        "missingSyllables": []
+      },
+      "course": {
+        "supportsGuidedCourse": true,
+        "courseTier": "full",
+        "reason": "双拼鼻祖，iOS ≥16 内置；键位布局均衡，学习成本与小鹤同级，适合作为第二推荐方案。",
+        "courseNotes": "完整课程，模板与小鹤一致（零声母同为字母式）。"
+      },
+      "recommendation": {
+        "rank": 2,
+        "reason": "双拼鼻祖，iOS ≥16 内置；键位布局均衡，学习成本与小鹤同级，适合作为第二推荐方案。"
+      },
+      "dataGaps": []
+    },
+    {
+      "id": "weiruan",
+      "name": "微软双拼",
+      "type": "compositional",
+      "file": "data/schemes/weiruan/scheme.json",
+      "keys": {
+        "initials": 23,
+        "finals": 33,
+        "zeroInitial": 12,
+        "flyingInitials": [],
+        "multiKeyFinals": [
+          "ue"
+        ],
+        "sameKeyGroups": 6,
+        "recommended": 8,
+        "compatCodes": 4
+      },
+      "atoms": {
+        "initials": {
+          "total": 23,
+          "free": 20,
+          "learn": 3
+        },
+        "finals": {
+          "total": 33,
+          "free": 5,
+          "learn": 28
+        },
+        "zeroInitial": {
+          "total": 12,
+          "free": 0,
+          "learn": 12
+        },
+        "total": {
+          "free": 25,
+          "learn": 43,
+          "total": 68
+        }
+      },
+      "zeroInitialFamily": "o+键",
+      "zeroInitialRule": "零声母码 = 「o」+ 韵母键（或特殊键）",
+      "ambiguity": {
+        "codes": 411,
+        "ambiguousCodes": 1,
+        "examples": [
+          {
+            "code": "lo",
+            "pinyin": [
+              "lo",
+              "luo"
+            ]
+          }
+        ],
+        "missingSyllables": []
+      },
+      "course": {
+        "supportsGuidedCourse": true,
+        "courseTier": "full",
+        "reason": "Windows/Office 生态自带方案，用户覆盖面最大；学习成本因 ü 系统（v→y）与 o+ 零声母略高。",
+        "courseNotes": "完整课程；课程提示需注意 ue 双键容错只展示主键 T，ü 键需单列知识点。"
+      },
+      "recommendation": {
+        "rank": 3,
+        "reason": "Windows/Office 生态自带方案，用户覆盖面最大；学习成本因 ü 系统（v→y）与 o+ 零声母略高。"
+      },
+      "dataGaps": []
+    },
+    {
+      "id": "sougou",
+      "name": "搜狗双拼",
+      "type": "compositional",
+      "file": "data/schemes/sougou/scheme.json",
+      "keys": {
+        "initials": 23,
+        "finals": 33,
+        "zeroInitial": 12,
+        "flyingInitials": [],
+        "multiKeyFinals": [],
+        "sameKeyGroups": 6,
+        "recommended": 4,
+        "compatCodes": 4
+      },
+      "atoms": {
+        "initials": {
+          "total": 23,
+          "free": 20,
+          "learn": 3
+        },
+        "finals": {
+          "total": 33,
+          "free": 5,
+          "learn": 28
+        },
+        "zeroInitial": {
+          "total": 12,
+          "free": 0,
+          "learn": 12
+        },
+        "total": {
+          "free": 25,
+          "learn": 43,
+          "total": 68
+        }
+      },
+      "zeroInitialFamily": "o+键",
+      "zeroInitialRule": "零声母码 = 「o」+ 韵母键（或特殊键）",
+      "ambiguity": {
+        "codes": 407,
+        "ambiguousCodes": 1,
+        "examples": [
+          {
+            "code": "lo",
+            "pinyin": [
+              "lo",
+              "luo"
+            ]
+          }
+        ],
+        "missingSyllables": []
+      },
+      "course": {
+        "supportsGuidedCourse": true,
+        "courseTier": "full",
+        "reason": "搜狗输入法用户基数大；与自然码高度接近、迁移成本低，学习成本与微软同级。",
+        "courseNotes": "完整课程；需强调 ing=「;」与 o+ 零声母。"
+      },
+      "recommendation": {
+        "rank": 4,
+        "reason": "搜狗输入法用户基数大；与自然码高度接近、迁移成本低，学习成本与微软同级。"
+      },
+      "dataGaps": []
+    },
+    {
+      "id": "zhinengabc",
+      "name": "智能ABC",
+      "type": "compositional",
+      "file": "data/schemes/zhinengabc/scheme.json",
+      "keys": {
+        "initials": 23,
+        "finals": 33,
+        "zeroInitial": 12,
+        "flyingInitials": [],
+        "multiKeyFinals": [
+          "ve",
+          "ue"
+        ],
+        "sameKeyGroups": 7,
+        "recommended": 10,
+        "compatCodes": 4
+      },
+      "atoms": {
+        "initials": {
+          "total": 23,
+          "free": 20,
+          "learn": 3
+        },
+        "finals": {
+          "total": 33,
+          "free": 6,
+          "learn": 27
+        },
+        "zeroInitial": {
+          "total": 12,
+          "free": 0,
+          "learn": 12
+        },
+        "total": {
+          "free": 26,
+          "learn": 42,
+          "total": 68
+        }
+      },
+      "zeroInitialFamily": "o+键",
+      "zeroInitialRule": "零声母码 = 「o」+ 韵母键（或特殊键）",
+      "ambiguity": {
+        "codes": 407,
+        "ambiguousCodes": 7,
+        "examples": [
+          {
+            "code": "jv",
+            "pinyin": [
+              "ju",
+              "jue"
+            ]
+          },
+          {
+            "code": "lo",
+            "pinyin": [
+              "lo",
+              "luo"
+            ]
+          },
+          {
+            "code": "lv",
+            "pinyin": [
+              "lv",
+              "lve"
+            ]
+          },
+          {
+            "code": "nv",
+            "pinyin": [
+              "nv",
+              "nve"
+            ]
+          },
+          {
+            "code": "qv",
+            "pinyin": [
+              "qu",
+              "que"
+            ]
+          },
+          {
+            "code": "xv",
+            "pinyin": [
+              "xu",
+              "xue"
+            ]
+          },
+          {
+            "code": "yv",
+            "pinyin": [
+              "yu",
+              "yue"
+            ]
+          }
+        ],
+        "missingSyllables": []
+      },
+      "course": {
+        "supportsGuidedCourse": true,
+        "courseTier": "full",
+        "reason": "macOS 默认双拼方案，存量用户多；声母改造（zh→a/ch→e/sh→v）是与其他方案最大的迁移障碍，课程价值高。",
+        "courseNotes": "完整课程；第一章「声母改造」要重点讲 zh/ch/sh 三个字母被占用（a/e/v），并避开 ue/ve 双键容错的提示噪声。"
+      },
+      "recommendation": {
+        "rank": 5,
+        "reason": "macOS 默认双拼方案，存量用户多；声母改造（zh→a/ch→e/sh→v）是与其他方案最大的迁移障碍，课程价值高。"
+      },
+      "dataGaps": []
+    },
+    {
+      "id": "pinyinjiajia",
+      "name": "拼音加加",
+      "type": "compositional",
+      "file": "data/schemes/pinyinjiajia/scheme.json",
+      "keys": {
+        "initials": 23,
+        "finals": 33,
+        "zeroInitial": 12,
+        "flyingInitials": [],
+        "multiKeyFinals": [],
+        "sameKeyGroups": 6,
+        "recommended": 4,
+        "compatCodes": 4
+      },
+      "atoms": {
+        "initials": {
+          "total": 23,
+          "free": 20,
+          "learn": 3
+        },
+        "finals": {
+          "total": 33,
+          "free": 6,
+          "learn": 27
+        },
+        "zeroInitial": {
+          "total": 12,
+          "free": 0,
+          "learn": 12
+        },
+        "total": {
+          "free": 26,
+          "learn": 42,
+          "total": 68
+        }
+      },
+      "zeroInitialFamily": "字母式",
+      "zeroInitialRule": "零声母码 = 音节首字母 + 韵母键（字母+键式）",
+      "ambiguity": {
+        "codes": 407,
+        "ambiguousCodes": 1,
+        "examples": [
+          {
+            "code": "lo",
+            "pinyin": [
+              "lo",
+              "luo"
+            ]
+          }
+        ],
+        "missingSyllables": []
+      },
+      "course": {
+        "supportsGuidedCourse": false,
+        "courseTier": "extendable",
+        "reason": "iOS ≥11.3 内置、键位规则规整；数据形态与五大方案完全一致，可复用课程模板，但本期不做完整课程。",
+        "courseNotes": "可直接套用「声母改造 → 韵母家族 → 零声母」模板（compositional、无多键/override）；本期自由练习 + 键位图。"
+      },
+      "recommendation": {
+        "rank": 6,
+        "reason": "iOS ≥11.3 内置、键位规则规整；数据形态与五大方案完全一致，可复用课程模板，但本期不做完整课程。"
+      },
+      "dataGaps": []
+    },
+    {
+      "id": "ziguang",
+      "name": "紫光双拼",
+      "type": "compositional",
+      "file": "data/schemes/ziguang/scheme.json",
+      "keys": {
+        "initials": 23,
+        "finals": 33,
+        "zeroInitial": 12,
+        "flyingInitials": [],
+        "multiKeyFinals": [],
+        "sameKeyGroups": 6,
+        "recommended": 4,
+        "compatCodes": 4
+      },
+      "atoms": {
+        "initials": {
+          "total": 23,
+          "free": 20,
+          "learn": 3
+        },
+        "finals": {
+          "total": 33,
+          "free": 6,
+          "learn": 27
+        },
+        "zeroInitial": {
+          "total": 12,
+          "free": 0,
+          "learn": 12
+        },
+        "total": {
+          "free": 26,
+          "learn": 42,
+          "total": 68
+        }
+      },
+      "zeroInitialFamily": "o+键",
+      "zeroInitialRule": "零声母码 = 「o」+ 韵母键（或特殊键）",
+      "ambiguity": {
+        "codes": 407,
+        "ambiguousCodes": 1,
+        "examples": [
+          {
+            "code": "lo",
+            "pinyin": [
+              "lo",
+              "luo"
+            ]
+          }
+        ],
+        "missingSyllables": []
+      },
+      "course": {
+        "supportsGuidedCourse": false,
+        "courseTier": "extendable",
+        "reason": "紫光/华宇输入法内置，键位规整；但 ing=「;」与 o+ 零声母增加提示成本，本期自由练习。",
+        "courseNotes": "可复用课程模板；需单列分号键知识点。"
+      },
+      "recommendation": {
+        "rank": 7,
+        "reason": "紫光/华宇输入法内置，键位规整；但 ing=「;」与 o+ 零声母增加提示成本，本期自由练习。"
+      },
+      "dataGaps": []
+    },
+    {
+      "id": "lantian",
+      "name": "蓝天双拼",
+      "type": "compositional",
+      "file": "data/schemes/lantian/scheme.json",
+      "keys": {
+        "initials": 23,
+        "finals": 33,
+        "zeroInitial": 12,
+        "flyingInitials": [],
+        "multiKeyFinals": [],
+        "sameKeyGroups": 7,
+        "recommended": 4,
+        "compatCodes": 4
+      },
+      "atoms": {
+        "initials": {
+          "total": 23,
+          "free": 20,
+          "learn": 3
+        },
+        "finals": {
+          "total": 33,
+          "free": 6,
+          "learn": 27
+        },
+        "zeroInitial": {
+          "total": 12,
+          "free": 7,
+          "learn": 5
+        },
+        "total": {
+          "free": 33,
+          "learn": 35,
+          "total": 68
+        }
+      },
+      "zeroInitialFamily": "字母式",
+      "zeroInitialRule": "双字母零声母音节按全拼直出；单字母叠键；带 ng 的音节取「首字母+韵母键」",
+      "ambiguity": {
+        "codes": 407,
+        "ambiguousCodes": 1,
+        "examples": [
+          {
+            "code": "lo",
+            "pinyin": [
+              "lo",
+              "luo"
+            ]
+          }
+        ],
+        "missingSyllables": []
+      },
+      "course": {
+        "supportsGuidedCourse": false,
+        "courseTier": "extendable",
+        "reason": "学习成本同类最低档（与小鹤同级），手心/华宇内置；但用户规模小，本期自由练习。",
+        "courseNotes": "可复用课程模板；注意 eng→eg 与韵母键 z 的不同步。"
+      },
+      "recommendation": {
+        "rank": 8,
+        "reason": "学习成本同类最低档（与小鹤同级），手心/华宇内置；但用户规模小，本期自由练习。"
+      },
+      "dataGaps": []
+    },
+    {
+      "id": "baiyun",
+      "name": "白云双拼",
+      "type": "compositional",
+      "file": "data/schemes/baiyun/scheme.json",
+      "keys": {
+        "initials": 23,
+        "finals": 33,
+        "zeroInitial": 12,
+        "flyingInitials": [],
+        "multiKeyFinals": [],
+        "sameKeyGroups": 8,
+        "recommended": 4,
+        "compatCodes": 4
+      },
+      "atoms": {
+        "initials": {
+          "total": 23,
+          "free": 20,
+          "learn": 3
+        },
+        "finals": {
+          "total": 33,
+          "free": 6,
+          "learn": 27
+        },
+        "zeroInitial": {
+          "total": 12,
+          "free": 7,
+          "learn": 5
+        },
+        "total": {
+          "free": 33,
+          "learn": 35,
+          "total": 68
+        }
+      },
+      "zeroInitialFamily": "字母式",
+      "zeroInitialRule": "双字母零声母音节按全拼直出；单字母叠键；带 ng 的音节取「首字母+韵母键」",
+      "ambiguity": {
+        "codes": 407,
+        "ambiguousCodes": 1,
+        "examples": [
+          {
+            "code": "lo",
+            "pinyin": [
+              "lo",
+              "luo"
+            ]
+          }
+        ],
+        "missingSyllables": []
+      },
+      "course": {
+        "supportsGuidedCourse": false,
+        "courseTier": "extendable",
+        "reason": "键位规整、学习成本低，爱好者方案；本期自由练习。",
+        "courseNotes": "可复用课程模板；零声母按韵母键展开（ang→af/eng→ez）。"
+      },
+      "recommendation": {
+        "rank": 9,
+        "reason": "键位规整、学习成本低，爱好者方案；本期自由练习。"
+      },
+      "dataGaps": []
+    },
+    {
+      "id": "xiaoyue",
+      "name": "小月双拼",
+      "type": "compositional",
+      "file": "data/schemes/xiaoyue/scheme.json",
+      "keys": {
+        "initials": 23,
+        "finals": 33,
+        "zeroInitial": 12,
+        "flyingInitials": [],
+        "multiKeyFinals": [],
+        "sameKeyGroups": 7,
+        "recommended": 4,
+        "compatCodes": 4
+      },
+      "atoms": {
+        "initials": {
+          "total": 23,
+          "free": 20,
+          "learn": 3
+        },
+        "finals": {
+          "total": 33,
+          "free": 6,
+          "learn": 27
+        },
+        "zeroInitial": {
+          "total": 12,
+          "free": 7,
+          "learn": 5
+        },
+        "total": {
+          "free": 33,
+          "learn": 35,
+          "total": 68
+        }
+      },
+      "zeroInitialFamily": "字母式",
+      "zeroInitialRule": "双字母零声母音节按全拼直出；单字母叠键；带 ng 的音节取「首字母+韵母键」",
+      "ambiguity": {
+        "codes": 407,
+        "ambiguousCodes": 1,
+        "examples": [
+          {
+            "code": "lo",
+            "pinyin": [
+              "lo",
+              "luo"
+            ]
+          }
+        ],
+        "missingSyllables": []
+      },
+      "course": {
+        "supportsGuidedCourse": false,
+        "courseTier": "extendable",
+        "reason": "舒适手感定位，键位同键多但均音位互补；本期自由练习。",
+        "courseNotes": "可复用课程模板；忽略参考 yun 表里的非规范 er 项即可。"
+      },
+      "recommendation": {
+        "rank": 10,
+        "reason": "舒适手感定位，键位同键多但均音位互补；本期自由练习。"
+      },
+      "dataGaps": []
+    },
+    {
+      "id": "guobiao",
+      "name": "国标双拼",
+      "type": "compositional",
+      "file": "data/schemes/guobiao/scheme.json",
+      "keys": {
+        "initials": 23,
+        "finals": 33,
+        "zeroInitial": 12,
+        "flyingInitials": [],
+        "multiKeyFinals": [],
+        "sameKeyGroups": 7,
+        "recommended": 4,
+        "compatCodes": 4
+      },
+      "atoms": {
+        "initials": {
+          "total": 23,
+          "free": 20,
+          "learn": 3
+        },
+        "finals": {
+          "total": 33,
+          "free": 6,
+          "learn": 27
+        },
+        "zeroInitial": {
+          "total": 12,
+          "free": 0,
+          "learn": 12
+        },
+        "total": {
+          "free": 26,
+          "learn": 42,
+          "total": 68
+        }
+      },
+      "zeroInitialFamily": "a+键",
+      "zeroInitialRule": "零声母码 = 「a」+ 韵母键（或特殊键）",
+      "ambiguity": {
+        "codes": 407,
+        "ambiguousCodes": 1,
+        "examples": [
+          {
+            "code": "lo",
+            "pinyin": [
+              "lo",
+              "luo"
+            ]
+          }
+        ],
+        "missingSyllables": []
+      },
+      "course": {
+        "supportsGuidedCourse": false,
+        "courseTier": "extendable",
+        "reason": "GB/T 34947-2017 推荐性国标，适合作为标准对照数据；实际输入法支持少，保持数据完整即可。",
+        "courseNotes": "可复用课程模板（零声母为「字母+韵母键」式）；本期自由练习。"
+      },
+      "recommendation": {
+        "rank": 11,
+        "reason": "GB/T 34947-2017 推荐性国标，适合作为标准对照数据；实际输入法支持少，保持数据完整即可。"
+      },
+      "dataGaps": []
+    },
+    {
+      "id": "xiaoguan",
+      "name": "开源小鹳",
+      "type": "compositional",
+      "file": "data/schemes/xiaoguan/scheme.json",
+      "keys": {
+        "initials": 23,
+        "finals": 33,
+        "zeroInitial": 12,
+        "flyingInitials": [],
+        "multiKeyFinals": [
+          "ue"
+        ],
+        "sameKeyGroups": 8,
+        "recommended": 19,
+        "compatCodes": 4
+      },
+      "atoms": {
+        "initials": {
+          "total": 23,
+          "free": 20,
+          "learn": 3
+        },
+        "finals": {
+          "total": 33,
+          "free": 6,
+          "learn": 27
+        },
+        "zeroInitial": {
+          "total": 12,
+          "free": 7,
+          "learn": 5
+        },
+        "total": {
+          "free": 33,
+          "learn": 35,
+          "total": 68
+        }
+      },
+      "zeroInitialFamily": "双家族",
+      "zeroInitialRule": "同一零声母音节同时接受「字母式」与「o+键」两种键序列",
+      "ambiguity": {
+        "codes": 422,
+        "ambiguousCodes": 1,
+        "examples": [
+          {
+            "code": "lo",
+            "pinyin": [
+              "lo",
+              "luo"
+            ]
+          }
+        ],
+        "missingSyllables": []
+      },
+      "course": {
+        "supportsGuidedCourse": false,
+        "courseTier": "free-practice",
+        "reason": "零声母有字母式/o+式双家族，课程知识点需要合并两条规则，且 ue 双键；本期降级自由练习。",
+        "courseNotes": "若后续做课程：零声母知识卡需同时给出两种键序列，提示档位只展示主序列。"
+      },
+      "recommendation": {
+        "rank": 12,
+        "reason": "零声母有字母式/o+式双家族，课程知识点需要合并两条规则，且 ue 双键；本期降级自由练习。"
+      },
+      "dataGaps": []
+    },
+    {
+      "id": "xiaolang",
+      "name": "小浪双拼",
+      "type": "compositional",
+      "file": "data/schemes/xiaolang/scheme.json",
+      "keys": {
+        "initials": 23,
+        "finals": 33,
+        "zeroInitial": 12,
+        "flyingInitials": [],
+        "multiKeyFinals": [],
+        "sameKeyGroups": 8,
+        "recommended": 4,
+        "compatCodes": 4
+      },
+      "atoms": {
+        "initials": {
+          "total": 23,
+          "free": 20,
+          "learn": 3
+        },
+        "finals": {
+          "total": 33,
+          "free": 5,
+          "learn": 28
+        },
+        "zeroInitial": {
+          "total": 12,
+          "free": 4,
+          "learn": 8
+        },
+        "total": {
+          "free": 29,
+          "learn": 39,
+          "total": 68
+        }
+      },
+      "zeroInitialFamily": "混合式",
+      "zeroInitialRule": "不同音节使用不同家族（字母式 + 其他）",
+      "ambiguity": {
+        "codes": 403,
+        "ambiguousCodes": 5,
+        "examples": [
+          {
+            "code": "dk",
+            "pinyin": [
+              "dai",
+              "dia"
+            ]
+          },
+          {
+            "code": "lk",
+            "pinyin": [
+              "lai",
+              "lia"
+            ]
+          },
+          {
+            "code": "lo",
+            "pinyin": [
+              "lo",
+              "luo"
+            ]
+          },
+          {
+            "code": "nm",
+            "pinyin": [
+              "nen",
+              "niang"
+            ]
+          },
+          {
+            "code": "un",
+            "pinyin": [
+              "en",
+              "eng"
+            ]
+          }
+        ],
+        "missingSyllables": []
+      },
+      "course": {
+        "supportsGuidedCourse": false,
+        "courseTier": "free-practice",
+        "reason": "存在真实同码冲突（en/eng 同为 un，ai/ia、en/iang 同键），且零声母为混合式；本期降级自由练习。",
+        "courseNotes": "若后续做课程：需在零声母知识点标注 en/eng 同码，并避免用 dai/dia、nen/niang 等冲突对做干扰项。"
+      },
+      "recommendation": {
+        "rank": 13,
+        "reason": "存在真实同码冲突（en/eng 同为 un，ai/ia、en/iang 同键），且零声母为混合式；本期降级自由练习。"
+      },
+      "dataGaps": []
+    },
+    {
+      "id": "yunbiaokuaipin",
+      "name": "韵标块拼",
+      "type": "compositional",
+      "file": "data/schemes/yunbiaokuaipin/scheme.json",
+      "keys": {
+        "initials": 23,
+        "finals": 33,
+        "zeroInitial": 12,
+        "flyingInitials": [],
+        "multiKeyFinals": [],
+        "sameKeyGroups": 6,
+        "recommended": 0,
+        "compatCodes": 0
+      },
+      "atoms": {
+        "initials": {
+          "total": 23,
+          "free": 20,
+          "learn": 3
+        },
+        "finals": {
+          "total": 33,
+          "free": 5,
+          "learn": 28
+        },
+        "zeroInitial": {
+          "total": 12,
+          "free": 2,
+          "learn": 10
+        },
+        "total": {
+          "free": 27,
+          "learn": 41,
+          "total": 68
+        }
+      },
+      "zeroInitialFamily": "e+键",
+      "zeroInitialRule": "零声母码 = 「e」+ 韵母键（或特殊键）",
+      "ambiguity": {
+        "codes": 401,
+        "ambiguousCodes": 3,
+        "examples": [
+          {
+            "code": "lo",
+            "pinyin": [
+              "lo",
+              "luo"
+            ]
+          },
+          {
+            "code": "lu",
+            "pinyin": [
+              "lu",
+              "lv"
+            ]
+          },
+          {
+            "code": "nu",
+            "pinyin": [
+              "nu",
+              "nv"
+            ]
+          }
+        ],
+        "missingSyllables": []
+      },
+      "course": {
+        "supportsGuidedCourse": false,
+        "courseTier": "free-practice",
+        "reason": "参考项目内部数据冲突（零声母 ei/eng、韵母 v 键），裁定前不进入课程，避免教错键位。",
+        "courseNotes": "待官方文档裁定后修正数据，再考虑纳入。"
+      },
+      "recommendation": {
+        "rank": 14,
+        "reason": "参考项目内部数据冲突（零声母 ei/eng、韵母 v 键），裁定前不进入课程，避免教错键位。"
+      },
+      "dataGaps": []
+    },
+    {
+      "id": "xingkong",
+      "name": "星空双拼",
+      "type": "compositional",
+      "file": "data/schemes/xingkong/scheme.json",
+      "keys": {
+        "initials": 23,
+        "finals": 33,
+        "zeroInitial": 12,
+        "flyingInitials": [],
+        "multiKeyFinals": [
+          "ve",
+          "ue"
+        ],
+        "sameKeyGroups": 8,
+        "recommended": 10,
+        "compatCodes": 4
+      },
+      "atoms": {
+        "initials": {
+          "total": 23,
+          "free": 20,
+          "learn": 3
+        },
+        "finals": {
+          "total": 33,
+          "free": 6,
+          "learn": 27
+        },
+        "zeroInitial": {
+          "total": 12,
+          "free": 0,
+          "learn": 12
+        },
+        "total": {
+          "free": 26,
+          "learn": 42,
+          "total": 68
+        }
+      },
+      "zeroInitialFamily": "v+键",
+      "zeroInitialRule": "零声母码 = 「v」+ 韵母键（或特殊键）",
+      "ambiguity": {
+        "codes": 364,
+        "ambiguousCodes": 50,
+        "examples": [
+          {
+            "code": "ca",
+            "pinyin": [
+              "ca",
+              "cha"
+            ]
+          },
+          {
+            "code": "ce",
+            "pinyin": [
+              "ce",
+              "che"
+            ]
+          },
+          {
+            "code": "ch",
+            "pinyin": [
+              "cai",
+              "chai"
+            ]
+          },
+          {
+            "code": "ci",
+            "pinyin": [
+              "chi",
+              "ci"
+            ]
+          },
+          {
+            "code": "cj",
+            "pinyin": [
+              "can",
+              "chan"
+            ]
+          },
+          {
+            "code": "ck",
+            "pinyin": [
+              "cao",
+              "chao"
+            ]
+          },
+          {
+            "code": "cl",
+            "pinyin": [
+              "chong",
+              "cong"
+            ]
+          },
+          {
+            "code": "cm",
+            "pinyin": [
+              "ceng",
+              "cheng"
+            ]
+          }
+        ],
+        "missingSyllables": []
+      },
+      "course": {
+        "supportsGuidedCourse": false,
+        "courseTier": "free-practice",
+        "reason": "zh/ch/sh 与 z/c/s 同键，单音节判题虽可用，但「一键一义」的课程提示不成立；本期降级自由练习。",
+        "courseNotes": "若后续做课程：声母改造章节需说明「一声母两义」，并依赖候选词练习。"
+      },
+      "recommendation": {
+        "rank": 15,
+        "reason": "zh/ch/sh 与 z/c/s 同键，单音节判题虽可用，但「一键一义」的课程提示不成立；本期降级自由练习。"
+      },
+      "dataGaps": []
+    },
+    {
+      "id": "daniu",
+      "name": "大牛双拼",
+      "type": "hybrid",
+      "file": "data/schemes/daniu/scheme.json",
+      "keys": {
+        "initials": 23,
+        "finals": 33,
+        "zeroInitial": 12,
+        "flyingInitials": [
+          "zh",
+          "sh"
+        ],
+        "multiKeyFinals": [
+          "ui",
+          "ian",
+          "ue"
+        ],
+        "sameKeyGroups": 9,
+        "recommended": 74,
+        "compatCodes": 12
+      },
+      "atoms": {
+        "initials": {
+          "total": 23,
+          "free": 20,
+          "learn": 3
+        },
+        "finals": {
+          "total": 33,
+          "free": 6,
+          "learn": 27
+        },
+        "zeroInitial": {
+          "total": 12,
+          "free": 0,
+          "learn": 12
+        },
+        "total": {
+          "free": 26,
+          "learn": 42,
+          "total": 68
+        }
+      },
+      "zeroInitialFamily": "e+键",
+      "zeroInitialRule": "零声母码 = 「e」+ 韵母键（或特殊键）",
+      "ambiguity": {
+        "codes": 480,
+        "ambiguousCodes": 1,
+        "examples": [
+          {
+            "code": "lo",
+            "pinyin": [
+              "lo",
+              "luo"
+            ]
+          }
+        ],
+        "missingSyllables": []
+      },
+      "course": {
+        "supportsGuidedCourse": false,
+        "courseTier": "free-practice",
+        "reason": "多键声母/韵母（一键两字母）+ 多个整音节 override，三档提示与「每知识点一键」模型不兼容；本期降级自由练习。",
+        "courseNotes": "需要课程引擎支持「一个知识点对应多个键位」和 override 优先判题后再考虑。"
+      },
+      "recommendation": {
+        "rank": 16,
+        "reason": "多键声母/韵母（一键两字母）+ 多个整音节 override，三档提示与「每知识点一键」模型不兼容；本期降级自由练习。"
+      },
+      "dataGaps": []
+    },
+    {
+      "id": "jiandao3",
+      "name": "键道双拼3",
+      "type": "hybrid",
+      "file": "data/schemes/jiandao3/scheme.json",
+      "keys": {
+        "initials": 23,
+        "finals": 33,
+        "zeroInitial": 12,
+        "flyingInitials": [
+          "zh",
+          "ch"
+        ],
+        "multiKeyFinals": [],
+        "sameKeyGroups": 10,
+        "recommended": 43,
+        "compatCodes": 4
+      },
+      "atoms": {
+        "initials": {
+          "total": 23,
+          "free": 20,
+          "learn": 3
+        },
+        "finals": {
+          "total": 33,
+          "free": 0,
+          "learn": 33
+        },
+        "zeroInitial": {
+          "total": 12,
+          "free": 0,
+          "learn": 12
+        },
+        "total": {
+          "free": 20,
+          "learn": 48,
+          "total": 68
+        }
+      },
+      "zeroInitialFamily": "x+键",
+      "zeroInitialRule": "零声母码 = 「x」+ 韵母键（或特殊键）",
+      "ambiguity": {
+        "codes": 379,
+        "ambiguousCodes": 62,
+        "examples": [
+          {
+            "code": "dp",
+            "pinyin": [
+              "da",
+              "dia"
+            ]
+          },
+          {
+            "code": "ds",
+            "pinyin": [
+              "diu",
+              "dou"
+            ]
+          },
+          {
+            "code": "dw",
+            "pinyin": [
+              "dei",
+              "dun"
+            ]
+          },
+          {
+            "code": "fe",
+            "pinyin": [
+              "fan",
+              "zhan"
+            ]
+          },
+          {
+            "code": "fh",
+            "pinyin": [
+              "fang",
+              "zhang"
+            ]
+          },
+          {
+            "code": "fl",
+            "pinyin": [
+              "fo",
+              "zhuo"
+            ]
+          },
+          {
+            "code": "fm",
+            "pinyin": [
+              "fu",
+              "zhu"
+            ]
+          },
+          {
+            "code": "fn",
+            "pinyin": [
+              "fen",
+              "zhen"
+            ]
+          }
+        ],
+        "missingSyllables": []
+      },
+      "course": {
+        "supportsGuidedCourse": false,
+        "courseTier": "free-practice",
+        "reason": "飞键（zh→f/q、ch→j/w）+ x 前缀零声母 + jqxy 整音节 override，大量同码；学习成本高，本期降级自由练习/实验。",
+        "courseNotes": "课程模型需新增「飞键」知识点类型与 override 判题；建议仅保留给进阶用户体验。"
+      },
+      "recommendation": {
+        "rank": 17,
+        "reason": "飞键（zh→f/q、ch→j/w）+ x 前缀零声母 + jqxy 整音节 override，大量同码；学习成本高，本期降级自由练习/实验。"
+      },
+      "dataGaps": []
+    },
+    {
+      "id": "jiandao6",
+      "name": "键道双拼6",
+      "type": "hybrid",
+      "file": "data/schemes/jiandao6/scheme.json",
+      "keys": {
+        "initials": 23,
+        "finals": 33,
+        "zeroInitial": 12,
+        "flyingInitials": [
+          "zh",
+          "ch"
+        ],
+        "multiKeyFinals": [
+          "uang"
+        ],
+        "sameKeyGroups": 11,
+        "recommended": 47,
+        "compatCodes": 4
+      },
+      "atoms": {
+        "initials": {
+          "total": 23,
+          "free": 20,
+          "learn": 3
+        },
+        "finals": {
+          "total": 33,
+          "free": 1,
+          "learn": 32
+        },
+        "zeroInitial": {
+          "total": 12,
+          "free": 0,
+          "learn": 12
+        },
+        "total": {
+          "free": 21,
+          "learn": 47,
+          "total": 68
+        }
+      },
+      "zeroInitialFamily": "x+键",
+      "zeroInitialRule": "零声母码 = 「x」+ 韵母键（或特殊键）",
+      "ambiguity": {
+        "codes": 381,
+        "ambiguousCodes": 31,
+        "examples": [
+          {
+            "code": "dd",
+            "pinyin": [
+              "die",
+              "dou"
+            ]
+          },
+          {
+            "code": "ds",
+            "pinyin": [
+              "da",
+              "dia"
+            ]
+          },
+          {
+            "code": "dw",
+            "pinyin": [
+              "dei",
+              "dun"
+            ]
+          },
+          {
+            "code": "fd",
+            "pinyin": [
+              "fou",
+              "zhou"
+            ]
+          },
+          {
+            "code": "fl",
+            "pinyin": [
+              "fo",
+              "zhuo"
+            ]
+          },
+          {
+            "code": "fs",
+            "pinyin": [
+              "fa",
+              "zha"
+            ]
+          },
+          {
+            "code": "gw",
+            "pinyin": [
+              "gei",
+              "gun"
+            ]
+          },
+          {
+            "code": "hw",
+            "pinyin": [
+              "hei",
+              "hun"
+            ]
+          }
+        ],
+        "missingSyllables": []
+      },
+      "course": {
+        "supportsGuidedCourse": false,
+        "courseTier": "free-practice",
+        "reason": "飞键 + 37 条整音节 override，学习成本最高档（learn atom 约 84），本期降级自由练习/实验。",
+        "courseNotes": "同上；且需先修参考数据中未覆盖的 chao/che/zhai/zhao/zhe override。"
+      },
+      "recommendation": {
+        "rank": 18,
+        "reason": "飞键 + 37 条整音节 override，学习成本最高档（learn atom 约 84），本期降级自由练习/实验。"
+      },
+      "dataGaps": []
+    },
+    {
+      "id": "c",
+      "name": "C双拼",
+      "type": "compositional",
+      "file": "data/schemes/c/scheme.json",
+      "keys": {
+        "initials": 23,
+        "finals": 33,
+        "zeroInitial": 12,
+        "flyingInitials": [
+          "zh",
+          "ch"
+        ],
+        "multiKeyFinals": [
+          "ua",
+          "uo"
+        ],
+        "sameKeyGroups": 6,
+        "recommended": 192,
+        "compatCodes": 32
+      },
+      "atoms": {
+        "initials": {
+          "total": 23,
+          "free": 20,
+          "learn": 3
+        },
+        "finals": {
+          "total": 33,
+          "free": 6,
+          "learn": 27
+        },
+        "zeroInitial": {
+          "total": 12,
+          "free": 7,
+          "learn": 5
+        },
+        "total": {
+          "free": 33,
+          "learn": 35,
+          "total": 68
+        }
+      },
+      "zeroInitialFamily": "fcitx sp.dat [音节]",
+      "zeroInitialRule": "零声母按 fcitx sp.dat：[音节] 表完整收录 a/ai/an/ang/ao/e/ei/en/eng/er/o/ou；a/e/er/o 各有两条合法码。",
+      "ambiguity": {
+        "codes": 355,
+        "ambiguousCodes": 49,
+        "examples": [
+          {
+            "code": "bk",
+            "pinyin": [
+              "ben",
+              "bin"
+            ]
+          },
+          {
+            "code": "ck",
+            "pinyin": [
+              "cen",
+              "ceng"
+            ]
+          },
+          {
+            "code": "e;",
+            "pinyin": [
+              "e",
+              "yue"
+            ]
+          },
+          {
+            "code": "ei",
+            "pinyin": [
+              "ei",
+              "yi"
+            ]
+          },
+          {
+            "code": "en",
+            "pinyin": [
+              "en",
+              "yan"
+            ]
+          },
+          {
+            "code": "eo",
+            "pinyin": [
+              "yo",
+              "you"
+            ]
+          },
+          {
+            "code": "fo",
+            "pinyin": [
+              "fo",
+              "fou"
+            ]
+          },
+          {
+            "code": "g;",
+            "pinyin": [
+              "gui",
+              "gun"
+            ]
+          }
+        ],
+        "missingSyllables": []
+      },
+      "course": {
+        "supportsGuidedCourse": false,
+        "courseTier": "free-practice",
+        "reason": "已重建为组合式数据，但本期仍无课程模板：保持纯练习方案，不伪造 curriculum。",
+        "courseNotes": "若后续做课程，可按「声母改造 → 韵母家族 → 音节特例」设计；需要课程生成器支持该方案。"
+      },
+      "recommendation": {
+        "rank": 19,
+        "reason": "组合式方案（含整音节特例与较多同码），本期无课程，仅建议自由练习 / 实验。"
+      },
+      "dataGaps": []
+    }
+  ],
+  "packages": [
+    {
+      "schemaVersion": 1,
+      "id": "xiaohe",
+      "name": "小鹤双拼",
+      "version": "1.0.0",
+      "license": "GPL-3.0",
+      "source": {
+        "repo": "fcitx/libime",
+        "file": "src/libime/pinyin/shuangpindata.h (XIAOHE)",
+        "note": "内建双拼表与零声母规则来自 fcitx/libime commit 6fec3054d8a65fc8a6942a467a42f2c0dac20eb8（LGPL-2.1-or-later）。推荐码 / 兼容编码等额外多码补充参考 BlueSky-07/Shuang v6.0.0（GPL-3.0，仅键位事实）。"
+      },
+      "capabilities": {
+        "course": true,
+        "training": true,
+        "article": true,
+        "zeroInitial": true,
+        "customStages": false
+      },
+      "curriculum": {
+        "version": "curriculum-e9aea6cd5fd3",
+        "file": "curriculum.json"
+      },
+      "data": {
+        "scheme": "scheme.json"
+      },
+      "shared": {
+        "lexicon": "shared:lexicon"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "ziranma",
+      "name": "自然码",
+      "version": "1.0.0",
+      "license": "GPL-3.0",
+      "source": {
+        "repo": "fcitx/libime",
+        "file": "src/libime/pinyin/shuangpindata.h (Ziranma)",
+        "note": "内建双拼表与零声母规则来自 fcitx/libime commit 6fec3054d8a65fc8a6942a467a42f2c0dac20eb8（LGPL-2.1-or-later）。推荐码 / 兼容编码等额外多码补充参考 BlueSky-07/Shuang v6.0.0（GPL-3.0，仅键位事实）。"
+      },
+      "capabilities": {
+        "course": true,
+        "training": true,
+        "article": true,
+        "zeroInitial": true,
+        "customStages": false
+      },
+      "curriculum": {
+        "version": "curriculum-be4a8fb23d2a",
+        "file": "curriculum.json"
+      },
+      "data": {
+        "scheme": "scheme.json"
+      },
+      "shared": {
+        "lexicon": "shared:lexicon"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "weiruan",
+      "name": "微软双拼",
+      "version": "1.0.0",
+      "license": "GPL-3.0",
+      "source": {
+        "repo": "fcitx/libime",
+        "file": "src/libime/pinyin/shuangpindata.h (MS)",
+        "note": "内建双拼表与零声母规则来自 fcitx/libime commit 6fec3054d8a65fc8a6942a467a42f2c0dac20eb8（LGPL-2.1-or-later）。推荐码 / 兼容编码等额外多码补充参考 BlueSky-07/Shuang v6.0.0（GPL-3.0，仅键位事实）。"
+      },
+      "capabilities": {
+        "course": true,
+        "training": true,
+        "article": true,
+        "zeroInitial": true,
+        "customStages": false
+      },
+      "curriculum": {
+        "version": "curriculum-e7ccb68d065f",
+        "file": "curriculum.json"
+      },
+      "data": {
+        "scheme": "scheme.json"
+      },
+      "shared": {
+        "lexicon": "shared:lexicon"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "sougou",
+      "name": "搜狗双拼",
+      "version": "1.0.0",
+      "license": "GPL-3.0",
+      "source": {
+        "repo": "BlueSky-07/Shuang",
+        "file": "src/scheme/sougou.js",
+        "note": "从 https://github.com/BlueSky-07/Shuang（v6.0.0，commit 5a5e71e）提取键位事实；仅做数据比对与规范化，未复制其实现代码（原项目 GPL-3.0）。"
+      },
+      "capabilities": {
+        "course": true,
+        "training": true,
+        "article": true,
+        "zeroInitial": true,
+        "customStages": false
+      },
+      "curriculum": {
+        "version": "curriculum-e13751ee90b9",
+        "file": "curriculum.json"
+      },
+      "data": {
+        "scheme": "scheme.json"
+      },
+      "shared": {
+        "lexicon": "shared:lexicon"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "zhinengabc",
+      "name": "智能ABC",
+      "version": "1.0.0",
+      "license": "GPL-3.0",
+      "source": {
+        "repo": "fcitx/libime",
+        "file": "src/libime/pinyin/shuangpindata.h (ABC)",
+        "note": "内建双拼表与零声母规则来自 fcitx/libime commit 6fec3054d8a65fc8a6942a467a42f2c0dac20eb8（LGPL-2.1-or-later）。推荐码 / 兼容编码等额外多码补充参考 BlueSky-07/Shuang v6.0.0（GPL-3.0，仅键位事实）。"
+      },
+      "capabilities": {
+        "course": true,
+        "training": true,
+        "article": true,
+        "zeroInitial": true,
+        "customStages": false
+      },
+      "curriculum": {
+        "version": "curriculum-9c6985cf8133",
+        "file": "curriculum.json"
+      },
+      "data": {
+        "scheme": "scheme.json"
+      },
+      "shared": {
+        "lexicon": "shared:lexicon"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "pinyinjiajia",
+      "name": "拼音加加",
+      "version": "1.0.0",
+      "license": "GPL-3.0",
+      "source": {
+        "repo": "fcitx/libime",
+        "file": "src/libime/pinyin/shuangpindata.h (PinyinJiaJia)",
+        "note": "内建双拼表与零声母规则来自 fcitx/libime commit 6fec3054d8a65fc8a6942a467a42f2c0dac20eb8（LGPL-2.1-or-later）。推荐码 / 兼容编码等额外多码补充参考 BlueSky-07/Shuang v6.0.0（GPL-3.0，仅键位事实）。"
+      },
+      "capabilities": {
+        "course": false,
+        "training": true,
+        "article": true,
+        "zeroInitial": true,
+        "customStages": false
+      },
+      "curriculum": null,
+      "data": {
+        "scheme": "scheme.json"
+      },
+      "shared": {
+        "lexicon": "shared:lexicon"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "ziguang",
+      "name": "紫光双拼",
+      "version": "1.0.0",
+      "license": "GPL-3.0",
+      "source": {
+        "repo": "fcitx/libime",
+        "file": "src/libime/pinyin/shuangpindata.h (Ziguang)",
+        "note": "内建双拼表与零声母规则来自 fcitx/libime commit 6fec3054d8a65fc8a6942a467a42f2c0dac20eb8（LGPL-2.1-or-later）。推荐码 / 兼容编码等额外多码补充参考 BlueSky-07/Shuang v6.0.0（GPL-3.0，仅键位事实）。"
+      },
+      "capabilities": {
+        "course": false,
+        "training": true,
+        "article": true,
+        "zeroInitial": true,
+        "customStages": false
+      },
+      "curriculum": null,
+      "data": {
+        "scheme": "scheme.json"
+      },
+      "shared": {
+        "lexicon": "shared:lexicon"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "lantian",
+      "name": "蓝天双拼",
+      "version": "1.0.0",
+      "license": "GPL-3.0",
+      "source": {
+        "repo": "BlueSky-07/Shuang",
+        "file": "src/scheme/lantian.js",
+        "note": "从 https://github.com/BlueSky-07/Shuang（v6.0.0，commit 5a5e71e）提取键位事实；仅做数据比对与规范化，未复制其实现代码（原项目 GPL-3.0）。"
+      },
+      "capabilities": {
+        "course": false,
+        "training": true,
+        "article": true,
+        "zeroInitial": true,
+        "customStages": false
+      },
+      "curriculum": null,
+      "data": {
+        "scheme": "scheme.json"
+      },
+      "shared": {
+        "lexicon": "shared:lexicon"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "baiyun",
+      "name": "白云双拼",
+      "version": "1.0.0",
+      "license": "GPL-3.0",
+      "source": {
+        "repo": "BlueSky-07/Shuang",
+        "file": "src/scheme/baiyun.js",
+        "note": "从 https://github.com/BlueSky-07/Shuang（v6.0.0，commit 5a5e71e）提取键位事实；仅做数据比对与规范化，未复制其实现代码（原项目 GPL-3.0）。"
+      },
+      "capabilities": {
+        "course": false,
+        "training": true,
+        "article": true,
+        "zeroInitial": true,
+        "customStages": false
+      },
+      "curriculum": null,
+      "data": {
+        "scheme": "scheme.json"
+      },
+      "shared": {
+        "lexicon": "shared:lexicon"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "xiaoyue",
+      "name": "小月双拼",
+      "version": "1.0.0",
+      "license": "GPL-3.0",
+      "source": {
+        "repo": "BlueSky-07/Shuang",
+        "file": "src/scheme/xiaoyue.js",
+        "note": "从 https://github.com/BlueSky-07/Shuang（v6.0.0，commit 5a5e71e）提取键位事实；仅做数据比对与规范化，未复制其实现代码（原项目 GPL-3.0）。"
+      },
+      "capabilities": {
+        "course": false,
+        "training": true,
+        "article": true,
+        "zeroInitial": true,
+        "customStages": false
+      },
+      "curriculum": null,
+      "data": {
+        "scheme": "scheme.json"
+      },
+      "shared": {
+        "lexicon": "shared:lexicon"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "guobiao",
+      "name": "国标双拼",
+      "version": "1.0.0",
+      "license": "GPL-3.0",
+      "source": {
+        "repo": "fcitx/libime",
+        "file": "src/libime/pinyin/shuangpindata.h (GB)",
+        "note": "内建双拼表与零声母规则来自 fcitx/libime commit 6fec3054d8a65fc8a6942a467a42f2c0dac20eb8（LGPL-2.1-or-later）。推荐码 / 兼容编码等额外多码补充参考 BlueSky-07/Shuang v6.0.0（GPL-3.0，仅键位事实）。"
+      },
+      "capabilities": {
+        "course": false,
+        "training": true,
+        "article": true,
+        "zeroInitial": true,
+        "customStages": false
+      },
+      "curriculum": null,
+      "data": {
+        "scheme": "scheme.json"
+      },
+      "shared": {
+        "lexicon": "shared:lexicon"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "xiaoguan",
+      "name": "开源小鹳",
+      "version": "1.0.0",
+      "license": "GPL-3.0",
+      "source": {
+        "repo": "BlueSky-07/Shuang",
+        "file": "src/scheme/xiaoguan.js",
+        "note": "从 https://github.com/BlueSky-07/Shuang（v6.0.0，commit 5a5e71e）提取键位事实；仅做数据比对与规范化，未复制其实现代码（原项目 GPL-3.0）。"
+      },
+      "capabilities": {
+        "course": false,
+        "training": true,
+        "article": true,
+        "zeroInitial": true,
+        "customStages": false
+      },
+      "curriculum": null,
+      "data": {
+        "scheme": "scheme.json"
+      },
+      "shared": {
+        "lexicon": "shared:lexicon"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "xiaolang",
+      "name": "小浪双拼",
+      "version": "1.0.0",
+      "license": "GPL-3.0",
+      "source": {
+        "repo": "BlueSky-07/Shuang",
+        "file": "src/scheme/xiaolang.js",
+        "note": "从 https://github.com/BlueSky-07/Shuang（v6.0.0，commit 5a5e71e）提取键位事实；仅做数据比对与规范化，未复制其实现代码（原项目 GPL-3.0）。"
+      },
+      "capabilities": {
+        "course": false,
+        "training": true,
+        "article": true,
+        "zeroInitial": true,
+        "customStages": false
+      },
+      "curriculum": null,
+      "data": {
+        "scheme": "scheme.json"
+      },
+      "shared": {
+        "lexicon": "shared:lexicon"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "yunbiaokuaipin",
+      "name": "韵标块拼",
+      "version": "1.0.0",
+      "license": "GPL-3.0",
+      "source": {
+        "repo": "BlueSky-07/Shuang",
+        "file": "src/scheme/yunbiaokuaipin.js",
+        "note": "从 https://github.com/BlueSky-07/Shuang（v6.0.0，commit 5a5e71e）提取键位事实；仅做数据比对与规范化，未复制其实现代码（原项目 GPL-3.0）。"
+      },
+      "capabilities": {
+        "course": false,
+        "training": true,
+        "article": true,
+        "zeroInitial": true,
+        "customStages": false
+      },
+      "curriculum": null,
+      "data": {
+        "scheme": "scheme.json"
+      },
+      "shared": {
+        "lexicon": "shared:lexicon"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "xingkong",
+      "name": "星空双拼",
+      "version": "1.0.0",
+      "license": "GPL-3.0",
+      "source": {
+        "repo": "BlueSky-07/Shuang",
+        "file": "src/scheme/xingkong.js",
+        "note": "从 https://github.com/BlueSky-07/Shuang（v6.0.0，commit 5a5e71e）提取键位事实；仅做数据比对与规范化，未复制其实现代码（原项目 GPL-3.0）。"
+      },
+      "capabilities": {
+        "course": false,
+        "training": true,
+        "article": true,
+        "zeroInitial": true,
+        "customStages": false
+      },
+      "curriculum": null,
+      "data": {
+        "scheme": "scheme.json"
+      },
+      "shared": {
+        "lexicon": "shared:lexicon"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "daniu",
+      "name": "大牛双拼",
+      "version": "1.0.0",
+      "license": "GPL-3.0",
+      "source": {
+        "repo": "BlueSky-07/Shuang",
+        "file": "src/scheme/daniu.js",
+        "note": "从 https://github.com/BlueSky-07/Shuang（v6.0.0，commit 5a5e71e）提取键位事实；仅做数据比对与规范化，未复制其实现代码（原项目 GPL-3.0）。"
+      },
+      "capabilities": {
+        "course": false,
+        "training": true,
+        "article": true,
+        "zeroInitial": true,
+        "customStages": false
+      },
+      "curriculum": null,
+      "data": {
+        "scheme": "scheme.json"
+      },
+      "shared": {
+        "lexicon": "shared:lexicon"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "jiandao3",
+      "name": "键道双拼3",
+      "version": "1.0.0",
+      "license": "GPL-3.0",
+      "source": {
+        "repo": "BlueSky-07/Shuang",
+        "file": "src/scheme/jiandao3.js",
+        "note": "从 https://github.com/BlueSky-07/Shuang（v6.0.0，commit 5a5e71e）提取键位事实；仅做数据比对与规范化，未复制其实现代码（原项目 GPL-3.0）。"
+      },
+      "capabilities": {
+        "course": false,
+        "training": true,
+        "article": true,
+        "zeroInitial": true,
+        "customStages": false
+      },
+      "curriculum": null,
+      "data": {
+        "scheme": "scheme.json"
+      },
+      "shared": {
+        "lexicon": "shared:lexicon"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "jiandao6",
+      "name": "键道双拼6",
+      "version": "1.0.0",
+      "license": "GPL-3.0",
+      "source": {
+        "repo": "BlueSky-07/Shuang",
+        "file": "src/scheme/jiandao6.js",
+        "note": "从 https://github.com/BlueSky-07/Shuang（v6.0.0，commit 5a5e71e）提取键位事实；仅做数据比对与规范化，未复制其实现代码（原项目 GPL-3.0）。"
+      },
+      "capabilities": {
+        "course": false,
+        "training": true,
+        "article": true,
+        "zeroInitial": true,
+        "customStages": false
+      },
+      "curriculum": null,
+      "data": {
+        "scheme": "scheme.json"
+      },
+      "shared": {
+        "lexicon": "shared:lexicon"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "c",
+      "name": "C双拼",
+      "version": "1.0.0",
+      "license": "GPL-3.0",
+      "source": {
+        "repo": "fcitx/fcitx5-chinese-addons",
+        "file": "im/pinyin/sp.dat.example",
+        "note": "按 fcitx/fcitx5-chinese-addons commit e8d930f402e359cfd76a101ee3e46815d1331d83 的 sp.dat.example 重建（LGPL-2.1-or-later；仅解析键位事实，未复制实现代码）。零声母取 sp.dat [音节] 表；推荐码 / 兼容码补充参考 BlueSky-07/Shuang v6.0.0（GPL-3.0，仅键位事实）。"
+      },
+      "capabilities": {
+        "course": false,
+        "training": true,
+        "article": true,
+        "zeroInitial": true,
+        "customStages": false
+      },
+      "curriculum": null,
+      "data": {
+        "scheme": "scheme.json"
+      },
+      "shared": {
+        "lexicon": "shared:lexicon"
+      }
+    }
+  ]
+}

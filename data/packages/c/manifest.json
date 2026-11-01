@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "c",
+  "name": "C双拼",
+  "version": "1.0.0",
+  "license": "GPL-3.0",
+  "source": {
+    "repo": "fcitx/fcitx5-chinese-addons",
+    "file": "im/pinyin/sp.dat.example",
+    "note": "按 fcitx/fcitx5-chinese-addons commit e8d930f402e359cfd76a101ee3e46815d1331d83 的 sp.dat.example 重建（LGPL-2.1-or-later；仅解析键位事实，未复制实现代码）。零声母取 sp.dat [音节] 表；推荐码 / 兼容码补充参考 BlueSky-07/Shuang v6.0.0（GPL-3.0，仅键位事实）。"
+  },
+  "capabilities": {
+    "course": false,
+    "training": true,
+    "article": true,
+    "zeroInitial": true,
+    "customStages": false
+  },
+  "curriculum": null,
+  "data": {
+    "scheme": "scheme.json"
+  },
+  "shared": {
+    "lexicon": "shared:lexicon"
+  }
+}

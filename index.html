@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="description" content="双拼 NEXT：从全拼到双拼的结构化学习路线，一课一键、三种提示档位。" />
+    <meta name="keywords" content="双拼,双拼练习,小鹤双拼,双拼学习,双拼课程" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%236366f1'/%3E%3Cg fill='%23ffffff'%3E%3Crect x='7' y='8' width='8' height='7' rx='2'/%3E%3Crect x='17' y='8' width='8' height='7' rx='2' fill-opacity='.55'/%3E%3Crect x='7' y='17' width='8' height='7' rx='2' fill-opacity='.55'/%3E%3Crect x='17' y='17' width='8' height='7' rx='2'/%3E%3C/g%3E%3C/svg%3E" />
+    <title>双拼 NEXT · 学习路线</title>
+    <script>
+      // 首屏前应用已保存/系统主题，避免深色模式闪白。
+      ;(function () {
+        try {
+          var saved = localStorage.getItem('shuangpin-next:theme')
+          var theme =
+            saved === 'dark' || saved === 'light'
+              ? saved
+              : window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+                ? 'dark'
+                : 'light'
+          document.documentElement.dataset.theme = theme
+          document.documentElement.style.colorScheme = theme
+        } catch (error) {
+          /* 存储不可用时保持默认亮色主题 */
+        }
+      })()
+    </script>
+    <script type="module" crossorigin src="/shuangpin-next/assets/index-BmT7KCXw.js"></script>
+    <link rel="stylesheet" crossorigin href="/shuangpin-next/assets/index-D4qpqaeJ.css">
+  </head>
+  <body>
+    <div id="app"></div>
+  </body>
+</html>

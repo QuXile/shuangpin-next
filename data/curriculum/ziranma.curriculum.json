@@ -1,0 +1,7791 @@
+{
+  "schemeId": "ziranma",
+  "schemeName": "自然码",
+  "schemeType": "compositional",
+  "version": "1.0.0",
+  "templateVersion": "1.0.0",
+  "generatedAt": "2026-10-31T07:30:16.077Z",
+  "supportLevel": "full",
+  "dataVersion": "curriculum-be4a8fb23d2a",
+  "chapters": [
+    {
+      "id": "ch-intro",
+      "order": 1,
+      "title": "认识双拼",
+      "subtitle": "原理与键位图 · 建立两键直觉"
+    },
+    {
+      "id": "ch-basic",
+      "order": 2,
+      "title": "声母与零声母",
+      "subtitle": "改造声母 + 零声母 · 打牢基础"
+    },
+    {
+      "id": "ch-a",
+      "order": 3,
+      "title": "a 家族",
+      "subtitle": "开口组 → 介音组 → 同键双韵"
+    },
+    {
+      "id": "ch-o",
+      "order": 4,
+      "title": "o 家族",
+      "subtitle": "o 家族 · 同键对照"
+    },
+    {
+      "id": "ch-mid",
+      "order": 5,
+      "title": "期中检验",
+      "subtitle": "前四章混合检验 · 先准确后速度"
+    },
+    {
+      "id": "ch-e",
+      "order": 6,
+      "title": "e 家族",
+      "subtitle": "前后鼻音对比 · 家族复习"
+    },
+    {
+      "id": "ch-i",
+      "order": 7,
+      "title": "i 家族",
+      "subtitle": "i 介音家族 · 家族复习"
+    },
+    {
+      "id": "ch-u",
+      "order": 8,
+      "title": "u 与 ü 家族",
+      "subtitle": "ui/un 与 ü 组 · 家族复习"
+    },
+    {
+      "id": "ch-sprint",
+      "order": 9,
+      "title": "综合冲刺",
+      "subtitle": "全量混合 · 速度冲刺"
+    },
+    {
+      "id": "ch-exam",
+      "order": 10,
+      "title": "通关考核",
+      "subtitle": "全遮挡考核 · 与入门呼应"
+    }
+  ],
+  "lessons": [
+    {
+      "id": "L1.1",
+      "chapterId": "ch-intro",
+      "kind": "intro",
+      "title": "入门 · 认识双拼",
+      "desc": "一声母一韵母两键；键位图；三行卡；先看单字、再练词语",
+      "focusAtoms": [],
+      "blockingAtoms": [],
+      "nonBlockingAtoms": [],
+      "prerequisites": [],
+      "wordPlan": {
+        "maxUnfamiliar": 0,
+        "lengthRange": [
+          2,
+          3
+        ]
+      },
+      "atomMeta": {},
+      "zeroExamples": [],
+      "tips": [
+        "不用先背整张键位图：先看提示打对，再逐步撤掉提示即可。",
+        "目标不是速度，而是看到字能稳定拆出「声母键 + 韵母键」。"
+      ],
+      "stageMinWords": {}
+    },
+    {
+      "id": "L2.1",
+      "chapterId": "ch-basic",
+      "kind": "drill",
+      "title": "声母 · zh",
+      "desc": "新键：zh。先练单字，再练词语",
+      "focusAtoms": [
+        "initial:zh"
+      ],
+      "blockingAtoms": [
+        "initial:zh"
+      ],
+      "nonBlockingAtoms": [],
+      "prerequisites": [],
+      "wordPlan": {
+        "maxUnfamiliar": 0,
+        "lengthRange": [
+          2,
+          5
+        ]
+      },
+      "atomMeta": {
+        "initial:zh": {
+          "atomId": "initial:zh",
+          "type": "initial",
+          "pinyin": "zh",
+          "keys": [
+            "v"
+          ],
+          "free": false,
+          "anchors": [
+            "追",
+            "锥",
+            "坠"
+          ],
+          "mnemonic": "ZH + UI = ZHUI（同在 V 键）"
+        }
+      },
+      "zeroExamples": [],
+      "tips": [
+        "遇到多音字按词语读音取键；j/q/x/y 后的 ü 写作 u，仍按 U 键（如「去」= QU）。",
+        "翘舌三定：zh / ch / sh 被放在三个低频键上；本方案 zh = V。",
+        "把键位和字绑在一起记（字组结合），比背字母表牢固。"
+      ],
+      "passCriteria": {
+        "accuracy": 0.85,
+        "mode": "accuracy"
+      },
+      "stageMinWords": {
+        "single": 15,
+        "word": 15,
+        "exam": 25
+      }
+    },
+    {
+      "id": "L2.2",
+      "chapterId": "ch-basic",
+      "kind": "drill",
+      "title": "声母 · ch",
+      "desc": "新键：ch。注意 i/u/v 键的双重身份",
+      "focusAtoms": [
+        "initial:ch"
+      ],
+      "blockingAtoms": [
+        "initial:ch"
+      ],
+      "nonBlockingAtoms": [],
+      "prerequisites": [
+        "initial:zh"
+      ],
+      "wordPlan": {
+        "maxUnfamiliar": 0,
+        "lengthRange": [
+          2,
+          5
+        ]
+      },
+      "atomMeta": {
+        "initial:ch": {
+          "atomId": "initial:ch",
+          "type": "initial",
+          "pinyin": "ch",
+          "keys": [
+            "i"
+          ],
+          "free": false,
+          "anchors": [
+            "吃",
+            "持",
+            "赤",
+            "迟",
+            "池"
+          ],
+          "mnemonic": "CH + I = CHI（同在 I 键）"
+        }
+      },
+      "zeroExamples": [],
+      "tips": [
+        "翘舌三定：zh / ch / sh 被放在三个低频键上；本方案 ch = I。",
+        "改造声母 + 零声母全表：常规声母键位不变，只有 zh/ch/sh 需要改造；12 个零声母音节在 L2.4 一次看全。",
+        "把键位和字绑在一起记（字组结合），比背字母表牢固。"
+      ],
+      "passCriteria": {
+        "accuracy": 0.85,
+        "mode": "accuracy"
+      },
+      "stageMinWords": {
+        "single": 15,
+        "word": 15,
+        "exam": 25
+      }
+    },
+    {
+      "id": "L2.3",
+      "chapterId": "ch-basic",
+      "kind": "drill",
+      "title": "声母 · sh",
+      "desc": "新键：sh。声母部分完成，先单字后词语",
+      "focusAtoms": [
+        "initial:sh"
+      ],
+      "blockingAtoms": [
+        "initial:sh"
+      ],
+      "nonBlockingAtoms": [],
+      "prerequisites": [
+        "initial:zh",
+        "initial:ch"
+      ],
+      "wordPlan": {
+        "maxUnfamiliar": 0,
+        "lengthRange": [
+          2,
+          5
+        ]
+      },
+      "atomMeta": {
+        "initial:sh": {
+          "atomId": "initial:sh",
+          "type": "initial",
+          "pinyin": "sh",
+          "keys": [
+            "u"
+          ],
+          "free": false,
+          "anchors": [
+            "属",
+            "书",
+            "数",
+            "树",
+            "熟"
+          ],
+          "mnemonic": "SH + U = SHU（同在 U 键）"
+        }
+      },
+      "zeroExamples": [],
+      "tips": [
+        "翘舌三定：zh / ch / sh 被放在三个低频键上；本方案 sh = U。",
+        "改造声母 + 零声母全表：常规声母键位不变，只有 zh/ch/sh 需要改造；12 个零声母音节在 L2.4 一次看全。",
+        "把键位和字绑在一起记（字组结合），比背字母表牢固。"
+      ],
+      "passCriteria": {
+        "accuracy": 0.85,
+        "mode": "accuracy"
+      },
+      "stageMinWords": {
+        "single": 15,
+        "word": 15,
+        "exam": 25
+      }
+    },
+    {
+      "id": "L2.4",
+      "chapterId": "ch-basic",
+      "kind": "drill",
+      "title": "零声母 · 12 个音节",
+      "desc": "逐个列出 12 个零声母音节的两键映射（字母式 / o+ 式由方案决定）",
+      "focusAtoms": [
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou"
+      ],
+      "blockingAtoms": [],
+      "nonBlockingAtoms": [
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou"
+      ],
+      "prerequisites": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh"
+      ],
+      "wordPlan": {
+        "maxUnfamiliar": 0,
+        "lengthRange": [
+          2,
+          5
+        ]
+      },
+      "atomMeta": {
+        "zero:a": {
+          "atomId": "zero:a",
+          "type": "zero",
+          "pinyin": "a",
+          "keys": [
+            "aa"
+          ],
+          "free": false
+        },
+        "zero:ai": {
+          "atomId": "zero:ai",
+          "type": "zero",
+          "pinyin": "ai",
+          "keys": [
+            "ai"
+          ],
+          "free": true
+        },
+        "zero:an": {
+          "atomId": "zero:an",
+          "type": "zero",
+          "pinyin": "an",
+          "keys": [
+            "an"
+          ],
+          "free": true
+        },
+        "zero:ang": {
+          "atomId": "zero:ang",
+          "type": "zero",
+          "pinyin": "ang",
+          "keys": [
+            "ah"
+          ],
+          "free": false
+        },
+        "zero:ao": {
+          "atomId": "zero:ao",
+          "type": "zero",
+          "pinyin": "ao",
+          "keys": [
+            "ao"
+          ],
+          "free": true
+        },
+        "zero:e": {
+          "atomId": "zero:e",
+          "type": "zero",
+          "pinyin": "e",
+          "keys": [
+            "ee"
+          ],
+          "free": false
+        },
+        "zero:ei": {
+          "atomId": "zero:ei",
+          "type": "zero",
+          "pinyin": "ei",
+          "keys": [
+            "ei"
+          ],
+          "free": true
+        },
+        "zero:en": {
+          "atomId": "zero:en",
+          "type": "zero",
+          "pinyin": "en",
+          "keys": [
+            "en"
+          ],
+          "free": true
+        },
+        "zero:eng": {
+          "atomId": "zero:eng",
+          "type": "zero",
+          "pinyin": "eng",
+          "keys": [
+            "eg"
+          ],
+          "free": false
+        },
+        "zero:er": {
+          "atomId": "zero:er",
+          "type": "zero",
+          "pinyin": "er",
+          "keys": [
+            "er"
+          ],
+          "free": true
+        },
+        "zero:o": {
+          "atomId": "zero:o",
+          "type": "zero",
+          "pinyin": "o",
+          "keys": [
+            "oo"
+          ],
+          "free": false
+        },
+        "zero:ou": {
+          "atomId": "zero:ou",
+          "type": "zero",
+          "pinyin": "ou",
+          "keys": [
+            "ou"
+          ],
+          "free": true
+        }
+      },
+      "zeroExamples": [
+        {
+          "syllable": "a",
+          "char": "阿",
+          "tone": 1
+        },
+        {
+          "syllable": "ai",
+          "char": "爱",
+          "tone": 4
+        },
+        {
+          "syllable": "an",
+          "char": "按",
+          "tone": 4
+        },
+        {
+          "syllable": "ang",
+          "char": "昂",
+          "tone": 2
+        },
+        {
+          "syllable": "ao",
+          "char": "奥",
+          "tone": 4
+        },
+        {
+          "syllable": "e",
+          "char": "鄂",
+          "tone": 4
+        },
+        {
+          "syllable": "ei",
+          "char": "诶",
+          "tone": 1
+        },
+        {
+          "syllable": "en",
+          "char": "恩",
+          "tone": 1
+        },
+        {
+          "syllable": "eng",
+          "char": "鞥",
+          "tone": 1
+        },
+        {
+          "syllable": "er",
+          "char": "而",
+          "tone": 2
+        },
+        {
+          "syllable": "o",
+          "char": "哦",
+          "tone": 4
+        },
+        {
+          "syllable": "ou",
+          "char": "欧",
+          "tone": 1
+        }
+      ],
+      "tips": [
+        "零声母 12 音映射（按方案整段键位）：a = AA、ai = AI、an = AN、ang = AH、ao = AO、e = EE、ei = EI、en = EN、eng = EG、er = ER、o = OO、ou = OU。",
+        "改造声母 + 零声母全表：常规声母键位不变，只有 zh/ch/sh 需要改造；12 个零声母音节在 L2.4 一次看全。",
+        "把键位和字绑在一起记（字组结合），比背字母表牢固。"
+      ],
+      "passCriteria": {
+        "accuracy": 0.85,
+        "mode": "accuracy"
+      },
+      "stageMinWords": {
+        "single": 15,
+        "word": 15,
+        "exam": 25
+      }
+    },
+    {
+      "id": "L2.5",
+      "chapterId": "ch-basic",
+      "kind": "review",
+      "title": "复习 · 声母与零声母",
+      "desc": "范围：声母改造 + 零声母全表（按学习顺序累计复习）",
+      "focusAtoms": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou"
+      ],
+      "blockingAtoms": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh"
+      ],
+      "nonBlockingAtoms": [
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou"
+      ],
+      "prerequisites": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou"
+      ],
+      "wordPlan": {
+        "maxUnfamiliar": 0,
+        "lengthRange": [
+          2,
+          5
+        ]
+      },
+      "atomMeta": {
+        "initial:zh": {
+          "atomId": "initial:zh",
+          "type": "initial",
+          "pinyin": "zh",
+          "keys": [
+            "v"
+          ],
+          "free": false,
+          "anchors": [
+            "追",
+            "锥",
+            "坠"
+          ],
+          "mnemonic": "ZH + UI = ZHUI（同在 V 键）"
+        },
+        "initial:ch": {
+          "atomId": "initial:ch",
+          "type": "initial",
+          "pinyin": "ch",
+          "keys": [
+            "i"
+          ],
+          "free": false,
+          "anchors": [
+            "吃",
+            "持",
+            "赤",
+            "迟",
+            "池"
+          ],
+          "mnemonic": "CH + I = CHI（同在 I 键）"
+        },
+        "initial:sh": {
+          "atomId": "initial:sh",
+          "type": "initial",
+          "pinyin": "sh",
+          "keys": [
+            "u"
+          ],
+          "free": false,
+          "anchors": [
+            "属",
+            "书",
+            "数",
+            "树",
+            "熟"
+          ],
+          "mnemonic": "SH + U = SHU（同在 U 键）"
+        },
+        "zero:a": {
+          "atomId": "zero:a",
+          "type": "zero",
+          "pinyin": "a",
+          "keys": [
+            "aa"
+          ],
+          "free": false
+        },
+        "zero:ai": {
+          "atomId": "zero:ai",
+          "type": "zero",
+          "pinyin": "ai",
+          "keys": [
+            "ai"
+          ],
+          "free": true
+        },
+        "zero:an": {
+          "atomId": "zero:an",
+          "type": "zero",
+          "pinyin": "an",
+          "keys": [
+            "an"
+          ],
+          "free": true
+        },
+        "zero:ang": {
+          "atomId": "zero:ang",
+          "type": "zero",
+          "pinyin": "ang",
+          "keys": [
+            "ah"
+          ],
+          "free": false
+        },
+        "zero:ao": {
+          "atomId": "zero:ao",
+          "type": "zero",
+          "pinyin": "ao",
+          "keys": [
+            "ao"
+          ],
+          "free": true
+        },
+        "zero:e": {
+          "atomId": "zero:e",
+          "type": "zero",
+          "pinyin": "e",
+          "keys": [
+            "ee"
+          ],
+          "free": false
+        },
+        "zero:ei": {
+          "atomId": "zero:ei",
+          "type": "zero",
+          "pinyin": "ei",
+          "keys": [
+            "ei"
+          ],
+          "free": true
+        },
+        "zero:en": {
+          "atomId": "zero:en",
+          "type": "zero",
+          "pinyin": "en",
+          "keys": [
+            "en"
+          ],
+          "free": true
+        },
+        "zero:eng": {
+          "atomId": "zero:eng",
+          "type": "zero",
+          "pinyin": "eng",
+          "keys": [
+            "eg"
+          ],
+          "free": false
+        },
+        "zero:er": {
+          "atomId": "zero:er",
+          "type": "zero",
+          "pinyin": "er",
+          "keys": [
+            "er"
+          ],
+          "free": true
+        },
+        "zero:o": {
+          "atomId": "zero:o",
+          "type": "zero",
+          "pinyin": "o",
+          "keys": [
+            "oo"
+          ],
+          "free": false
+        },
+        "zero:ou": {
+          "atomId": "zero:ou",
+          "type": "zero",
+          "pinyin": "ou",
+          "keys": [
+            "ou"
+          ],
+          "free": true
+        }
+      },
+      "zeroExamples": [
+        {
+          "syllable": "a",
+          "char": "阿",
+          "tone": 1
+        },
+        {
+          "syllable": "ai",
+          "char": "爱",
+          "tone": 4
+        },
+        {
+          "syllable": "an",
+          "char": "按",
+          "tone": 4
+        },
+        {
+          "syllable": "ang",
+          "char": "昂",
+          "tone": 2
+        },
+        {
+          "syllable": "ao",
+          "char": "奥",
+          "tone": 4
+        },
+        {
+          "syllable": "e",
+          "char": "鄂",
+          "tone": 4
+        },
+        {
+          "syllable": "ei",
+          "char": "诶",
+          "tone": 1
+        },
+        {
+          "syllable": "en",
+          "char": "恩",
+          "tone": 1
+        },
+        {
+          "syllable": "eng",
+          "char": "鞥",
+          "tone": 1
+        },
+        {
+          "syllable": "er",
+          "char": "而",
+          "tone": 2
+        },
+        {
+          "syllable": "o",
+          "char": "哦",
+          "tone": 4
+        },
+        {
+          "syllable": "ou",
+          "char": "欧",
+          "tone": 1
+        }
+      ],
+      "tips": [
+        "本课零声母：a = AA、ai = AI、an = AN、ang = AH、ao = AO、e = EE 等（没有声母的音节也要按满两键）。",
+        "混合练习检验「看字 → 两键」的反射；准确率优先于速度。",
+        "卡壳时先回忆 5 秒再看提示，把卡住的拼音记进“漏洞表”。"
+      ],
+      "passCriteria": {
+        "accuracy": 0.85,
+        "mode": "accuracy",
+        "minCpm": 45
+      },
+      "stageMinWords": {
+        "exam": 50
+      }
+    },
+    {
+      "id": "L3.1",
+      "chapterId": "ch-a",
+      "kind": "drill",
+      "title": "韵母 · ai",
+      "desc": "新键：韵母 ai",
+      "focusAtoms": [
+        "final:ai"
+      ],
+      "blockingAtoms": [
+        "final:ai"
+      ],
+      "nonBlockingAtoms": [],
+      "prerequisites": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou"
+      ],
+      "wordPlan": {
+        "maxUnfamiliar": 0,
+        "lengthRange": [
+          2,
+          5
+        ]
+      },
+      "atomMeta": {
+        "final:ai": {
+          "atomId": "final:ai",
+          "type": "final",
+          "pinyin": "ai",
+          "keys": [
+            "l"
+          ],
+          "free": false,
+          "anchors": [
+            "来",
+            "赖",
+            "睐"
+          ],
+          "mnemonic": "L + AI = LAI"
+        }
+      },
+      "zeroExamples": [],
+      "tips": [
+        "双字母韵母，先念「ai」再落指：第一键是 a 键，第二键是 ai 所在键。",
+        "a 家族韵母最多，分成「开口组」和「介音组」两段学。",
+        "把键位和字绑在一起记（字组结合），比背字母表牢固。"
+      ],
+      "passCriteria": {
+        "accuracy": 0.85,
+        "mode": "accuracy"
+      },
+      "stageMinWords": {
+        "single": 15,
+        "word": 15,
+        "exam": 25
+      }
+    },
+    {
+      "id": "L3.2",
+      "chapterId": "ch-a",
+      "kind": "drill",
+      "title": "韵母 · ao",
+      "desc": "新键：韵母 ao",
+      "focusAtoms": [
+        "final:ao"
+      ],
+      "blockingAtoms": [
+        "final:ao"
+      ],
+      "nonBlockingAtoms": [],
+      "prerequisites": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou",
+        "final:ai"
+      ],
+      "wordPlan": {
+        "maxUnfamiliar": 0,
+        "lengthRange": [
+          2,
+          5
+        ]
+      },
+      "atomMeta": {
+        "final:ao": {
+          "atomId": "final:ao",
+          "type": "final",
+          "pinyin": "ao",
+          "keys": [
+            "k"
+          ],
+          "free": false,
+          "anchors": [
+            "靠",
+            "考",
+            "烤"
+          ],
+          "mnemonic": "K + AO = KAO"
+        }
+      },
+      "zeroExamples": [],
+      "tips": [
+        "双字母韵母 ao，从 a 滑向 o，口型收圆。",
+        "a 家族韵母最多，分成「开口组」和「介音组」两段学。",
+        "把键位和字绑在一起记（字组结合），比背字母表牢固。"
+      ],
+      "passCriteria": {
+        "accuracy": 0.85,
+        "mode": "accuracy"
+      },
+      "stageMinWords": {
+        "single": 15,
+        "word": 15,
+        "exam": 25
+      }
+    },
+    {
+      "id": "L3.3",
+      "chapterId": "ch-a",
+      "kind": "drill",
+      "title": "韵母 · an",
+      "desc": "新键：韵母 an（前鼻音）",
+      "focusAtoms": [
+        "final:an"
+      ],
+      "blockingAtoms": [
+        "final:an"
+      ],
+      "nonBlockingAtoms": [],
+      "prerequisites": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou",
+        "final:ai",
+        "final:ao"
+      ],
+      "wordPlan": {
+        "maxUnfamiliar": 0,
+        "lengthRange": [
+          2,
+          5
+        ]
+      },
+      "atomMeta": {
+        "final:an": {
+          "atomId": "final:an",
+          "type": "final",
+          "pinyin": "an",
+          "keys": [
+            "j"
+          ],
+          "free": false,
+          "anchors": [
+            "但",
+            "看",
+            "三",
+            "万",
+            "占"
+          ],
+          "mnemonic": "AN 在 J 键：但、看、三"
+        }
+      },
+      "zeroExamples": [],
+      "tips": [
+        "前后鼻音对比：an 的 n 是舌尖抵牙龈，ang 的 ng 是舌根抬软腭；多读「担心 / 当心」。",
+        "a 家族韵母最多，分成「开口组」和「介音组」两段学。",
+        "把键位和字绑在一起记（字组结合），比背字母表牢固。"
+      ],
+      "passCriteria": {
+        "accuracy": 0.85,
+        "mode": "accuracy"
+      },
+      "stageMinWords": {
+        "single": 15,
+        "word": 15,
+        "exam": 25
+      }
+    },
+    {
+      "id": "L3.4",
+      "chapterId": "ch-a",
+      "kind": "drill",
+      "title": "韵母 · ang",
+      "desc": "新键：韵母 ang（后鼻音）",
+      "focusAtoms": [
+        "final:ang"
+      ],
+      "blockingAtoms": [
+        "final:ang"
+      ],
+      "nonBlockingAtoms": [],
+      "prerequisites": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou",
+        "final:ai",
+        "final:ao",
+        "final:an"
+      ],
+      "wordPlan": {
+        "maxUnfamiliar": 0,
+        "lengthRange": [
+          2,
+          5
+        ]
+      },
+      "atomMeta": {
+        "final:ang": {
+          "atomId": "final:ang",
+          "type": "final",
+          "pinyin": "ang",
+          "keys": [
+            "h"
+          ],
+          "free": false,
+          "anchors": [
+            "杭",
+            "航"
+          ],
+          "mnemonic": "H + ANG = HANG"
+        }
+      },
+      "zeroExamples": [],
+      "tips": [
+        "前后鼻音对比：ang 的 ng 舌根抬起，口型比 an 更开。",
+        "a 家族韵母最多，分成「开口组」和「介音组」两段学。",
+        "把键位和字绑在一起记（字组结合），比背字母表牢固。"
+      ],
+      "passCriteria": {
+        "accuracy": 0.85,
+        "mode": "accuracy"
+      },
+      "stageMinWords": {
+        "single": 15,
+        "word": 15,
+        "exam": 25
+      }
+    },
+    {
+      "id": "L3.5",
+      "chapterId": "ch-a",
+      "kind": "review",
+      "title": "复习 · a 家族开口组",
+      "desc": "范围：ai/ao/an/ang + 本组零声母",
+      "focusAtoms": [
+        "final:ai",
+        "final:ao",
+        "final:an",
+        "final:ang",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao"
+      ],
+      "blockingAtoms": [
+        "final:ai",
+        "final:ao",
+        "final:an",
+        "final:ang"
+      ],
+      "nonBlockingAtoms": [
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao"
+      ],
+      "prerequisites": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou",
+        "final:ai",
+        "final:ao",
+        "final:an",
+        "final:ang"
+      ],
+      "wordPlan": {
+        "maxUnfamiliar": 0,
+        "lengthRange": [
+          2,
+          5
+        ]
+      },
+      "atomMeta": {
+        "final:ai": {
+          "atomId": "final:ai",
+          "type": "final",
+          "pinyin": "ai",
+          "keys": [
+            "l"
+          ],
+          "free": false,
+          "anchors": [
+            "来",
+            "赖",
+            "睐"
+          ],
+          "mnemonic": "L + AI = LAI"
+        },
+        "final:ao": {
+          "atomId": "final:ao",
+          "type": "final",
+          "pinyin": "ao",
+          "keys": [
+            "k"
+          ],
+          "free": false,
+          "anchors": [
+            "靠",
+            "考",
+            "烤"
+          ],
+          "mnemonic": "K + AO = KAO"
+        },
+        "final:an": {
+          "atomId": "final:an",
+          "type": "final",
+          "pinyin": "an",
+          "keys": [
+            "j"
+          ],
+          "free": false,
+          "anchors": [
+            "但",
+            "看",
+            "三",
+            "万",
+            "占"
+          ],
+          "mnemonic": "AN 在 J 键：但、看、三"
+        },
+        "final:ang": {
+          "atomId": "final:ang",
+          "type": "final",
+          "pinyin": "ang",
+          "keys": [
+            "h"
+          ],
+          "free": false,
+          "anchors": [
+            "杭",
+            "航"
+          ],
+          "mnemonic": "H + ANG = HANG"
+        },
+        "zero:ai": {
+          "atomId": "zero:ai",
+          "type": "zero",
+          "pinyin": "ai",
+          "keys": [
+            "ai"
+          ],
+          "free": true
+        },
+        "zero:an": {
+          "atomId": "zero:an",
+          "type": "zero",
+          "pinyin": "an",
+          "keys": [
+            "an"
+          ],
+          "free": true
+        },
+        "zero:ang": {
+          "atomId": "zero:ang",
+          "type": "zero",
+          "pinyin": "ang",
+          "keys": [
+            "ah"
+          ],
+          "free": false
+        },
+        "zero:ao": {
+          "atomId": "zero:ao",
+          "type": "zero",
+          "pinyin": "ao",
+          "keys": [
+            "ao"
+          ],
+          "free": true
+        }
+      },
+      "zeroExamples": [
+        {
+          "syllable": "ai",
+          "char": "爱",
+          "tone": 4
+        },
+        {
+          "syllable": "an",
+          "char": "按",
+          "tone": 4
+        },
+        {
+          "syllable": "ang",
+          "char": "昂",
+          "tone": 2
+        },
+        {
+          "syllable": "ao",
+          "char": "奥",
+          "tone": 4
+        }
+      ],
+      "tips": [
+        "a 开口组（ai/ao/an/ang）先练熟，再进入带 i/u 介音的复合韵母。",
+        "本课零声母：ai = AI、an = AN、ang = AH、ao = AO（没有声母的音节也要按满两键）。",
+        "先回忆再落指：看到拼音先在心里说出两键，再按键。",
+        "错得多的音节单独慢打 3 遍，比整段重刷更有效。"
+      ],
+      "passCriteria": {
+        "accuracy": 0.85,
+        "mode": "accuracy",
+        "minCpm": 45
+      },
+      "stageMinWords": {
+        "exam": 50
+      },
+      "reviewFamily": "a-open"
+    },
+    {
+      "id": "L3.6",
+      "chapterId": "ch-a",
+      "kind": "drill",
+      "title": "同键 · ia / ua",
+      "desc": "新键：ia / ua（同键双韵）",
+      "focusAtoms": [
+        "final:ia",
+        "final:ua"
+      ],
+      "blockingAtoms": [
+        "final:ia",
+        "final:ua"
+      ],
+      "nonBlockingAtoms": [],
+      "prerequisites": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou",
+        "final:ai",
+        "final:ao",
+        "final:an",
+        "final:ang"
+      ],
+      "wordPlan": {
+        "maxUnfamiliar": 0,
+        "lengthRange": [
+          2,
+          5
+        ]
+      },
+      "atomMeta": {
+        "final:ia": {
+          "atomId": "final:ia",
+          "type": "final",
+          "pinyin": "ia",
+          "keys": [
+            "w"
+          ],
+          "free": false,
+          "anchors": [
+            "下",
+            "家",
+            "加",
+            "辖",
+            "架"
+          ],
+          "mnemonic": "IA 在 W 键：下、家、加"
+        },
+        "final:ua": {
+          "atomId": "final:ua",
+          "type": "final",
+          "pinyin": "ua",
+          "keys": [
+            "w"
+          ],
+          "free": false,
+          "anchors": [
+            "话",
+            "花",
+            "画",
+            "化",
+            "挂"
+          ],
+          "mnemonic": "UA 在 W 键：话、花、画"
+        }
+      },
+      "zeroExamples": [],
+      "tips": [
+        "同键双韵：W 键同时是 ia / ua；一个键记两个韵母，记「家 jiā / 化 huà」。",
+        "把键位和字绑在一起记（字组结合），比背字母表牢固。",
+        "忘记键位时先想 5 秒，再看键位图，然后把这一键慢打 3 遍。"
+      ],
+      "passCriteria": {
+        "accuracy": 0.85,
+        "mode": "accuracy"
+      },
+      "stageMinWords": {
+        "single": 15,
+        "word": 15,
+        "exam": 25
+      }
+    },
+    {
+      "id": "L3.7",
+      "chapterId": "ch-a",
+      "kind": "drill",
+      "title": "韵母 · iao",
+      "desc": "新键：韵母 iao",
+      "focusAtoms": [
+        "final:iao"
+      ],
+      "blockingAtoms": [
+        "final:iao"
+      ],
+      "nonBlockingAtoms": [],
+      "prerequisites": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou",
+        "final:ai",
+        "final:ao",
+        "final:an",
+        "final:ang",
+        "final:ia",
+        "final:ua"
+      ],
+      "wordPlan": {
+        "maxUnfamiliar": 0,
+        "lengthRange": [
+          2,
+          5
+        ]
+      },
+      "atomMeta": {
+        "final:iao": {
+          "atomId": "final:iao",
+          "type": "final",
+          "pinyin": "iao",
+          "keys": [
+            "c"
+          ],
+          "free": false,
+          "anchors": [
+            "了",
+            "小",
+            "叫",
+            "笑",
+            "较"
+          ],
+          "mnemonic": "IAO 在 C 键：了、小、叫"
+        }
+      },
+      "zeroExamples": [],
+      "tips": [
+        "iao = i + ao，先 i 再 a 再收 o，按两键即可。",
+        "a 家族韵母最多，分成「开口组」和「介音组」两段学。",
+        "把键位和字绑在一起记（字组结合），比背字母表牢固。"
+      ],
+      "passCriteria": {
+        "accuracy": 0.85,
+        "mode": "accuracy"
+      },
+      "stageMinWords": {
+        "single": 15,
+        "word": 15,
+        "exam": 25
+      }
+    },
+    {
+      "id": "L3.8",
+      "chapterId": "ch-a",
+      "kind": "drill",
+      "title": "韵母 · ian",
+      "desc": "新键：韵母 ian",
+      "focusAtoms": [
+        "final:ian"
+      ],
+      "blockingAtoms": [
+        "final:ian"
+      ],
+      "nonBlockingAtoms": [],
+      "prerequisites": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou",
+        "final:ai",
+        "final:ao",
+        "final:an",
+        "final:ang",
+        "final:ia",
+        "final:ua",
+        "final:iao"
+      ],
+      "wordPlan": {
+        "maxUnfamiliar": 0,
+        "lengthRange": [
+          2,
+          5
+        ]
+      },
+      "atomMeta": {
+        "final:ian": {
+          "atomId": "final:ian",
+          "type": "final",
+          "pinyin": "ian",
+          "keys": [
+            "m"
+          ],
+          "free": false,
+          "anchors": [
+            "面",
+            "免",
+            "棉",
+            "沔",
+            "眠"
+          ],
+          "mnemonic": "M + IAN = MIAN"
+        }
+      },
+      "zeroExamples": [],
+      "tips": [
+        "ian = i + an，注意与 iang 的前后鼻音区别。",
+        "a 家族韵母最多，分成「开口组」和「介音组」两段学。",
+        "把键位和字绑在一起记（字组结合），比背字母表牢固。"
+      ],
+      "passCriteria": {
+        "accuracy": 0.85,
+        "mode": "accuracy"
+      },
+      "stageMinWords": {
+        "single": 15,
+        "word": 15,
+        "exam": 25
+      }
+    },
+    {
+      "id": "L3.9",
+      "chapterId": "ch-a",
+      "kind": "drill",
+      "title": "同键 · iang / uang",
+      "desc": "新键：iang / uang（同键双韵）",
+      "focusAtoms": [
+        "final:iang",
+        "final:uang"
+      ],
+      "blockingAtoms": [
+        "final:iang",
+        "final:uang"
+      ],
+      "nonBlockingAtoms": [],
+      "prerequisites": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou",
+        "final:ai",
+        "final:ao",
+        "final:an",
+        "final:ang",
+        "final:ia",
+        "final:ua",
+        "final:iao",
+        "final:ian"
+      ],
+      "wordPlan": {
+        "maxUnfamiliar": 0,
+        "lengthRange": [
+          2,
+          5
+        ]
+      },
+      "atomMeta": {
+        "final:iang": {
+          "atomId": "final:iang",
+          "type": "final",
+          "pinyin": "iang",
+          "keys": [
+            "d"
+          ],
+          "free": false,
+          "anchors": [
+            "将",
+            "向",
+            "想",
+            "两",
+            "像"
+          ],
+          "mnemonic": "IANG 在 D 键：将、向、想"
+        },
+        "final:uang": {
+          "atomId": "final:uang",
+          "type": "final",
+          "pinyin": "uang",
+          "keys": [
+            "d"
+          ],
+          "free": false,
+          "anchors": [
+            "黄",
+            "光",
+            "双",
+            "装",
+            "状"
+          ],
+          "mnemonic": "UANG 在 D 键：黄、光、双"
+        }
+      },
+      "zeroExamples": [],
+      "tips": [
+        "同键双韵：D 键同时是 iang / uang；一个键记两个韵母，记「两 liǎng / 况 kuàng」。",
+        "把键位和字绑在一起记（字组结合），比背字母表牢固。",
+        "忘记键位时先想 5 秒，再看键位图，然后把这一键慢打 3 遍。"
+      ],
+      "passCriteria": {
+        "accuracy": 0.85,
+        "mode": "accuracy"
+      },
+      "stageMinWords": {
+        "single": 15,
+        "word": 15,
+        "exam": 25
+      }
+    },
+    {
+      "id": "L3.10",
+      "chapterId": "ch-a",
+      "kind": "drill",
+      "title": "韵母 · uai",
+      "desc": "新键：韵母 uai",
+      "focusAtoms": [
+        "final:uai"
+      ],
+      "blockingAtoms": [
+        "final:uai"
+      ],
+      "nonBlockingAtoms": [],
+      "prerequisites": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou",
+        "final:ai",
+        "final:ao",
+        "final:an",
+        "final:ang",
+        "final:ia",
+        "final:ua",
+        "final:iao",
+        "final:ian",
+        "final:iang",
+        "final:uang"
+      ],
+      "wordPlan": {
+        "maxUnfamiliar": 0,
+        "lengthRange": [
+          2,
+          5
+        ]
+      },
+      "atomMeta": {
+        "final:uai": {
+          "atomId": "final:uai",
+          "type": "final",
+          "pinyin": "uai",
+          "keys": [
+            "y"
+          ],
+          "free": false,
+          "anchors": [
+            "快",
+            "块",
+            "怪",
+            "坏",
+            "摔"
+          ],
+          "mnemonic": "UAI 在 Y 键：快、块、怪"
+        }
+      },
+      "zeroExamples": [],
+      "tips": [
+        "同键提示：Y 键同时是 uai / ing；ing 在 L7.2 学。",
+        "uai 从 u 滑向 ai，口型由圆到开。",
+        "把键位和字绑在一起记（字组结合），比背字母表牢固。"
+      ],
+      "passCriteria": {
+        "accuracy": 0.85,
+        "mode": "accuracy"
+      },
+      "stageMinWords": {
+        "single": 15,
+        "word": 15,
+        "exam": 25
+      }
+    },
+    {
+      "id": "L3.11",
+      "chapterId": "ch-a",
+      "kind": "drill",
+      "title": "韵母 · uan",
+      "desc": "新键：韵母 uan",
+      "focusAtoms": [
+        "final:uan"
+      ],
+      "blockingAtoms": [
+        "final:uan"
+      ],
+      "nonBlockingAtoms": [],
+      "prerequisites": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou",
+        "final:ai",
+        "final:ao",
+        "final:an",
+        "final:ang",
+        "final:ia",
+        "final:ua",
+        "final:iao",
+        "final:ian",
+        "final:iang",
+        "final:uang",
+        "final:uai"
+      ],
+      "wordPlan": {
+        "maxUnfamiliar": 0,
+        "lengthRange": [
+          2,
+          5
+        ]
+      },
+      "atomMeta": {
+        "final:uan": {
+          "atomId": "final:uan",
+          "type": "final",
+          "pinyin": "uan",
+          "keys": [
+            "r"
+          ],
+          "free": false,
+          "anchors": [
+            "软"
+          ],
+          "mnemonic": "R + UAN = RUAN"
+        }
+      },
+      "zeroExamples": [],
+      "tips": [
+        "uan 注意与 uang 的前后鼻音区别。",
+        "a 家族韵母最多，分成「开口组」和「介音组」两段学。",
+        "把键位和字绑在一起记（字组结合），比背字母表牢固。"
+      ],
+      "passCriteria": {
+        "accuracy": 0.85,
+        "mode": "accuracy"
+      },
+      "stageMinWords": {
+        "single": 15,
+        "word": 15,
+        "exam": 25
+      }
+    },
+    {
+      "id": "L3.12",
+      "chapterId": "ch-a",
+      "kind": "review",
+      "title": "复习 · a 家族",
+      "desc": "范围：a 家族全部韵母 + 本家族零声母",
+      "focusAtoms": [
+        "final:ai",
+        "final:ao",
+        "final:an",
+        "final:ang",
+        "final:ia",
+        "final:iao",
+        "final:ian",
+        "final:iang",
+        "final:ua",
+        "final:uai",
+        "final:uan",
+        "final:uang",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao"
+      ],
+      "blockingAtoms": [
+        "final:ai",
+        "final:ao",
+        "final:an",
+        "final:ang",
+        "final:ia",
+        "final:iao",
+        "final:ian",
+        "final:iang",
+        "final:ua",
+        "final:uai",
+        "final:uan",
+        "final:uang"
+      ],
+      "nonBlockingAtoms": [
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao"
+      ],
+      "prerequisites": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou",
+        "final:ai",
+        "final:ao",
+        "final:an",
+        "final:ang",
+        "final:ia",
+        "final:ua",
+        "final:iao",
+        "final:ian",
+        "final:iang",
+        "final:uang",
+        "final:uai",
+        "final:uan"
+      ],
+      "wordPlan": {
+        "maxUnfamiliar": 0,
+        "lengthRange": [
+          2,
+          5
+        ]
+      },
+      "atomMeta": {
+        "final:ai": {
+          "atomId": "final:ai",
+          "type": "final",
+          "pinyin": "ai",
+          "keys": [
+            "l"
+          ],
+          "free": false,
+          "anchors": [
+            "来",
+            "赖",
+            "睐"
+          ],
+          "mnemonic": "L + AI = LAI"
+        },
+        "final:ao": {
+          "atomId": "final:ao",
+          "type": "final",
+          "pinyin": "ao",
+          "keys": [
+            "k"
+          ],
+          "free": false,
+          "anchors": [
+            "靠",
+            "考",
+            "烤"
+          ],
+          "mnemonic": "K + AO = KAO"
+        },
+        "final:an": {
+          "atomId": "final:an",
+          "type": "final",
+          "pinyin": "an",
+          "keys": [
+            "j"
+          ],
+          "free": false,
+          "anchors": [
+            "但",
+            "看",
+            "三",
+            "万",
+            "占"
+          ],
+          "mnemonic": "AN 在 J 键：但、看、三"
+        },
+        "final:ang": {
+          "atomId": "final:ang",
+          "type": "final",
+          "pinyin": "ang",
+          "keys": [
+            "h"
+          ],
+          "free": false,
+          "anchors": [
+            "杭",
+            "航"
+          ],
+          "mnemonic": "H + ANG = HANG"
+        },
+        "final:ia": {
+          "atomId": "final:ia",
+          "type": "final",
+          "pinyin": "ia",
+          "keys": [
+            "w"
+          ],
+          "free": false,
+          "anchors": [
+            "下",
+            "家",
+            "加",
+            "辖",
+            "架"
+          ],
+          "mnemonic": "IA 在 W 键：下、家、加"
+        },
+        "final:iao": {
+          "atomId": "final:iao",
+          "type": "final",
+          "pinyin": "iao",
+          "keys": [
+            "c"
+          ],
+          "free": false,
+          "anchors": [
+            "了",
+            "小",
+            "叫",
+            "笑",
+            "较"
+          ],
+          "mnemonic": "IAO 在 C 键：了、小、叫"
+        },
+        "final:ian": {
+          "atomId": "final:ian",
+          "type": "final",
+          "pinyin": "ian",
+          "keys": [
+            "m"
+          ],
+          "free": false,
+          "anchors": [
+            "面",
+            "免",
+            "棉",
+            "沔",
+            "眠"
+          ],
+          "mnemonic": "M + IAN = MIAN"
+        },
+        "final:iang": {
+          "atomId": "final:iang",
+          "type": "final",
+          "pinyin": "iang",
+          "keys": [
+            "d"
+          ],
+          "free": false,
+          "anchors": [
+            "将",
+            "向",
+            "想",
+            "两",
+            "像"
+          ],
+          "mnemonic": "IANG 在 D 键：将、向、想"
+        },
+        "final:ua": {
+          "atomId": "final:ua",
+          "type": "final",
+          "pinyin": "ua",
+          "keys": [
+            "w"
+          ],
+          "free": false,
+          "anchors": [
+            "话",
+            "花",
+            "画",
+            "化",
+            "挂"
+          ],
+          "mnemonic": "UA 在 W 键：话、花、画"
+        },
+        "final:uai": {
+          "atomId": "final:uai",
+          "type": "final",
+          "pinyin": "uai",
+          "keys": [
+            "y"
+          ],
+          "free": false,
+          "anchors": [
+            "快",
+            "块",
+            "怪",
+            "坏",
+            "摔"
+          ],
+          "mnemonic": "UAI 在 Y 键：快、块、怪"
+        },
+        "final:uan": {
+          "atomId": "final:uan",
+          "type": "final",
+          "pinyin": "uan",
+          "keys": [
+            "r"
+          ],
+          "free": false,
+          "anchors": [
+            "软"
+          ],
+          "mnemonic": "R + UAN = RUAN"
+        },
+        "final:uang": {
+          "atomId": "final:uang",
+          "type": "final",
+          "pinyin": "uang",
+          "keys": [
+            "d"
+          ],
+          "free": false,
+          "anchors": [
+            "黄",
+            "光",
+            "双",
+            "装",
+            "状"
+          ],
+          "mnemonic": "UANG 在 D 键：黄、光、双"
+        },
+        "zero:ai": {
+          "atomId": "zero:ai",
+          "type": "zero",
+          "pinyin": "ai",
+          "keys": [
+            "ai"
+          ],
+          "free": true
+        },
+        "zero:an": {
+          "atomId": "zero:an",
+          "type": "zero",
+          "pinyin": "an",
+          "keys": [
+            "an"
+          ],
+          "free": true
+        },
+        "zero:ang": {
+          "atomId": "zero:ang",
+          "type": "zero",
+          "pinyin": "ang",
+          "keys": [
+            "ah"
+          ],
+          "free": false
+        },
+        "zero:ao": {
+          "atomId": "zero:ao",
+          "type": "zero",
+          "pinyin": "ao",
+          "keys": [
+            "ao"
+          ],
+          "free": true
+        }
+      },
+      "zeroExamples": [
+        {
+          "syllable": "ai",
+          "char": "爱",
+          "tone": 4
+        },
+        {
+          "syllable": "an",
+          "char": "按",
+          "tone": 4
+        },
+        {
+          "syllable": "ang",
+          "char": "昂",
+          "tone": 2
+        },
+        {
+          "syllable": "ao",
+          "char": "奥",
+          "tone": 4
+        }
+      ],
+      "tips": [
+        "a 家族：先开口后介音；an/ang、iang/uang 注意前后鼻音与同键对照。",
+        "本课零声母：ai = AI、an = AN、ang = AH、ao = AO（没有声母的音节也要按满两键）。",
+        "先回忆再落指：看到拼音先在心里说出两键，再按键。",
+        "错得多的音节单独慢打 3 遍，比整段重刷更有效。"
+      ],
+      "passCriteria": {
+        "accuracy": 0.85,
+        "mode": "accuracy",
+        "minCpm": 45
+      },
+      "stageMinWords": {
+        "exam": 50
+      },
+      "reviewFamily": "a"
+    },
+    {
+      "id": "L4.1",
+      "chapterId": "ch-o",
+      "kind": "drill",
+      "title": "韵母 · uo",
+      "desc": "新键：韵母 uo",
+      "focusAtoms": [
+        "final:uo"
+      ],
+      "blockingAtoms": [
+        "final:uo"
+      ],
+      "nonBlockingAtoms": [],
+      "prerequisites": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou",
+        "final:ai",
+        "final:ao",
+        "final:an",
+        "final:ang",
+        "final:ia",
+        "final:ua",
+        "final:iao",
+        "final:ian",
+        "final:iang",
+        "final:uang",
+        "final:uai",
+        "final:uan"
+      ],
+      "wordPlan": {
+        "maxUnfamiliar": 0,
+        "lengthRange": [
+          2,
+          5
+        ]
+      },
+      "atomMeta": {
+        "final:uo": {
+          "atomId": "final:uo",
+          "type": "final",
+          "pinyin": "uo",
+          "keys": [
+            "o"
+          ],
+          "free": false,
+          "anchors": [
+            "说",
+            "多",
+            "过",
+            "或",
+            "所"
+          ],
+          "mnemonic": "UO 在 O 键：说、多、过"
+        }
+      },
+      "zeroExamples": [],
+      "tips": [
+        "同键提示：O 键同时是 uo / o。",
+        "uo 从 u 滑向 o、口型由圆到开；它与 ou（o→u）方向相反，注意别混。",
+        "把键位和字绑在一起记（字组结合），比背字母表牢固。"
+      ],
+      "passCriteria": {
+        "accuracy": 0.85,
+        "mode": "accuracy"
+      },
+      "stageMinWords": {
+        "single": 15,
+        "word": 15,
+        "exam": 25
+      }
+    },
+    {
+      "id": "L4.2",
+      "chapterId": "ch-o",
+      "kind": "drill",
+      "title": "韵母 · ou",
+      "desc": "新键：韵母 ou",
+      "focusAtoms": [
+        "final:ou"
+      ],
+      "blockingAtoms": [
+        "final:ou"
+      ],
+      "nonBlockingAtoms": [],
+      "prerequisites": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou",
+        "final:ai",
+        "final:ao",
+        "final:an",
+        "final:ang",
+        "final:ia",
+        "final:ua",
+        "final:iao",
+        "final:ian",
+        "final:iang",
+        "final:uang",
+        "final:uai",
+        "final:uan",
+        "final:uo"
+      ],
+      "wordPlan": {
+        "maxUnfamiliar": 0,
+        "lengthRange": [
+          2,
+          5
+        ]
+      },
+      "atomMeta": {
+        "final:ou": {
+          "atomId": "final:ou",
+          "type": "final",
+          "pinyin": "ou",
+          "keys": [
+            "b"
+          ],
+          "free": false,
+          "anchors": [
+            "有",
+            "都",
+            "又",
+            "后",
+            "由"
+          ],
+          "mnemonic": "OU 在 B 键：有、都、又"
+        }
+      },
+      "zeroExamples": [],
+      "tips": [
+        "双字母韵母 ou，从 o 滑向 u，口型收小。",
+        "o 家族只有 4 个韵母，重点是 o/uo 与 ong/iong 的同键关系。",
+        "把键位和字绑在一起记（字组结合），比背字母表牢固。"
+      ],
+      "passCriteria": {
+        "accuracy": 0.85,
+        "mode": "accuracy"
+      },
+      "stageMinWords": {
+        "single": 15,
+        "word": 15,
+        "exam": 25
+      }
+    },
+    {
+      "id": "L4.3",
+      "chapterId": "ch-o",
+      "kind": "drill",
+      "title": "同键 · ong / iong",
+      "desc": "新键：ong / iong（同键双韵）",
+      "focusAtoms": [
+        "final:ong",
+        "final:iong"
+      ],
+      "blockingAtoms": [
+        "final:ong",
+        "final:iong"
+      ],
+      "nonBlockingAtoms": [],
+      "prerequisites": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou",
+        "final:ai",
+        "final:ao",
+        "final:an",
+        "final:ang",
+        "final:ia",
+        "final:ua",
+        "final:iao",
+        "final:ian",
+        "final:iang",
+        "final:uang",
+        "final:uai",
+        "final:uan",
+        "final:uo",
+        "final:ou"
+      ],
+      "wordPlan": {
+        "maxUnfamiliar": 0,
+        "lengthRange": [
+          2,
+          5
+        ]
+      },
+      "atomMeta": {
+        "final:ong": {
+          "atomId": "final:ong",
+          "type": "final",
+          "pinyin": "ong",
+          "keys": [
+            "s"
+          ],
+          "free": false,
+          "anchors": [
+            "送",
+            "宋",
+            "松",
+            "颂",
+            "耸"
+          ],
+          "mnemonic": "S + ONG = SONG"
+        },
+        "final:iong": {
+          "atomId": "final:iong",
+          "type": "final",
+          "pinyin": "iong",
+          "keys": [
+            "s"
+          ],
+          "free": false,
+          "anchors": [
+            "兄",
+            "雄",
+            "穷",
+            "胸",
+            "凶"
+          ],
+          "mnemonic": "IONG 在 S 键：兄、雄、穷"
+        }
+      },
+      "zeroExamples": [],
+      "tips": [
+        "同键双韵：S 键同时是 ong / iong；一个键记两个韵母，记「中 zhōng / 兄 xiōng」。",
+        "把键位和字绑在一起记（字组结合），比背字母表牢固。",
+        "忘记键位时先想 5 秒，再看键位图，然后把这一键慢打 3 遍。"
+      ],
+      "passCriteria": {
+        "accuracy": 0.85,
+        "mode": "accuracy"
+      },
+      "stageMinWords": {
+        "single": 15,
+        "word": 15,
+        "exam": 25
+      }
+    },
+    {
+      "id": "L4.4",
+      "chapterId": "ch-o",
+      "kind": "review",
+      "title": "复习 · o 家族",
+      "desc": "范围：o 家族 + 本家族零声母",
+      "focusAtoms": [
+        "final:uo",
+        "final:ou",
+        "final:ong",
+        "final:iong",
+        "zero:o",
+        "zero:ou"
+      ],
+      "blockingAtoms": [
+        "final:uo",
+        "final:ou",
+        "final:ong",
+        "final:iong"
+      ],
+      "nonBlockingAtoms": [
+        "zero:o",
+        "zero:ou"
+      ],
+      "prerequisites": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou",
+        "final:ai",
+        "final:ao",
+        "final:an",
+        "final:ang",
+        "final:ia",
+        "final:ua",
+        "final:iao",
+        "final:ian",
+        "final:iang",
+        "final:uang",
+        "final:uai",
+        "final:uan",
+        "final:uo",
+        "final:ou",
+        "final:ong",
+        "final:iong"
+      ],
+      "wordPlan": {
+        "maxUnfamiliar": 0,
+        "lengthRange": [
+          2,
+          5
+        ]
+      },
+      "atomMeta": {
+        "final:uo": {
+          "atomId": "final:uo",
+          "type": "final",
+          "pinyin": "uo",
+          "keys": [
+            "o"
+          ],
+          "free": false,
+          "anchors": [
+            "说",
+            "多",
+            "过",
+            "或",
+            "所"
+          ],
+          "mnemonic": "UO 在 O 键：说、多、过"
+        },
+        "final:ou": {
+          "atomId": "final:ou",
+          "type": "final",
+          "pinyin": "ou",
+          "keys": [
+            "b"
+          ],
+          "free": false,
+          "anchors": [
+            "有",
+            "都",
+            "又",
+            "后",
+            "由"
+          ],
+          "mnemonic": "OU 在 B 键：有、都、又"
+        },
+        "final:ong": {
+          "atomId": "final:ong",
+          "type": "final",
+          "pinyin": "ong",
+          "keys": [
+            "s"
+          ],
+          "free": false,
+          "anchors": [
+            "送",
+            "宋",
+            "松",
+            "颂",
+            "耸"
+          ],
+          "mnemonic": "S + ONG = SONG"
+        },
+        "final:iong": {
+          "atomId": "final:iong",
+          "type": "final",
+          "pinyin": "iong",
+          "keys": [
+            "s"
+          ],
+          "free": false,
+          "anchors": [
+            "兄",
+            "雄",
+            "穷",
+            "胸",
+            "凶"
+          ],
+          "mnemonic": "IONG 在 S 键：兄、雄、穷"
+        },
+        "zero:o": {
+          "atomId": "zero:o",
+          "type": "zero",
+          "pinyin": "o",
+          "keys": [
+            "oo"
+          ],
+          "free": false
+        },
+        "zero:ou": {
+          "atomId": "zero:ou",
+          "type": "zero",
+          "pinyin": "ou",
+          "keys": [
+            "ou"
+          ],
+          "free": true
+        }
+      },
+      "zeroExamples": [
+        {
+          "syllable": "o",
+          "char": "哦",
+          "tone": 4
+        },
+        {
+          "syllable": "ou",
+          "char": "欧",
+          "tone": 1
+        }
+      ],
+      "tips": [
+        "o 家族：o 与 uo 通常同键；ong/iong 同键，记「松 sōng / 穷 qióng」。",
+        "本课零声母：o = OO、ou = OU（没有声母的音节也要按满两键）。",
+        "先回忆再落指：看到拼音先在心里说出两键，再按键。",
+        "错得多的音节单独慢打 3 遍，比整段重刷更有效。"
+      ],
+      "passCriteria": {
+        "accuracy": 0.85,
+        "mode": "accuracy",
+        "minCpm": 45
+      },
+      "stageMinWords": {
+        "exam": 50
+      },
+      "reviewFamily": "o"
+    },
+    {
+      "id": "L5.1",
+      "chapterId": "ch-mid",
+      "kind": "review",
+      "title": "期中 · 混合练习",
+      "desc": "检验：前四章混合练习，准确率优先",
+      "focusAtoms": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou",
+        "final:ai",
+        "final:ao",
+        "final:an",
+        "final:ang",
+        "final:ia",
+        "final:ua",
+        "final:iao",
+        "final:ian",
+        "final:iang",
+        "final:uang",
+        "final:uai",
+        "final:uan",
+        "final:uo",
+        "final:ou",
+        "final:ong",
+        "final:iong"
+      ],
+      "blockingAtoms": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "final:ai",
+        "final:ao",
+        "final:an",
+        "final:ang",
+        "final:ia",
+        "final:ua",
+        "final:iao",
+        "final:ian",
+        "final:iang",
+        "final:uang",
+        "final:uai",
+        "final:uan",
+        "final:uo",
+        "final:ou",
+        "final:ong",
+        "final:iong"
+      ],
+      "nonBlockingAtoms": [
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou"
+      ],
+      "prerequisites": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou",
+        "final:ai",
+        "final:ao",
+        "final:an",
+        "final:ang",
+        "final:ia",
+        "final:ua",
+        "final:iao",
+        "final:ian",
+        "final:iang",
+        "final:uang",
+        "final:uai",
+        "final:uan",
+        "final:uo",
+        "final:ou",
+        "final:ong",
+        "final:iong"
+      ],
+      "wordPlan": {
+        "maxUnfamiliar": 0,
+        "lengthRange": [
+          2,
+          5
+        ]
+      },
+      "atomMeta": {
+        "initial:zh": {
+          "atomId": "initial:zh",
+          "type": "initial",
+          "pinyin": "zh",
+          "keys": [
+            "v"
+          ],
+          "free": false,
+          "anchors": [
+            "追",
+            "锥",
+            "坠"
+          ],
+          "mnemonic": "ZH + UI = ZHUI（同在 V 键）"
+        },
+        "initial:ch": {
+          "atomId": "initial:ch",
+          "type": "initial",
+          "pinyin": "ch",
+          "keys": [
+            "i"
+          ],
+          "free": false,
+          "anchors": [
+            "吃",
+            "持",
+            "赤",
+            "迟",
+            "池"
+          ],
+          "mnemonic": "CH + I = CHI（同在 I 键）"
+        },
+        "initial:sh": {
+          "atomId": "initial:sh",
+          "type": "initial",
+          "pinyin": "sh",
+          "keys": [
+            "u"
+          ],
+          "free": false,
+          "anchors": [
+            "属",
+            "书",
+            "数",
+            "树",
+            "熟"
+          ],
+          "mnemonic": "SH + U = SHU（同在 U 键）"
+        },
+        "zero:a": {
+          "atomId": "zero:a",
+          "type": "zero",
+          "pinyin": "a",
+          "keys": [
+            "aa"
+          ],
+          "free": false
+        },
+        "zero:ai": {
+          "atomId": "zero:ai",
+          "type": "zero",
+          "pinyin": "ai",
+          "keys": [
+            "ai"
+          ],
+          "free": true
+        },
+        "zero:an": {
+          "atomId": "zero:an",
+          "type": "zero",
+          "pinyin": "an",
+          "keys": [
+            "an"
+          ],
+          "free": true
+        },
+        "zero:ang": {
+          "atomId": "zero:ang",
+          "type": "zero",
+          "pinyin": "ang",
+          "keys": [
+            "ah"
+          ],
+          "free": false
+        },
+        "zero:ao": {
+          "atomId": "zero:ao",
+          "type": "zero",
+          "pinyin": "ao",
+          "keys": [
+            "ao"
+          ],
+          "free": true
+        },
+        "zero:e": {
+          "atomId": "zero:e",
+          "type": "zero",
+          "pinyin": "e",
+          "keys": [
+            "ee"
+          ],
+          "free": false
+        },
+        "zero:ei": {
+          "atomId": "zero:ei",
+          "type": "zero",
+          "pinyin": "ei",
+          "keys": [
+            "ei"
+          ],
+          "free": true
+        },
+        "zero:en": {
+          "atomId": "zero:en",
+          "type": "zero",
+          "pinyin": "en",
+          "keys": [
+            "en"
+          ],
+          "free": true
+        },
+        "zero:eng": {
+          "atomId": "zero:eng",
+          "type": "zero",
+          "pinyin": "eng",
+          "keys": [
+            "eg"
+          ],
+          "free": false
+        },
+        "zero:er": {
+          "atomId": "zero:er",
+          "type": "zero",
+          "pinyin": "er",
+          "keys": [
+            "er"
+          ],
+          "free": true
+        },
+        "zero:o": {
+          "atomId": "zero:o",
+          "type": "zero",
+          "pinyin": "o",
+          "keys": [
+            "oo"
+          ],
+          "free": false
+        },
+        "zero:ou": {
+          "atomId": "zero:ou",
+          "type": "zero",
+          "pinyin": "ou",
+          "keys": [
+            "ou"
+          ],
+          "free": true
+        },
+        "final:ai": {
+          "atomId": "final:ai",
+          "type": "final",
+          "pinyin": "ai",
+          "keys": [
+            "l"
+          ],
+          "free": false,
+          "anchors": [
+            "来",
+            "赖",
+            "睐"
+          ],
+          "mnemonic": "L + AI = LAI"
+        },
+        "final:ao": {
+          "atomId": "final:ao",
+          "type": "final",
+          "pinyin": "ao",
+          "keys": [
+            "k"
+          ],
+          "free": false,
+          "anchors": [
+            "靠",
+            "考",
+            "烤"
+          ],
+          "mnemonic": "K + AO = KAO"
+        },
+        "final:an": {
+          "atomId": "final:an",
+          "type": "final",
+          "pinyin": "an",
+          "keys": [
+            "j"
+          ],
+          "free": false,
+          "anchors": [
+            "但",
+            "看",
+            "三",
+            "万",
+            "占"
+          ],
+          "mnemonic": "AN 在 J 键：但、看、三"
+        },
+        "final:ang": {
+          "atomId": "final:ang",
+          "type": "final",
+          "pinyin": "ang",
+          "keys": [
+            "h"
+          ],
+          "free": false,
+          "anchors": [
+            "杭",
+            "航"
+          ],
+          "mnemonic": "H + ANG = HANG"
+        },
+        "final:ia": {
+          "atomId": "final:ia",
+          "type": "final",
+          "pinyin": "ia",
+          "keys": [
+            "w"
+          ],
+          "free": false,
+          "anchors": [
+            "下",
+            "家",
+            "加",
+            "辖",
+            "架"
+          ],
+          "mnemonic": "IA 在 W 键：下、家、加"
+        },
+        "final:ua": {
+          "atomId": "final:ua",
+          "type": "final",
+          "pinyin": "ua",
+          "keys": [
+            "w"
+          ],
+          "free": false,
+          "anchors": [
+            "话",
+            "花",
+            "画",
+            "化",
+            "挂"
+          ],
+          "mnemonic": "UA 在 W 键：话、花、画"
+        },
+        "final:iao": {
+          "atomId": "final:iao",
+          "type": "final",
+          "pinyin": "iao",
+          "keys": [
+            "c"
+          ],
+          "free": false,
+          "anchors": [
+            "了",
+            "小",
+            "叫",
+            "笑",
+            "较"
+          ],
+          "mnemonic": "IAO 在 C 键：了、小、叫"
+        },
+        "final:ian": {
+          "atomId": "final:ian",
+          "type": "final",
+          "pinyin": "ian",
+          "keys": [
+            "m"
+          ],
+          "free": false,
+          "anchors": [
+            "面",
+            "免",
+            "棉",
+            "沔",
+            "眠"
+          ],
+          "mnemonic": "M + IAN = MIAN"
+        },
+        "final:iang": {
+          "atomId": "final:iang",
+          "type": "final",
+          "pinyin": "iang",
+          "keys": [
+            "d"
+          ],
+          "free": false,
+          "anchors": [
+            "将",
+            "向",
+            "想",
+            "两",
+            "像"
+          ],
+          "mnemonic": "IANG 在 D 键：将、向、想"
+        },
+        "final:uang": {
+          "atomId": "final:uang",
+          "type": "final",
+          "pinyin": "uang",
+          "keys": [
+            "d"
+          ],
+          "free": false,
+          "anchors": [
+            "黄",
+            "光",
+            "双",
+            "装",
+            "状"
+          ],
+          "mnemonic": "UANG 在 D 键：黄、光、双"
+        },
+        "final:uai": {
+          "atomId": "final:uai",
+          "type": "final",
+          "pinyin": "uai",
+          "keys": [
+            "y"
+          ],
+          "free": false,
+          "anchors": [
+            "快",
+            "块",
+            "怪",
+            "坏",
+            "摔"
+          ],
+          "mnemonic": "UAI 在 Y 键：快、块、怪"
+        },
+        "final:uan": {
+          "atomId": "final:uan",
+          "type": "final",
+          "pinyin": "uan",
+          "keys": [
+            "r"
+          ],
+          "free": false,
+          "anchors": [
+            "软"
+          ],
+          "mnemonic": "R + UAN = RUAN"
+        },
+        "final:uo": {
+          "atomId": "final:uo",
+          "type": "final",
+          "pinyin": "uo",
+          "keys": [
+            "o"
+          ],
+          "free": false,
+          "anchors": [
+            "说",
+            "多",
+            "过",
+            "或",
+            "所"
+          ],
+          "mnemonic": "UO 在 O 键：说、多、过"
+        },
+        "final:ou": {
+          "atomId": "final:ou",
+          "type": "final",
+          "pinyin": "ou",
+          "keys": [
+            "b"
+          ],
+          "free": false,
+          "anchors": [
+            "有",
+            "都",
+            "又",
+            "后",
+            "由"
+          ],
+          "mnemonic": "OU 在 B 键：有、都、又"
+        },
+        "final:ong": {
+          "atomId": "final:ong",
+          "type": "final",
+          "pinyin": "ong",
+          "keys": [
+            "s"
+          ],
+          "free": false,
+          "anchors": [
+            "送",
+            "宋",
+            "松",
+            "颂",
+            "耸"
+          ],
+          "mnemonic": "S + ONG = SONG"
+        },
+        "final:iong": {
+          "atomId": "final:iong",
+          "type": "final",
+          "pinyin": "iong",
+          "keys": [
+            "s"
+          ],
+          "free": false,
+          "anchors": [
+            "兄",
+            "雄",
+            "穷",
+            "胸",
+            "凶"
+          ],
+          "mnemonic": "IONG 在 S 键：兄、雄、穷"
+        }
+      },
+      "zeroExamples": [
+        {
+          "syllable": "a",
+          "char": "阿",
+          "tone": 1
+        },
+        {
+          "syllable": "ai",
+          "char": "爱",
+          "tone": 4
+        },
+        {
+          "syllable": "an",
+          "char": "按",
+          "tone": 4
+        },
+        {
+          "syllable": "ang",
+          "char": "昂",
+          "tone": 2
+        },
+        {
+          "syllable": "ao",
+          "char": "奥",
+          "tone": 4
+        },
+        {
+          "syllable": "e",
+          "char": "鄂",
+          "tone": 4
+        },
+        {
+          "syllable": "ei",
+          "char": "诶",
+          "tone": 1
+        },
+        {
+          "syllable": "en",
+          "char": "恩",
+          "tone": 1
+        },
+        {
+          "syllable": "eng",
+          "char": "鞥",
+          "tone": 1
+        },
+        {
+          "syllable": "er",
+          "char": "而",
+          "tone": 2
+        },
+        {
+          "syllable": "o",
+          "char": "哦",
+          "tone": 4
+        },
+        {
+          "syllable": "ou",
+          "char": "欧",
+          "tone": 1
+        }
+      ],
+      "tips": [
+        "本课零声母：a = AA、ai = AI、an = AN、ang = AH、ao = AO、e = EE 等（没有声母的音节也要按满两键）。",
+        "混合练习检验「看字 → 两键」的反射；准确率优先于速度。",
+        "卡壳时先回忆 5 秒再看提示，把卡住的拼音记进“漏洞表”。"
+      ],
+      "passCriteria": {
+        "accuracy": 0.85,
+        "mode": "accuracy",
+        "minCpm": 45
+      },
+      "stageMinWords": {
+        "exam": 50
+      }
+    },
+    {
+      "id": "L5.2",
+      "chapterId": "ch-mid",
+      "kind": "review",
+      "title": "期中 · 速度练习",
+      "desc": "检验：前四章速度练习，正确率 ≥85%，速度按 45/60/75 WPM 分档",
+      "focusAtoms": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou",
+        "final:ai",
+        "final:ao",
+        "final:an",
+        "final:ang",
+        "final:ia",
+        "final:ua",
+        "final:iao",
+        "final:ian",
+        "final:iang",
+        "final:uang",
+        "final:uai",
+        "final:uan",
+        "final:uo",
+        "final:ou",
+        "final:ong",
+        "final:iong"
+      ],
+      "blockingAtoms": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "final:ai",
+        "final:ao",
+        "final:an",
+        "final:ang",
+        "final:ia",
+        "final:ua",
+        "final:iao",
+        "final:ian",
+        "final:iang",
+        "final:uang",
+        "final:uai",
+        "final:uan",
+        "final:uo",
+        "final:ou",
+        "final:ong",
+        "final:iong"
+      ],
+      "nonBlockingAtoms": [
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou"
+      ],
+      "prerequisites": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou",
+        "final:ai",
+        "final:ao",
+        "final:an",
+        "final:ang",
+        "final:ia",
+        "final:ua",
+        "final:iao",
+        "final:ian",
+        "final:iang",
+        "final:uang",
+        "final:uai",
+        "final:uan",
+        "final:uo",
+        "final:ou",
+        "final:ong",
+        "final:iong"
+      ],
+      "wordPlan": {
+        "maxUnfamiliar": 0,
+        "lengthRange": [
+          2,
+          5
+        ]
+      },
+      "atomMeta": {
+        "initial:zh": {
+          "atomId": "initial:zh",
+          "type": "initial",
+          "pinyin": "zh",
+          "keys": [
+            "v"
+          ],
+          "free": false,
+          "anchors": [
+            "追",
+            "锥",
+            "坠"
+          ],
+          "mnemonic": "ZH + UI = ZHUI（同在 V 键）"
+        },
+        "initial:ch": {
+          "atomId": "initial:ch",
+          "type": "initial",
+          "pinyin": "ch",
+          "keys": [
+            "i"
+          ],
+          "free": false,
+          "anchors": [
+            "吃",
+            "持",
+            "赤",
+            "迟",
+            "池"
+          ],
+          "mnemonic": "CH + I = CHI（同在 I 键）"
+        },
+        "initial:sh": {
+          "atomId": "initial:sh",
+          "type": "initial",
+          "pinyin": "sh",
+          "keys": [
+            "u"
+          ],
+          "free": false,
+          "anchors": [
+            "属",
+            "书",
+            "数",
+            "树",
+            "熟"
+          ],
+          "mnemonic": "SH + U = SHU（同在 U 键）"
+        },
+        "zero:a": {
+          "atomId": "zero:a",
+          "type": "zero",
+          "pinyin": "a",
+          "keys": [
+            "aa"
+          ],
+          "free": false
+        },
+        "zero:ai": {
+          "atomId": "zero:ai",
+          "type": "zero",
+          "pinyin": "ai",
+          "keys": [
+            "ai"
+          ],
+          "free": true
+        },
+        "zero:an": {
+          "atomId": "zero:an",
+          "type": "zero",
+          "pinyin": "an",
+          "keys": [
+            "an"
+          ],
+          "free": true
+        },
+        "zero:ang": {
+          "atomId": "zero:ang",
+          "type": "zero",
+          "pinyin": "ang",
+          "keys": [
+            "ah"
+          ],
+          "free": false
+        },
+        "zero:ao": {
+          "atomId": "zero:ao",
+          "type": "zero",
+          "pinyin": "ao",
+          "keys": [
+            "ao"
+          ],
+          "free": true
+        },
+        "zero:e": {
+          "atomId": "zero:e",
+          "type": "zero",
+          "pinyin": "e",
+          "keys": [
+            "ee"
+          ],
+          "free": false
+        },
+        "zero:ei": {
+          "atomId": "zero:ei",
+          "type": "zero",
+          "pinyin": "ei",
+          "keys": [
+            "ei"
+          ],
+          "free": true
+        },
+        "zero:en": {
+          "atomId": "zero:en",
+          "type": "zero",
+          "pinyin": "en",
+          "keys": [
+            "en"
+          ],
+          "free": true
+        },
+        "zero:eng": {
+          "atomId": "zero:eng",
+          "type": "zero",
+          "pinyin": "eng",
+          "keys": [
+            "eg"
+          ],
+          "free": false
+        },
+        "zero:er": {
+          "atomId": "zero:er",
+          "type": "zero",
+          "pinyin": "er",
+          "keys": [
+            "er"
+          ],
+          "free": true
+        },
+        "zero:o": {
+          "atomId": "zero:o",
+          "type": "zero",
+          "pinyin": "o",
+          "keys": [
+            "oo"
+          ],
+          "free": false
+        },
+        "zero:ou": {
+          "atomId": "zero:ou",
+          "type": "zero",
+          "pinyin": "ou",
+          "keys": [
+            "ou"
+          ],
+          "free": true
+        },
+        "final:ai": {
+          "atomId": "final:ai",
+          "type": "final",
+          "pinyin": "ai",
+          "keys": [
+            "l"
+          ],
+          "free": false,
+          "anchors": [
+            "来",
+            "赖",
+            "睐"
+          ],
+          "mnemonic": "L + AI = LAI"
+        },
+        "final:ao": {
+          "atomId": "final:ao",
+          "type": "final",
+          "pinyin": "ao",
+          "keys": [
+            "k"
+          ],
+          "free": false,
+          "anchors": [
+            "靠",
+            "考",
+            "烤"
+          ],
+          "mnemonic": "K + AO = KAO"
+        },
+        "final:an": {
+          "atomId": "final:an",
+          "type": "final",
+          "pinyin": "an",
+          "keys": [
+            "j"
+          ],
+          "free": false,
+          "anchors": [
+            "但",
+            "看",
+            "三",
+            "万",
+            "占"
+          ],
+          "mnemonic": "AN 在 J 键：但、看、三"
+        },
+        "final:ang": {
+          "atomId": "final:ang",
+          "type": "final",
+          "pinyin": "ang",
+          "keys": [
+            "h"
+          ],
+          "free": false,
+          "anchors": [
+            "杭",
+            "航"
+          ],
+          "mnemonic": "H + ANG = HANG"
+        },
+        "final:ia": {
+          "atomId": "final:ia",
+          "type": "final",
+          "pinyin": "ia",
+          "keys": [
+            "w"
+          ],
+          "free": false,
+          "anchors": [
+            "下",
+            "家",
+            "加",
+            "辖",
+            "架"
+          ],
+          "mnemonic": "IA 在 W 键：下、家、加"
+        },
+        "final:ua": {
+          "atomId": "final:ua",
+          "type": "final",
+          "pinyin": "ua",
+          "keys": [
+            "w"
+          ],
+          "free": false,
+          "anchors": [
+            "话",
+            "花",
+            "画",
+            "化",
+            "挂"
+          ],
+          "mnemonic": "UA 在 W 键：话、花、画"
+        },
+        "final:iao": {
+          "atomId": "final:iao",
+          "type": "final",
+          "pinyin": "iao",
+          "keys": [
+            "c"
+          ],
+          "free": false,
+          "anchors": [
+            "了",
+            "小",
+            "叫",
+            "笑",
+            "较"
+          ],
+          "mnemonic": "IAO 在 C 键：了、小、叫"
+        },
+        "final:ian": {
+          "atomId": "final:ian",
+          "type": "final",
+          "pinyin": "ian",
+          "keys": [
+            "m"
+          ],
+          "free": false,
+          "anchors": [
+            "面",
+            "免",
+            "棉",
+            "沔",
+            "眠"
+          ],
+          "mnemonic": "M + IAN = MIAN"
+        },
+        "final:iang": {
+          "atomId": "final:iang",
+          "type": "final",
+          "pinyin": "iang",
+          "keys": [
+            "d"
+          ],
+          "free": false,
+          "anchors": [
+            "将",
+            "向",
+            "想",
+            "两",
+            "像"
+          ],
+          "mnemonic": "IANG 在 D 键：将、向、想"
+        },
+        "final:uang": {
+          "atomId": "final:uang",
+          "type": "final",
+          "pinyin": "uang",
+          "keys": [
+            "d"
+          ],
+          "free": false,
+          "anchors": [
+            "黄",
+            "光",
+            "双",
+            "装",
+            "状"
+          ],
+          "mnemonic": "UANG 在 D 键：黄、光、双"
+        },
+        "final:uai": {
+          "atomId": "final:uai",
+          "type": "final",
+          "pinyin": "uai",
+          "keys": [
+            "y"
+          ],
+          "free": false,
+          "anchors": [
+            "快",
+            "块",
+            "怪",
+            "坏",
+            "摔"
+          ],
+          "mnemonic": "UAI 在 Y 键：快、块、怪"
+        },
+        "final:uan": {
+          "atomId": "final:uan",
+          "type": "final",
+          "pinyin": "uan",
+          "keys": [
+            "r"
+          ],
+          "free": false,
+          "anchors": [
+            "软"
+          ],
+          "mnemonic": "R + UAN = RUAN"
+        },
+        "final:uo": {
+          "atomId": "final:uo",
+          "type": "final",
+          "pinyin": "uo",
+          "keys": [
+            "o"
+          ],
+          "free": false,
+          "anchors": [
+            "说",
+            "多",
+            "过",
+            "或",
+            "所"
+          ],
+          "mnemonic": "UO 在 O 键：说、多、过"
+        },
+        "final:ou": {
+          "atomId": "final:ou",
+          "type": "final",
+          "pinyin": "ou",
+          "keys": [
+            "b"
+          ],
+          "free": false,
+          "anchors": [
+            "有",
+            "都",
+            "又",
+            "后",
+            "由"
+          ],
+          "mnemonic": "OU 在 B 键：有、都、又"
+        },
+        "final:ong": {
+          "atomId": "final:ong",
+          "type": "final",
+          "pinyin": "ong",
+          "keys": [
+            "s"
+          ],
+          "free": false,
+          "anchors": [
+            "送",
+            "宋",
+            "松",
+            "颂",
+            "耸"
+          ],
+          "mnemonic": "S + ONG = SONG"
+        },
+        "final:iong": {
+          "atomId": "final:iong",
+          "type": "final",
+          "pinyin": "iong",
+          "keys": [
+            "s"
+          ],
+          "free": false,
+          "anchors": [
+            "兄",
+            "雄",
+            "穷",
+            "胸",
+            "凶"
+          ],
+          "mnemonic": "IONG 在 S 键：兄、雄、穷"
+        }
+      },
+      "zeroExamples": [
+        {
+          "syllable": "a",
+          "char": "阿",
+          "tone": 1
+        },
+        {
+          "syllable": "ai",
+          "char": "爱",
+          "tone": 4
+        },
+        {
+          "syllable": "an",
+          "char": "按",
+          "tone": 4
+        },
+        {
+          "syllable": "ang",
+          "char": "昂",
+          "tone": 2
+        },
+        {
+          "syllable": "ao",
+          "char": "奥",
+          "tone": 4
+        },
+        {
+          "syllable": "e",
+          "char": "鄂",
+          "tone": 4
+        },
+        {
+          "syllable": "ei",
+          "char": "诶",
+          "tone": 1
+        },
+        {
+          "syllable": "en",
+          "char": "恩",
+          "tone": 1
+        },
+        {
+          "syllable": "eng",
+          "char": "鞥",
+          "tone": 1
+        },
+        {
+          "syllable": "er",
+          "char": "而",
+          "tone": 2
+        },
+        {
+          "syllable": "o",
+          "char": "哦",
+          "tone": 4
+        },
+        {
+          "syllable": "ou",
+          "char": "欧",
+          "tone": 1
+        }
+      ],
+      "tips": [
+        "本课零声母：a = AA、ai = AI、an = AN、ang = AH、ao = AO、e = EE 等（没有声母的音节也要按满两键）。",
+        "先准确后速度：连续两轮正确率 ≥95% 再冲速度。",
+        "盲打是提速前提：眼睛看字，不看键盘。",
+        "每天 10–15 分钟短练，再把双拼带进真实聊天/写笔记。"
+      ],
+      "passCriteria": {
+        "accuracy": 0.85,
+        "mode": "speed",
+        "minCpm": 45,
+        "starCpm": [
+          45,
+          60,
+          75
+        ]
+      },
+      "stageMinWords": {
+        "exam": 50
+      }
+    },
+    {
+      "id": "L6.1",
+      "chapterId": "ch-e",
+      "kind": "drill",
+      "title": "韵母 · ei",
+      "desc": "新键：韵母 ei",
+      "focusAtoms": [
+        "final:ei"
+      ],
+      "blockingAtoms": [
+        "final:ei"
+      ],
+      "nonBlockingAtoms": [],
+      "prerequisites": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou",
+        "final:ai",
+        "final:ao",
+        "final:an",
+        "final:ang",
+        "final:ia",
+        "final:ua",
+        "final:iao",
+        "final:ian",
+        "final:iang",
+        "final:uang",
+        "final:uai",
+        "final:uan",
+        "final:uo",
+        "final:ou",
+        "final:ong",
+        "final:iong"
+      ],
+      "wordPlan": {
+        "maxUnfamiliar": 0,
+        "lengthRange": [
+          2,
+          5
+        ]
+      },
+      "atomMeta": {
+        "final:ei": {
+          "atomId": "final:ei",
+          "type": "final",
+          "pinyin": "ei",
+          "keys": [
+            "z"
+          ],
+          "free": false,
+          "anchors": [
+            "贼"
+          ],
+          "mnemonic": "Z + EI = ZEI"
+        }
+      },
+      "zeroExamples": [],
+      "tips": [
+        "双字母韵母 ei，注意与 ai 的口型区别：ei 从 e 滑向 i。",
+        "e 家族先练 en/eng 前后鼻音，再复习整条家族。",
+        "把键位和字绑在一起记（字组结合），比背字母表牢固。"
+      ],
+      "passCriteria": {
+        "accuracy": 0.85,
+        "mode": "accuracy"
+      },
+      "stageMinWords": {
+        "single": 15,
+        "word": 15,
+        "exam": 25
+      }
+    },
+    {
+      "id": "L6.2",
+      "chapterId": "ch-e",
+      "kind": "drill",
+      "title": "韵母 · en",
+      "desc": "新键：韵母 en",
+      "focusAtoms": [
+        "final:en"
+      ],
+      "blockingAtoms": [
+        "final:en"
+      ],
+      "nonBlockingAtoms": [],
+      "prerequisites": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou",
+        "final:ai",
+        "final:ao",
+        "final:an",
+        "final:ang",
+        "final:ia",
+        "final:ua",
+        "final:iao",
+        "final:ian",
+        "final:iang",
+        "final:uang",
+        "final:uai",
+        "final:uan",
+        "final:uo",
+        "final:ou",
+        "final:ong",
+        "final:iong",
+        "final:ei"
+      ],
+      "wordPlan": {
+        "maxUnfamiliar": 0,
+        "lengthRange": [
+          2,
+          5
+        ]
+      },
+      "atomMeta": {
+        "final:en": {
+          "atomId": "final:en",
+          "type": "final",
+          "pinyin": "en",
+          "keys": [
+            "f"
+          ],
+          "free": false,
+          "anchors": [
+            "分",
+            "份",
+            "粉",
+            "愤",
+            "奋"
+          ],
+          "mnemonic": "F + EN = FEN"
+        }
+      },
+      "zeroExamples": [],
+      "tips": [
+        "前后鼻音对比：en 舌尖抵牙龈，eng 舌根抬软腭；多读「盆 / 棚」。",
+        "e 家族先练 en/eng 前后鼻音，再复习整条家族。",
+        "把键位和字绑在一起记（字组结合），比背字母表牢固。"
+      ],
+      "passCriteria": {
+        "accuracy": 0.85,
+        "mode": "accuracy"
+      },
+      "stageMinWords": {
+        "single": 15,
+        "word": 15,
+        "exam": 25
+      }
+    },
+    {
+      "id": "L6.3",
+      "chapterId": "ch-e",
+      "kind": "drill",
+      "title": "韵母 · eng",
+      "desc": "新键：韵母 eng（与 en 对比）",
+      "focusAtoms": [
+        "final:eng"
+      ],
+      "blockingAtoms": [
+        "final:eng"
+      ],
+      "nonBlockingAtoms": [],
+      "prerequisites": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou",
+        "final:ai",
+        "final:ao",
+        "final:an",
+        "final:ang",
+        "final:ia",
+        "final:ua",
+        "final:iao",
+        "final:ian",
+        "final:iang",
+        "final:uang",
+        "final:uai",
+        "final:uan",
+        "final:uo",
+        "final:ou",
+        "final:ong",
+        "final:iong",
+        "final:ei",
+        "final:en"
+      ],
+      "wordPlan": {
+        "maxUnfamiliar": 0,
+        "lengthRange": [
+          2,
+          5
+        ]
+      },
+      "atomMeta": {
+        "final:eng": {
+          "atomId": "final:eng",
+          "type": "final",
+          "pinyin": "eng",
+          "keys": [
+            "g"
+          ],
+          "free": false,
+          "anchors": [
+            "更",
+            "耕"
+          ],
+          "mnemonic": "G + ENG = GENG"
+        }
+      },
+      "zeroExamples": [],
+      "tips": [
+        "前后鼻音对比：eng 舌根抬起，与 en 成对练。",
+        "e 家族先练 en/eng 前后鼻音，再复习整条家族。",
+        "把键位和字绑在一起记（字组结合），比背字母表牢固。"
+      ],
+      "passCriteria": {
+        "accuracy": 0.85,
+        "mode": "accuracy"
+      },
+      "stageMinWords": {
+        "single": 15,
+        "word": 15,
+        "exam": 25
+      }
+    },
+    {
+      "id": "L6.4",
+      "chapterId": "ch-e",
+      "kind": "review",
+      "title": "复习 · e 家族",
+      "desc": "范围：e 家族 + 零声母 er",
+      "focusAtoms": [
+        "final:ei",
+        "final:en",
+        "final:eng",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er"
+      ],
+      "blockingAtoms": [
+        "final:ei",
+        "final:en",
+        "final:eng"
+      ],
+      "nonBlockingAtoms": [
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er"
+      ],
+      "prerequisites": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou",
+        "final:ai",
+        "final:ao",
+        "final:an",
+        "final:ang",
+        "final:ia",
+        "final:ua",
+        "final:iao",
+        "final:ian",
+        "final:iang",
+        "final:uang",
+        "final:uai",
+        "final:uan",
+        "final:uo",
+        "final:ou",
+        "final:ong",
+        "final:iong",
+        "final:ei",
+        "final:en",
+        "final:eng"
+      ],
+      "wordPlan": {
+        "maxUnfamiliar": 0,
+        "lengthRange": [
+          2,
+          5
+        ]
+      },
+      "atomMeta": {
+        "final:ei": {
+          "atomId": "final:ei",
+          "type": "final",
+          "pinyin": "ei",
+          "keys": [
+            "z"
+          ],
+          "free": false,
+          "anchors": [
+            "贼"
+          ],
+          "mnemonic": "Z + EI = ZEI"
+        },
+        "final:en": {
+          "atomId": "final:en",
+          "type": "final",
+          "pinyin": "en",
+          "keys": [
+            "f"
+          ],
+          "free": false,
+          "anchors": [
+            "分",
+            "份",
+            "粉",
+            "愤",
+            "奋"
+          ],
+          "mnemonic": "F + EN = FEN"
+        },
+        "final:eng": {
+          "atomId": "final:eng",
+          "type": "final",
+          "pinyin": "eng",
+          "keys": [
+            "g"
+          ],
+          "free": false,
+          "anchors": [
+            "更",
+            "耕"
+          ],
+          "mnemonic": "G + ENG = GENG"
+        },
+        "zero:ei": {
+          "atomId": "zero:ei",
+          "type": "zero",
+          "pinyin": "ei",
+          "keys": [
+            "ei"
+          ],
+          "free": true
+        },
+        "zero:en": {
+          "atomId": "zero:en",
+          "type": "zero",
+          "pinyin": "en",
+          "keys": [
+            "en"
+          ],
+          "free": true
+        },
+        "zero:eng": {
+          "atomId": "zero:eng",
+          "type": "zero",
+          "pinyin": "eng",
+          "keys": [
+            "eg"
+          ],
+          "free": false
+        },
+        "zero:er": {
+          "atomId": "zero:er",
+          "type": "zero",
+          "pinyin": "er",
+          "keys": [
+            "er"
+          ],
+          "free": true
+        }
+      },
+      "zeroExamples": [
+        {
+          "syllable": "ei",
+          "char": "诶",
+          "tone": 1
+        },
+        {
+          "syllable": "en",
+          "char": "恩",
+          "tone": 1
+        },
+        {
+          "syllable": "eng",
+          "char": "鞥",
+          "tone": 1
+        },
+        {
+          "syllable": "er",
+          "char": "而",
+          "tone": 2
+        }
+      ],
+      "tips": [
+        "e 家族：en/eng 前后鼻音对比；er 是零声母，单独成音。",
+        "本课零声母：ei = EI、en = EN、eng = EG、er = ER（没有声母的音节也要按满两键）。",
+        "先回忆再落指：看到拼音先在心里说出两键，再按键。",
+        "错得多的音节单独慢打 3 遍，比整段重刷更有效。"
+      ],
+      "passCriteria": {
+        "accuracy": 0.85,
+        "mode": "accuracy",
+        "minCpm": 45
+      },
+      "stageMinWords": {
+        "exam": 50
+      },
+      "reviewFamily": "e"
+    },
+    {
+      "id": "L7.1",
+      "chapterId": "ch-i",
+      "kind": "drill",
+      "title": "韵母 · in",
+      "desc": "新键：韵母 in",
+      "focusAtoms": [
+        "final:in"
+      ],
+      "blockingAtoms": [
+        "final:in"
+      ],
+      "nonBlockingAtoms": [],
+      "prerequisites": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou",
+        "final:ai",
+        "final:ao",
+        "final:an",
+        "final:ang",
+        "final:ia",
+        "final:ua",
+        "final:iao",
+        "final:ian",
+        "final:iang",
+        "final:uang",
+        "final:uai",
+        "final:uan",
+        "final:uo",
+        "final:ou",
+        "final:ong",
+        "final:iong",
+        "final:ei",
+        "final:en",
+        "final:eng"
+      ],
+      "wordPlan": {
+        "maxUnfamiliar": 0,
+        "lengthRange": [
+          2,
+          5
+        ]
+      },
+      "atomMeta": {
+        "final:in": {
+          "atomId": "final:in",
+          "type": "final",
+          "pinyin": "in",
+          "keys": [
+            "n"
+          ],
+          "free": false,
+          "anchors": [
+            "您",
+            "拰",
+            "脌"
+          ],
+          "mnemonic": "N + IN = NIN"
+        }
+      },
+      "zeroExamples": [],
+      "tips": [
+        "前后鼻音对比：in 舌尖抵牙龈，ing 舌根抬起；多读「金 / 京」。",
+        "i 家族完成后，27 个韵母只剩 u/ü 一组。",
+        "把键位和字绑在一起记（字组结合），比背字母表牢固。"
+      ],
+      "passCriteria": {
+        "accuracy": 0.85,
+        "mode": "accuracy"
+      },
+      "stageMinWords": {
+        "single": 15,
+        "word": 15,
+        "exam": 25
+      }
+    },
+    {
+      "id": "L7.2",
+      "chapterId": "ch-i",
+      "kind": "drill",
+      "title": "韵母 · ing",
+      "desc": "新键：韵母 ing（与 in 对比）",
+      "focusAtoms": [
+        "final:ing"
+      ],
+      "blockingAtoms": [
+        "final:ing"
+      ],
+      "nonBlockingAtoms": [],
+      "prerequisites": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou",
+        "final:ai",
+        "final:ao",
+        "final:an",
+        "final:ang",
+        "final:ia",
+        "final:ua",
+        "final:iao",
+        "final:ian",
+        "final:iang",
+        "final:uang",
+        "final:uai",
+        "final:uan",
+        "final:uo",
+        "final:ou",
+        "final:ong",
+        "final:iong",
+        "final:ei",
+        "final:en",
+        "final:eng",
+        "final:in"
+      ],
+      "wordPlan": {
+        "maxUnfamiliar": 0,
+        "lengthRange": [
+          2,
+          5
+        ]
+      },
+      "atomMeta": {
+        "final:ing": {
+          "atomId": "final:ing",
+          "type": "final",
+          "pinyin": "ing",
+          "keys": [
+            "y"
+          ],
+          "free": false,
+          "anchors": [
+            "应",
+            "英",
+            "营",
+            "硬",
+            "迎"
+          ],
+          "mnemonic": "Y + ING = YING"
+        }
+      },
+      "zeroExamples": [],
+      "tips": [
+        "同键提示：Y 键同时是 ing / uai；uai 在 L3.10 学。",
+        "前后鼻音对比：ing 舌根抬起收尾，与 in 成对练。",
+        "把键位和字绑在一起记（字组结合），比背字母表牢固。"
+      ],
+      "passCriteria": {
+        "accuracy": 0.85,
+        "mode": "accuracy"
+      },
+      "stageMinWords": {
+        "single": 15,
+        "word": 15,
+        "exam": 25
+      }
+    },
+    {
+      "id": "L7.3",
+      "chapterId": "ch-i",
+      "kind": "drill",
+      "title": "韵母 · ie",
+      "desc": "新键：韵母 ie",
+      "focusAtoms": [
+        "final:ie"
+      ],
+      "blockingAtoms": [
+        "final:ie"
+      ],
+      "nonBlockingAtoms": [],
+      "prerequisites": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou",
+        "final:ai",
+        "final:ao",
+        "final:an",
+        "final:ang",
+        "final:ia",
+        "final:ua",
+        "final:iao",
+        "final:ian",
+        "final:iang",
+        "final:uang",
+        "final:uai",
+        "final:uan",
+        "final:uo",
+        "final:ou",
+        "final:ong",
+        "final:iong",
+        "final:ei",
+        "final:en",
+        "final:eng",
+        "final:in",
+        "final:ing"
+      ],
+      "wordPlan": {
+        "maxUnfamiliar": 0,
+        "lengthRange": [
+          2,
+          5
+        ]
+      },
+      "atomMeta": {
+        "final:ie": {
+          "atomId": "final:ie",
+          "type": "final",
+          "pinyin": "ie",
+          "keys": [
+            "x"
+          ],
+          "free": false,
+          "anchors": [
+            "些",
+            "写",
+            "斜",
+            "谢",
+            "携"
+          ],
+          "mnemonic": "X + IE = XIE"
+        }
+      },
+      "zeroExamples": [],
+      "tips": [
+        "i 家族完成后，27 个韵母只剩 u/ü 一组。",
+        "把键位和字绑在一起记（字组结合），比背字母表牢固。",
+        "忘记键位时先想 5 秒，再看键位图，然后把这一键慢打 3 遍。"
+      ],
+      "passCriteria": {
+        "accuracy": 0.85,
+        "mode": "accuracy"
+      },
+      "stageMinWords": {
+        "single": 15,
+        "word": 15,
+        "exam": 25
+      }
+    },
+    {
+      "id": "L7.4",
+      "chapterId": "ch-i",
+      "kind": "drill",
+      "title": "韵母 · iu",
+      "desc": "新键：韵母 iu",
+      "focusAtoms": [
+        "final:iu"
+      ],
+      "blockingAtoms": [
+        "final:iu"
+      ],
+      "nonBlockingAtoms": [],
+      "prerequisites": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou",
+        "final:ai",
+        "final:ao",
+        "final:an",
+        "final:ang",
+        "final:ia",
+        "final:ua",
+        "final:iao",
+        "final:ian",
+        "final:iang",
+        "final:uang",
+        "final:uai",
+        "final:uan",
+        "final:uo",
+        "final:ou",
+        "final:ong",
+        "final:iong",
+        "final:ei",
+        "final:en",
+        "final:eng",
+        "final:in",
+        "final:ing",
+        "final:ie"
+      ],
+      "wordPlan": {
+        "maxUnfamiliar": 0,
+        "lengthRange": [
+          2,
+          5
+        ]
+      },
+      "atomMeta": {
+        "final:iu": {
+          "atomId": "final:iu",
+          "type": "final",
+          "pinyin": "iu",
+          "keys": [
+            "q"
+          ],
+          "free": false,
+          "anchors": [
+            "求",
+            "球",
+            "秋",
+            "丘"
+          ],
+          "mnemonic": "Q + IU = QIU"
+        }
+      },
+      "zeroExamples": [],
+      "tips": [
+        "i 家族完成后，27 个韵母只剩 u/ü 一组。",
+        "把键位和字绑在一起记（字组结合），比背字母表牢固。",
+        "忘记键位时先想 5 秒，再看键位图，然后把这一键慢打 3 遍。"
+      ],
+      "passCriteria": {
+        "accuracy": 0.85,
+        "mode": "accuracy"
+      },
+      "stageMinWords": {
+        "single": 15,
+        "word": 15,
+        "exam": 25
+      }
+    },
+    {
+      "id": "L7.5",
+      "chapterId": "ch-i",
+      "kind": "review",
+      "title": "复习 · i 家族",
+      "desc": "范围：i 家族",
+      "focusAtoms": [
+        "final:in",
+        "final:ing",
+        "final:ie",
+        "final:iu"
+      ],
+      "blockingAtoms": [
+        "final:in",
+        "final:ing",
+        "final:ie",
+        "final:iu"
+      ],
+      "nonBlockingAtoms": [],
+      "prerequisites": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou",
+        "final:ai",
+        "final:ao",
+        "final:an",
+        "final:ang",
+        "final:ia",
+        "final:ua",
+        "final:iao",
+        "final:ian",
+        "final:iang",
+        "final:uang",
+        "final:uai",
+        "final:uan",
+        "final:uo",
+        "final:ou",
+        "final:ong",
+        "final:iong",
+        "final:ei",
+        "final:en",
+        "final:eng",
+        "final:in",
+        "final:ing",
+        "final:ie",
+        "final:iu"
+      ],
+      "wordPlan": {
+        "maxUnfamiliar": 0,
+        "lengthRange": [
+          2,
+          5
+        ]
+      },
+      "atomMeta": {
+        "final:in": {
+          "atomId": "final:in",
+          "type": "final",
+          "pinyin": "in",
+          "keys": [
+            "n"
+          ],
+          "free": false,
+          "anchors": [
+            "您",
+            "拰",
+            "脌"
+          ],
+          "mnemonic": "N + IN = NIN"
+        },
+        "final:ing": {
+          "atomId": "final:ing",
+          "type": "final",
+          "pinyin": "ing",
+          "keys": [
+            "y"
+          ],
+          "free": false,
+          "anchors": [
+            "应",
+            "英",
+            "营",
+            "硬",
+            "迎"
+          ],
+          "mnemonic": "Y + ING = YING"
+        },
+        "final:ie": {
+          "atomId": "final:ie",
+          "type": "final",
+          "pinyin": "ie",
+          "keys": [
+            "x"
+          ],
+          "free": false,
+          "anchors": [
+            "些",
+            "写",
+            "斜",
+            "谢",
+            "携"
+          ],
+          "mnemonic": "X + IE = XIE"
+        },
+        "final:iu": {
+          "atomId": "final:iu",
+          "type": "final",
+          "pinyin": "iu",
+          "keys": [
+            "q"
+          ],
+          "free": false,
+          "anchors": [
+            "求",
+            "球",
+            "秋",
+            "丘"
+          ],
+          "mnemonic": "Q + IU = QIU"
+        }
+      },
+      "zeroExamples": [],
+      "tips": [
+        "i 家族：in/ing 前后鼻音对比；ie 与 iu 注意口型收放。",
+        "先回忆再落指：看到拼音先在心里说出两键，再按键。",
+        "错得多的音节单独慢打 3 遍，比整段重刷更有效。"
+      ],
+      "passCriteria": {
+        "accuracy": 0.85,
+        "mode": "accuracy",
+        "minCpm": 45
+      },
+      "stageMinWords": {
+        "exam": 50
+      },
+      "reviewFamily": "i"
+    },
+    {
+      "id": "L8.1",
+      "chapterId": "ch-u",
+      "kind": "drill",
+      "title": "韵母 · ui",
+      "desc": "新键：韵母 ui",
+      "focusAtoms": [
+        "final:ui"
+      ],
+      "blockingAtoms": [
+        "final:ui"
+      ],
+      "nonBlockingAtoms": [],
+      "prerequisites": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou",
+        "final:ai",
+        "final:ao",
+        "final:an",
+        "final:ang",
+        "final:ia",
+        "final:ua",
+        "final:iao",
+        "final:ian",
+        "final:iang",
+        "final:uang",
+        "final:uai",
+        "final:uan",
+        "final:uo",
+        "final:ou",
+        "final:ong",
+        "final:iong",
+        "final:ei",
+        "final:en",
+        "final:eng",
+        "final:in",
+        "final:ing",
+        "final:ie",
+        "final:iu"
+      ],
+      "wordPlan": {
+        "maxUnfamiliar": 0,
+        "lengthRange": [
+          2,
+          5
+        ]
+      },
+      "atomMeta": {
+        "final:ui": {
+          "atomId": "final:ui",
+          "type": "final",
+          "pinyin": "ui",
+          "keys": [
+            "v"
+          ],
+          "free": false,
+          "anchors": [
+            "对",
+            "会",
+            "最",
+            "谁",
+            "水"
+          ],
+          "mnemonic": "UI 在 V 键：对、会、最"
+        }
+      },
+      "zeroExamples": [],
+      "tips": [
+        "同键提示：V 键同时是 ui / v；v 在 L8.3 学。",
+        "ui = uei 的缩写：先按 u，再按 ui 所在键。",
+        "把键位和字绑在一起记（字组结合），比背字母表牢固。"
+      ],
+      "passCriteria": {
+        "accuracy": 0.85,
+        "mode": "accuracy"
+      },
+      "stageMinWords": {
+        "single": 15,
+        "word": 15,
+        "exam": 25
+      }
+    },
+    {
+      "id": "L8.2",
+      "chapterId": "ch-u",
+      "kind": "drill",
+      "title": "韵母 · un",
+      "desc": "新键：韵母 un",
+      "focusAtoms": [
+        "final:un"
+      ],
+      "blockingAtoms": [
+        "final:un"
+      ],
+      "nonBlockingAtoms": [],
+      "prerequisites": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou",
+        "final:ai",
+        "final:ao",
+        "final:an",
+        "final:ang",
+        "final:ia",
+        "final:ua",
+        "final:iao",
+        "final:ian",
+        "final:iang",
+        "final:uang",
+        "final:uai",
+        "final:uan",
+        "final:uo",
+        "final:ou",
+        "final:ong",
+        "final:iong",
+        "final:ei",
+        "final:en",
+        "final:eng",
+        "final:in",
+        "final:ing",
+        "final:ie",
+        "final:iu",
+        "final:ui"
+      ],
+      "wordPlan": {
+        "maxUnfamiliar": 0,
+        "lengthRange": [
+          2,
+          5
+        ]
+      },
+      "atomMeta": {
+        "final:un": {
+          "atomId": "final:un",
+          "type": "final",
+          "pinyin": "un",
+          "keys": [
+            "p"
+          ],
+          "free": false,
+          "anchors": [
+            "军",
+            "均",
+            "郡",
+            "群",
+            "村"
+          ],
+          "mnemonic": "UN 在 P 键：军、均、郡"
+        }
+      },
+      "zeroExamples": [],
+      "tips": [
+        "un = uen 的缩写：先按 u，再按 un 所在键。",
+        "u/ü 家族收尾：ui/un 缩写、üe 两种拼写。",
+        "把键位和字绑在一起记（字组结合），比背字母表牢固。"
+      ],
+      "passCriteria": {
+        "accuracy": 0.85,
+        "mode": "accuracy"
+      },
+      "stageMinWords": {
+        "single": 15,
+        "word": 15,
+        "exam": 25
+      }
+    },
+    {
+      "id": "L8.3",
+      "chapterId": "ch-u",
+      "kind": "drill",
+      "title": "韵母 · ü / üe / ve",
+      "desc": "新键：üe 的 ue / ve 两种拼写",
+      "focusAtoms": [
+        "final:ue",
+        "final:ve",
+        "final:v"
+      ],
+      "blockingAtoms": [
+        "final:ue",
+        "final:ve",
+        "final:v"
+      ],
+      "nonBlockingAtoms": [],
+      "prerequisites": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou",
+        "final:ai",
+        "final:ao",
+        "final:an",
+        "final:ang",
+        "final:ia",
+        "final:ua",
+        "final:iao",
+        "final:ian",
+        "final:iang",
+        "final:uang",
+        "final:uai",
+        "final:uan",
+        "final:uo",
+        "final:ou",
+        "final:ong",
+        "final:iong",
+        "final:ei",
+        "final:en",
+        "final:eng",
+        "final:in",
+        "final:ing",
+        "final:ie",
+        "final:iu",
+        "final:ui",
+        "final:un"
+      ],
+      "wordPlan": {
+        "maxUnfamiliar": 0,
+        "lengthRange": [
+          2,
+          5
+        ]
+      },
+      "atomMeta": {
+        "final:ue": {
+          "atomId": "final:ue",
+          "type": "final",
+          "pinyin": "ue",
+          "keys": [
+            "t"
+          ],
+          "free": false,
+          "anchors": [
+            "月",
+            "却",
+            "约",
+            "学",
+            "越"
+          ],
+          "mnemonic": "UE 在 T 键：月、却、约"
+        },
+        "final:ve": {
+          "atomId": "final:ve",
+          "type": "final",
+          "pinyin": "ve",
+          "keys": [
+            "t"
+          ],
+          "free": false,
+          "anchors": [
+            "略",
+            "掠"
+          ],
+          "mnemonic": "VE 在 T 键：略、掠"
+        },
+        "final:v": {
+          "atomId": "final:v",
+          "type": "final",
+          "pinyin": "v",
+          "keys": [
+            "v"
+          ],
+          "free": true,
+          "anchors": [
+            "女",
+            "率",
+            "绿",
+            "旅",
+            "律"
+          ],
+          "mnemonic": "V 在 V 键：女、率、绿"
+        }
+      },
+      "zeroExamples": [],
+      "tips": [
+        "同键双韵：T 键同时是 ue / ve；一个键记两个韵母，记「决 jué / 略 lüè」。",
+        "把键位和字绑在一起记（字组结合），比背字母表牢固。",
+        "忘记键位时先想 5 秒，再看键位图，然后把这一键慢打 3 遍。"
+      ],
+      "passCriteria": {
+        "accuracy": 0.85,
+        "mode": "accuracy"
+      },
+      "stageMinWords": {
+        "single": 15,
+        "word": 15,
+        "exam": 25
+      }
+    },
+    {
+      "id": "L8.4",
+      "chapterId": "ch-u",
+      "kind": "review",
+      "title": "复习 · u 与 ü 家族",
+      "desc": "范围：u 与 ü 家族（ui/un/ue/ve）",
+      "focusAtoms": [
+        "final:ui",
+        "final:un",
+        "final:ue",
+        "final:ve"
+      ],
+      "blockingAtoms": [
+        "final:ui",
+        "final:un",
+        "final:ue",
+        "final:ve"
+      ],
+      "nonBlockingAtoms": [],
+      "prerequisites": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou",
+        "final:ai",
+        "final:ao",
+        "final:an",
+        "final:ang",
+        "final:ia",
+        "final:ua",
+        "final:iao",
+        "final:ian",
+        "final:iang",
+        "final:uang",
+        "final:uai",
+        "final:uan",
+        "final:uo",
+        "final:ou",
+        "final:ong",
+        "final:iong",
+        "final:ei",
+        "final:en",
+        "final:eng",
+        "final:in",
+        "final:ing",
+        "final:ie",
+        "final:iu",
+        "final:ui",
+        "final:un",
+        "final:ue",
+        "final:ve",
+        "final:v"
+      ],
+      "wordPlan": {
+        "maxUnfamiliar": 0,
+        "lengthRange": [
+          2,
+          5
+        ]
+      },
+      "atomMeta": {
+        "final:ui": {
+          "atomId": "final:ui",
+          "type": "final",
+          "pinyin": "ui",
+          "keys": [
+            "v"
+          ],
+          "free": false,
+          "anchors": [
+            "对",
+            "会",
+            "最",
+            "谁",
+            "水"
+          ],
+          "mnemonic": "UI 在 V 键：对、会、最"
+        },
+        "final:un": {
+          "atomId": "final:un",
+          "type": "final",
+          "pinyin": "un",
+          "keys": [
+            "p"
+          ],
+          "free": false,
+          "anchors": [
+            "军",
+            "均",
+            "郡",
+            "群",
+            "村"
+          ],
+          "mnemonic": "UN 在 P 键：军、均、郡"
+        },
+        "final:ue": {
+          "atomId": "final:ue",
+          "type": "final",
+          "pinyin": "ue",
+          "keys": [
+            "t"
+          ],
+          "free": false,
+          "anchors": [
+            "月",
+            "却",
+            "约",
+            "学",
+            "越"
+          ],
+          "mnemonic": "UE 在 T 键：月、却、约"
+        },
+        "final:ve": {
+          "atomId": "final:ve",
+          "type": "final",
+          "pinyin": "ve",
+          "keys": [
+            "t"
+          ],
+          "free": false,
+          "anchors": [
+            "略",
+            "掠"
+          ],
+          "mnemonic": "VE 在 T 键：略、掠"
+        }
+      },
+      "zeroExamples": [],
+      "tips": [
+        "u 与 ü 家族：ui/un 是缩写；üe 有 ue / ve 两种拼写，n/l 后的 ü 用方案 ü 键。",
+        "先回忆再落指：看到拼音先在心里说出两键，再按键。",
+        "错得多的音节单独慢打 3 遍，比整段重刷更有效。"
+      ],
+      "passCriteria": {
+        "accuracy": 0.85,
+        "mode": "accuracy",
+        "minCpm": 45
+      },
+      "stageMinWords": {
+        "exam": 50
+      },
+      "reviewFamily": "u-ü"
+    },
+    {
+      "id": "L9.1",
+      "chapterId": "ch-sprint",
+      "kind": "review",
+      "title": "综合 · 混合练习",
+      "desc": "综合：全量混合练习",
+      "focusAtoms": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou",
+        "final:ai",
+        "final:ao",
+        "final:an",
+        "final:ang",
+        "final:ia",
+        "final:ua",
+        "final:iao",
+        "final:ian",
+        "final:iang",
+        "final:uang",
+        "final:uai",
+        "final:uan",
+        "final:uo",
+        "final:ou",
+        "final:ong",
+        "final:iong",
+        "final:ei",
+        "final:en",
+        "final:eng",
+        "final:in",
+        "final:ing",
+        "final:ie",
+        "final:iu",
+        "final:ui",
+        "final:un",
+        "final:ue",
+        "final:ve",
+        "final:v"
+      ],
+      "blockingAtoms": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "final:ai",
+        "final:ao",
+        "final:an",
+        "final:ang",
+        "final:ia",
+        "final:ua",
+        "final:iao",
+        "final:ian",
+        "final:iang",
+        "final:uang",
+        "final:uai",
+        "final:uan",
+        "final:uo",
+        "final:ou",
+        "final:ong",
+        "final:iong",
+        "final:ei",
+        "final:en",
+        "final:eng",
+        "final:in",
+        "final:ing",
+        "final:ie",
+        "final:iu",
+        "final:ui",
+        "final:un",
+        "final:ue",
+        "final:ve",
+        "final:v"
+      ],
+      "nonBlockingAtoms": [
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou"
+      ],
+      "prerequisites": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou",
+        "final:ai",
+        "final:ao",
+        "final:an",
+        "final:ang",
+        "final:ia",
+        "final:ua",
+        "final:iao",
+        "final:ian",
+        "final:iang",
+        "final:uang",
+        "final:uai",
+        "final:uan",
+        "final:uo",
+        "final:ou",
+        "final:ong",
+        "final:iong",
+        "final:ei",
+        "final:en",
+        "final:eng",
+        "final:in",
+        "final:ing",
+        "final:ie",
+        "final:iu",
+        "final:ui",
+        "final:un",
+        "final:ue",
+        "final:ve",
+        "final:v"
+      ],
+      "wordPlan": {
+        "maxUnfamiliar": 0,
+        "lengthRange": [
+          2,
+          5
+        ]
+      },
+      "atomMeta": {
+        "initial:zh": {
+          "atomId": "initial:zh",
+          "type": "initial",
+          "pinyin": "zh",
+          "keys": [
+            "v"
+          ],
+          "free": false,
+          "anchors": [
+            "追",
+            "锥",
+            "坠"
+          ],
+          "mnemonic": "ZH + UI = ZHUI（同在 V 键）"
+        },
+        "initial:ch": {
+          "atomId": "initial:ch",
+          "type": "initial",
+          "pinyin": "ch",
+          "keys": [
+            "i"
+          ],
+          "free": false,
+          "anchors": [
+            "吃",
+            "持",
+            "赤",
+            "迟",
+            "池"
+          ],
+          "mnemonic": "CH + I = CHI（同在 I 键）"
+        },
+        "initial:sh": {
+          "atomId": "initial:sh",
+          "type": "initial",
+          "pinyin": "sh",
+          "keys": [
+            "u"
+          ],
+          "free": false,
+          "anchors": [
+            "属",
+            "书",
+            "数",
+            "树",
+            "熟"
+          ],
+          "mnemonic": "SH + U = SHU（同在 U 键）"
+        },
+        "zero:a": {
+          "atomId": "zero:a",
+          "type": "zero",
+          "pinyin": "a",
+          "keys": [
+            "aa"
+          ],
+          "free": false
+        },
+        "zero:ai": {
+          "atomId": "zero:ai",
+          "type": "zero",
+          "pinyin": "ai",
+          "keys": [
+            "ai"
+          ],
+          "free": true
+        },
+        "zero:an": {
+          "atomId": "zero:an",
+          "type": "zero",
+          "pinyin": "an",
+          "keys": [
+            "an"
+          ],
+          "free": true
+        },
+        "zero:ang": {
+          "atomId": "zero:ang",
+          "type": "zero",
+          "pinyin": "ang",
+          "keys": [
+            "ah"
+          ],
+          "free": false
+        },
+        "zero:ao": {
+          "atomId": "zero:ao",
+          "type": "zero",
+          "pinyin": "ao",
+          "keys": [
+            "ao"
+          ],
+          "free": true
+        },
+        "zero:e": {
+          "atomId": "zero:e",
+          "type": "zero",
+          "pinyin": "e",
+          "keys": [
+            "ee"
+          ],
+          "free": false
+        },
+        "zero:ei": {
+          "atomId": "zero:ei",
+          "type": "zero",
+          "pinyin": "ei",
+          "keys": [
+            "ei"
+          ],
+          "free": true
+        },
+        "zero:en": {
+          "atomId": "zero:en",
+          "type": "zero",
+          "pinyin": "en",
+          "keys": [
+            "en"
+          ],
+          "free": true
+        },
+        "zero:eng": {
+          "atomId": "zero:eng",
+          "type": "zero",
+          "pinyin": "eng",
+          "keys": [
+            "eg"
+          ],
+          "free": false
+        },
+        "zero:er": {
+          "atomId": "zero:er",
+          "type": "zero",
+          "pinyin": "er",
+          "keys": [
+            "er"
+          ],
+          "free": true
+        },
+        "zero:o": {
+          "atomId": "zero:o",
+          "type": "zero",
+          "pinyin": "o",
+          "keys": [
+            "oo"
+          ],
+          "free": false
+        },
+        "zero:ou": {
+          "atomId": "zero:ou",
+          "type": "zero",
+          "pinyin": "ou",
+          "keys": [
+            "ou"
+          ],
+          "free": true
+        },
+        "final:ai": {
+          "atomId": "final:ai",
+          "type": "final",
+          "pinyin": "ai",
+          "keys": [
+            "l"
+          ],
+          "free": false,
+          "anchors": [
+            "来",
+            "赖",
+            "睐"
+          ],
+          "mnemonic": "L + AI = LAI"
+        },
+        "final:ao": {
+          "atomId": "final:ao",
+          "type": "final",
+          "pinyin": "ao",
+          "keys": [
+            "k"
+          ],
+          "free": false,
+          "anchors": [
+            "靠",
+            "考",
+            "烤"
+          ],
+          "mnemonic": "K + AO = KAO"
+        },
+        "final:an": {
+          "atomId": "final:an",
+          "type": "final",
+          "pinyin": "an",
+          "keys": [
+            "j"
+          ],
+          "free": false,
+          "anchors": [
+            "但",
+            "看",
+            "三",
+            "万",
+            "占"
+          ],
+          "mnemonic": "AN 在 J 键：但、看、三"
+        },
+        "final:ang": {
+          "atomId": "final:ang",
+          "type": "final",
+          "pinyin": "ang",
+          "keys": [
+            "h"
+          ],
+          "free": false,
+          "anchors": [
+            "杭",
+            "航"
+          ],
+          "mnemonic": "H + ANG = HANG"
+        },
+        "final:ia": {
+          "atomId": "final:ia",
+          "type": "final",
+          "pinyin": "ia",
+          "keys": [
+            "w"
+          ],
+          "free": false,
+          "anchors": [
+            "下",
+            "家",
+            "加",
+            "辖",
+            "架"
+          ],
+          "mnemonic": "IA 在 W 键：下、家、加"
+        },
+        "final:ua": {
+          "atomId": "final:ua",
+          "type": "final",
+          "pinyin": "ua",
+          "keys": [
+            "w"
+          ],
+          "free": false,
+          "anchors": [
+            "话",
+            "花",
+            "画",
+            "化",
+            "挂"
+          ],
+          "mnemonic": "UA 在 W 键：话、花、画"
+        },
+        "final:iao": {
+          "atomId": "final:iao",
+          "type": "final",
+          "pinyin": "iao",
+          "keys": [
+            "c"
+          ],
+          "free": false,
+          "anchors": [
+            "了",
+            "小",
+            "叫",
+            "笑",
+            "较"
+          ],
+          "mnemonic": "IAO 在 C 键：了、小、叫"
+        },
+        "final:ian": {
+          "atomId": "final:ian",
+          "type": "final",
+          "pinyin": "ian",
+          "keys": [
+            "m"
+          ],
+          "free": false,
+          "anchors": [
+            "面",
+            "免",
+            "棉",
+            "沔",
+            "眠"
+          ],
+          "mnemonic": "M + IAN = MIAN"
+        },
+        "final:iang": {
+          "atomId": "final:iang",
+          "type": "final",
+          "pinyin": "iang",
+          "keys": [
+            "d"
+          ],
+          "free": false,
+          "anchors": [
+            "将",
+            "向",
+            "想",
+            "两",
+            "像"
+          ],
+          "mnemonic": "IANG 在 D 键：将、向、想"
+        },
+        "final:uang": {
+          "atomId": "final:uang",
+          "type": "final",
+          "pinyin": "uang",
+          "keys": [
+            "d"
+          ],
+          "free": false,
+          "anchors": [
+            "黄",
+            "光",
+            "双",
+            "装",
+            "状"
+          ],
+          "mnemonic": "UANG 在 D 键：黄、光、双"
+        },
+        "final:uai": {
+          "atomId": "final:uai",
+          "type": "final",
+          "pinyin": "uai",
+          "keys": [
+            "y"
+          ],
+          "free": false,
+          "anchors": [
+            "快",
+            "块",
+            "怪",
+            "坏",
+            "摔"
+          ],
+          "mnemonic": "UAI 在 Y 键：快、块、怪"
+        },
+        "final:uan": {
+          "atomId": "final:uan",
+          "type": "final",
+          "pinyin": "uan",
+          "keys": [
+            "r"
+          ],
+          "free": false,
+          "anchors": [
+            "软"
+          ],
+          "mnemonic": "R + UAN = RUAN"
+        },
+        "final:uo": {
+          "atomId": "final:uo",
+          "type": "final",
+          "pinyin": "uo",
+          "keys": [
+            "o"
+          ],
+          "free": false,
+          "anchors": [
+            "说",
+            "多",
+            "过",
+            "或",
+            "所"
+          ],
+          "mnemonic": "UO 在 O 键：说、多、过"
+        },
+        "final:ou": {
+          "atomId": "final:ou",
+          "type": "final",
+          "pinyin": "ou",
+          "keys": [
+            "b"
+          ],
+          "free": false,
+          "anchors": [
+            "有",
+            "都",
+            "又",
+            "后",
+            "由"
+          ],
+          "mnemonic": "OU 在 B 键：有、都、又"
+        },
+        "final:ong": {
+          "atomId": "final:ong",
+          "type": "final",
+          "pinyin": "ong",
+          "keys": [
+            "s"
+          ],
+          "free": false,
+          "anchors": [
+            "送",
+            "宋",
+            "松",
+            "颂",
+            "耸"
+          ],
+          "mnemonic": "S + ONG = SONG"
+        },
+        "final:iong": {
+          "atomId": "final:iong",
+          "type": "final",
+          "pinyin": "iong",
+          "keys": [
+            "s"
+          ],
+          "free": false,
+          "anchors": [
+            "兄",
+            "雄",
+            "穷",
+            "胸",
+            "凶"
+          ],
+          "mnemonic": "IONG 在 S 键：兄、雄、穷"
+        },
+        "final:ei": {
+          "atomId": "final:ei",
+          "type": "final",
+          "pinyin": "ei",
+          "keys": [
+            "z"
+          ],
+          "free": false,
+          "anchors": [
+            "贼"
+          ],
+          "mnemonic": "Z + EI = ZEI"
+        },
+        "final:en": {
+          "atomId": "final:en",
+          "type": "final",
+          "pinyin": "en",
+          "keys": [
+            "f"
+          ],
+          "free": false,
+          "anchors": [
+            "分",
+            "份",
+            "粉",
+            "愤",
+            "奋"
+          ],
+          "mnemonic": "F + EN = FEN"
+        },
+        "final:eng": {
+          "atomId": "final:eng",
+          "type": "final",
+          "pinyin": "eng",
+          "keys": [
+            "g"
+          ],
+          "free": false,
+          "anchors": [
+            "更",
+            "耕"
+          ],
+          "mnemonic": "G + ENG = GENG"
+        },
+        "final:in": {
+          "atomId": "final:in",
+          "type": "final",
+          "pinyin": "in",
+          "keys": [
+            "n"
+          ],
+          "free": false,
+          "anchors": [
+            "您",
+            "拰",
+            "脌"
+          ],
+          "mnemonic": "N + IN = NIN"
+        },
+        "final:ing": {
+          "atomId": "final:ing",
+          "type": "final",
+          "pinyin": "ing",
+          "keys": [
+            "y"
+          ],
+          "free": false,
+          "anchors": [
+            "应",
+            "英",
+            "营",
+            "硬",
+            "迎"
+          ],
+          "mnemonic": "Y + ING = YING"
+        },
+        "final:ie": {
+          "atomId": "final:ie",
+          "type": "final",
+          "pinyin": "ie",
+          "keys": [
+            "x"
+          ],
+          "free": false,
+          "anchors": [
+            "些",
+            "写",
+            "斜",
+            "谢",
+            "携"
+          ],
+          "mnemonic": "X + IE = XIE"
+        },
+        "final:iu": {
+          "atomId": "final:iu",
+          "type": "final",
+          "pinyin": "iu",
+          "keys": [
+            "q"
+          ],
+          "free": false,
+          "anchors": [
+            "求",
+            "球",
+            "秋",
+            "丘"
+          ],
+          "mnemonic": "Q + IU = QIU"
+        },
+        "final:ui": {
+          "atomId": "final:ui",
+          "type": "final",
+          "pinyin": "ui",
+          "keys": [
+            "v"
+          ],
+          "free": false,
+          "anchors": [
+            "对",
+            "会",
+            "最",
+            "谁",
+            "水"
+          ],
+          "mnemonic": "UI 在 V 键：对、会、最"
+        },
+        "final:un": {
+          "atomId": "final:un",
+          "type": "final",
+          "pinyin": "un",
+          "keys": [
+            "p"
+          ],
+          "free": false,
+          "anchors": [
+            "军",
+            "均",
+            "郡",
+            "群",
+            "村"
+          ],
+          "mnemonic": "UN 在 P 键：军、均、郡"
+        },
+        "final:ue": {
+          "atomId": "final:ue",
+          "type": "final",
+          "pinyin": "ue",
+          "keys": [
+            "t"
+          ],
+          "free": false,
+          "anchors": [
+            "月",
+            "却",
+            "约",
+            "学",
+            "越"
+          ],
+          "mnemonic": "UE 在 T 键：月、却、约"
+        },
+        "final:ve": {
+          "atomId": "final:ve",
+          "type": "final",
+          "pinyin": "ve",
+          "keys": [
+            "t"
+          ],
+          "free": false,
+          "anchors": [
+            "略",
+            "掠"
+          ],
+          "mnemonic": "VE 在 T 键：略、掠"
+        },
+        "final:v": {
+          "atomId": "final:v",
+          "type": "final",
+          "pinyin": "v",
+          "keys": [
+            "v"
+          ],
+          "free": true,
+          "anchors": [
+            "女",
+            "率",
+            "绿",
+            "旅",
+            "律"
+          ],
+          "mnemonic": "V 在 V 键：女、率、绿"
+        }
+      },
+      "zeroExamples": [
+        {
+          "syllable": "a",
+          "char": "阿",
+          "tone": 1
+        },
+        {
+          "syllable": "ai",
+          "char": "爱",
+          "tone": 4
+        },
+        {
+          "syllable": "an",
+          "char": "按",
+          "tone": 4
+        },
+        {
+          "syllable": "ang",
+          "char": "昂",
+          "tone": 2
+        },
+        {
+          "syllable": "ao",
+          "char": "奥",
+          "tone": 4
+        },
+        {
+          "syllable": "e",
+          "char": "鄂",
+          "tone": 4
+        },
+        {
+          "syllable": "ei",
+          "char": "诶",
+          "tone": 1
+        },
+        {
+          "syllable": "en",
+          "char": "恩",
+          "tone": 1
+        },
+        {
+          "syllable": "eng",
+          "char": "鞥",
+          "tone": 1
+        },
+        {
+          "syllable": "er",
+          "char": "而",
+          "tone": 2
+        },
+        {
+          "syllable": "o",
+          "char": "哦",
+          "tone": 4
+        },
+        {
+          "syllable": "ou",
+          "char": "欧",
+          "tone": 1
+        }
+      ],
+      "tips": [
+        "本课零声母：a = AA、ai = AI、an = AN、ang = AH、ao = AO、e = EE 等（没有声母的音节也要按满两键）。",
+        "混合练习检验「看字 → 两键」的反射；准确率优先于速度。",
+        "卡壳时先回忆 5 秒再看提示，把卡住的拼音记进“漏洞表”。"
+      ],
+      "passCriteria": {
+        "accuracy": 0.85,
+        "mode": "accuracy",
+        "minCpm": 45
+      },
+      "stageMinWords": {
+        "exam": 50
+      }
+    },
+    {
+      "id": "L9.2",
+      "chapterId": "ch-sprint",
+      "kind": "review",
+      "title": "综合 · 速度练习",
+      "desc": "速度：全量速度冲刺，目标 ≥45 WPM",
+      "focusAtoms": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou",
+        "final:ai",
+        "final:ao",
+        "final:an",
+        "final:ang",
+        "final:ia",
+        "final:ua",
+        "final:iao",
+        "final:ian",
+        "final:iang",
+        "final:uang",
+        "final:uai",
+        "final:uan",
+        "final:uo",
+        "final:ou",
+        "final:ong",
+        "final:iong",
+        "final:ei",
+        "final:en",
+        "final:eng",
+        "final:in",
+        "final:ing",
+        "final:ie",
+        "final:iu",
+        "final:ui",
+        "final:un",
+        "final:ue",
+        "final:ve",
+        "final:v"
+      ],
+      "blockingAtoms": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "final:ai",
+        "final:ao",
+        "final:an",
+        "final:ang",
+        "final:ia",
+        "final:ua",
+        "final:iao",
+        "final:ian",
+        "final:iang",
+        "final:uang",
+        "final:uai",
+        "final:uan",
+        "final:uo",
+        "final:ou",
+        "final:ong",
+        "final:iong",
+        "final:ei",
+        "final:en",
+        "final:eng",
+        "final:in",
+        "final:ing",
+        "final:ie",
+        "final:iu",
+        "final:ui",
+        "final:un",
+        "final:ue",
+        "final:ve",
+        "final:v"
+      ],
+      "nonBlockingAtoms": [
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou"
+      ],
+      "prerequisites": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou",
+        "final:ai",
+        "final:ao",
+        "final:an",
+        "final:ang",
+        "final:ia",
+        "final:ua",
+        "final:iao",
+        "final:ian",
+        "final:iang",
+        "final:uang",
+        "final:uai",
+        "final:uan",
+        "final:uo",
+        "final:ou",
+        "final:ong",
+        "final:iong",
+        "final:ei",
+        "final:en",
+        "final:eng",
+        "final:in",
+        "final:ing",
+        "final:ie",
+        "final:iu",
+        "final:ui",
+        "final:un",
+        "final:ue",
+        "final:ve",
+        "final:v"
+      ],
+      "wordPlan": {
+        "maxUnfamiliar": 0,
+        "lengthRange": [
+          2,
+          5
+        ]
+      },
+      "atomMeta": {
+        "initial:zh": {
+          "atomId": "initial:zh",
+          "type": "initial",
+          "pinyin": "zh",
+          "keys": [
+            "v"
+          ],
+          "free": false,
+          "anchors": [
+            "追",
+            "锥",
+            "坠"
+          ],
+          "mnemonic": "ZH + UI = ZHUI（同在 V 键）"
+        },
+        "initial:ch": {
+          "atomId": "initial:ch",
+          "type": "initial",
+          "pinyin": "ch",
+          "keys": [
+            "i"
+          ],
+          "free": false,
+          "anchors": [
+            "吃",
+            "持",
+            "赤",
+            "迟",
+            "池"
+          ],
+          "mnemonic": "CH + I = CHI（同在 I 键）"
+        },
+        "initial:sh": {
+          "atomId": "initial:sh",
+          "type": "initial",
+          "pinyin": "sh",
+          "keys": [
+            "u"
+          ],
+          "free": false,
+          "anchors": [
+            "属",
+            "书",
+            "数",
+            "树",
+            "熟"
+          ],
+          "mnemonic": "SH + U = SHU（同在 U 键）"
+        },
+        "zero:a": {
+          "atomId": "zero:a",
+          "type": "zero",
+          "pinyin": "a",
+          "keys": [
+            "aa"
+          ],
+          "free": false
+        },
+        "zero:ai": {
+          "atomId": "zero:ai",
+          "type": "zero",
+          "pinyin": "ai",
+          "keys": [
+            "ai"
+          ],
+          "free": true
+        },
+        "zero:an": {
+          "atomId": "zero:an",
+          "type": "zero",
+          "pinyin": "an",
+          "keys": [
+            "an"
+          ],
+          "free": true
+        },
+        "zero:ang": {
+          "atomId": "zero:ang",
+          "type": "zero",
+          "pinyin": "ang",
+          "keys": [
+            "ah"
+          ],
+          "free": false
+        },
+        "zero:ao": {
+          "atomId": "zero:ao",
+          "type": "zero",
+          "pinyin": "ao",
+          "keys": [
+            "ao"
+          ],
+          "free": true
+        },
+        "zero:e": {
+          "atomId": "zero:e",
+          "type": "zero",
+          "pinyin": "e",
+          "keys": [
+            "ee"
+          ],
+          "free": false
+        },
+        "zero:ei": {
+          "atomId": "zero:ei",
+          "type": "zero",
+          "pinyin": "ei",
+          "keys": [
+            "ei"
+          ],
+          "free": true
+        },
+        "zero:en": {
+          "atomId": "zero:en",
+          "type": "zero",
+          "pinyin": "en",
+          "keys": [
+            "en"
+          ],
+          "free": true
+        },
+        "zero:eng": {
+          "atomId": "zero:eng",
+          "type": "zero",
+          "pinyin": "eng",
+          "keys": [
+            "eg"
+          ],
+          "free": false
+        },
+        "zero:er": {
+          "atomId": "zero:er",
+          "type": "zero",
+          "pinyin": "er",
+          "keys": [
+            "er"
+          ],
+          "free": true
+        },
+        "zero:o": {
+          "atomId": "zero:o",
+          "type": "zero",
+          "pinyin": "o",
+          "keys": [
+            "oo"
+          ],
+          "free": false
+        },
+        "zero:ou": {
+          "atomId": "zero:ou",
+          "type": "zero",
+          "pinyin": "ou",
+          "keys": [
+            "ou"
+          ],
+          "free": true
+        },
+        "final:ai": {
+          "atomId": "final:ai",
+          "type": "final",
+          "pinyin": "ai",
+          "keys": [
+            "l"
+          ],
+          "free": false,
+          "anchors": [
+            "来",
+            "赖",
+            "睐"
+          ],
+          "mnemonic": "L + AI = LAI"
+        },
+        "final:ao": {
+          "atomId": "final:ao",
+          "type": "final",
+          "pinyin": "ao",
+          "keys": [
+            "k"
+          ],
+          "free": false,
+          "anchors": [
+            "靠",
+            "考",
+            "烤"
+          ],
+          "mnemonic": "K + AO = KAO"
+        },
+        "final:an": {
+          "atomId": "final:an",
+          "type": "final",
+          "pinyin": "an",
+          "keys": [
+            "j"
+          ],
+          "free": false,
+          "anchors": [
+            "但",
+            "看",
+            "三",
+            "万",
+            "占"
+          ],
+          "mnemonic": "AN 在 J 键：但、看、三"
+        },
+        "final:ang": {
+          "atomId": "final:ang",
+          "type": "final",
+          "pinyin": "ang",
+          "keys": [
+            "h"
+          ],
+          "free": false,
+          "anchors": [
+            "杭",
+            "航"
+          ],
+          "mnemonic": "H + ANG = HANG"
+        },
+        "final:ia": {
+          "atomId": "final:ia",
+          "type": "final",
+          "pinyin": "ia",
+          "keys": [
+            "w"
+          ],
+          "free": false,
+          "anchors": [
+            "下",
+            "家",
+            "加",
+            "辖",
+            "架"
+          ],
+          "mnemonic": "IA 在 W 键：下、家、加"
+        },
+        "final:ua": {
+          "atomId": "final:ua",
+          "type": "final",
+          "pinyin": "ua",
+          "keys": [
+            "w"
+          ],
+          "free": false,
+          "anchors": [
+            "话",
+            "花",
+            "画",
+            "化",
+            "挂"
+          ],
+          "mnemonic": "UA 在 W 键：话、花、画"
+        },
+        "final:iao": {
+          "atomId": "final:iao",
+          "type": "final",
+          "pinyin": "iao",
+          "keys": [
+            "c"
+          ],
+          "free": false,
+          "anchors": [
+            "了",
+            "小",
+            "叫",
+            "笑",
+            "较"
+          ],
+          "mnemonic": "IAO 在 C 键：了、小、叫"
+        },
+        "final:ian": {
+          "atomId": "final:ian",
+          "type": "final",
+          "pinyin": "ian",
+          "keys": [
+            "m"
+          ],
+          "free": false,
+          "anchors": [
+            "面",
+            "免",
+            "棉",
+            "沔",
+            "眠"
+          ],
+          "mnemonic": "M + IAN = MIAN"
+        },
+        "final:iang": {
+          "atomId": "final:iang",
+          "type": "final",
+          "pinyin": "iang",
+          "keys": [
+            "d"
+          ],
+          "free": false,
+          "anchors": [
+            "将",
+            "向",
+            "想",
+            "两",
+            "像"
+          ],
+          "mnemonic": "IANG 在 D 键：将、向、想"
+        },
+        "final:uang": {
+          "atomId": "final:uang",
+          "type": "final",
+          "pinyin": "uang",
+          "keys": [
+            "d"
+          ],
+          "free": false,
+          "anchors": [
+            "黄",
+            "光",
+            "双",
+            "装",
+            "状"
+          ],
+          "mnemonic": "UANG 在 D 键：黄、光、双"
+        },
+        "final:uai": {
+          "atomId": "final:uai",
+          "type": "final",
+          "pinyin": "uai",
+          "keys": [
+            "y"
+          ],
+          "free": false,
+          "anchors": [
+            "快",
+            "块",
+            "怪",
+            "坏",
+            "摔"
+          ],
+          "mnemonic": "UAI 在 Y 键：快、块、怪"
+        },
+        "final:uan": {
+          "atomId": "final:uan",
+          "type": "final",
+          "pinyin": "uan",
+          "keys": [
+            "r"
+          ],
+          "free": false,
+          "anchors": [
+            "软"
+          ],
+          "mnemonic": "R + UAN = RUAN"
+        },
+        "final:uo": {
+          "atomId": "final:uo",
+          "type": "final",
+          "pinyin": "uo",
+          "keys": [
+            "o"
+          ],
+          "free": false,
+          "anchors": [
+            "说",
+            "多",
+            "过",
+            "或",
+            "所"
+          ],
+          "mnemonic": "UO 在 O 键：说、多、过"
+        },
+        "final:ou": {
+          "atomId": "final:ou",
+          "type": "final",
+          "pinyin": "ou",
+          "keys": [
+            "b"
+          ],
+          "free": false,
+          "anchors": [
+            "有",
+            "都",
+            "又",
+            "后",
+            "由"
+          ],
+          "mnemonic": "OU 在 B 键：有、都、又"
+        },
+        "final:ong": {
+          "atomId": "final:ong",
+          "type": "final",
+          "pinyin": "ong",
+          "keys": [
+            "s"
+          ],
+          "free": false,
+          "anchors": [
+            "送",
+            "宋",
+            "松",
+            "颂",
+            "耸"
+          ],
+          "mnemonic": "S + ONG = SONG"
+        },
+        "final:iong": {
+          "atomId": "final:iong",
+          "type": "final",
+          "pinyin": "iong",
+          "keys": [
+            "s"
+          ],
+          "free": false,
+          "anchors": [
+            "兄",
+            "雄",
+            "穷",
+            "胸",
+            "凶"
+          ],
+          "mnemonic": "IONG 在 S 键：兄、雄、穷"
+        },
+        "final:ei": {
+          "atomId": "final:ei",
+          "type": "final",
+          "pinyin": "ei",
+          "keys": [
+            "z"
+          ],
+          "free": false,
+          "anchors": [
+            "贼"
+          ],
+          "mnemonic": "Z + EI = ZEI"
+        },
+        "final:en": {
+          "atomId": "final:en",
+          "type": "final",
+          "pinyin": "en",
+          "keys": [
+            "f"
+          ],
+          "free": false,
+          "anchors": [
+            "分",
+            "份",
+            "粉",
+            "愤",
+            "奋"
+          ],
+          "mnemonic": "F + EN = FEN"
+        },
+        "final:eng": {
+          "atomId": "final:eng",
+          "type": "final",
+          "pinyin": "eng",
+          "keys": [
+            "g"
+          ],
+          "free": false,
+          "anchors": [
+            "更",
+            "耕"
+          ],
+          "mnemonic": "G + ENG = GENG"
+        },
+        "final:in": {
+          "atomId": "final:in",
+          "type": "final",
+          "pinyin": "in",
+          "keys": [
+            "n"
+          ],
+          "free": false,
+          "anchors": [
+            "您",
+            "拰",
+            "脌"
+          ],
+          "mnemonic": "N + IN = NIN"
+        },
+        "final:ing": {
+          "atomId": "final:ing",
+          "type": "final",
+          "pinyin": "ing",
+          "keys": [
+            "y"
+          ],
+          "free": false,
+          "anchors": [
+            "应",
+            "英",
+            "营",
+            "硬",
+            "迎"
+          ],
+          "mnemonic": "Y + ING = YING"
+        },
+        "final:ie": {
+          "atomId": "final:ie",
+          "type": "final",
+          "pinyin": "ie",
+          "keys": [
+            "x"
+          ],
+          "free": false,
+          "anchors": [
+            "些",
+            "写",
+            "斜",
+            "谢",
+            "携"
+          ],
+          "mnemonic": "X + IE = XIE"
+        },
+        "final:iu": {
+          "atomId": "final:iu",
+          "type": "final",
+          "pinyin": "iu",
+          "keys": [
+            "q"
+          ],
+          "free": false,
+          "anchors": [
+            "求",
+            "球",
+            "秋",
+            "丘"
+          ],
+          "mnemonic": "Q + IU = QIU"
+        },
+        "final:ui": {
+          "atomId": "final:ui",
+          "type": "final",
+          "pinyin": "ui",
+          "keys": [
+            "v"
+          ],
+          "free": false,
+          "anchors": [
+            "对",
+            "会",
+            "最",
+            "谁",
+            "水"
+          ],
+          "mnemonic": "UI 在 V 键：对、会、最"
+        },
+        "final:un": {
+          "atomId": "final:un",
+          "type": "final",
+          "pinyin": "un",
+          "keys": [
+            "p"
+          ],
+          "free": false,
+          "anchors": [
+            "军",
+            "均",
+            "郡",
+            "群",
+            "村"
+          ],
+          "mnemonic": "UN 在 P 键：军、均、郡"
+        },
+        "final:ue": {
+          "atomId": "final:ue",
+          "type": "final",
+          "pinyin": "ue",
+          "keys": [
+            "t"
+          ],
+          "free": false,
+          "anchors": [
+            "月",
+            "却",
+            "约",
+            "学",
+            "越"
+          ],
+          "mnemonic": "UE 在 T 键：月、却、约"
+        },
+        "final:ve": {
+          "atomId": "final:ve",
+          "type": "final",
+          "pinyin": "ve",
+          "keys": [
+            "t"
+          ],
+          "free": false,
+          "anchors": [
+            "略",
+            "掠"
+          ],
+          "mnemonic": "VE 在 T 键：略、掠"
+        },
+        "final:v": {
+          "atomId": "final:v",
+          "type": "final",
+          "pinyin": "v",
+          "keys": [
+            "v"
+          ],
+          "free": true,
+          "anchors": [
+            "女",
+            "率",
+            "绿",
+            "旅",
+            "律"
+          ],
+          "mnemonic": "V 在 V 键：女、率、绿"
+        }
+      },
+      "zeroExamples": [
+        {
+          "syllable": "a",
+          "char": "阿",
+          "tone": 1
+        },
+        {
+          "syllable": "ai",
+          "char": "爱",
+          "tone": 4
+        },
+        {
+          "syllable": "an",
+          "char": "按",
+          "tone": 4
+        },
+        {
+          "syllable": "ang",
+          "char": "昂",
+          "tone": 2
+        },
+        {
+          "syllable": "ao",
+          "char": "奥",
+          "tone": 4
+        },
+        {
+          "syllable": "e",
+          "char": "鄂",
+          "tone": 4
+        },
+        {
+          "syllable": "ei",
+          "char": "诶",
+          "tone": 1
+        },
+        {
+          "syllable": "en",
+          "char": "恩",
+          "tone": 1
+        },
+        {
+          "syllable": "eng",
+          "char": "鞥",
+          "tone": 1
+        },
+        {
+          "syllable": "er",
+          "char": "而",
+          "tone": 2
+        },
+        {
+          "syllable": "o",
+          "char": "哦",
+          "tone": 4
+        },
+        {
+          "syllable": "ou",
+          "char": "欧",
+          "tone": 1
+        }
+      ],
+      "tips": [
+        "本课零声母：a = AA、ai = AI、an = AN、ang = AH、ao = AO、e = EE 等（没有声母的音节也要按满两键）。",
+        "先准确后速度：连续两轮正确率 ≥95% 再冲速度。",
+        "盲打是提速前提：眼睛看字，不看键盘。",
+        "每天 10–15 分钟短练，再把双拼带进真实聊天/写笔记。"
+      ],
+      "passCriteria": {
+        "accuracy": 0.85,
+        "mode": "speed",
+        "minCpm": 45,
+        "starCpm": [
+          45,
+          60,
+          75
+        ]
+      },
+      "stageMinWords": {
+        "exam": 50
+      }
+    },
+    {
+      "id": "L10.1",
+      "chapterId": "ch-exam",
+      "kind": "exam",
+      "title": "通关 · 最终考核",
+      "desc": "全遮挡 + 限时；正确率与速度同时分档（准确率 85/90/95，速度 45/60/75 WPM）",
+      "focusAtoms": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou",
+        "final:ai",
+        "final:ao",
+        "final:an",
+        "final:ang",
+        "final:ia",
+        "final:ua",
+        "final:iao",
+        "final:ian",
+        "final:iang",
+        "final:uang",
+        "final:uai",
+        "final:uan",
+        "final:uo",
+        "final:ou",
+        "final:ong",
+        "final:iong",
+        "final:ei",
+        "final:en",
+        "final:eng",
+        "final:in",
+        "final:ing",
+        "final:ie",
+        "final:iu",
+        "final:ui",
+        "final:un",
+        "final:ue",
+        "final:ve",
+        "final:v"
+      ],
+      "blockingAtoms": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "final:ai",
+        "final:ao",
+        "final:an",
+        "final:ang",
+        "final:ia",
+        "final:ua",
+        "final:iao",
+        "final:ian",
+        "final:iang",
+        "final:uang",
+        "final:uai",
+        "final:uan",
+        "final:uo",
+        "final:ou",
+        "final:ong",
+        "final:iong",
+        "final:ei",
+        "final:en",
+        "final:eng",
+        "final:in",
+        "final:ing",
+        "final:ie",
+        "final:iu",
+        "final:ui",
+        "final:un",
+        "final:ue",
+        "final:ve",
+        "final:v"
+      ],
+      "nonBlockingAtoms": [
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou"
+      ],
+      "prerequisites": [
+        "initial:zh",
+        "initial:ch",
+        "initial:sh",
+        "zero:a",
+        "zero:ai",
+        "zero:an",
+        "zero:ang",
+        "zero:ao",
+        "zero:e",
+        "zero:ei",
+        "zero:en",
+        "zero:eng",
+        "zero:er",
+        "zero:o",
+        "zero:ou",
+        "final:ai",
+        "final:ao",
+        "final:an",
+        "final:ang",
+        "final:ia",
+        "final:ua",
+        "final:iao",
+        "final:ian",
+        "final:iang",
+        "final:uang",
+        "final:uai",
+        "final:uan",
+        "final:uo",
+        "final:ou",
+        "final:ong",
+        "final:iong",
+        "final:ei",
+        "final:en",
+        "final:eng",
+        "final:in",
+        "final:ing",
+        "final:ie",
+        "final:iu",
+        "final:ui",
+        "final:un",
+        "final:ue",
+        "final:ve",
+        "final:v"
+      ],
+      "wordPlan": {
+        "maxUnfamiliar": 0,
+        "lengthRange": [
+          2,
+          5
+        ]
+      },
+      "atomMeta": {
+        "initial:zh": {
+          "atomId": "initial:zh",
+          "type": "initial",
+          "pinyin": "zh",
+          "keys": [
+            "v"
+          ],
+          "free": false,
+          "anchors": [
+            "追",
+            "锥",
+            "坠"
+          ],
+          "mnemonic": "ZH + UI = ZHUI（同在 V 键）"
+        },
+        "initial:ch": {
+          "atomId": "initial:ch",
+          "type": "initial",
+          "pinyin": "ch",
+          "keys": [
+            "i"
+          ],
+          "free": false,
+          "anchors": [
+            "吃",
+            "持",
+            "赤",
+            "迟",
+            "池"
+          ],
+          "mnemonic": "CH + I = CHI（同在 I 键）"
+        },
+        "initial:sh": {
+          "atomId": "initial:sh",
+          "type": "initial",
+          "pinyin": "sh",
+          "keys": [
+            "u"
+          ],
+          "free": false,
+          "anchors": [
+            "属",
+            "书",
+            "数",
+            "树",
+            "熟"
+          ],
+          "mnemonic": "SH + U = SHU（同在 U 键）"
+        },
+        "zero:a": {
+          "atomId": "zero:a",
+          "type": "zero",
+          "pinyin": "a",
+          "keys": [
+            "aa"
+          ],
+          "free": false
+        },
+        "zero:ai": {
+          "atomId": "zero:ai",
+          "type": "zero",
+          "pinyin": "ai",
+          "keys": [
+            "ai"
+          ],
+          "free": true
+        },
+        "zero:an": {
+          "atomId": "zero:an",
+          "type": "zero",
+          "pinyin": "an",
+          "keys": [
+            "an"
+          ],
+          "free": true
+        },
+        "zero:ang": {
+          "atomId": "zero:ang",
+          "type": "zero",
+          "pinyin": "ang",
+          "keys": [
+            "ah"
+          ],
+          "free": false
+        },
+        "zero:ao": {
+          "atomId": "zero:ao",
+          "type": "zero",
+          "pinyin": "ao",
+          "keys": [
+            "ao"
+          ],
+          "free": true
+        },
+        "zero:e": {
+          "atomId": "zero:e",
+          "type": "zero",
+          "pinyin": "e",
+          "keys": [
+            "ee"
+          ],
+          "free": false
+        },
+        "zero:ei": {
+          "atomId": "zero:ei",
+          "type": "zero",
+          "pinyin": "ei",
+          "keys": [
+            "ei"
+          ],
+          "free": true
+        },
+        "zero:en": {
+          "atomId": "zero:en",
+          "type": "zero",
+          "pinyin": "en",
+          "keys": [
+            "en"
+          ],
+          "free": true
+        },
+        "zero:eng": {
+          "atomId": "zero:eng",
+          "type": "zero",
+          "pinyin": "eng",
+          "keys": [
+            "eg"
+          ],
+          "free": false
+        },
+        "zero:er": {
+          "atomId": "zero:er",
+          "type": "zero",
+          "pinyin": "er",
+          "keys": [
+            "er"
+          ],
+          "free": true
+        },
+        "zero:o": {
+          "atomId": "zero:o",
+          "type": "zero",
+          "pinyin": "o",
+          "keys": [
+            "oo"
+          ],
+          "free": false
+        },
+        "zero:ou": {
+          "atomId": "zero:ou",
+          "type": "zero",
+          "pinyin": "ou",
+          "keys": [
+            "ou"
+          ],
+          "free": true
+        },
+        "final:ai": {
+          "atomId": "final:ai",
+          "type": "final",
+          "pinyin": "ai",
+          "keys": [
+            "l"
+          ],
+          "free": false,
+          "anchors": [
+            "来",
+            "赖",
+            "睐"
+          ],
+          "mnemonic": "L + AI = LAI"
+        },
+        "final:ao": {
+          "atomId": "final:ao",
+          "type": "final",
+          "pinyin": "ao",
+          "keys": [
+            "k"
+          ],
+          "free": false,
+          "anchors": [
+            "靠",
+            "考",
+            "烤"
+          ],
+          "mnemonic": "K + AO = KAO"
+        },
+        "final:an": {
+          "atomId": "final:an",
+          "type": "final",
+          "pinyin": "an",
+          "keys": [
+            "j"
+          ],
+          "free": false,
+          "anchors": [
+            "但",
+            "看",
+            "三",
+            "万",
+            "占"
+          ],
+          "mnemonic": "AN 在 J 键：但、看、三"
+        },
+        "final:ang": {
+          "atomId": "final:ang",
+          "type": "final",
+          "pinyin": "ang",
+          "keys": [
+            "h"
+          ],
+          "free": false,
+          "anchors": [
+            "杭",
+            "航"
+          ],
+          "mnemonic": "H + ANG = HANG"
+        },
+        "final:ia": {
+          "atomId": "final:ia",
+          "type": "final",
+          "pinyin": "ia",
+          "keys": [
+            "w"
+          ],
+          "free": false,
+          "anchors": [
+            "下",
+            "家",
+            "加",
+            "辖",
+            "架"
+          ],
+          "mnemonic": "IA 在 W 键：下、家、加"
+        },
+        "final:ua": {
+          "atomId": "final:ua",
+          "type": "final",
+          "pinyin": "ua",
+          "keys": [
+            "w"
+          ],
+          "free": false,
+          "anchors": [
+            "话",
+            "花",
+            "画",
+            "化",
+            "挂"
+          ],
+          "mnemonic": "UA 在 W 键：话、花、画"
+        },
+        "final:iao": {
+          "atomId": "final:iao",
+          "type": "final",
+          "pinyin": "iao",
+          "keys": [
+            "c"
+          ],
+          "free": false,
+          "anchors": [
+            "了",
+            "小",
+            "叫",
+            "笑",
+            "较"
+          ],
+          "mnemonic": "IAO 在 C 键：了、小、叫"
+        },
+        "final:ian": {
+          "atomId": "final:ian",
+          "type": "final",
+          "pinyin": "ian",
+          "keys": [
+            "m"
+          ],
+          "free": false,
+          "anchors": [
+            "面",
+            "免",
+            "棉",
+            "沔",
+            "眠"
+          ],
+          "mnemonic": "M + IAN = MIAN"
+        },
+        "final:iang": {
+          "atomId": "final:iang",
+          "type": "final",
+          "pinyin": "iang",
+          "keys": [
+            "d"
+          ],
+          "free": false,
+          "anchors": [
+            "将",
+            "向",
+            "想",
+            "两",
+            "像"
+          ],
+          "mnemonic": "IANG 在 D 键：将、向、想"
+        },
+        "final:uang": {
+          "atomId": "final:uang",
+          "type": "final",
+          "pinyin": "uang",
+          "keys": [
+            "d"
+          ],
+          "free": false,
+          "anchors": [
+            "黄",
+            "光",
+            "双",
+            "装",
+            "状"
+          ],
+          "mnemonic": "UANG 在 D 键：黄、光、双"
+        },
+        "final:uai": {
+          "atomId": "final:uai",
+          "type": "final",
+          "pinyin": "uai",
+          "keys": [
+            "y"
+          ],
+          "free": false,
+          "anchors": [
+            "快",
+            "块",
+            "怪",
+            "坏",
+            "摔"
+          ],
+          "mnemonic": "UAI 在 Y 键：快、块、怪"
+        },
+        "final:uan": {
+          "atomId": "final:uan",
+          "type": "final",
+          "pinyin": "uan",
+          "keys": [
+            "r"
+          ],
+          "free": false,
+          "anchors": [
+            "软"
+          ],
+          "mnemonic": "R + UAN = RUAN"
+        },
+        "final:uo": {
+          "atomId": "final:uo",
+          "type": "final",
+          "pinyin": "uo",
+          "keys": [
+            "o"
+          ],
+          "free": false,
+          "anchors": [
+            "说",
+            "多",
+            "过",
+            "或",
+            "所"
+          ],
+          "mnemonic": "UO 在 O 键：说、多、过"
+        },
+        "final:ou": {
+          "atomId": "final:ou",
+          "type": "final",
+          "pinyin": "ou",
+          "keys": [
+            "b"
+          ],
+          "free": false,
+          "anchors": [
+            "有",
+            "都",
+            "又",
+            "后",
+            "由"
+          ],
+          "mnemonic": "OU 在 B 键：有、都、又"
+        },
+        "final:ong": {
+          "atomId": "final:ong",
+          "type": "final",
+          "pinyin": "ong",
+          "keys": [
+            "s"
+          ],
+          "free": false,
+          "anchors": [
+            "送",
+            "宋",
+            "松",
+            "颂",
+            "耸"
+          ],
+          "mnemonic": "S + ONG = SONG"
+        },
+        "final:iong": {
+          "atomId": "final:iong",
+          "type": "final",
+          "pinyin": "iong",
+          "keys": [
+            "s"
+          ],
+          "free": false,
+          "anchors": [
+            "兄",
+            "雄",
+            "穷",
+            "胸",
+            "凶"
+          ],
+          "mnemonic": "IONG 在 S 键：兄、雄、穷"
+        },
+        "final:ei": {
+          "atomId": "final:ei",
+          "type": "final",
+          "pinyin": "ei",
+          "keys": [
+            "z"
+          ],
+          "free": false,
+          "anchors": [
+            "贼"
+          ],
+          "mnemonic": "Z + EI = ZEI"
+        },
+        "final:en": {
+          "atomId": "final:en",
+          "type": "final",
+          "pinyin": "en",
+          "keys": [
+            "f"
+          ],
+          "free": false,
+          "anchors": [
+            "分",
+            "份",
+            "粉",
+            "愤",
+            "奋"
+          ],
+          "mnemonic": "F + EN = FEN"
+        },
+        "final:eng": {
+          "atomId": "final:eng",
+          "type": "final",
+          "pinyin": "eng",
+          "keys": [
+            "g"
+          ],
+          "free": false,
+          "anchors": [
+            "更",
+            "耕"
+          ],
+          "mnemonic": "G + ENG = GENG"
+        },
+        "final:in": {
+          "atomId": "final:in",
+          "type": "final",
+          "pinyin": "in",
+          "keys": [
+            "n"
+          ],
+          "free": false,
+          "anchors": [
+            "您",
+            "拰",
+            "脌"
+          ],
+          "mnemonic": "N + IN = NIN"
+        },
+        "final:ing": {
+          "atomId": "final:ing",
+          "type": "final",
+          "pinyin": "ing",
+          "keys": [
+            "y"
+          ],
+          "free": false,
+          "anchors": [
+            "应",
+            "英",
+            "营",
+            "硬",
+            "迎"
+          ],
+          "mnemonic": "Y + ING = YING"
+        },
+        "final:ie": {
+          "atomId": "final:ie",
+          "type": "final",
+          "pinyin": "ie",
+          "keys": [
+            "x"
+          ],
+          "free": false,
+          "anchors": [
+            "些",
+            "写",
+            "斜",
+            "谢",
+            "携"
+          ],
+          "mnemonic": "X + IE = XIE"
+        },
+        "final:iu": {
+          "atomId": "final:iu",
+          "type": "final",
+          "pinyin": "iu",
+          "keys": [
+            "q"
+          ],
+          "free": false,
+          "anchors": [
+            "求",
+            "球",
+            "秋",
+            "丘"
+          ],
+          "mnemonic": "Q + IU = QIU"
+        },
+        "final:ui": {
+          "atomId": "final:ui",
+          "type": "final",
+          "pinyin": "ui",
+          "keys": [
+            "v"
+          ],
+          "free": false,
+          "anchors": [
+            "对",
+            "会",
+            "最",
+            "谁",
+            "水"
+          ],
+          "mnemonic": "UI 在 V 键：对、会、最"
+        },
+        "final:un": {
+          "atomId": "final:un",
+          "type": "final",
+          "pinyin": "un",
+          "keys": [
+            "p"
+          ],
+          "free": false,
+          "anchors": [
+            "军",
+            "均",
+            "郡",
+            "群",
+            "村"
+          ],
+          "mnemonic": "UN 在 P 键：军、均、郡"
+        },
+        "final:ue": {
+          "atomId": "final:ue",
+          "type": "final",
+          "pinyin": "ue",
+          "keys": [
+            "t"
+          ],
+          "free": false,
+          "anchors": [
+            "月",
+            "却",
+            "约",
+            "学",
+            "越"
+          ],
+          "mnemonic": "UE 在 T 键：月、却、约"
+        },
+        "final:ve": {
+          "atomId": "final:ve",
+          "type": "final",
+          "pinyin": "ve",
+          "keys": [
+            "t"
+          ],
+          "free": false,
+          "anchors": [
+            "略",
+            "掠"
+          ],
+          "mnemonic": "VE 在 T 键：略、掠"
+        },
+        "final:v": {
+          "atomId": "final:v",
+          "type": "final",
+          "pinyin": "v",
+          "keys": [
+            "v"
+          ],
+          "free": true,
+          "anchors": [
+            "女",
+            "率",
+            "绿",
+            "旅",
+            "律"
+          ],
+          "mnemonic": "V 在 V 键：女、率、绿"
+        }
+      },
+      "zeroExamples": [
+        {
+          "syllable": "a",
+          "char": "阿",
+          "tone": 1
+        },
+        {
+          "syllable": "ai",
+          "char": "爱",
+          "tone": 4
+        },
+        {
+          "syllable": "an",
+          "char": "按",
+          "tone": 4
+        },
+        {
+          "syllable": "ang",
+          "char": "昂",
+          "tone": 2
+        },
+        {
+          "syllable": "ao",
+          "char": "奥",
+          "tone": 4
+        },
+        {
+          "syllable": "e",
+          "char": "鄂",
+          "tone": 4
+        },
+        {
+          "syllable": "ei",
+          "char": "诶",
+          "tone": 1
+        },
+        {
+          "syllable": "en",
+          "char": "恩",
+          "tone": 1
+        },
+        {
+          "syllable": "eng",
+          "char": "鞥",
+          "tone": 1
+        },
+        {
+          "syllable": "er",
+          "char": "而",
+          "tone": 2
+        },
+        {
+          "syllable": "o",
+          "char": "哦",
+          "tone": 4
+        },
+        {
+          "syllable": "ou",
+          "char": "欧",
+          "tone": 1
+        }
+      ],
+      "tips": [
+        "本课零声母：a = AA、ai = AI、an = AN、ang = AH、ao = AO、e = EE 等（没有声母的音节也要按满两键）。",
+        "全遮挡时按音节整组出键：先声母键、再韵母键，不要逐字母找。",
+        "速度目标 30 WPM起；稳定比冲快更重要。",
+        "第三颗星要求全程不揭示答案：不确定时宁可放慢。"
+      ],
+      "passCriteria": {
+        "accuracy": 0.85,
+        "mode": "accuracy-speed",
+        "minCpm": 45,
+        "starCpm": [
+          45,
+          60,
+          75
+        ]
+      },
+      "stageMinWords": {
+        "exam": 100
+      }
+    }
+  ]
+}

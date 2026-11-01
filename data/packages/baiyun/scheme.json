@@ -1,0 +1,303 @@
+{
+  "id": "baiyun",
+  "name": "白云双拼",
+  "type": "compositional",
+  "initials": {
+    "b": [
+      "b"
+    ],
+    "p": [
+      "p"
+    ],
+    "m": [
+      "m"
+    ],
+    "f": [
+      "f"
+    ],
+    "d": [
+      "d"
+    ],
+    "t": [
+      "t"
+    ],
+    "n": [
+      "n"
+    ],
+    "l": [
+      "l"
+    ],
+    "g": [
+      "g"
+    ],
+    "k": [
+      "k"
+    ],
+    "h": [
+      "h"
+    ],
+    "j": [
+      "j"
+    ],
+    "q": [
+      "q"
+    ],
+    "x": [
+      "x"
+    ],
+    "zh": [
+      "u"
+    ],
+    "ch": [
+      "i"
+    ],
+    "sh": [
+      "v"
+    ],
+    "r": [
+      "r"
+    ],
+    "z": [
+      "z"
+    ],
+    "c": [
+      "c"
+    ],
+    "s": [
+      "s"
+    ],
+    "y": [
+      "y"
+    ],
+    "w": [
+      "w"
+    ]
+  },
+  "finals": {
+    "a": [
+      "a"
+    ],
+    "o": [
+      "o"
+    ],
+    "e": [
+      "e"
+    ],
+    "i": [
+      "i"
+    ],
+    "u": [
+      "u"
+    ],
+    "v": [
+      "v"
+    ],
+    "ai": [
+      "j"
+    ],
+    "ei": [
+      "w"
+    ],
+    "ui": [
+      "h"
+    ],
+    "ao": [
+      "c"
+    ],
+    "ou": [
+      "s"
+    ],
+    "iu": [
+      "t"
+    ],
+    "ie": [
+      "p"
+    ],
+    "ve": [
+      "x"
+    ],
+    "an": [
+      "d"
+    ],
+    "en": [
+      "k"
+    ],
+    "in": [
+      "b"
+    ],
+    "un": [
+      "y"
+    ],
+    "ang": [
+      "f"
+    ],
+    "eng": [
+      "z"
+    ],
+    "ing": [
+      "g"
+    ],
+    "ong": [
+      "l"
+    ],
+    "ia": [
+      "k"
+    ],
+    "iao": [
+      "n"
+    ],
+    "ian": [
+      "m"
+    ],
+    "iang": [
+      "h"
+    ],
+    "iong": [
+      "l"
+    ],
+    "ua": [
+      "x"
+    ],
+    "uo": [
+      "o"
+    ],
+    "uai": [
+      "v"
+    ],
+    "uan": [
+      "r"
+    ],
+    "uang": [
+      "g"
+    ],
+    "ue": [
+      "j"
+    ]
+  },
+  "zeroInitial": {
+    "a": [
+      "aa"
+    ],
+    "ai": [
+      "ai"
+    ],
+    "an": [
+      "an"
+    ],
+    "ang": [
+      "af"
+    ],
+    "ao": [
+      "ao"
+    ],
+    "e": [
+      "ee"
+    ],
+    "ei": [
+      "ei"
+    ],
+    "en": [
+      "en"
+    ],
+    "eng": [
+      "ez"
+    ],
+    "er": [
+      "er"
+    ],
+    "o": [
+      "oo"
+    ],
+    "ou": [
+      "ou"
+    ]
+  },
+  "umlautNote": "j/q/x/y 与 ü 相拼时：除 initials[声母]×finals[u] 的组合外，另接受 initials[声母]×finals[v] 的组合（对应参考实现 core.js 的 jqxy+ü 补充规则）；数据结构上仍把音节记为 u/ue/un/uan 归属，ü 语义由 UI 标注。",
+  "sameKeyGroups": [
+    {
+      "key": "g",
+      "finals": [
+        "ing",
+        "uang"
+      ]
+    },
+    {
+      "key": "h",
+      "finals": [
+        "ui",
+        "iang"
+      ]
+    },
+    {
+      "key": "j",
+      "finals": [
+        "ai",
+        "ue"
+      ]
+    },
+    {
+      "key": "k",
+      "finals": [
+        "en",
+        "ia"
+      ]
+    },
+    {
+      "key": "l",
+      "finals": [
+        "ong",
+        "iong"
+      ]
+    },
+    {
+      "key": "o",
+      "finals": [
+        "o",
+        "uo"
+      ]
+    },
+    {
+      "key": "v",
+      "finals": [
+        "v",
+        "uai"
+      ]
+    },
+    {
+      "key": "x",
+      "finals": [
+        "ve",
+        "ua"
+      ]
+    }
+  ],
+  "source": {
+    "repo": "BlueSky-07/Shuang",
+    "file": "src/scheme/baiyun.js",
+    "note": "从 https://github.com/BlueSky-07/Shuang（v6.0.0，commit 5a5e71e）提取键位事实；仅做数据比对与规范化，未复制其实现代码（原项目 GPL-3.0）。"
+  },
+  "notes": [
+    "零声母为字母式；ang→af、eng→ez（按韵母键展开）。",
+    "参考项目提示：常用输入法不内置。"
+  ],
+  "recommended": {
+    "ju": "ju",
+    "qu": "qu",
+    "xu": "xu",
+    "yu": "yu"
+  },
+  "compatCodes": {
+    "ju": [
+      "jv"
+    ],
+    "qu": [
+      "qv"
+    ],
+    "xu": [
+      "xv"
+    ],
+    "yu": [
+      "yv"
+    ]
+  }
+}

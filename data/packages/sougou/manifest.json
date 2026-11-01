@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "id": "sougou",
+  "name": "搜狗双拼",
+  "version": "1.0.0",
+  "license": "GPL-3.0",
+  "source": {
+    "repo": "BlueSky-07/Shuang",
+    "file": "src/scheme/sougou.js",
+    "note": "从 https://github.com/BlueSky-07/Shuang（v6.0.0，commit 5a5e71e）提取键位事实；仅做数据比对与规范化，未复制其实现代码（原项目 GPL-3.0）。"
+  },
+  "capabilities": {
+    "course": true,
+    "training": true,
+    "article": true,
+    "zeroInitial": true,
+    "customStages": false
+  },
+  "curriculum": {
+    "version": "curriculum-e13751ee90b9",
+    "file": "curriculum.json"
+  },
+  "data": {
+    "scheme": "scheme.json"
+  },
+  "shared": {
+    "lexicon": "shared:lexicon"
+  }
+}

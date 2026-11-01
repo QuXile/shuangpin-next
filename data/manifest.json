@@ -1,0 +1,245 @@
+{
+  "generatedAt": "2026-11-01T13:41:05.027Z",
+  "versions": {
+    "curriculum": "curriculum-e9aea6cd5fd3",
+    "lexicon": "lexicon-fe0e0bd32c56"
+  },
+  "defaultScheme": "xiaohe",
+  "courses": [
+    "xiaohe",
+    "ziranma",
+    "weiruan",
+    "sougou",
+    "zhinengabc"
+  ],
+  "files": [
+    {
+      "file": "curriculum/index.json",
+      "bytes": 898
+    },
+    {
+      "file": "curriculum/sougou.curriculum.json",
+      "bytes": 170651
+    },
+    {
+      "file": "curriculum/weiruan.curriculum.json",
+      "bytes": 170741
+    },
+    {
+      "file": "curriculum/xiaohe.curriculum.json",
+      "bytes": 169829
+    },
+    {
+      "file": "curriculum/zhinengabc.curriculum.json",
+      "bytes": 171633
+    },
+    {
+      "file": "curriculum/ziranma.curriculum.json",
+      "bytes": 170510
+    },
+    {
+      "file": "lexicon/lexicon.json",
+      "bytes": 8375693
+    },
+    {
+      "file": "packages/baiyun/manifest.json",
+      "bytes": 649
+    },
+    {
+      "file": "packages/baiyun/scheme.json",
+      "bytes": 3748
+    },
+    {
+      "file": "packages/c/manifest.json",
+      "bytes": 786
+    },
+    {
+      "file": "packages/c/scheme.json",
+      "bytes": 8605
+    },
+    {
+      "file": "packages/daniu/manifest.json",
+      "bytes": 647
+    },
+    {
+      "file": "packages/daniu/scheme.json",
+      "bytes": 5871
+    },
+    {
+      "file": "packages/guobiao/manifest.json",
+      "bytes": 726
+    },
+    {
+      "file": "packages/guobiao/scheme.json",
+      "bytes": 3839
+    },
+    {
+      "file": "packages/index.json",
+      "bytes": 57349
+    },
+    {
+      "file": "packages/jiandao3/manifest.json",
+      "bytes": 654
+    },
+    {
+      "file": "packages/jiandao3/scheme.json",
+      "bytes": 5254
+    },
+    {
+      "file": "packages/jiandao6/manifest.json",
+      "bytes": 654
+    },
+    {
+      "file": "packages/jiandao6/scheme.json",
+      "bytes": 5601
+    },
+    {
+      "file": "packages/lantian/manifest.json",
+      "bytes": 651
+    },
+    {
+      "file": "packages/lantian/scheme.json",
+      "bytes": 3734
+    },
+    {
+      "file": "packages/pinyinjiajia/manifest.json",
+      "bytes": 741
+    },
+    {
+      "file": "packages/pinyinjiajia/scheme.json",
+      "bytes": 3800
+    },
+    {
+      "file": "packages/sougou/curriculum.json",
+      "bytes": 170651
+    },
+    {
+      "file": "packages/sougou/manifest.json",
+      "bytes": 721
+    },
+    {
+      "file": "packages/sougou/scheme.json",
+      "bytes": 3667
+    },
+    {
+      "file": "packages/weiruan/curriculum.json",
+      "bytes": 170741
+    },
+    {
+      "file": "packages/weiruan/manifest.json",
+      "bytes": 798
+    },
+    {
+      "file": "packages/weiruan/scheme.json",
+      "bytes": 4012
+    },
+    {
+      "file": "packages/xiaoguan/manifest.json",
+      "bytes": 653
+    },
+    {
+      "file": "packages/xiaoguan/scheme.json",
+      "bytes": 4466
+    },
+    {
+      "file": "packages/xiaohe/curriculum.json",
+      "bytes": 169829
+    },
+    {
+      "file": "packages/xiaohe/manifest.json",
+      "bytes": 801
+    },
+    {
+      "file": "packages/xiaohe/scheme.json",
+      "bytes": 3937
+    },
+    {
+      "file": "packages/xiaolang/manifest.json",
+      "bytes": 653
+    },
+    {
+      "file": "packages/xiaolang/scheme.json",
+      "bytes": 3992
+    },
+    {
+      "file": "packages/xiaoyue/manifest.json",
+      "bytes": 651
+    },
+    {
+      "file": "packages/xiaoyue/scheme.json",
+      "bytes": 3879
+    },
+    {
+      "file": "packages/xingkong/manifest.json",
+      "bytes": 653
+    },
+    {
+      "file": "packages/xingkong/scheme.json",
+      "bytes": 4108
+    },
+    {
+      "file": "packages/yunbiaokuaipin/manifest.json",
+      "bytes": 665
+    },
+    {
+      "file": "packages/yunbiaokuaipin/scheme.json",
+      "bytes": 3597
+    },
+    {
+      "file": "packages/zhinengabc/curriculum.json",
+      "bytes": 171633
+    },
+    {
+      "file": "packages/zhinengabc/manifest.json",
+      "bytes": 799
+    },
+    {
+      "file": "packages/zhinengabc/scheme.json",
+      "bytes": 4188
+    },
+    {
+      "file": "packages/ziguang/manifest.json",
+      "bytes": 731
+    },
+    {
+      "file": "packages/ziguang/scheme.json",
+      "bytes": 3655
+    },
+    {
+      "file": "packages/ziranma/curriculum.json",
+      "bytes": 170510
+    },
+    {
+      "file": "packages/ziranma/manifest.json",
+      "bytes": 800
+    },
+    {
+      "file": "packages/ziranma/scheme.json",
+      "bytes": 3817
+    },
+    {
+      "file": "schemes/index.json",
+      "bytes": 51686
+    },
+    {
+      "file": "schemes/sougou.json",
+      "bytes": 3667
+    },
+    {
+      "file": "schemes/weiruan.json",
+      "bytes": 4012
+    },
+    {
+      "file": "schemes/xiaohe.json",
+      "bytes": 3937
+    },
+    {
+      "file": "schemes/zhinengabc.json",
+      "bytes": 4188
+    },
+    {
+      "file": "schemes/ziranma.json",
+      "bytes": 3817
+    }
+  ]
+}
