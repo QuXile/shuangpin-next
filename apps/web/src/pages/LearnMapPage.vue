@@ -220,6 +220,20 @@ function startCurrent(): void {
   if (currentId.value) void start(currentId.value)
 }
 
+/** 在学习路线中定位当前课：滚动到对应课程卡并闪烁高亮一次。 */
+function locateCurrentLesson(): void {
+  const id = currentId.value
+  if (!id) return
+  const card = document.querySelector<HTMLElement>(`.lesson-card[data-lesson-id="${id}"]`)
+  if (!card) return
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  card.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center' })
+  card.classList.remove('is-located')
+  void card.offsetWidth
+  card.classList.add('is-located')
+  window.setTimeout(() => card.classList.remove('is-located'), 1700)
+}
+
 function clearProgress(): void {
   if (course.passedCount === 0) return
   if (!window.confirm('清除当前双拼方案的全部学习进度？此操作不可撤销。')) return
@@ -347,6 +361,7 @@ useGlobalKeys(bindings)
           :empty-message="course.previewMode ? '当前方案仅支持练习，暂无课程路线。' : undefined"
           :style="heroHeight ? { height: `${heroHeight}px` } : undefined"
           @start="startCurrent"
+          @locate="locateCurrentLesson"
         />
       </div>
 

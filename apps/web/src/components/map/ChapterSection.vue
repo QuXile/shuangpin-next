@@ -42,7 +42,7 @@ const emit = defineEmits<{ start: [lessonId: string] }>()
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 20px 26px 14px;
+  padding: 14px 22px 10px;
   background: var(--surface-2);
   border-bottom: 1px solid var(--line);
 }
@@ -102,8 +102,8 @@ const emit = defineEmits<{ start: [lessonId: string] }>()
 .lesson-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-  padding: 16px 26px 24px;
+  gap: 10px;
+  padding: 12px 22px 18px;
 }
 @media (max-width: 1024px) {
   .lesson-grid {

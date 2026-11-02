@@ -21,6 +21,7 @@ const statusClass = computed(() => {
   <button
     type="button"
     class="lesson-card"
+    :data-lesson-id="lesson.id"
     :class="statusClass"
     :disabled="lesson.state === 'locked'"
     :title="lesson.state === 'locked' ? '完成前一课后解锁' : '开始练习 Enter'"
@@ -68,11 +69,11 @@ const statusClass = computed(() => {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
   width: 100%;
-  height: 160px;
+  height: 116px;
   min-width: 0;
-  padding: 16px 18px;
+  padding: 12px 14px;
   text-align: left;
   color: var(--ink);
   border: 1px solid var(--line);
@@ -80,6 +81,23 @@ const statusClass = computed(() => {
   background: var(--surface);
   transition: border-color var(--dur-mid) var(--ease), box-shadow var(--dur-mid) var(--ease),
     transform var(--dur-mid) var(--ease), background var(--dur-mid) var(--ease);
+}
+.lesson-card.is-located {
+  animation: lesson-locate var(--dur-slow) var(--ease) 3;
+}
+@keyframes lesson-locate {
+  0% {
+    box-shadow: 0 0 0 0 var(--mapping-focus), var(--shadow-sm);
+  }
+  18% {
+    box-shadow: 0 0 0 4px var(--mapping-focus-line), var(--shadow-md);
+  }
+  55% {
+    box-shadow: 0 0 0 3px var(--mapping-focus-soft), var(--shadow-md);
+  }
+  100% {
+    box-shadow: var(--shadow-sm);
+  }
 }
 .lesson-card:hover:not(:disabled) {
   z-index: 10;
@@ -121,7 +139,7 @@ const statusClass = computed(() => {
 .card-title {
   overflow: hidden;
   color: var(--ink);
-  font-size: var(--text-md);
+  font-size: var(--text-base);
   font-weight: 850;
   line-height: 1.3;
   text-overflow: ellipsis;
@@ -131,18 +149,17 @@ const statusClass = computed(() => {
   display: flex;
   flex: 1;
   align-items: stretch;
-  gap: 12px;
+  gap: 10px;
   min-height: 0;
-  margin-top: 2px;
 }
 .card-main.is-empty {
   min-height: 0;
 }
 .card-icon {
   flex: none;
-  align-self: flex-start;
-  width: 26px;
-  height: 26px;
+  align-self: center;
+  width: 24px;
+  height: 24px;
   display: grid;
   place-items: center;
   border: 1px solid var(--line-strong);
@@ -151,8 +168,8 @@ const statusClass = computed(() => {
   color: var(--ink-3);
 }
 .card-icon svg {
-  width: 14px;
-  height: 14px;
+  width: 13px;
+  height: 13px;
 }
 .is-done .card-icon {
   color: var(--success);

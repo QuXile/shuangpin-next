@@ -17,7 +17,7 @@ const props = withDefaults(
   { lesson: null, chapter: null, emptyMessage: '课程已全部完成，可以选择任意课程继续练习。' },
 )
 
-const emit = defineEmits<{ start: [] }>()
+const emit = defineEmits<{ start: []; locate: [] }>()
 
 </script>
 
@@ -55,10 +55,26 @@ const emit = defineEmits<{ start: [] }>()
           已完成 {{ passedCount }} / {{ lessonTotal }} 课
           <template v-if="chapter"> · 本章 {{ chapter.lessons.filter((item) => item.state === 'passed').length }} / {{ chapter.lessons.length }} 小节</template>
         </span>
-        <button class="continue" type="button" @click.stop="emit('start')">
-          {{ currentTitle }}
-          <kbd>Enter</kbd>
-        </button>
+        <span class="current-actions">
+          <button
+            class="locate"
+            type="button"
+            title="在学习路线中定位本课"
+            aria-label="在学习路线中定位本课"
+            @click.stop="emit('locate')"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="7" />
+              <circle cx="12" cy="12" r="2.5" />
+              <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+            </svg>
+            定位
+          </button>
+          <button class="continue" type="button" @click.stop="emit('start')">
+            {{ currentTitle }}
+            <kbd>Enter</kbd>
+          </button>
+        </span>
       </div>
     </div>
 
@@ -131,6 +147,89 @@ const emit = defineEmits<{ start: [] }>()
   width: 14px;
   height: 14px;
 }
+.current-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+.locate {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-control);
+  background: var(--surface);
+  color: var(--ink-3);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  transition:
+    color var(--dur-fast),
+    border-color var(--dur-fast),
+    background var(--dur-fast),
+    transform var(--dur-fast);
+}
+.locate svg {
+  width: 14px;
+  height: 14px;
+}
+.locate:hover {
+  color: var(--brand);
+  border-color: var(--brand-line);
+  background: var(--brand-soft);
+  transform: translateY(-1px);
+}
+.locate:active {
+  transform: translateY(0) scale(0.97);
+}
+.locate:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+.current-actions {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.locate {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-control);
+  background: var(--surface);
+  color: var(--ink-3);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  white-space: nowrap;
+  transition:
+    color var(--dur-fast),
+    border-color var(--dur-fast),
+    background var(--dur-fast),
+    transform var(--dur-fast);
+}
+.locate svg {
+  width: 14px;
+  height: 14px;
+}
+.locate:hover {
+  color: var(--brand);
+  border-color: var(--brand-line);
+  background: var(--brand-soft);
+  transform: translateY(-1px);
+}
+.locate:active {
+  transform: translateY(0) scale(0.97);
+}
+.locate:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
 .current-foot {
   display: flex;
   align-items: center;
@@ -201,8 +300,16 @@ const emit = defineEmits<{ start: [] }>()
   .current-progress {
     white-space: normal;
   }
-  .continue {
+  .current-actions {
     width: 100%;
+  }
+  .locate {
+    flex: none;
+  }
+  .continue {
+    flex: 1;
+    width: auto;
+    justify-content: center;
   }
 }
 </style>
