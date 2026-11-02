@@ -5,7 +5,7 @@
  * 内容结构由 IntroLesson 的通用页面顺序定义。
  * 拼音基础 → 声母 → 韵母 → 零声母 → 多键（条件）→ 推荐码 / 兼容编码（条件）→ 工具说明 → 试打。
  * - 不写死任何方案名 / 键位；声母、韵母、零声母、示例、推荐码、兼容编码全部来自 SchemeDef + engine + 词表；
- * - 主键（数组第一条 / 主序列）蓝色，其余键普通样式，所有列出的键都合法；
+ * - 主键（数组第一条 / 主序列）紫色，其余键普通样式，所有列出的键都合法；
  * - 试打复用 core 的 createSession / applyKey / backspace，完成后 emit('finished') / emit('next')。
  */
 import { computed, ref, shallowRef, watch } from 'vue'
@@ -30,8 +30,10 @@ import IntroStepLayout from '@/components/intro/IntroStepLayout.vue'
 import PinyinAnatomy from '@/components/intro/PinyinAnatomy.vue'
 import SchemeGuideCards from '@/components/intro/SchemeGuideCards.vue'
 import { useGlobalKeys, type KeyBinding } from '@/composables/useGlobalKeys'
+import type { FocusAtomView } from '@/lib/lessonView'
 import { useSoundStore } from '@/stores/sound'
 import CodeExampleCard from './CodeExampleCard.vue'
+import FocusTagList from '@/components/FocusTagList.vue'
 import KeyAtomCapsule from './KeyAtomCapsule.vue'
 import KeyCap from '@/components/common/KeyCap.vue'
 import {
@@ -87,6 +89,23 @@ watch(steps, (list) => {
 })
 
 const EMPTY_ATOMS = { atoms: [] as KeyAtom[], learnCount: 0, freeCount: 0, multiCount: 0 }
+
+/** 入门课原子列表复用课程「映射范围」同款 chip（新 = 需要新学，沿 = 与全拼一致）。 */
+function toFocusTags(atoms: readonly KeyAtom[]): FocusAtomView[] {
+  return atoms.map((atom) => ({
+    atomId: atom.atomId,
+    label: atom.label,
+    keys: atom.keys.map((key) => key.sequence),
+    badge: atom.free ? '沿' : '新',
+    type: atom.kind,
+    anchors: [],
+  }))
+}
+
+const initialTags = computed(() => toFocusTags(initialsSection.value.atoms))
+const finalTags = computed(() => toFocusTags(finalsSection.value.atoms))
+const zeroTags = computed(() => toFocusTags(zeroSection.value.atoms))
+const multiTags = computed(() => toFocusTags(multiKeySection.value.atoms))
 
 function findSection<K extends IntroSectionKind>(kind: K): Extract<IntroSection, { kind: K }> | null {
   const section = model.value.sections.find((item) => item.kind === kind)
@@ -336,15 +355,13 @@ defineExpose({ pressKey: handleKey, backspace: handleBackspace })
       <template #visual>
           <header class="atoms-head panel-head">
             <h2 class="panel-title">全部声母</h2>
-            <span v-if="initialsSection.freeCount > 0" class="atoms-hint">标「沿用」的与全拼一致</span>
+            <span v-if="initialsSection.freeCount > 0" class="atoms-hint">带「沿」标记的与全拼一致</span>
           </header>
-          <div class="atom-grid">
-            <KeyAtomCapsule v-for="atom in initialsSection.atoms" :key="atom.atomId" :atom="atom" />
-          </div>
+          <FocusTagList :items="initialTags" />
       </template>
       <div class="intro-prose">
           <p>当前方案「{{ model.schemeName }}」共有 {{ initialsSection.atoms.length }} 个声母：<b>{{ initialsSection.learnCount }}</b> 个需要重新记键位，<b>{{ initialsSection.freeCount }}</b> 个与全拼一致。</p>
-          <p>每个声母对应一个键。若一个声母列出多个键，蓝色是<b>主键</b>，其他是<b>副键</b>——它们都是合法输入，不是只能按蓝色。</p>
+          <p>每个声母对应一个键。若一个声母列出多个键，紫色是<b>主键</b>，其他是<b>副键</b>——它们都是合法输入，不是只能按紫色。</p>
           <p v-if="initialsSection.multiCount > 0">本方案有 {{ initialsSection.multiCount }} 个声母带多个键，后面的「多键」页会统一说明。</p>
           <p v-else>本方案每个声母都只有一个键。</p>
           <p>键位图里声母用蓝色标出；先认识「哪个声母在哪个键」，不用急着背整张表。</p>
@@ -379,15 +396,13 @@ defineExpose({ pressKey: handleKey, backspace: handleBackspace })
       <template #visual>
           <header class="atoms-head panel-head">
             <h2 class="panel-title">全部韵母</h2>
-            <span v-if="finalsSection.freeCount > 0" class="atoms-hint">标「沿用」的与全拼一致</span>
+            <span v-if="finalsSection.freeCount > 0" class="atoms-hint">带「沿」标记的与全拼一致</span>
           </header>
-          <div class="atom-grid">
-            <KeyAtomCapsule v-for="atom in finalsSection.atoms" :key="atom.atomId" :atom="atom" />
-          </div>
+          <FocusTagList :items="finalTags" />
       </template>
       <div class="intro-prose">
           <p>当前方案「{{ model.schemeName }}」共有 {{ finalsSection.atoms.length }} 个韵母：<b>{{ finalsSection.learnCount }}</b> 个需要重新记，<b>{{ finalsSection.freeCount }}</b> 个与全拼一致。</p>
-          <p>韵母决定音节的后半段。列出多个键时，蓝色是<b>主键</b>，其他是<b>副键</b>；所有列出的键都是合法输入，不要求只用蓝色。</p>
+          <p>韵母决定音节的后半段。列出多个键时，紫色是<b>主键</b>，其他是<b>副键</b>；所有列出的键都是合法输入，不要求只用紫色。</p>
           <p>拼音里的 ü 在方案数据中写作 v，如 ü → v、üe → ve；列表中的韵母名与键位就是实际输入的按键，以列出的键为准。</p>
 
           <div v-if="finalsSection.example" class="example-card">
@@ -421,17 +436,15 @@ defineExpose({ pressKey: handleKey, backspace: handleBackspace })
       <template #visual>
           <header class="atoms-head panel-head">
             <h2 class="panel-title">全部零声母</h2>
-            <span v-if="zeroSection.freeCount > 0" class="atoms-hint">标「沿用」的与全拼一致</span>
+            <span v-if="zeroSection.freeCount > 0" class="atoms-hint">带「沿」标记的与全拼一致</span>
           </header>
-          <div class="atom-grid atom-grid--wide">
-            <KeyAtomCapsule v-for="atom in zeroSection.atoms" :key="atom.atomId" :atom="atom" />
-          </div>
+          <FocusTagList :items="zeroTags" />
       </template>
       <div class="intro-prose">
           <p>没有声母的音节叫<b>零声母</b>，例如 a、ai、er。当前方案为这 {{ zeroSection.atoms.length }} 个音节分别定义了完整的按键序列。</p>
-          <p v-if="zeroSection.multiCount > 0">零声母不是「先按什么、再按什么」，而是一整段固定序列；一个音节可能有多条序列，蓝色是<b>主序列</b>，其他序列同样合法。</p>
+          <p v-if="zeroSection.multiCount > 0">零声母不是「先按什么、再按什么」，而是一整段固定序列；一个音节可能有多条序列，紫色是<b>主序列</b>，其他序列同样合法。</p>
           <p v-else>零声母不是「先按什么、再按什么」，而是一整段固定序列。</p>
-          <p>{{ zeroSection.freeCount }} 个零声母的序列与全拼拼写一致，标「沿用」，{{ zeroSection.learnCount }} 个需要重新记。</p>
+          <p>{{ zeroSection.freeCount }} 个零声母的序列与全拼拼写一致，标「沿」，{{ zeroSection.learnCount }} 个需要重新记。</p>
           <div v-if="zeroSection.example" class="example-card">
             <div class="example-head">
               <span class="example-word">{{ zeroSection.example.atom.label }}</span>
@@ -454,25 +467,20 @@ defineExpose({ pressKey: handleKey, backspace: handleBackspace })
     <IntroStepLayout v-else-if="step === 'multi-key'" visual-class="multi-panel">
       <template #visual>
           <div class="atom-legend">
-            <span class="atom-legend-item"><i class="legend-swatch is-primary" aria-hidden="true" />主键 蓝色</span>
+            <span class="atom-legend-item"><i class="legend-swatch is-primary" aria-hidden="true" />主键 紫色</span>
             <span class="atom-legend-item"><i class="legend-swatch" aria-hidden="true" />副键 / 兼容键</span>
           </div>
           <div class="multi-list">
-            <KeyAtomCapsule
-              v-for="atom in multiKeySection.atoms"
-              :key="atom.atomId"
-              :atom="atom"
-              show-kind
-            />
+            <FocusTagList :items="multiTags" />
           </div>
       </template>
       <div class="intro-prose">
           <p>本方案有 <b>{{ multiKeySection.totalCount }}</b> 个映射带多个键：同一个声母、韵母或零声母，可以用不止一个键输入。</p>
-          <p>蓝色是<b>主键</b>，也是工具默认展示、答案卡优先显示的键；其他键是<b>副键</b>。所有列出的键都能参与组合，都会被判题接受。</p>
+          <p>紫色是<b>主键</b>，也是工具默认展示、答案卡优先显示的键；其他键是<b>副键</b>。所有列出的键都能参与组合，都会被判题接受。</p>
           <p v-if="multiKeySection.hasRecommended">方案数据里还有推荐码：标答以推荐码为准，推荐码可能与「主键 + 主键」的组合不同。</p>
           <p v-else>没有推荐码时，「主键 + 主键」的组合就是默认标答。</p>
           <p v-if="multiKeySection.sharedKey">同一个键也可能被多个映射共用，例如 <b>{{ multiKeySection.sharedKey.key }}</b> 键同时对应韵母 {{ multiKeySection.sharedKey.labels.join('、') }}；每个韵母仍按自己的主键 / 副键判断，判题看完整的按键序列。</p>
-          <p>练习时按任意合法键都算对，不必只按蓝色。</p>
+          <p>练习时按任意合法键都算对，不必只按紫色。</p>
       </div>
     </IntroStepLayout>
 
@@ -511,7 +519,7 @@ defineExpose({ pressKey: handleKey, backspace: handleBackspace })
           <div class="tool-row">
             <span class="tool-swatch is-primary" aria-hidden="true" />
             <div>
-              <b>蓝色键 = 主键</b>
+              <b>紫色键 = 主键</b>
               <p>工具默认展示、答案卡优先显示。</p>
             </div>
           </div>
@@ -532,12 +540,12 @@ defineExpose({ pressKey: handleKey, backspace: handleBackspace })
           <p class="tool-note">答案卡只显示 primary 标答；判题接受全部 accepted，不只认标答。</p>
       </template>
       <div class="intro-prose">
-          <p><b>蓝色键</b>是工具默认显示的主键。</p>
+          <p><b>紫色键</b>是工具默认显示的主键。</p>
           <p v-if="toolSection.hasMulti || toolSection.hasCodes"><b>普通样式</b>的键是副键 / 兼容键，它们都是合法输入。</p>
           <p>答案卡显示 primary 标答，但判题接受全部 accepted：副键、兼容编码、主键组合都算对。</p>
           <p>页面底部的键位图会列出全部映射<template v-if="toolSection.hasMulti">，多键映射会全部标出</template><template v-if="toolSection.hasCodes">，兼容编码单独成行</template>；可以用 <kbd>Ctrl+K</kbd> 随时显隐。</p>
           <p>课程和练习场使用同一套判题规则。</p>
-          <p v-if="toolSection.hasMulti || toolSection.hasCodes">练习时不必只按蓝色键，按任意合法组合都能通过。</p>
+          <p v-if="toolSection.hasMulti || toolSection.hasCodes">练习时不必只按紫色键，按任意合法组合都能通过。</p>
           <p>课程进度只保存在本地浏览器，不会同步到其他设备。</p>
       </div>
     </IntroStepLayout>
@@ -630,15 +638,6 @@ defineExpose({ pressKey: handleKey, backspace: handleBackspace })
   line-height: 1.4;
   text-align: right;
 }
-.atom-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 6px;
-  align-content: start;
-}
-.atom-grid--wide {
-  grid-template-columns: repeat(auto-fill, minmax(172px, 1fr));
-}
 
 /* ── 示例卡 ─────────────────────────────────────── */
 .example-card {
@@ -716,13 +715,11 @@ defineExpose({ pressKey: handleKey, backspace: handleBackspace })
   background: var(--surface);
 }
 .legend-swatch.is-primary {
-  border-color: var(--brand-fill);
-  background: var(--brand-fill);
+  border-color: var(--mapping-focus-line);
+  background: var(--mapping-focus);
 }
 .multi-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  min-width: 0;
 }
 
 /* ── 推荐码 / 兼容编码 ──────────────────────────── */
@@ -834,10 +831,6 @@ defineExpose({ pressKey: handleKey, backspace: handleBackspace })
   .intro-page {
     height: auto;
     min-height: 0;
-  }
-  .atom-grid,
-  .atom-grid--wide {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 </style>

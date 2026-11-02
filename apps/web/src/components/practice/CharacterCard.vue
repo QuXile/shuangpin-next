@@ -80,6 +80,8 @@ onBeforeUnmount(() => {
   if (wrongTimer !== undefined) window.clearTimeout(wrongTimer)
 })
 
+const allCapsHidden = computed(() => props.caps.length > 0 && props.caps.every((cap) => hidden(cap)))
+
 function hidden(cap: PracticeCap): boolean {
   if (props.revealed) return false
   if (hiddenSet.value.has(cap.atomId)) return true
@@ -107,7 +109,7 @@ function hidden(cap: PracticeCap): boolean {
       <span class="py-initial">{{ initialPinyin }}</span>
       <span class="py-final">{{ finalPinyin }}</span>
     </span>
-    <div class="char-target">
+    <div v-if="!allCapsHidden" class="char-target">
       <KeyCap
         v-for="(cap, index) in caps"
         :key="index"
@@ -119,7 +121,13 @@ function hidden(cap: PracticeCap): boolean {
         :completed="completed"
       />
     </div>
-    <InputSlots v-if="showInput" :caps="caps" :input="input" :state="inputState" />
+    <InputSlots
+      v-if="showInput"
+      :caps="caps"
+      :input="input"
+      :state="inputState"
+      :placeholder="allCapsHidden ? '?' : ''"
+    />
   </div>
 </template>
 

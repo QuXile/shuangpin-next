@@ -115,6 +115,10 @@ withDefaults(
   justify-content: center;
   align-content: center;
 }
+/* 试打面板没有滚动内容，且底色是 surface-2：去掉按页面底色绘制的上下渐隐 */
+.intro-visual.try-panel :deep(.fade) {
+  display: none;
+}
 .intro-card--try :deep(.intro-prose) {
   padding-top: 8px;
   padding-right: 4px;

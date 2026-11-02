@@ -18,7 +18,7 @@ import type {
 } from '@shuangpin/core'
 import { atomDisplayLabel, isFreeAtom, lessonState, parseAtomId } from '@shuangpin/core'
 
-type FocusBadge = '新' | '含'
+type FocusBadge = '新' | '含' | '沿'
 
 export interface FocusAtomView {
   atomId: AtomId
