@@ -6,18 +6,18 @@
  * （curriculum.supportLevel === 'full'）一律跳过、原样保留。
  *
  * 设计依据：tmp/curriculum-route-design.md
- *  - 第一章：通用入门 + （存在全拼沿用原子时）「复习 · 全拼沿用」；
+ *  - 第一章：通用入门；
  *  - 内容章顺序：单韵母 → 单声母 → 复合声母 → 前响复韵母 → 后响复韵母 →
  *    中响复韵母 → 基本前鼻韵母 → 基本后鼻韵母 → 带介前鼻韵母 →
  *    带介后鼻韵母 → 零声母；
  *  - 内容章只给 learn 原子单独设课（每原子一课、不合并），章末生成复习课；
- *    free 原子（与全拼一致）统一进第一章「复习 · 全拼沿用」，不重复排课；
+ *    free 原子（与全拼一致）直接作为已会内容，不单独排课；
  *  - 期中：按「左右新课数差最小 → 章数差最小 → 更早边界」选章间边界插入，
  *    独立成章、只有复习课；
  *  - 最终章：综合练习 → 速度练习 → 最终考核（考核必须是最后一课）；
  *  - 推荐码例外（recommended != 主键组合）与兼容编码不单独设课，按
  *    「目标音节最后学到的 learn 原子」归组写入对应原子课 tips；两端都是 free
- *    原子的归到「复习 · 全拼沿用」tips。
+ *    原子的归到「综合 · 混合练习」tips。
  *
  * 生成结果写入 data/schemes/<id>/curriculum.json，并同步更新
  * data/schemes/curriculum-index.json 与 data/schemes/index.json 的课程能力字段。
@@ -498,7 +498,7 @@ export function buildUniversalCurriculum({ scheme, schemeName, generatedAt, lexi
   }
 
   // ── 第一章：入门 ──
-  const introChapter = addChapter('ch-intro', '入门', '认识双拼 · 全拼沿用')
+  const introChapter = addChapter('ch-intro', '入门', '认识双拼')
   addLesson(
     introChapter,
     makeLesson('intro', '入门 · 认识双拼', '一声母一韵母两键；先看提示打对，再逐步撤掉提示。', [], {
@@ -508,28 +508,8 @@ export function buildUniversalCurriculum({ scheme, schemeName, generatedAt, lexi
       ],
     }),
   )
-  if (freeAtoms.length > 0) {
-    const freeInitialCount = freeAtoms.filter((atom) => atom.startsWith('initial:')).length
-    const freeFinalCount = freeAtoms.filter((atom) => atom.startsWith('final:')).length
-    const freeZeroCount = freeAtoms.filter((atom) => atom.startsWith('zero:')).length
-    addLesson(
-      introChapter,
-      makeLesson(
-        'review',
-        '复习 · 全拼沿用',
-        `与全拼一致的 ${freeAtoms.length} 个键位复习（声母 ${freeInitialCount} · 韵母 ${freeFinalCount} · 零声母 ${freeZeroCount}）。`,
-        freeAtoms,
-        {
-          passCriteria: PASS_REVIEW,
-          // Lead 决策 A：无 newFocus 的全拼沿用复习允许少量预习原子，
-          // 否则「全部韵母都需要重学」的方案（如键道3）没有任何合法练习词。
-          wordPlan: { maxUnfamiliar: 2, lengthRange: [2, 5] },
-          tips: zeroReviewTips(freeInitialCount, freeFinalCount, freeZeroCount, codeAnalysis.groups.get('free')),
-        },
-      ),
-    )
-    learned.push(...freeAtoms)
-  }
+  // free 原子已经会，直接进入 prerequisites，不再单独生成「全拼沿用」复习课。
+  learned.push(...freeAtoms)
 
   // ── 内容章（含期中插入） ──
   const addMidChapter = () => {
@@ -593,7 +573,7 @@ export function buildUniversalCurriculum({ scheme, schemeName, generatedAt, lexi
     finalChapter,
     makeLesson('review', '综合 · 混合练习', '综合：全部内容混合练习。', [...learned], {
       passCriteria: PASS_REVIEW,
-      tips: sprintMixedTips(),
+      tips: [...sprintMixedTips(), ...codeTipsFor(codeAnalysis.groups.get('free') ?? [])],
     }),
   )
   addLesson(
@@ -648,7 +628,7 @@ export function buildUniversalCurriculum({ scheme, schemeName, generatedAt, lexi
 const GENERATED_COURSE = Object.freeze({
   supportsGuidedCourse: true,
   courseTier: 'simplified',
-  reason: '没有自有课程路线：使用自动生成的通用课程（learn 原子逐课 + 全拼沿用复习 + 期中 / 最终章）。',
+  reason: '没有自有课程路线：使用自动生成的通用课程（learn 原子逐课 + 期中 / 最终章）。',
   courseNotes: '通用课程由 scripts/generate-universal-curriculum.mjs 生成；推荐码 / 兼容编码信息写在对应原子课 tips。',
 })
 

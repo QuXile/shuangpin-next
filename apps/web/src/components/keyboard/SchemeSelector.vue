@@ -14,7 +14,7 @@ const props = withDefaults(
     busy?: boolean
     /** 是否在每个方案按钮旁显示 Alt+数字 快捷键 */
     showKeys?: boolean
-    /** 主要方案 id；其余方案收进「其他方案」内部选择器 */
+    /** 主要方案 id；其余方案收进「更多方案」内部选择器 */
     primaryIds?: readonly string[]
   }>(),
   { busy: false, showKeys: false, primaryIds: () => [] },
@@ -52,7 +52,7 @@ function stepOther(delta: 1 | -1): void {
   if (option) emit('select', option.id)
 }
 
-/** 左右方向键在方案按钮与「其他方案」选择器之间移动；下拉内部交给原生控件。 */
+/** 左右方向键在方案按钮与「更多方案」选择器之间移动；下拉内部交给原生控件。 */
 function onKeydown(event: KeyboardEvent): void {
   if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
   // 选择器展开时 ↑↓/Enter 交给原生 select；←→ 在外层控件之间移动焦点。
@@ -90,14 +90,14 @@ function shortLabel(name: string): string {
       <kbd v-if="showKeys">Alt+{{ index + 1 }}</kbd>
     </button>
     <label v-if="otherOptions.length > 0" class="scheme-more" :class="{ active: Boolean(selectedOther) }">
-      <span>{{ selectedOther ? shortLabel(selectedOther.name) : '其他方案' }}</span>
+      <span>{{ selectedOther ? shortLabel(selectedOther.name) : '更多方案' }}</span>
       <kbd v-if="showKeys">Alt+6</kbd>
       <select
         :id="selectedOther ? 'scheme-select' : undefined"
         :value="selectedOther?.id ?? ''"
         aria-keyshortcuts="Alt+6"
         :disabled="busy"
-        aria-label="其他双拼方案"
+        aria-label="更多双拼方案"
         @change="emit('select', ($event.target as HTMLSelectElement).value)"
         @keydown.down.prevent="stepOther(1)"
         @keydown.up.prevent="stepOther(-1)"

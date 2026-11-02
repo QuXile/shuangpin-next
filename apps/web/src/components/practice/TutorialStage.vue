@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import type { AtomId, LessonDef, PracticeWord } from '@shuangpin/core'
 import type { PassCriteriaLine } from '@shuangpin/core'
 import { describePassCriteria } from '@shuangpin/core'
@@ -23,7 +23,7 @@ const props = withDefaults(
     focusBadge?: string
     startLabel?: string
   }>(),
-  { focusAtoms: () => [], focusBadge: '新', startLabel: '开始练习' },
+  { focusAtoms: () => [], focusBadge: '新', startLabel: '开始学习' },
 )
 
 const emit = defineEmits<{ start: [] }>()
@@ -36,6 +36,36 @@ const ratingLines = computed<PassCriteriaLine[]>(() => {
   const criteria = props.lesson.passCriteria
   return criteria ? describePassCriteria(criteria) : []
 })
+
+const allTips = computed(() => props.notes.flatMap((note) => note.bullets))
+/** 把生成课程的「编码补充」长句拆成推荐码 / 兼容映射两组；普通 tips 单独展示。 */
+const recommendedTips = computed(() => {
+  const lines: string[] = []
+  for (const tip of allTips.value) {
+    const body = tip.replace(/^编码补充（[^）]*）：/, '')
+    for (const part of body.split('；')) {
+      const [recommended, compat] = part.split(/，兼容码/)
+      if (recommended?.includes('推荐码')) lines.push(recommended.trim())
+      if (compat) lines.push(`兼容码 ${compat.trim()}`)
+    }
+  }
+  return lines
+})
+const compatTips = computed(() => recommendedTips.value.filter((tip) => tip.startsWith('兼容码')))
+const recommendedOnlyTips = computed(() => recommendedTips.value.filter((tip) => !tip.startsWith('兼容码')))
+const otherTips = computed(() =>
+  allTips.value.filter((tip) => !/推荐码|兼容|编码补充/.test(tip)),
+)
+const hasTips = computed(
+  () =>
+    recommendedOnlyTips.value.length > 0 ||
+    compatTips.value.length > 0 ||
+    otherTips.value.length > 0 ||
+    anchorRows.value.length > 0,
+)
+
+/** 悬停示例时，课程技巧收起到标题行，示例向上占满。 */
+const examplesHovered = ref(false)
 </script>
 
 <template>
@@ -61,54 +91,14 @@ const ratingLines = computed<PassCriteriaLine[]>(() => {
             <h2 class="panel-title">课程范围</h2>
             <span class="count-badge">{{ focusItems.length }} 个映射</span>
           </header>
-          <div
-            class="focus-block thin-scroll"
-            :class="{ 'is-wide': focusItems.length > 8 }"
-          >
+          <div class="focus-block thin-scroll" :class="{ 'is-wide': focusItems.length > 8 }">
             <FocusTagList :items="focusItems" />
             <span v-if="focusItems.length === 0" class="focus-empty">键位总览 · 无新键</span>
           </div>
         </div>
 
-        <div v-if="anchorRows.length || notes.length" class="tutorial-bottom">
-          <section v-if="anchorRows.length" class="anchors-card" aria-label="记忆锚点">
-            <div class="anchors-list">
-              <div v-for="row in anchorRows" :key="row.atomId" class="anchor-row">
-                <span class="anchor-label" :class="`is-${row.type}`">{{ row.label.toUpperCase() }}</span>
-                <span v-if="row.keys.length" class="anchor-key">
-                  {{ row.keys.map((key) => key.toUpperCase()).join(' + ') }} 键
-                </span>
-                <span v-if="row.mnemonic" class="anchor-mnemonic">{{ row.mnemonic }}</span>
-                <span v-if="row.anchors.length" class="anchor-chips">
-                  <span v-for="anchor in row.anchors" :key="anchor" class="anchor-chip">{{ anchor }}</span>
-                </span>
-              </div>
-            </div>
-          </section>
-
-          <section v-if="notes.length" class="notes-card" aria-label="本课技巧">
-            <div v-for="note in notes" :key="note.title" class="note-item">
-              <strong>{{ note.title }}</strong>
-              <ul class="note-bullets">
-                <li v-for="bullet in note.bullets" :key="bullet">{{ bullet }}</li>
-              </ul>
-            </div>
-          </section>
-        </div>
-
-      </section>
-
-      <aside class="tutorial-side">
-        <section class="tutorial-examples panel">
-          <header class="panel-head tutorial-side-head">
-            <h2 class="panel-title">示例</h2>
-            <span class="count-badge">{{ examples.length }} 张</span>
-          </header>
-          <TutorialExamples :words="examples" :focus-atoms="focusAtoms" :focus-badge="focusBadge" />
-        </section>
-
-        <section v-if="ratingLines.length" class="tutorial-rating panel" aria-label="评分标准">
-          <header class="panel-head tutorial-side-head">
+        <section v-if="ratingLines.length" class="tutorial-rating" aria-label="评分标准">
+          <header class="range-head panel-head">
             <h2 class="panel-title">评分标准</h2>
             <span class="count-badge">{{ ratingLines.length }} 档</span>
           </header>
@@ -118,6 +108,72 @@ const ratingLines = computed<PassCriteriaLine[]>(() => {
               <span>{{ line.text }}</span>
             </p>
           </div>
+        </section>
+      </section>
+
+      <aside class="tutorial-side">
+        <section
+          v-if="hasTips"
+          class="tutorial-notes panel"
+          :class="{ 'is-collapsed': examplesHovered }"
+          aria-label="课程技巧"
+        >
+          <header class="panel-head tutorial-side-head">
+            <h2 class="panel-title">课程技巧</h2>
+            <span class="count-badge">本课</span>
+          </header>
+          <div v-show="!examplesHovered" class="notes-body thin-scroll">
+            <section v-if="recommendedOnlyTips.length" class="tip-section">
+              <h3>推荐码</h3>
+              <ul class="tip-bullets">
+                <li v-for="tip in recommendedOnlyTips" :key="tip">{{ tip }}</li>
+              </ul>
+            </section>
+
+            <section v-if="compatTips.length" class="tip-section">
+              <h3>兼容映射</h3>
+              <ul class="tip-bullets">
+                <li v-for="tip in compatTips" :key="tip">{{ tip }}</li>
+              </ul>
+            </section>
+
+            <section v-if="anchorRows.length" class="tip-section">
+              <h3>助记</h3>
+              <div class="anchors-list">
+                <div v-for="row in anchorRows" :key="row.atomId" class="anchor-row">
+                  <span class="anchor-label" :class="`is-${row.type}`">{{ row.label.toUpperCase() }}</span>
+                  <span v-if="row.keys.length" class="anchor-key">
+                    {{ row.keys.map((key) => key.toUpperCase()).join(' + ') }} 键
+                  </span>
+                  <span v-if="row.mnemonic" class="anchor-mnemonic">{{ row.mnemonic }}</span>
+                  <span v-if="row.anchors.length" class="anchor-chips">
+                    <span v-for="anchor in row.anchors" :key="anchor" class="anchor-chip">{{ anchor }}</span>
+                  </span>
+                </div>
+              </div>
+            </section>
+
+            <section v-if="otherTips.length" class="tip-section">
+              <h3>其他技巧</h3>
+              <ul class="tip-bullets">
+                <li v-for="tip in otherTips" :key="tip">{{ tip }}</li>
+              </ul>
+            </section>
+          </div>
+        </section>
+
+        <section
+          class="tutorial-examples panel"
+          :class="{ 'is-expanded': examplesHovered }"
+          aria-label="示例"
+          @mouseenter="examplesHovered = true"
+          @mouseleave="examplesHovered = false"
+        >
+          <header class="panel-head tutorial-side-head">
+            <h2 class="panel-title">示例</h2>
+            <span class="count-badge">{{ examples.length }} 张</span>
+          </header>
+          <TutorialExamples :words="examples" :focus-atoms="focusAtoms" :focus-badge="focusBadge" />
         </section>
       </aside>
     </div>
@@ -147,10 +203,10 @@ const ratingLines = computed<PassCriteriaLine[]>(() => {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  overflow: visible;
+  overflow: hidden;
   position: relative;
   z-index: 1;
-  padding: 20px 22px 22px;
+  padding: 20px 22px 18px;
 }
 .tutorial-head {
   flex: none;
@@ -196,6 +252,9 @@ const ratingLines = computed<PassCriteriaLine[]>(() => {
   flex: none;
   margin-bottom: 10px;
 }
+.panel-head .panel-title {
+  font-size: 13px;
+}
 .focus-block {
   flex: 1;
   min-height: 0;
@@ -209,7 +268,6 @@ const ratingLines = computed<PassCriteriaLine[]>(() => {
   background: var(--surface-2);
   border: 1px solid var(--line-faint);
 }
-/* 映射标签始终从顶部开始，少量/大量映射保持同一视觉规则 */
 .focus-block.is-wide :deep(.focus-tag-list) {
   padding-right: 6px;
 }
@@ -223,26 +281,90 @@ const ratingLines = computed<PassCriteriaLine[]>(() => {
   color: var(--ink-3);
   font-size: var(--text-sm);
 }
-.tutorial-bottom {
+.tutorial-rating {
   flex: none;
+  max-height: 40%;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  min-height: 0;
   margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line-faint);
 }
-.anchors-card,
-.notes-card {
+.tutorial-side {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  overflow: hidden;
+}
+.tutorial-notes {
+  flex: 0 1 auto;
+  max-height: 48%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  overflow: hidden;
+}
+.tutorial-notes.is-collapsed {
+  flex: 0 0 auto;
+  max-height: none;
+}
+.tutorial-notes.is-collapsed .tutorial-side-head {
+  margin-bottom: 0;
+}
+.tutorial-examples {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  overflow: hidden;
+}
+.tutorial-examples.is-expanded {
+  flex: 1 1 auto;
+}
+.tutorial-side-head {
   flex: none;
-  padding: 10px 12px;
-  border-radius: var(--r-sm);
-  border: 1px solid var(--line-faint);
-  background: var(--surface-2);
+  margin-bottom: 10px;
+}
+.notes-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
+  padding-right: 2px;
+}
+.tip-section + .tip-section {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line-faint);
+}
+.tip-section h3 {
+  margin: 0 0 6px;
+  color: var(--ink-3);
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.05em;
+}
+.tip-bullets {
+  margin: 0;
+  padding-left: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.tip-bullets li {
+  color: var(--ink-2);
+  font-size: 11px;
+  line-height: 1.65;
 }
 .anchors-list {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding-right: 2px;
 }
 .anchor-row {
   display: flex;
@@ -301,62 +423,6 @@ const ratingLines = computed<PassCriteriaLine[]>(() => {
   font-size: 10px;
   line-height: 1.5;
 }
-.note-item {
-  display: flex;
-  gap: 8px;
-  padding: 3px 0;
-  color: var(--ink-3);
-  font-size: 11px;
-  line-height: 1.6;
-}
-.note-item + .note-item {
-  border-top: 1px dashed var(--line-faint);
-}
-.note-item strong {
-  flex: none;
-  color: var(--ink-2);
-  font-weight: 650;
-}
-.note-bullets {
-  flex: 1;
-  margin: 0;
-  padding-left: 15px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.note-bullets li {
-  color: var(--ink-3);
-  font-size: 11px;
-  line-height: 1.6;
-}
-.tutorial-side {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  min-height: 0;
-  overflow: hidden;
-}
-.tutorial-examples {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  padding: 16px;
-  overflow: hidden;
-}
-.tutorial-rating {
-  flex: none;
-  max-height: 42%;
-  display: flex;
-  flex-direction: column;
-  padding: 16px;
-  overflow: hidden;
-}
-.tutorial-side-head {
-  flex: none;
-  margin-bottom: 10px;
-}
 .rating-lines {
   flex: 1;
   min-height: 0;
@@ -401,6 +467,9 @@ const ratingLines = computed<PassCriteriaLine[]>(() => {
   .tutorial-side {
     min-height: 0;
   }
+  .tutorial-notes {
+    max-height: 45%;
+  }
   .anchor-mnemonic {
     flex-basis: 100%;
     width: 100%;
@@ -444,15 +513,25 @@ const ratingLines = computed<PassCriteriaLine[]>(() => {
     overflow: visible;
     padding: 12px;
   }
-  .tutorial-bottom {
+  .tutorial-rating {
     max-height: none;
+    overflow: visible;
     margin-top: 10px;
-    gap: 6px;
   }
   .tutorial-side {
     flex: none;
     overflow: visible;
     gap: 10px;
+  }
+  .tutorial-notes {
+    flex: none;
+    max-height: none;
+    overflow: visible;
+    padding: 12px;
+  }
+  .notes-body {
+    flex: none;
+    overflow: visible;
   }
   .tutorial-examples {
     flex: none;
@@ -460,10 +539,8 @@ const ratingLines = computed<PassCriteriaLine[]>(() => {
     min-height: 300px;
     padding: 12px 12px 8px;
   }
-  .tutorial-rating {
-    flex: none;
-    max-height: none;
-    padding: 12px 12px 8px;
+  .tutorial-notes.is-collapsed .notes-body {
+    display: none;
   }
   .tutorial-side-head {
     margin-bottom: 6px;
@@ -473,21 +550,13 @@ const ratingLines = computed<PassCriteriaLine[]>(() => {
     line-height: 1.45;
     gap: 4px;
   }
-  .anchors-card {
-    padding: 8px 10px;
-  }
   .anchor-chips {
     display: none;
   }
-  .notes-card {
-    padding: 8px 10px;
+  .anchor-chip {
+    display: none;
   }
-  .note-item {
-    padding: 2px 0;
-    font-size: 10px;
-    line-height: 1.5;
-  }
-  .note-bullets li {
+  .tip-bullets li {
     font-size: 10px;
     line-height: 1.5;
   }

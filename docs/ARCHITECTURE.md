@@ -59,7 +59,7 @@ kind      intro（入门）/ drill（新课）/ review（复习、期中、综�
 ```
 
 - 只有 `initial/final` 阻塞选词；`prerequisites` 是此前 focus 的累计集合，复习范围直接取 `prerequisites`。
-- 5 套 full 课程使用手写路线（含同键双韵合并、零声母整表课）；14 套 simplified 由 `scripts/generate-universal-curriculum.mjs` 生成：learn 原子逐课、free 原子归入全拼复习、逐章复习、期中、最终章。
+- 5 套 full 课程使用手写路线（含同键双韵合并、零声母整表课）；14 套 simplified 由 `scripts/generate-universal-curriculum.mjs` 生成：learn 原子逐课、free 原子直接视为已会、逐章复习、期中、最终章。
 - `stageMinWords` 定义各阶段最低词数；`passCriteria` 定义正确率与可选速度门槛；`tips`、`atomMeta` 由内容库与锚点数据生成。
 - `lessonStages` 给出阶段；`hintTierFor` 决定提示档位；`stageGate` 判定阶段是否达标。每阶段保留独立 `SessionState`，切换时用 `resumeSession` 恢复，已达标阶段记录在进度 `clearedStages` 中。
 

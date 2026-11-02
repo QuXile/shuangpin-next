@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-01T18:07:24.248Z",
+  "generatedAt": "2026-11-02T07:57:04.115Z",
   "templateVersion": "1.0.0",
   "schemes": [
     {
@@ -9,16 +9,22 @@
       "file": "data/schemes/xiaohe/curriculum.json"
     },
     {
+      "schemeId": "weiruan",
+      "schemeName": "微软双拼",
+      "supportLevel": "full",
+      "file": "data/schemes/weiruan/curriculum.json"
+    },
+    {
       "schemeId": "ziranma",
       "schemeName": "自然码",
       "supportLevel": "full",
       "file": "data/schemes/ziranma/curriculum.json"
     },
     {
-      "schemeId": "weiruan",
-      "schemeName": "微软双拼",
+      "schemeId": "pinyinjiajia",
+      "schemeName": "拼音加加",
       "supportLevel": "full",
-      "file": "data/schemes/weiruan/curriculum.json"
+      "file": "data/schemes/pinyinjiajia/curriculum.json"
     },
     {
       "schemeId": "sougou",
@@ -29,14 +35,8 @@
     {
       "schemeId": "zhinengabc",
       "schemeName": "智能ABC",
-      "supportLevel": "full",
-      "file": "data/schemes/zhinengabc/curriculum.json"
-    },
-    {
-      "schemeId": "pinyinjiajia",
-      "schemeName": "拼音加加",
       "supportLevel": "simplified",
-      "file": "data/schemes/pinyinjiajia/curriculum.json"
+      "file": "data/schemes/zhinengabc/curriculum.json"
     },
     {
       "schemeId": "ziguang",

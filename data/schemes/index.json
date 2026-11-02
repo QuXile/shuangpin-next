@@ -33,11 +33,11 @@
   "defaultScheme": "xiaohe",
   "recommendedOrder": [
     "xiaohe",
-    "ziranma",
     "weiruan",
+    "ziranma",
+    "pinyinjiajia",
     "sougou",
     "zhinengabc",
-    "pinyinjiajia",
     "ziguang",
     "lantian",
     "baiyun",
@@ -54,11 +54,11 @@
   ],
   "courseSupported": [
     "xiaohe",
-    "ziranma",
     "weiruan",
+    "ziranma",
+    "pinyinjiajia",
     "sougou",
     "zhinengabc",
-    "pinyinjiajia",
     "ziguang",
     "lantian",
     "baiyun",
@@ -436,9 +436,9 @@
       },
       "course": {
         "supportsGuidedCourse": true,
-        "courseTier": "full",
-        "reason": "macOS 默认双拼方案，存量用户多；声母改造（zh→a/ch→e/sh→v）是与其他方案最大的迁移障碍，课程价值高。",
-        "courseNotes": "完整课程；第一章「声母改造」要重点讲 zh/ch/sh 三个字母被占用（a/e/v），并避开 ue/ve 双键容错的提示噪声。"
+        "courseTier": "simplified",
+        "reason": "没有自有课程路线：使用自动生成的通用课程（learn 原子逐课 + 期中 / 最终章）。",
+        "courseNotes": "通用课程由 scripts/generate-universal-curriculum.mjs 生成；推荐码 / 兼容编码信息写在对应原子课 tips。"
       },
       "recommendation": {
         "rank": 5,
@@ -501,9 +501,9 @@
       },
       "course": {
         "supportsGuidedCourse": true,
-        "courseTier": "simplified",
-        "reason": "没有自有课程路线：使用自动生成的通用课程（learn 原子逐课 + 全拼沿用复习 + 期中 / 最终章）。",
-        "courseNotes": "通用课程由 scripts/generate-universal-curriculum.mjs 生成；推荐码 / 兼容编码信息写在对应原子课 tips。"
+        "courseTier": "full",
+        "reason": "常用且键位规整的拼音加加双拼；本期使用自建完整课程。",
+        "courseNotes": "自建完整课程。"
       },
       "recommendation": {
         "rank": 6,
@@ -567,7 +567,7 @@
       "course": {
         "supportsGuidedCourse": true,
         "courseTier": "simplified",
-        "reason": "没有自有课程路线：使用自动生成的通用课程（learn 原子逐课 + 全拼沿用复习 + 期中 / 最终章）。",
+        "reason": "没有自有课程路线：使用自动生成的通用课程（learn 原子逐课 + 期中 / 最终章）。",
         "courseNotes": "通用课程由 scripts/generate-universal-curriculum.mjs 生成；推荐码 / 兼容编码信息写在对应原子课 tips。"
       },
       "recommendation": {
@@ -632,7 +632,7 @@
       "course": {
         "supportsGuidedCourse": true,
         "courseTier": "simplified",
-        "reason": "没有自有课程路线：使用自动生成的通用课程（learn 原子逐课 + 全拼沿用复习 + 期中 / 最终章）。",
+        "reason": "没有自有课程路线：使用自动生成的通用课程（learn 原子逐课 + 期中 / 最终章）。",
         "courseNotes": "通用课程由 scripts/generate-universal-curriculum.mjs 生成；推荐码 / 兼容编码信息写在对应原子课 tips。"
       },
       "recommendation": {
@@ -697,7 +697,7 @@
       "course": {
         "supportsGuidedCourse": true,
         "courseTier": "simplified",
-        "reason": "没有自有课程路线：使用自动生成的通用课程（learn 原子逐课 + 全拼沿用复习 + 期中 / 最终章）。",
+        "reason": "没有自有课程路线：使用自动生成的通用课程（learn 原子逐课 + 期中 / 最终章）。",
         "courseNotes": "通用课程由 scripts/generate-universal-curriculum.mjs 生成；推荐码 / 兼容编码信息写在对应原子课 tips。"
       },
       "recommendation": {
@@ -762,7 +762,7 @@
       "course": {
         "supportsGuidedCourse": true,
         "courseTier": "simplified",
-        "reason": "没有自有课程路线：使用自动生成的通用课程（learn 原子逐课 + 全拼沿用复习 + 期中 / 最终章）。",
+        "reason": "没有自有课程路线：使用自动生成的通用课程（learn 原子逐课 + 期中 / 最终章）。",
         "courseNotes": "通用课程由 scripts/generate-universal-curriculum.mjs 生成；推荐码 / 兼容编码信息写在对应原子课 tips。"
       },
       "recommendation": {
@@ -827,7 +827,7 @@
       "course": {
         "supportsGuidedCourse": true,
         "courseTier": "simplified",
-        "reason": "没有自有课程路线：使用自动生成的通用课程（learn 原子逐课 + 全拼沿用复习 + 期中 / 最终章）。",
+        "reason": "没有自有课程路线：使用自动生成的通用课程（learn 原子逐课 + 期中 / 最终章）。",
         "courseNotes": "通用课程由 scripts/generate-universal-curriculum.mjs 生成；推荐码 / 兼容编码信息写在对应原子课 tips。"
       },
       "recommendation": {
@@ -894,7 +894,7 @@
       "course": {
         "supportsGuidedCourse": true,
         "courseTier": "simplified",
-        "reason": "没有自有课程路线：使用自动生成的通用课程（learn 原子逐课 + 全拼沿用复习 + 期中 / 最终章）。",
+        "reason": "没有自有课程路线：使用自动生成的通用课程（learn 原子逐课 + 期中 / 最终章）。",
         "courseNotes": "通用课程由 scripts/generate-universal-curriculum.mjs 生成；推荐码 / 兼容编码信息写在对应原子课 tips。"
       },
       "recommendation": {
@@ -987,7 +987,7 @@
       "course": {
         "supportsGuidedCourse": true,
         "courseTier": "simplified",
-        "reason": "没有自有课程路线：使用自动生成的通用课程（learn 原子逐课 + 全拼沿用复习 + 期中 / 最终章）。",
+        "reason": "没有自有课程路线：使用自动生成的通用课程（learn 原子逐课 + 期中 / 最终章）。",
         "courseNotes": "通用课程由 scripts/generate-universal-curriculum.mjs 生成；推荐码 / 兼容编码信息写在对应原子课 tips。"
       },
       "recommendation": {
@@ -1066,7 +1066,7 @@
       "course": {
         "supportsGuidedCourse": true,
         "courseTier": "simplified",
-        "reason": "没有自有课程路线：使用自动生成的通用课程（learn 原子逐课 + 全拼沿用复习 + 期中 / 最终章）。",
+        "reason": "没有自有课程路线：使用自动生成的通用课程（learn 原子逐课 + 期中 / 最终章）。",
         "courseNotes": "通用课程由 scripts/generate-universal-curriculum.mjs 生成；推荐码 / 兼容编码信息写在对应原子课 tips。"
       },
       "recommendation": {
@@ -1183,7 +1183,7 @@
       "course": {
         "supportsGuidedCourse": true,
         "courseTier": "simplified",
-        "reason": "没有自有课程路线：使用自动生成的通用课程（learn 原子逐课 + 全拼沿用复习 + 期中 / 最终章）。",
+        "reason": "没有自有课程路线：使用自动生成的通用课程（learn 原子逐课 + 期中 / 最终章）。",
         "courseNotes": "通用课程由 scripts/generate-universal-curriculum.mjs 生成；推荐码 / 兼容编码信息写在对应原子课 tips。"
       },
       "recommendation": {
@@ -1255,7 +1255,7 @@
       "course": {
         "supportsGuidedCourse": true,
         "courseTier": "simplified",
-        "reason": "没有自有课程路线：使用自动生成的通用课程（learn 原子逐课 + 全拼沿用复习 + 期中 / 最终章）。",
+        "reason": "没有自有课程路线：使用自动生成的通用课程（learn 原子逐课 + 期中 / 最终章）。",
         "courseNotes": "通用课程由 scripts/generate-universal-curriculum.mjs 生成；推荐码 / 兼容编码信息写在对应原子课 tips。"
       },
       "recommendation": {
@@ -1372,7 +1372,7 @@
       "course": {
         "supportsGuidedCourse": true,
         "courseTier": "simplified",
-        "reason": "没有自有课程路线：使用自动生成的通用课程（learn 原子逐课 + 全拼沿用复习 + 期中 / 最终章）。",
+        "reason": "没有自有课程路线：使用自动生成的通用课程（learn 原子逐课 + 期中 / 最终章）。",
         "courseNotes": "通用课程由 scripts/generate-universal-curriculum.mjs 生成；推荐码 / 兼容编码信息写在对应原子课 tips。"
       },
       "recommendation": {
@@ -1491,7 +1491,7 @@
       "course": {
         "supportsGuidedCourse": true,
         "courseTier": "simplified",
-        "reason": "没有自有课程路线：使用自动生成的通用课程（learn 原子逐课 + 全拼沿用复习 + 期中 / 最终章）。",
+        "reason": "没有自有课程路线：使用自动生成的通用课程（learn 原子逐课 + 期中 / 最终章）。",
         "courseNotes": "通用课程由 scripts/generate-universal-curriculum.mjs 生成；推荐码 / 兼容编码信息写在对应原子课 tips。"
       },
       "recommendation": {
@@ -1611,7 +1611,7 @@
       "course": {
         "supportsGuidedCourse": true,
         "courseTier": "simplified",
-        "reason": "没有自有课程路线：使用自动生成的通用课程（learn 原子逐课 + 全拼沿用复习 + 期中 / 最终章）。",
+        "reason": "没有自有课程路线：使用自动生成的通用课程（learn 原子逐课 + 期中 / 最终章）。",
         "courseNotes": "通用课程由 scripts/generate-universal-curriculum.mjs 生成；推荐码 / 兼容编码信息写在对应原子课 tips。"
       },
       "recommendation": {

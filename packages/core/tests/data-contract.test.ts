@@ -64,7 +64,7 @@ describe('方案与课程数据契约', () => {
       else if (curriculum.supportLevel === 'simplified') simplifiedIds.push(schemeId)
       else expect.fail(`${schemeId}: 未知 supportLevel ${curriculum.supportLevel}`)
     }
-    expect(fullIds.sort()).toEqual(['sougou', 'weiruan', 'xiaohe', 'zhinengabc', 'ziranma'])
+    expect(fullIds.sort()).toEqual(['pinyinjiajia', 'sougou', 'weiruan', 'xiaohe', 'ziranma'])
     expect(simplifiedIds).toHaveLength(14)
   })
 
@@ -90,18 +90,12 @@ describe('方案与课程数据契约', () => {
       const drills = curriculum.lessons.filter((lesson) => lesson.kind === 'drill')
       for (const lesson of drills) expect(lesson.focusAtoms, `${schemeId}/${lesson.id}: 每原子一节课`).toHaveLength(1)
       expect(new Set(drills.flatMap((lesson) => lesson.focusAtoms)).size, `${schemeId}: 新课原子重复`).toBe(drills.length)
-      // 全拼沿用复习：覆盖 free 原子，prerequisites 为空
-      const freeReview = curriculum.lessons.find((lesson) => lesson.title === '复习 · 全拼沿用')
-      expect(freeReview, `${schemeId}: 缺全拼复习`).toBeTruthy()
-      if (freeReview) {
-        expect(freeReview.kind).toBe('review')
-        expect(freeReview.prerequisites).toEqual([])
-        expect(freeReview.focusAtoms.length).toBeGreaterThan(0)
-        // 全拼沿用复习允许少量预习原子：部分方案（如键道3）全部韵母都需要重学。
-        expect(freeReview.wordPlan.maxUnfamiliar).toBe(2)
-      }
+      // 不再生成「全拼沿用」复习课；free 原子直接进入内容课前置
+      expect(curriculum.lessons.some((lesson) => lesson.title === '复习 · 全拼沿用')).toBe(false)
+      const firstDrill = curriculum.lessons.find((lesson) => lesson.kind === 'drill')
+      expect(firstDrill?.prerequisites.length ?? 0).toBeGreaterThan(0)
       for (const lesson of curriculum.lessons) {
-        if (lesson.title !== '复习 · 全拼沿用') expect(lesson.wordPlan.maxUnfamiliar, `${schemeId}/${lesson.id}`).toBe(0)
+        expect(lesson.wordPlan.maxUnfamiliar, `${schemeId}/${lesson.id}`).toBe(0)
       }
     }
   })

@@ -18,7 +18,7 @@ defineProps<{ items: readonly FocusAtomView[] }>()
       <template v-if="item.keys.length">
         <span class="focus-arrow" aria-hidden="true">→</span>
         <span class="focus-keys">
-          <kbd v-for="key in item.keys" :key="key">{{ key.toUpperCase() }}</kbd>
+          <kbd v-for="(key, index) in item.keys" :key="key" :class="{ 'is-primary': index === 0 }">{{ key.toUpperCase() }}</kbd>
         </span>
       </template>
     </span>
@@ -88,10 +88,15 @@ defineProps<{ items: readonly FocusAtomView[] }>()
   border-bottom-width: 2px;
   border-radius: 4px;
   background: var(--surface-2);
-  color: var(--brand-ink);
+  color: var(--ink-2);
   font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 700;
   line-height: 1;
+}
+.focus-keys kbd.is-primary {
+  border-color: var(--brand);
+  background: var(--brand);
+  color: var(--on-accent);
 }
 </style>

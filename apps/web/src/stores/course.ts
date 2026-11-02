@@ -110,9 +110,11 @@ export const useCourseStore = defineStore('course', () => {
     const order = index.recommendedOrder.length > 0
       ? index.recommendedOrder
       : index.schemes.map((item) => item.id)
+    // 主选择器固定展示前五套；其余全部收进「更多方案」。
+    const primary = new Set(order.slice(0, 5))
     return order
       .map((id) => index.schemes.find((item) => item.id === id))
-      .filter((item): item is SchemeSummary => item !== undefined && supported.has(item.id))
+      .filter((item): item is SchemeSummary => item !== undefined && supported.has(item.id) && primary.has(item.id))
       .map((item) => ({ id: item.id, name: item.name, meta: item }))
   })
 

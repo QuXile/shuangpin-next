@@ -127,8 +127,7 @@ const LESSON_FORBIDDEN = [
 ]
 const LESSON_TITLE_RE = /^(入门|声母|零声母|韵母|复习|期中|综合|通关) · (.+)$/
 /** 有自有课程路线的方案：通用生成器必须原样跳过。 */
-const FULL_COURSE_IDS = ['xiaohe', 'ziranma', 'weiruan', 'sougou', 'zhinengabc']
-const FREE_REVIEW_TITLE = '复习 · 全拼沿用'
+const FULL_COURSE_IDS = ['xiaohe', 'weiruan', 'ziranma', 'pinyinjiajia', 'sougou']
 /** 通用课程内容章顺序（与 tmp/curriculum-route-design.md 一致）。 */
 const CONTENT_MODULE_ORDER = [
   { key: 'single-final', type: 'final', title: '单韵母', atoms: ['a', 'o', 'e', 'i', 'u', 'v'] },
@@ -156,8 +155,7 @@ const STAGE_MIN_BY_KIND = {
 }
 const WORD_PLAN_INTRO = { maxUnfamiliar: 0, lengthRange: [2, 3] }
 const WORD_PLAN_DEFAULT = { maxUnfamiliar: 0, lengthRange: [2, 5] }
-/** 全拼沿用复习：无 newFocus 时允许少量预习原子（否则部分方案无合法练习词）。 */
-const WORD_PLAN_FREE_REVIEW = { maxUnfamiliar: 2, lengthRange: [2, 5] }
+/** 复习课允许少量预习原子（默认 0）。 */
 
 function splitAtom(atomId) {
   const index = String(atomId).indexOf(':')
@@ -177,7 +175,7 @@ function atomExistsInScheme(scheme, atomId) {
   return Boolean(table) && Object.prototype.hasOwnProperty.call(table, key)
 }
 
-/** 通用课程全拼沿用复习覆盖的 free 原子（规范顺序：声母 → 韵母 → 零声母）。 */
+/** free 原子（规范顺序：声母 → 韵母 → 零声母）。 */
 function freeAtomIdsOf(scheme, diff) {
   const freeInitials = new Set(diff.freeInitials)
   const freeFinals = new Set(diff.freeFinals)
@@ -541,7 +539,7 @@ function validateFullCurriculum(schemeId, curriculum, engineInfo) {
 
 /**
  * 14 套通用生成课程（supportLevel=simplified）：
- *  - 第一章「入门」（通用入门 + 全拼沿用复习，prerequisites=[]）；
+ *  - 第一章「入门」（通用入门；free 原子直接进入后续 prerequisites）；
  *  - 内容章只按 learn 原子逐课（每原子一课、不合并），章末复习；
  *  - 期中按「左右新课数差最小 → 章数差最小 → 更早边界」插入；
  *  - 最终章：综合 → 速度 → 最终考核（最后一课）；
@@ -605,16 +603,7 @@ function validateSimplifiedCurriculum(schemeId, curriculum, engineInfo) {
 
   // ── 期望课程序列 ──
   const expectedLessons = []
-  expectedLessons.push({ chapterId: 'ch-intro', kind: 'intro', title: '入门 · 认识双拼', focusAtoms: [], addedAtoms: [] })
-  if (freeAtomIds.length > 0) {
-    expectedLessons.push({
-      chapterId: 'ch-intro',
-      kind: 'review',
-      title: FREE_REVIEW_TITLE,
-      focusAtoms: freeAtomIds,
-      addedAtoms: freeAtomIds,
-    })
-  }
+  expectedLessons.push({ chapterId: 'ch-intro', kind: 'intro', title: '入门 · 认识双拼', focusAtoms: [], addedAtoms: [...freeAtomIds] })
   const pushMidLessons = () => {
     expectedLessons.push({ chapterId: 'ch-mid', kind: 'review', title: '期中 · 混合练习', focusAtoms: null, addedAtoms: [] })
     expectedLessons.push({ chapterId: 'ch-mid', kind: 'review', title: '期中 · 速度练习', focusAtoms: null, addedAtoms: [] })
@@ -736,9 +725,7 @@ function validateSimplifiedCurriculum(schemeId, curriculum, engineInfo) {
     const expectedWordPlan =
       lesson.kind === 'intro'
         ? WORD_PLAN_INTRO
-        : lesson.title === FREE_REVIEW_TITLE
-          ? WORD_PLAN_FREE_REVIEW
-          : WORD_PLAN_DEFAULT
+        : WORD_PLAN_DEFAULT
     ok(JSON.stringify(lesson.wordPlan) === JSON.stringify(expectedWordPlan), `${where}: wordPlan 与课程类型不符`)
     if (lesson.kind === 'intro') {
       ok(lesson.passCriteria === undefined, `${where}: 入门课不应写 passCriteria`)
@@ -822,11 +809,11 @@ function validateSimplifiedCurriculum(schemeId, curriculum, engineInfo) {
     compatMarkers === codeAnalysis.stats.compatCount,
     `${schemeId}: 兼容编码 ${codeAnalysis.stats.compatCount} 条，tips 中只有 ${compatMarkers} 条`,
   )
-  const freeReviewLesson = curriculum.lessons.find((lesson) => lesson.title === FREE_REVIEW_TITLE)
+  const freeCodeLesson = curriculum.lessons.find((lesson) => lesson.title === '综合 · 混合练习')
   for (const [target, entries] of codeAnalysis.groups) {
     const lesson =
       target === 'free'
-        ? freeReviewLesson
+        ? freeCodeLesson
         : curriculum.lessons.find(
             (item) => item.kind === 'drill' && item.focusAtoms.length === 1 && item.focusAtoms[0] === target,
           )
