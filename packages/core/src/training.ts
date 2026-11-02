@@ -1,45 +1,50 @@
 /**
- * 训练场的纯函数：范围过滤（字/词）与文章文本解析。
+ * 训练场纯函数：范围过滤、文章解析、条目装配、训练批次与文章计划。
  *
- * - 范围：条目的每个音节的 (initial, final) 都必须命中所选集合；零声母以 initial='' 参与；
+ * - 范围：条目的每个音节的 (initial, final) 都必须命中所选集合；零声母以 initial='' 参与，
+ *   优先使用 zeroFinals（er 等只存在于 zeroInitial 中，不一定在普通韵母表里）；
  * - 文章：只保留汉字；任何非汉字（标点/引号/括号/字母/数字/空白/换行）都作为换行分隔且不显示；
  *   连续分隔合并；每行最多 5 个汉字（满 5 自动换行）；保留标点造成的短行。
  */
-import type { SchemeDef, WordEntry } from './types.ts'
+import type {
+  ArticlePlan,
+  ParsedArticle,
+  PracticeWord,
+  SchemeDef,
+  SchemeEngine,
+  TrainingAtomOptions,
+  TrainingCommonAtoms,
+  TrainingScope,
+  WordEntry,
+} from './types.ts'
 import { freeAtomsOf } from './scheme.ts'
-
-export interface TrainingScope {
-  /** 选中的声母；含 '' 表示零声母（未传 zeroFinals 时的兼容用法） */
-  initials: readonly string[]
-  finals: readonly string[]
-  /** 选中的零声母音节（按韵母名，如 a/ai/an…）；传空数组表示不练零声母 */
-  zeroFinals?: readonly string[]
-}
-
-export interface ParsedArticle {
-  chars: string[]
-  /** 每行 1–5 个汉字（由标点/非汉字或满 5 触发换行） */
-  lines: string[][]
-}
+import { buildPracticeWord } from './session.ts'
+import { shuffleSeeded } from './selector.ts'
 
 const HAN = /\p{Script=Han}/u
 
-/** 与全拼拼写完全一致的键位集合（free atoms）。 */
-export interface TrainingCommonAtoms {
-  initials: string[]
-  finals: string[]
-  zeroFinals: string[]
+// ── 方案键位选项 ──────────────────────────────────────────────
+
+/** 方案可选声母/韵母/零声母音节（零声母为独立选择集，不在 initials 内） */
+export function atomOptionsOf(scheme: SchemeDef): TrainingAtomOptions {
+  return {
+    initials: Object.keys(scheme.initials),
+    finals: Object.keys(scheme.finals),
+    zeroFinals: Object.keys(scheme.zeroInitial),
+  }
 }
 
-/** 单个方案里与全拼一致的声母、韵母、零声母音节。 */
+/** 单个方案里与全拼一致的声母、韵母、零声母音节（「全拼沿用」胶囊） */
 export function freeTrainingAtoms(scheme: SchemeDef): TrainingCommonAtoms {
   const free = freeAtomsOf(scheme)
   return {
-    initials: free.freeInitials,
-    finals: free.freeFinals,
-    zeroFinals: free.freeZero,
+    initials: [...free.initials],
+    finals: [...free.finals],
+    zeroFinals: [...free.zero],
   }
 }
+
+// ── 范围过滤 / 文章解析 ──────────────────────────────────────
 
 /** 该音节是否命中训练范围 */
 export function syllableInTrainingScope(
@@ -47,7 +52,6 @@ export function syllableInTrainingScope(
   scope: TrainingScope,
 ): boolean {
   if (syllable.initial === '') {
-    // 零声母是独立选择集（er 等只存在于 zeroInitial 中，不一定在普通韵母表里）
     return scope.zeroFinals
       ? scope.zeroFinals.includes(syllable.final)
       : scope.initials.includes('') && scope.finals.includes(syllable.final)
@@ -61,11 +65,13 @@ export function filterTrainingEntries<T extends WordEntry>(
   scope: TrainingScope,
 ): T[] {
   return entries.filter(
-    (entry) => entry.syllables.length > 0 && entry.syllables.every((syllable) => syllableInTrainingScope(syllable, scope)),
+    (entry) =>
+      entry.syllables.length > 0 &&
+      entry.syllables.every((syllable) => syllableInTrainingScope(syllable, scope)),
   )
 }
 
-/** 解析文章：只留汉字，非汉字（标点/空白/换行/字母/数字）断行且不显示，每行最多 5 字 */
+/** 解析文章：只留汉字，非汉字断行且不显示，每行最多 5 字 */
 export function parseArticleText(text: string): ParsedArticle {
   const chars: string[] = []
   const lines: string[][] = []
@@ -87,4 +93,105 @@ export function parseArticleText(text: string): ParsedArticle {
   }
   closeLine()
   return { chars, lines }
+}
+
+// ── 条目装配 / 训练批次 ──────────────────────────────────────
+
+/** 词条 → 展示/判题模型；数据异常条目返回 null 由调用方跳过 */
+export function entryToPracticeWord(engine: SchemeEngine, entry: WordEntry): PracticeWord | null {
+  try {
+    return buildPracticeWord(engine, entry)
+  } catch {
+    return null
+  }
+}
+
+/** 批量装配，跳过异常条目 */
+export function entriesToPracticeWords(
+  engine: SchemeEngine,
+  entries: readonly WordEntry[],
+): PracticeWord[] {
+  const words: PracticeWord[] = []
+  for (const entry of entries) {
+    const word = entryToPracticeWord(engine, entry)
+    if (word) words.push(word)
+  }
+  return words
+}
+
+/**
+ * 从条目取一批练习词（不足时循环补齐，跳过异常条目）。
+ * 默认随机 seed；调用方传 seed 时结果完全可复现。
+ */
+export function buildTrainingBatch(
+  engine: SchemeEngine,
+  entries: readonly WordEntry[],
+  count: number,
+  seed = Math.floor(Math.random() * 0xffffffff),
+): PracticeWord[] {
+  if (entries.length === 0 || count <= 0) return []
+  const words: PracticeWord[] = []
+  let guard = 0
+  while (words.length < count && guard < count * 4) {
+    guard += 1
+    const copy = shuffleSeeded(entries, seed + guard * 7919)
+    for (const entry of copy) {
+      if (words.length >= count) break
+      const word = entryToPracticeWord(engine, entry)
+      if (word) words.push(word)
+    }
+  }
+  return words
+}
+
+// ── 文章装配 ──────────────────────────────────────────────────
+
+/** 把解析出的行映射到字库：字库外汉字标记跳过（不练习） */
+export function buildArticlePlan(
+  lines: readonly string[][],
+  entries: readonly WordEntry[],
+): ArticlePlan {
+  const lookup = new Map<string, WordEntry>()
+  for (const entry of entries) {
+    if (!lookup.has(entry.text)) lookup.set(entry.text, entry)
+  }
+  let wordIndex = 0
+  let skipped = 0
+  const chars: string[] = []
+  const cells = lines.map((line) =>
+    line.map((char) => {
+      chars.push(char)
+      if (!lookup.has(char)) {
+        skipped += 1
+        return { char, wordIndex: null }
+      }
+      const cell = { char, wordIndex }
+      wordIndex += 1
+      return cell
+    }),
+  )
+  return { cells, chars, skipped }
+}
+
+/** 文章练习的固定顺序词序列（字库外跳过） */
+export function articlesToPracticeWords(
+  engine: SchemeEngine,
+  plan: ArticlePlan,
+  entries: readonly WordEntry[],
+): PracticeWord[] {
+  const lookup = new Map<string, WordEntry>()
+  for (const entry of entries) {
+    if (!lookup.has(entry.text)) lookup.set(entry.text, entry)
+  }
+  const words: PracticeWord[] = []
+  for (const line of plan.cells) {
+    for (const cell of line) {
+      if (cell.wordIndex === null) continue
+      const entry = lookup.get(cell.char)
+      if (!entry) continue
+      const word = entryToPracticeWord(engine, entry)
+      if (word) words.push(word)
+    }
+  }
+  return words
 }

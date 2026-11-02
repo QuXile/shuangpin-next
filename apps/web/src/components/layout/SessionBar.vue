@@ -2,6 +2,8 @@
 /**
  * 统一会话顶栏（50px 平铺操作条）：课程练习、入门课、练习场共用。
  * 左/右插槽放操作按钮，中间平铺当前场景的数据/文案。
+ * 插槽内按钮直接使用 base.css 的 .session-btn / .session-primary 等全局类，
+ * 本组件只负责布局与通过态上下文。
  */
 withDefaults(
   defineProps<{
@@ -32,13 +34,13 @@ withDefaults(
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
-  max-width: 1080px;
+  max-width: var(--content-narrow);
   width: 100%;
   height: 50px;
   margin: 0 auto 10px;
   padding: 0 10px;
   border: 1px solid var(--line);
-  border-radius: var(--r-md);
+  border-radius: var(--r-card);
   background: var(--surface);
   box-shadow: var(--shadow-sm);
   transition: background var(--dur-mid), border-color var(--dur-mid);
@@ -71,100 +73,37 @@ withDefaults(
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-.session-side :slotted(.session-btn) {
-  flex: none;
-  height: 30px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0 9px;
-  border-radius: var(--r-control);
-  color: var(--ink-3);
-  font-size: var(--text-sm);
-  font-weight: 600;
-  transition: background var(--dur-fast), color var(--dur-fast), transform var(--dur-fast);
-}
-.session-side :slotted(.session-btn:hover:not(:disabled)) {
-  color: var(--ink);
-  background: var(--surface-2);
-}
-.session-side :slotted(.session-btn:active:not(:disabled)) {
-  transform: scale(0.96);
-}
-.session-side :slotted(.session-btn:disabled) {
-  opacity: 0.42;
-  cursor: not-allowed;
-}
-.session-side :slotted(.session-icon) {
-  width: 14px;
-  height: 14px;
-}
-.session-side :slotted(.session-primary) {
-  flex: none;
-  height: 34px;
-  margin-left: 4px;
-  padding: 0 13px;
-  font-size: var(--text-sm);
-  background: var(--brand-fill);
-}
-.session-side :slotted(.session-primary:disabled) {
-  color: var(--ink-4);
-  background: var(--surface-3);
-  border-color: var(--line);
-  box-shadow: none;
-  cursor: not-allowed;
-}
-.session-side :slotted(.session-primary:disabled kbd) {
-  color: var(--ink-4);
-  border-color: var(--line);
-  background: var(--surface-2);
-}
-.session-center :slotted(.session-item) {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.session-center :slotted(.session-sep) {
-  flex: none;
-  color: var(--ink-4);
-}
-.session-center :slotted(.session-danger) {
-  color: var(--danger);
-}
-.session-center :slotted(.session-speed) {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
+
 /* 成功态：绿色渐变操作条 + 绿色主按钮（入门课试打完成 / 阶段达标） */
 .session-bar.is-success {
-  background: var(--state-success-bg);
-  border-color: var(--state-success-line);
-  animation: ui-fade-in 240ms var(--ease);
+  background: linear-gradient(100deg, var(--success-soft), var(--success-surface));
+  border-color: var(--success-line);
+  animation: ui-fade-in var(--dur-mid) var(--ease);
 }
 .session-bar.is-success .session-center {
-  color: var(--state-success-ink);
+  color: var(--success-ink);
 }
 .session-bar.is-success .session-center :slotted(.session-sep) {
-  color: color-mix(in srgb, var(--state-success-ink) 52%, transparent);
+  color: color-mix(in srgb, var(--success-ink) 52%, transparent);
 }
 /* 成功条上的次级操作也走通过态浅色悬停，避免深蓝块压在绿底上 */
 .session-bar.is-success .session-side :slotted(.session-btn) {
-  color: var(--state-success-ink);
+  color: var(--success-ink);
 }
 .session-bar.is-success .session-side :slotted(.session-btn:hover:not(:disabled)) {
-  color: var(--state-success-ink);
-  background: color-mix(in srgb, var(--state-success-ink) 13%, transparent);
+  color: var(--success-ink);
+  background: color-mix(in srgb, var(--success-ink) 13%, transparent);
 }
 .session-bar.is-success .session-side :slotted(.session-primary) {
-  background: var(--state-success-fill);
+  background: var(--success);
   border-color: transparent;
   color: var(--on-accent);
-  box-shadow: 0 2px 0 var(--state-success-fill-hover);
+  box-shadow: 0 2px 0 var(--success-strong);
 }
 .session-bar.is-success .session-side :slotted(.session-primary:hover:not(:disabled)) {
-  background: var(--state-success-fill-hover);
+  background: var(--success-strong);
 }
+
 @media (max-width: 640px) {
   .session-bar {
     height: auto;
@@ -190,20 +129,9 @@ withDefaults(
     flex-wrap: wrap;
     row-gap: 2px;
     gap: 6px;
-    font-size: 11.5px;
+    font-size: var(--text-xs);
     line-height: 1.5;
     white-space: normal;
-  }
-  .session-side :slotted(.session-btn) {
-    padding: 0 5px;
-    gap: 4px;
-    font-size: 11px;
-  }
-  .session-side :slotted(.session-primary) {
-    height: 32px;
-    margin-left: 2px;
-    padding: 0 10px;
-    font-size: 11.5px;
   }
 }
 </style>

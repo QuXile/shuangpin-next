@@ -50,7 +50,7 @@
   grid-row: 1;
   align-self: stretch;
   min-width: 0;
-  max-width: 620px;
+  max-width: var(--content-reading);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -64,7 +64,7 @@
 .hero-copy :slotted(h1) {
   margin: 0;
   color: var(--ink);
-  font-size: clamp(31px, 3.4vw, 44px);
+  font-size: var(--text-display);
   font-weight: 800;
   line-height: 1.5;
   letter-spacing: -0.055em;
@@ -93,7 +93,7 @@
   display: flex;
   flex-direction: column;
 }
-@media (max-width: 800px) {
+@media (max-width: 1024px) {
   .hero-layout {
     grid-template-columns: 1fr;
     grid-template-rows: auto auto auto;
@@ -117,15 +117,15 @@
     grid-row: 3;
   }
   .hero-copy :slotted(h1) {
-    font-size: 30px;
+    font-size: var(--text-display);
   }
 }
-@media (max-width: 560px) {
+@media (max-width: 640px) {
   .hero-layout {
     padding: 18px 16px;
   }
   .hero-copy :slotted(h1) {
-    font-size: 28px;
+    font-size: var(--text-display-sm);
   }
 }
 </style>

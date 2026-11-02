@@ -31,7 +31,7 @@ describe('createSession', () => {
     expect(state.words).toHaveLength(2)
     expect(state.stats.totalChars).toBe(3)
     expect(state.stats.correctChars).toBe(0)
-    expect(state.stats.accuracy).toBe(0)
+    expect(state.stats.errors).toBe(0)
     expect(state.lastFeedback.kind).toBe('idle')
   })
 
@@ -137,7 +137,7 @@ describe('applyKey · 正确推进', () => {
     expect(state.phase).toBe('finished')
     expect(state.stats.wordsCompleted).toBe(2)
     expect(state.stats.correctChars).toBe(3)
-    expect(state.stats.accuracy).toBe(1)
+    expect(state.stats.errors).toBe(0)
   })
 
   it('末词完成时 session-complete，phase=finished，finishedAt 记录', () => {
@@ -149,7 +149,7 @@ describe('applyKey · 正确推进', () => {
     expect(result.state.stats.finishedAt).toBe(2000)
     expect(result.state.stats.totalMs).toBe(1000)
     expect(result.state.stats.correctChars).toBe(1)
-    expect(result.state.stats.accuracy).toBe(1)
+    expect(result.state.stats.errors).toBe(0)
   })
 })
 
@@ -163,7 +163,6 @@ describe('applyKey · 错误反馈', () => {
     expect(result.feedback.expected).toEqual(['n', 'v'])
     expect(result.feedback.input).toEqual(['x', 'x'])
     expect(state.stats.errors).toBe(1)
-    expect(state.stats.accuracy).toBe(0)
     expect(state.words[0]?.input).toEqual(['x', 'x'])
     expect(state.phase).toBe('playing')
   })
@@ -192,7 +191,6 @@ describe('applyKey · 错误反馈', () => {
     state = applyKey(state, 'v', 40).state // 正确完成
     expect(state.stats.correctChars).toBe(1)
     expect(state.stats.errors).toBe(1)
-    expect(state.stats.accuracy).toBe(0.5)
   })
 
   it('clearInput 清空错误输入后可重试', () => {

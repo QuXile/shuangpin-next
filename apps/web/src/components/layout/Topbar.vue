@@ -1,17 +1,15 @@
 <script setup lang="ts">
-/** 全局顶栏：品牌 / 主导航 / 返回路线 / 课程标题 / 主题切换。 */
+/** 全局顶栏：返回路线 / 品牌 / 主导航 / 操作区。品牌与操作区拆为子组件。 */
 import { computed } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useCourseStore } from '@/stores/course'
 import { useLayoutStore } from '@/stores/layout'
-import { useSettingsStore } from '@/stores/settings'
-import { useSoundStore } from '@/stores/sound'
+import BrandPopover from './BrandPopover.vue'
+import TopbarActions from './TopbarActions.vue'
 
 const route = useRoute()
 const router = useRouter()
 const course = useCourseStore()
-const settings = useSettingsStore()
-const sound = useSoundStore()
 const layout = useLayoutStore()
 
 const isPractice = computed(() => route.path.startsWith('/practice'))
@@ -35,77 +33,13 @@ const practiceTitle = computed(() => {
               <path d="M19.5 12h-15" /><path d="m10.5 6-6 6 6 6" />
             </svg>
             返回路线
-            <kbd>Esc</kbd>
+            <kbd>Alt+H</kbd>
           </button>
           <span class="topbar-divider" aria-hidden="true" />
           <span class="topbar-course">{{ practiceTitle }}</span>
           <span v-if="layout.stageLabel" class="topbar-stage">{{ layout.stageLabel }}</span>
         </template>
-        <div v-else class="brand-wrap">
-          <RouterLink
-            to="/"
-            class="brand"
-            aria-label="双拼 NEXT 学习路线"
-            aria-describedby="brand-project-info"
-          >
-            <span class="brand-mark" aria-hidden="true">
-              <svg viewBox="0 0 32 32">
-                <defs>
-                  <linearGradient id="brandGrad" x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0" class="brand-grad-start" />
-                    <stop offset="1" class="brand-grad-end" />
-                  </linearGradient>
-                </defs>
-                <rect x="1.5" y="1.5" width="29" height="29" rx="9" fill="url(#brandGrad)" />
-                <g class="brand-glyph">
-                  <rect x="7.4" y="8.4" width="7.4" height="6.6" rx="2" opacity=".95" />
-                  <rect x="17.2" y="8.4" width="7.4" height="6.6" rx="2" opacity=".55" />
-                  <rect x="7.4" y="17" width="7.4" height="6.6" rx="2" opacity=".55" />
-                  <rect x="17.2" y="17" width="7.4" height="6.6" rx="2" opacity=".95" />
-                </g>
-              </svg>
-            </span>
-            <span class="brand-name">双拼</span>
-            <span class="brand-tag">NEXT</span>
-          </RouterLink>
-          <aside id="brand-project-info" class="brand-popover" aria-label="项目信息">
-            <div class="brand-popover-head">
-              <span>双拼 NEXT</span>
-              <span class="count-badge">开源项目</span>
-            </div>
-            <p>面向全拼熟练者的结构化双拼学习与练习应用。</p>
-            <dl>
-              <div>
-                <dt>作者</dt>
-                <dd><a href="https://github.com/QuXile" target="_blank" rel="noopener noreferrer">QuXile</a></dd>
-              </div>
-              <div>
-                <dt>开源协议</dt>
-                <dd>
-                  <a href="https://github.com/QuXile/shuangpin-next/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">
-                    GPL-3.0-only
-                  </a>
-                </dd>
-              </div>
-              <div>
-                <dt>开源地址</dt>
-                <dd>
-                  <a href="https://github.com/QuXile/shuangpin-next" target="_blank" rel="noopener noreferrer">
-                    github.com/QuXile/shuangpin-next
-                  </a>
-                </dd>
-              </div>
-              <div>
-                <dt>在线体验</dt>
-                <dd>
-                  <a href="https://quxile.github.io/shuangpin-next/" target="_blank" rel="noopener noreferrer">
-                    quxile.github.io/shuangpin-next
-                  </a>
-                </dd>
-              </div>
-            </dl>
-          </aside>
-        </div>
+        <BrandPopover v-else />
         <span v-if="!isPractice && layout.stageLabel" class="topbar-stage">{{ layout.stageLabel }}</span>
         <span v-if="displayedScheme" class="count-badge topbar-scheme">{{ displayedScheme }}</span>
       </div>
@@ -117,7 +51,7 @@ const practiceTitle = computed(() => {
           :class="{ 'is-active': courseActive }"
           :aria-current="courseActive ? 'page' : undefined"
           aria-keyshortcuts="Alt+H"
-          title="课程路线（Alt+H）"
+          title="课程路线 Alt+H"
         >
           课程
           <kbd>Alt+H</kbd>
@@ -128,89 +62,14 @@ const practiceTitle = computed(() => {
           :class="{ 'is-active': trainingActive }"
           :aria-current="trainingActive ? 'page' : undefined"
           aria-keyshortcuts="Alt+P"
-          title="练习场（Alt+P）"
+          title="练习场 Alt+P"
         >
           练习
           <kbd>Alt+P</kbd>
         </RouterLink>
       </nav>
 
-      <div class="top-actions">
-        <button
-          class="theme-btn shortcut-btn"
-          type="button"
-          aria-label="查看快捷键（?）"
-          aria-keyshortcuts="?"
-          title="查看快捷键（?）"
-          @click="layout.openShortcutHelp()"
-        >
-          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="8.5" />
-            <path d="M12 10.7v4.8" />
-            <path d="M12 7.9h.01" />
-          </svg>
-          <kbd>?</kbd>
-        </button>
-
-        <button
-          v-if="layout.keyboardAvailable"
-          class="theme-btn keyboard-btn"
-          type="button"
-          :aria-label="layout.keyboardVisible ? '隐藏底部键盘（Ctrl+K）' : '显示底部键盘（Ctrl+K）'"
-          :aria-pressed="layout.keyboardVisible"
-          aria-keyshortcuts="Control+K"
-          :title="layout.keyboardVisible ? '隐藏底部键盘（Ctrl+K）' : '显示底部键盘（Ctrl+K）'"
-          @click="layout.toggleKeyboard()"
-        >
-          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="2.5" y="6" width="19" height="12" rx="2.4" />
-            <path d="M6.2 10h.01M9.4 10h.01M12.6 10h.01M15.8 10h.01M19 10h.01M6.2 13.2h.01M9.4 13.2h.01M12.6 13.2h.01M15.8 13.2h.01M19 13.2h.01M7.4 16.2h9.2" />
-            <path v-if="layout.keyboardVisible" d="M4 20 20 4" />
-          </svg>
-          <kbd>Ctrl+K</kbd>
-        </button>
-
-        <button
-          class="theme-btn sound-btn"
-          type="button"
-          :aria-label="sound.enabled ? '关闭音效（Alt+B）' : '开启音效（Alt+B）'"
-          :aria-pressed="sound.enabled"
-          aria-keyshortcuts="Alt+B"
-          :title="sound.enabled ? '关闭音效（Alt+B）' : '开启音效（Alt+B）'"
-          @click="sound.toggle()"
-        >
-          <svg v-if="sound.enabled" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M11 5 6 9H3v6h3l5 4V5Z" />
-            <path d="M15.2 8.7a4.7 4.7 0 0 1 0 6.6" />
-            <path d="M18 5.9a8.5 8.5 0 0 1 0 12.2" />
-          </svg>
-          <svg v-else class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M11 5 6 9H3v6h3l5 4V5Z" />
-            <path d="m15.5 9.5 5 5" />
-            <path d="m20.5 9.5-5 5" />
-          </svg>
-          <kbd>Alt+B</kbd>
-        </button>
-
-        <button
-          class="theme-btn"
-          type="button"
-          :aria-label="settings.isDark ? '切换为亮色模式（Alt+T）' : '切换为暗色模式（Alt+T）'"
-          :aria-pressed="settings.isDark"
-          aria-keyshortcuts="Alt+T"
-          title="切换主题（Alt+T）"
-          @click="settings.toggleTheme()"
-        >
-          <svg v-if="settings.isDark" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round">
-            <circle cx="12" cy="12" r="4.1" />
-            <path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.4 5.4l1.6 1.6M17 17l1.6 1.6M18.6 5.4 17 7M7 17l-1.6 1.6" />
-          </svg>
-          <svg v-else class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20.4 14.4A8.5 8.5 0 1 1 9.6 3.6a6.9 6.9 0 0 0 10.8 10.8z" />
-          </svg>
-          <kbd>Alt+T</kbd>
-        </button>
-      </div>
+      <TopbarActions />
     </div>
   </header>
 </template>
@@ -225,7 +84,7 @@ const practiceTitle = computed(() => {
   height: var(--topbar-h);
   background: color-mix(in srgb, var(--bg) 88%, transparent);
   backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--line-faint);
+  border-bottom: 1px solid var(--line);
 }
 .topbar-inner {
   max-width: var(--page-max);
@@ -238,137 +97,7 @@ const practiceTitle = computed(() => {
   gap: 16px;
 }
 
-/* ── 品牌 ─────────────────────────────────── */
-.brand {
-  display: inline-flex;
-  flex: none;
-  align-items: center;
-  gap: 9px;
-  font-weight: 800;
-  font-size: 16px;
-}
-.brand-mark {
-  width: 30px;
-  height: 30px;
-  display: block;
-}
-.brand-mark svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-.brand-grad-start {
-  stop-color: var(--brand);
-}
-.brand-grad-end {
-  stop-color: var(--brand-fill-hover);
-}
-.brand-glyph {
-  fill: var(--on-accent);
-}
-.brand-name {
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-}
-.brand-tag {
-  padding: 2px 6px;
-  border-radius: 6px;
-  background: var(--brand-soft);
-  color: var(--brand-ink);
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  line-height: 1.5;
-}
 
-.brand-wrap {
-  position: relative;
-  display: inline-flex;
-  flex: none;
-  align-items: center;
-}
-.brand-popover {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  z-index: 40;
-  width: min(290px, calc(100vw - 2 * var(--page-pad-x)));
-  padding: 14px 16px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-card);
-  background: var(--surface);
-  box-shadow: var(--shadow-md);
-  color: var(--ink-3);
-  font-size: var(--text-xs);
-  line-height: 1.6;
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transform: translateY(-4px);
-  transition: opacity var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease),
-    visibility var(--dur-fast) var(--ease);
-}
-/* 品牌与浮层之间的鼠标桥，避免从品牌移到浮层时浮层先消失 */
-.brand-popover::before {
-  content: '';
-  position: absolute;
-  right: 0;
-  bottom: 100%;
-  left: 0;
-  height: 10px;
-}
-.brand-wrap:hover .brand-popover,
-.brand-wrap:focus-within .brand-popover {
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
-  transform: translateY(0);
-}
-.brand-popover-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  color: var(--ink);
-  font-size: var(--text-sm);
-  font-weight: 800;
-}
-.brand-popover p {
-  margin: 6px 0 10px;
-  color: var(--ink-3);
-  font-size: var(--text-xs);
-}
-.brand-popover dl {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin: 0;
-}
-.brand-popover dl > div {
-  display: grid;
-  grid-template-columns: 58px minmax(0, 1fr);
-  gap: 8px;
-}
-.brand-popover dt {
-  color: var(--ink-4);
-  font-weight: 650;
-}
-.brand-popover dd {
-  min-width: 0;
-  margin: 0;
-  overflow-wrap: anywhere;
-}
-.brand-popover a {
-  color: var(--brand-ink);
-  font-weight: 650;
-  text-decoration: none;
-}
-.brand-popover a:hover {
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-/* ── 左侧：返回路线 / 课名 / 阶段标签 ─────── */
 .topbar-left {
   min-width: 0;
   height: 100%;
@@ -425,7 +154,7 @@ const practiceTitle = computed(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 10px;
+  font-size: var(--text-2xs);
 }
 .topbar-stage {
   flex: none;
@@ -442,89 +171,13 @@ const practiceTitle = computed(() => {
   line-height: 1.5;
 }
 
-/* ── 右侧：主题切换 ───────────────────────── */
-.top-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-  min-width: 0;
-}
-.theme-btn {
-  flex: none;
-  height: 34px;
-  min-width: 34px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  padding: 0 10px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-control);
-  background: var(--surface);
-  box-shadow: var(--shadow-sm);
-  color: var(--ink-3);
-  transition: background var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast);
-}
-.theme-btn:hover {
-  border-color: var(--line-strong);
-  background: var(--surface-2);
-  color: var(--ink);
-}
-.theme-btn kbd {
-  color: var(--ink-3);
-}
-.theme-btn .icon {
-  transition: transform var(--dur-mid) var(--ease);
-}
-.theme-btn:hover .icon {
-  transform: rotate(-10deg);
-}
-.theme-btn:active .icon {
-  transform: scale(0.9);
-}
-.keyboard-btn:hover .icon {
-  transform: translateY(-1px);
-}
-.keyboard-btn:active .icon {
-  transform: scale(0.9);
-}
 
-/* 中等宽度：动作区使用图标-only，避免右侧按钮溢出压住主导航。 */
-@media (max-width: 1100px) {
-  .top-actions {
-    gap: 6px;
-  }
-  .theme-btn {
-    gap: 0;
-    width: 34px;
-    padding: 0;
-  }
-  .theme-btn kbd {
-    display: none;
-  }
-}
-
-/* ── 移动端（--topbar-h / --page-pad-x 已由 token 收窄到 54 / 14）── */
 @media (max-width: 640px) {
   .topbar-inner {
     gap: 8px;
   }
   .topbar-left {
     gap: 8px;
-  }
-  .brand {
-    gap: 8px;
-  }
-  .brand-mark {
-    width: 26px;
-    height: 26px;
-  }
-  .brand-name {
-    font-size: 14px;
-  }
-  .brand-tag {
-    display: none;
   }
   /* 移动端优先保留返回图标，课名与阶段标签仍可读 */
   .topbar-back {
@@ -549,7 +202,7 @@ const practiceTitle = computed(() => {
   .topbar-stage {
     max-width: 84px;
     padding: 1px 7px;
-    font-size: 10px;
+    font-size: var(--text-2xs);
   }
   .topbar-scheme {
     display: none;
@@ -562,16 +215,9 @@ const practiceTitle = computed(() => {
   .topbar-nav .segmented-btn {
     height: 26px;
     padding: 0 11px;
-    font-size: 11.5px;
+    font-size: var(--text-xs);
   }
   .topbar-nav kbd {
-    display: none;
-  }
-  .theme-btn {
-    width: 34px;
-    padding: 0;
-  }
-  .theme-btn kbd {
     display: none;
   }
   /* 练习进行中：移动端优先展示课名和阶段标签，隐藏主导航 */
@@ -581,7 +227,7 @@ const practiceTitle = computed(() => {
   .topbar.has-stage .topbar-nav {
     display: none;
   }
-  .topbar.has-stage .top-actions {
+  .topbar.has-stage :deep(.top-actions) {
     grid-column: 2;
   }
 }

@@ -44,7 +44,7 @@ defineProps<{ items: readonly FocusAtomView[] }>()
   border-radius: var(--r-control);
   border: 1px solid var(--line);
   background: var(--surface);
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--ink-2);
 }
 .focus-badge {
@@ -53,14 +53,14 @@ defineProps<{ items: readonly FocusAtomView[] }>()
   height: 18px;
   display: inline-grid;
   place-items: center;
-  border-radius: 5px;
-  font-size: 9px;
+  border-radius: var(--r-xs);
+  font-size: var(--text-2xs);
   font-weight: 800;
   line-height: 1;
 }
 .focus-badge.is-new {
   color: var(--on-accent);
-  background: var(--brand);
+  background: var(--fin);
 }
 .focus-badge.is-contained {
   color: var(--ink-3);
@@ -86,17 +86,17 @@ defineProps<{ items: readonly FocusAtomView[] }>()
   padding: 0 4px;
   border: 1px solid var(--line);
   border-bottom-width: 2px;
-  border-radius: 4px;
+  border-radius: var(--r-xs);
   background: var(--surface-2);
   color: var(--ink-2);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--text-2xs);
   font-weight: 700;
   line-height: 1;
 }
 .focus-keys kbd.is-primary {
-  border-color: var(--brand);
-  background: var(--brand);
-  color: var(--on-accent);
+  border-color: var(--mapping-focus-line);
+  background: var(--mapping-focus-soft);
+  color: var(--mapping-focus-ink);
 }
 </style>

@@ -2,7 +2,7 @@
  * 练习页阶段状态机（页面级 composable）。
  *
  * 规则全部来自 core（lessonStages/lessonStageMinWords/stageGate/evaluateLesson/
- * hintTierFor(stage) / build* / sessionMetrics / applyKey / resumeSession）。
+ * hintTierFor / build* / sessionMetrics / applyKey / backspace / clearInput / resumeSession）。
  *
  * 练习模型：
  * - 每阶段有限目标：完成目标词数后显示总结卡，不自动追加词卡；
@@ -11,18 +11,22 @@
  * - 主按钮文案只由阶段位置决定：非最后「下一阶段」、最后「完成本课」；仅 enabled 变化；
  * - 达标即自动记录本课通过；课程本身不提供无尽练习，需要时跳转练习场。
  */
-import { computed, onMounted, ref, shallowRef, watch } from 'vue'
+import { computed, onMounted, onScopeDispose, ref, shallowRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   accuracyTiers,
+  applyKey,
+  backspace as coreBackspace,
   buildSingleCharWords,
   buildTutorialWords,
   buildWordStageWords,
-  createSchemeEngine,
+  clearInput as coreClearInput,
   createSession,
   describePassCriteria,
   evaluateLesson,
+  hasInputError as coreHasInputError,
   hintTierFor,
+  buildLessonPool,
   lessonStageMinWords,
   lessonStages,
   resumeSession,
@@ -40,15 +44,11 @@ import {
   type StageGate,
 } from '@shuangpin/core'
 import { loadLexicon } from '@/lib/data'
-import { buildLessonPool } from '@/lib/lessonPool'
 import {
-  applySessionKey,
-  backspaceSession,
-  clearSessionInput,
-  currentCellKey as cellKeyOf,
-  hasInputError as hasErrorOf,
-  type InputTracker,
-} from '@/lib/sessionInput'
+  buildSessionSummary,
+  liveMessageOf,
+  playFeedback,
+} from '@/lib/sessionSummary'
 import {
   buildLessonNotes,
   lessonFocusItems,
@@ -56,15 +56,15 @@ import {
   type FocusAtomView,
   type LessonNote,
 } from '@/lib/lessonView'
+import { STORAGE_KEYS, getStorage, writeString } from '@/lib/storage'
 import { useCourseStore } from '@/stores/course'
 import { useSoundStore } from '@/stores/sound'
 import { useGlobalKeys, type KeyBinding } from './useGlobalKeys'
-import { useLiveCpm } from './useLiveCpm'
 
-export type PracticeStatus = 'loading' | 'ready' | 'error'
-export type PracticeStageView = 'tutorial' | PracticeStage
+type PracticeStatus = 'loading' | 'ready' | 'error'
+type PracticeStageView = 'tutorial' | PracticeStage
 
-export interface PracticeAction {
+interface PracticeAction {
   label: string
   kbd: string
   enabled: boolean
@@ -73,23 +73,19 @@ export interface PracticeAction {
 
 interface StageRuntime {
   session: SessionState
-  revealed: ReadonlySet<string>
-  wrongInputs: ReadonlyMap<string, string[]>
-  cellErrors: ReadonlyMap<string, number>
-  keyErrors: ReadonlyMap<string, number>
   /** 达标粘滞：gate.met 一旦为 true 即保持（含 alreadyPassed 课程） */
   cleared: boolean
   /** 最后一次考核是否已自动/手动记录，避免同一轮重复增加 attempts */
   recorded?: boolean
 }
 
-export interface EndPromptKeyError {
+interface EndPromptKeyError {
   expected: string
   typed: string
   count: number
 }
 
-export interface EndPromptRating {
+interface EndPromptRating {
   passed: boolean
   stars: 0 | 1 | 2 | 3
 }
@@ -118,11 +114,15 @@ const EMPTY_INPUTS: ReadonlyMap<string, string[]> = new Map()
 
 const newSeed = (): number => Math.floor(Math.random() * 0xffffffff) >>> 0
 
+/** 练习中实时速度刷新间隔（ms） */
+const CLOCK_TICK_MS = 500
+
 export function usePractice() {
   const route = useRoute()
   const router = useRouter()
   const course = useCourseStore()
   const sound = useSoundStore()
+  const presetStorage = getStorage('session')
 
   const lessonId = computed(() => String(route.params.lessonId ?? ''))
   const lesson = computed<LessonDef | undefined>(() => course.getLesson(lessonId.value))
@@ -134,7 +134,7 @@ export function usePractice() {
 
   const status = ref<PracticeStatus>('loading')
   const errorMessage = ref('')
-  const engine = shallowRef<SchemeEngine | null>(null)
+  const engine = computed<SchemeEngine | null>(() => course.engine)
   const pool = shallowRef<LessonPool | null>(null)
   const tutorialWords = ref<PracticeWord[]>([])
   const scheme = computed(() => course.scheme)
@@ -155,39 +155,44 @@ export function usePractice() {
     return runtimes.value.get(current) ?? null
   })
   const session = computed<SessionState | null>(() => currentRuntime.value?.session ?? null)
-  const revealed = computed<ReadonlySet<string>>(() => currentRuntime.value?.revealed ?? EMPTY_SET)
+  const revealed = computed<ReadonlySet<string>>(() => session.value?.revealed ?? EMPTY_SET)
   const wrongInputs = computed<ReadonlyMap<string, string[]>>(
-    () => currentRuntime.value?.wrongInputs ?? EMPTY_INPUTS,
+    () => session.value?.wrongInputs ?? EMPTY_INPUTS,
   )
-
   /** 当前字是否处于错误锁定状态（保留红色输入，空格/Enter 可清空） */
-  const currentCellKey = computed(() => cellKeyOf(session.value))
-  const hasInputError = computed(() => {
-    const runtime = currentRuntime.value
-    return runtime ? hasErrorOf(runtime.session, trackerOf(runtime)) : false
-  })
+  const hasInputError = computed(() => (session.value ? coreHasInputError(session.value) : false))
 
   const introRecorded = ref(false)
-  const liveCpm = useLiveCpm(() => session.value)
 
-  const alreadyPassed = computed(() => Boolean(lesson.value && course.progress[lessonId.value]?.passed))
-  const isLastStage = computed(
-    () => stageIndex.value >= 0 && stageIndex.value === stages.value.length - 1,
-  )
+  /** 显示与门槛判定共用的时钟（performance.now，与会话创建同源） */
+  const nowMs = ref(performance.now())
+  let clockTimer: number | undefined
 
-  /** 展示与门槛判定用（cpm 必须使用与会话一致的 performance.now 时钟） */
+  function refreshClock(): void {
+    nowMs.value = performance.now()
+  }
+
   const metrics = computed(() => {
     const state = session.value
-    return state ? sessionMetrics(state, performance.now()) : null
+    return state ? sessionMetrics(state, nowMs.value) : null
+  })
+  const cpm = computed(() => {
+    const value = metrics.value
+    if (!value) return 0
+    return value.completedChars > 0 ? value.cpm : 0
   })
 
   /** 完成第一个字后才展示正确率/速度，避免只按下一个键时先出现 0%。 */
   const hasStarted = computed(() => {
     const state = session.value
     if (!state) return false
-    const stats = state.stats
-    return state.phase === 'finished' || stats.correctChars > 0
+    return state.phase === 'finished' || state.stats.correctChars > 0
   })
+
+  const alreadyPassed = computed(() => Boolean(lesson.value && course.progress[lessonId.value]?.passed))
+  const isLastStage = computed(
+    () => stageIndex.value >= 0 && stageIndex.value === stages.value.length - 1,
+  )
 
   const gate = computed<StageGate | null>(() => {
     const currentLesson = lesson.value
@@ -217,87 +222,55 @@ export function usePractice() {
     const criteria = lesson.value?.passCriteria
     if (!criteria) return null
     const tiers = speedTiers(criteria)
-    return tiers ? tierOf(tiers, liveCpm.cpm.value) : null
+    return tiers ? tierOf(tiers, cpm.value) : null
   })
 
   /** 有限目标完成后的总结卡：统计、错误分布、评分标准；最后一场考核额外显示本次星级 */
   const endPrompt = computed<EndPromptView | null>(() => {
     const runtime = currentRuntime.value
-    const value = metrics.value
     const currentLesson = lesson.value
     if (!runtime || stage.value === 'tutorial' || !currentLesson) return null
-    if (runtime.session.phase !== 'finished' || !value) return null
+    if (runtime.session.phase !== 'finished') return null
 
-    const words = value.completedWords
+    const summary = buildSessionSummary(runtime.session, nowMs.value)
     const met = gateReady.value
     const passedAttempt = Boolean(gate.value?.met)
-    const rawStats = runtime.session.stats
-
-    // 错误键位统计：应敲的键 vs 实际按下的键
-    const keyErrors = [...runtime.keyErrors.entries()]
-      .map(([pair, count]) => {
-        const [typed = '?', expected = '?'] = pair.split('|')
-        return { expected: expected.toUpperCase(), typed: typed.toUpperCase(), count }
-      })
-      .sort((a, b) => b.count - a.count || a.expected.localeCompare(b.expected))
-
-    const finishedAt = rawStats.finishedAt ?? performance.now()
-    const durationSec = Math.max(1, Math.round((finishedAt - rawStats.startedAt) / 1000))
     const rules = currentLesson.passCriteria ? describePassCriteria(currentLesson.passCriteria) : []
 
     // 最后一场无提示考核：显示本次评分（未达标则记未通过）
     const isFinalExam = isLastStage.value && stage.value === 'exam'
     let rating: EndPromptRating | null = null
     if (isFinalExam) {
-      // 已通过课程重练时 gate 会继承“已达标”，本次评分仍必须满足本课最低正确率
-      const minAccuracy = currentLesson.passCriteria?.accuracy ?? 0
-      const passedAttempt = met && value.accuracy >= minAccuracy
-      if (!passedAttempt) {
-        rating = { passed: false, stars: 0 }
-      } else {
+      // 通过与否统一以 core evaluateLesson 为准；met 只负责判断「已通过课程重练」的外层状态。
+      if (met) {
         const result = evaluateLesson(currentLesson, {
-          accuracy: value.accuracy,
-          cpm: value.cpm,
-          revealed: runtime.revealed.size > 0,
+          accuracy: summary.accuracy / 100,
+          cpm: summary.cpm,
+          revealed: runtime.session.revealed.size > 0,
         })
         rating = { passed: result.passed, stars: result.stars }
+      } else {
+        rating = { passed: false, stars: 0 }
       }
     }
 
-    const stats = {
-      accuracy: Math.round(value.accuracy * 100),
-      cpm: value.cpm,
-      errors: rawStats.errors,
-      durationSec,
-    }
     const title = passedAttempt
-      ? `已练满 ${words} 词。`
-      : `已练满 ${words} 词，还没达标。`
+      ? `已练满 ${summary.completedWords} 词。`
+      : `已练满 ${summary.completedWords} 词，还没达标。`
+    const stats = {
+      accuracy: summary.accuracy,
+      cpm: summary.cpm,
+      errors: summary.errors,
+      durationSec: summary.durationSec,
+    }
+    const keyErrors: EndPromptKeyError[] = summary.keyErrorRows
 
     if (met) {
       const enterLabel = isLastStage.value ? '完成本课' : '进入下一阶段'
-      return {
-        met,
-        passedAttempt,
-        title,
-        enterLabel,
-        stats,
-        keyErrors,
-        rules,
-        rating,
-      }
+      return { met, passedAttempt, title, enterLabel, stats, keyErrors, rules, rating }
     }
     // 未达标原因已在顶栏以大号文字展示，这里不重复；按钮本身已说明操作方式
-    return {
-      met,
-      passedAttempt,
-      title,
-      enterLabel: null,
-      stats,
-      keyErrors,
-      rules,
-      rating,
-    }
+    return { met, passedAttempt, title, enterLabel: null, stats, keyErrors, rules, rating }
   })
 
   const stageTitleText = computed(() =>
@@ -307,33 +280,16 @@ export function usePractice() {
     stage.value !== 'tutorial' ? hintTierFor(stage.value) : 1,
   )
   /** 供 aria-live 播报的反馈（错误/词完成） */
-  const liveMessage = computed(() => {
-    const feedback = session.value?.lastFeedback
-    if (!feedback) return ''
-    if (feedback.kind === 'wrong') return feedback.message ?? '键位错误'
-    if (feedback.kind === 'word-complete') return feedback.message ?? '词语完成'
-    return ''
-  })
+  const liveMessage = computed(() => liveMessageOf(session.value?.lastFeedback))
 
   const focusItems = computed<FocusAtomView[]>(() =>
     lesson.value && engine.value ? lessonFocusItems(lesson.value, engine.value) : [],
   )
   const focusAtomIds = computed(() => focusItems.value.map((item) => item.atomId))
-  const focusBadge = computed(() =>
-    lesson.value && (lesson.value.kind === 'review' || lesson.value.kind === 'exam') ? '含' : '新',
-  )
   const notes = computed<LessonNote[]>(() => (lesson.value ? buildLessonNotes(lesson.value) : []))
 
   const conceal = computed(() => stage.value === 'word' || stage.value === 'exam')
-  const highlightAtomIds = computed(() => {
-    const focus = lesson.value?.focusAtoms ?? []
-    const blocking = focus.filter((atom) => atom.startsWith('initial:') || atom.startsWith('final:'))
-    const zeros = focus.filter((atom) => atom.startsWith('zero:'))
-    // 声母/韵母太多时字母键只保留零声母行的聚焦，不把整张图铺满。
-    return blocking.length <= 3 ? [...blocking, ...zeros] : zeros
-  })
-  const specialInitials = computed(() => engine.value?.diff().learnInitials ?? [])
-  const keyMapRows = computed(() => engine.value?.keyMap() ?? [])
+  const highlightAtomIds = computed(() => focusAtomIds.value)
   const nextLesson = computed(() => (lesson.value ? course.nextLesson(lesson.value.id) : undefined))
 
   // ── 批次生成器 ──────────────────────────────────────────────
@@ -341,7 +297,7 @@ export function usePractice() {
   function stageMinWords(target: PracticeStage): number {
     const currentLesson = lesson.value
     if (!currentLesson) return 10
-    return Math.max(1, lessonStageMinWords(currentLesson)[target] ?? 10)
+    return lessonStageMinWords(currentLesson)[target] ?? 10
   }
 
   /** 单字批次：重复洗牌；词语/考核批次：新 seed 重新组卷 */
@@ -353,40 +309,26 @@ export function usePractice() {
     const minWords = stageMinWords(target)
     const seed = newSeed()
     if (target === 'single') {
-      const count = Math.max(minWords, 1)
-      const words = buildSingleCharWords({
+      return buildSingleCharWords({
         engine: currentEngine,
         lesson: currentLesson,
         pool: currentPool,
         learnedAtoms: currentLesson.prerequisites,
-        count,
+        count: minWords,
         seed,
       })
-      if (words.length === 0) return []
-      const out: PracticeWord[] = []
-      while (out.length < count) out.push(words[out.length % words.length] as PracticeWord)
-      return out
     }
     return buildWordStageWords({
       engine: currentEngine,
       lesson: currentLesson,
       pool: currentPool,
       learnedAtoms: currentLesson.prerequisites,
-      targetWords: Math.max(minWords, 1),
+      targetWords: minWords,
       seed,
     })
   }
 
   // ── 阶段运行时管理 ─────────────────────────────────────────
-
-  function trackerOf(runtime: StageRuntime): InputTracker {
-    return {
-      revealed: runtime.revealed,
-      wrongInputs: runtime.wrongInputs,
-      cellErrors: runtime.cellErrors,
-      keyErrors: runtime.keyErrors,
-    }
-  }
 
   function setRuntime(target: PracticeStage, runtime: StageRuntime): void {
     const next = new Map(runtimes.value)
@@ -408,7 +350,7 @@ export function usePractice() {
         ...existing,
         session: resumeSession(existing.session, performance.now()),
       })
-      liveCpm.reset()
+      refreshClock()
       return
     }
     const words = makeBatch(target)
@@ -417,15 +359,12 @@ export function usePractice() {
       errorMessage.value = '本阶段暂无可用练习，请检查课程词池数据'
       return
     }
+    const now = performance.now()
+    nowMs.value = now
     setRuntime(target, {
-      session: createSession({ words, now: performance.now() }),
-      revealed: new Set(),
-      wrongInputs: new Map(),
-      cellErrors: new Map(),
-      keyErrors: new Map(),
+      session: createSession({ words, now }),
       cleared: alreadyPassed.value || stageWasCleared(target),
     })
-    liveCpm.reset()
   }
 
   function startFirstStage(): void {
@@ -456,7 +395,7 @@ export function usePractice() {
   function previousStage(): void {
     if (stageIndex.value <= 0) {
       stageIndex.value = -1
-      liveCpm.reset()
+      refreshClock()
       return
     }
     stageIndex.value -= 1
@@ -493,27 +432,17 @@ export function usePractice() {
       sound.playKey()
       return
     }
-    const state = runtime.session
-    const { state: nextState, tracker, feedback } = applySessionKey(state, raw, trackerOf(runtime), {
-      at: performance.now(),
-    })
-    if (feedback.kind === 'wrong') sound.playError()
-    else if (feedback.kind === 'word-complete') sound.playComplete()
-    else sound.playKey()
-    const nextGate = stageGate(
-      currentLesson,
-      currentStage,
-      sessionMetrics(nextState, performance.now()),
-    )
+    const now = performance.now()
+    const result = applyKey(runtime.session, raw, now)
+    playFeedback(sound, result.feedback)
+    nowMs.value = now
+    const nextGate = stageGate(currentLesson, currentStage, sessionMetrics(result.state, now))
     if (nextGate.met && currentStage !== 'exam') {
       course.markStageCleared(currentLesson.id, currentStage)
     }
     setRuntime(currentStage, {
-      session: nextState,
-      revealed: tracker.revealed,
-      wrongInputs: tracker.wrongInputs,
-      cellErrors: tracker.cellErrors,
-      keyErrors: tracker.keyErrors,
+      ...runtime,
+      session: result.state,
       cleared: runtime.cleared || nextGate.met,
     })
   }
@@ -522,14 +451,9 @@ export function usePractice() {
     sound.playKey()
     const runtime = currentRuntime.value
     if (!runtime || runtime.session.phase === 'finished') return
-    const { state, tracker } = backspaceSession(runtime.session, trackerOf(runtime))
     setRuntime(stage.value as PracticeStage, {
       ...runtime,
-      session: state,
-      revealed: tracker.revealed,
-      wrongInputs: tracker.wrongInputs,
-      cellErrors: tracker.cellErrors,
-      keyErrors: tracker.keyErrors,
+      session: coreBackspace(runtime.session),
     })
   }
 
@@ -540,14 +464,9 @@ export function usePractice() {
     sound.playKey()
     const runtime = runtimes.value.get(currentStage)
     if (!runtime || runtime.session.phase === 'finished') return
-    const { state, tracker } = clearSessionInput(runtime.session, trackerOf(runtime))
     setRuntime(currentStage, {
       ...runtime,
-      session: state,
-      revealed: tracker.revealed,
-      wrongInputs: tracker.wrongInputs,
-      cellErrors: tracker.cellErrors,
-      keyErrors: tracker.keyErrors,
+      session: coreClearInput(runtime.session),
     })
   }
 
@@ -561,11 +480,11 @@ export function usePractice() {
     // 只按「本次尝试是否达标」记录：已通过课程会继承 gateReady，不能拿它当落库依据，
     // 否则未达标的尝试会被记录（evaluateLesson 与 stageGate 的 accuracy 口径不同）。
     if (!gate.value?.met) return
-    const value = sessionMetrics(runtime.session, performance.now())
+    const value = sessionMetrics(runtime.session, nowMs.value)
     const result = evaluateLesson(currentLesson, {
       accuracy: value.accuracy,
       cpm: value.cpm,
-      revealed: runtime.revealed.size > 0,
+      revealed: runtime.session.revealed.size > 0,
     })
     course.recordResult(currentLesson.id, result, value.accuracy)
     setRuntime(stage.value as PracticeStage, { ...runtime, recorded: true })
@@ -583,21 +502,23 @@ export function usePractice() {
   function goEndlessPractice(): void {
     const current = lesson.value
     if (!current || stage.value === 'tutorial') return
-    try {
-      sessionStorage.setItem(
-        'shuangpin-next:training-preset',
-        JSON.stringify({ from: current.id, stage: stage.value, scheme: course.schemeId }),
-      )
-    } catch {
-      /* 隐私模式下仍然跳转，练习场使用当前/默认设置 */
-    }
+    writeString(
+      STORAGE_KEYS.trainingPreset,
+      JSON.stringify({ from: current.id, stage: stage.value, scheme: course.schemeId }),
+      presetStorage,
+    )
     void router.push('/training')
   }
 
   // 考核门槛一旦满足就自动记录；“最后一次评分覆盖前一次”由 progress store
   // 的 passed / stars / bestAccuracy 取历史最优保证。
   watch(
-    () => [stage.value, isLastStage.value, gate.value?.met === true, currentRuntime.value?.recorded === true] as const,
+    () => [
+      stage.value,
+      isLastStage.value,
+      gate.value?.met === true,
+      currentRuntime.value?.recorded === true,
+    ] as const,
     () => {
       if (stage.value === 'exam' && isLastStage.value && gate.value?.met) recordFinalAttempt()
     },
@@ -646,7 +567,9 @@ export function usePractice() {
       {
         key: 'Escape',
         run: () => {
-          void router.push('/')
+          // Esc 是当前语境的一级返回：先回上一阶段；已经在教学页才回路线。
+          if (!isIntro.value && stage.value !== 'tutorial') previousStage()
+          else void router.push('/')
         },
       },
     ]
@@ -690,6 +613,9 @@ export function usePractice() {
   // ── 初始化 ─────────────────────────────────────────────────
 
   onMounted(async () => {
+    clockTimer = window.setInterval(() => {
+      if (session.value && session.value.phase !== 'finished') refreshClock()
+    }, CLOCK_TICK_MS)
     await course.init()
     if (course.status === 'error') {
       status.value = 'error'
@@ -697,7 +623,7 @@ export function usePractice() {
       return
     }
     const currentLesson = lesson.value
-    if (!course.scheme || !currentLesson) {
+    if (!course.scheme || !currentLesson || !engine.value) {
       status.value = 'error'
       errorMessage.value = '课程不存在或尚未加载完成'
       return
@@ -706,7 +632,6 @@ export function usePractice() {
       await router.replace('/')
       return
     }
-    engine.value = createSchemeEngine(course.scheme)
     try {
       const lexicon = await loadLexicon()
       pool.value = buildLessonPool(currentLesson, lexicon)
@@ -723,6 +648,10 @@ export function usePractice() {
       })
     }
     status.value = 'ready'
+  })
+
+  onScopeDispose(() => {
+    if (clockTimer !== undefined) window.clearInterval(clockTimer)
   })
 
   return {
@@ -746,7 +675,6 @@ export function usePractice() {
     // 展示派生
     focusItems,
     focusAtomIds,
-    focusBadge,
     notes,
     tier,
     conceal,
@@ -758,10 +686,8 @@ export function usePractice() {
     accuracyPercent,
     accuracyTier,
     speedTier,
-    cpm: liveCpm.cpm,
-    keyMapRows,
+    cpm,
     highlightAtomIds,
-    specialInitials,
     primary,
     // 动作
     startFirstStage,

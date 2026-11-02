@@ -3,6 +3,8 @@
  * 练习场统一选择卡片：卡头固定 + 正文内部滚动（thin-scroll）。
  * 文章隐藏卡 / 专项隐藏卡 / 专项出现卡 / 文章输入卡共用同一外框结构。
  */
+import { ref } from 'vue'
+import ScrollTail from '@/components/common/ScrollTail.vue'
 withDefaults(
   defineProps<{
     /** 卡头 pill 文案，如「出现」「隐藏」；自定义 #head 插槽时可省略 */
@@ -13,6 +15,8 @@ withDefaults(
   }>(),
   { pill: '', tone: 'appear', subtitle: '' },
 )
+
+const scrollRef = ref<HTMLElement | null>(null)
 </script>
 
 <template>
@@ -24,9 +28,10 @@ withDefaults(
       </slot>
       <slot name="head-extra" />
     </header>
-    <div class="setup-card-scroll thin-scroll">
+    <div ref="scrollRef" class="setup-card-scroll thin-scroll">
       <slot />
     </div>
+    <ScrollTail :scroller="scrollRef" />
   </article>
 </template>
 
@@ -37,12 +42,17 @@ withDefaults(
   --setup-accent-ink: var(--brand-ink);
   --setup-accent-soft: var(--brand-soft);
   --setup-accent-line: var(--brand-soft-2);
+  --setup-card-bg: var(--surface);
+  --scroll-tail-bg: var(--setup-card-bg);
+  --scroll-tail-inset: 20px;
+  position: relative;
   display: flex;
   flex-direction: column;
   min-width: 0;
   min-height: 0;
   height: 100%;
   padding: 18px 20px;
+  overflow: hidden;
 }
 .setup-card.tone-hidden {
   --setup-accent: var(--danger);
@@ -50,7 +60,8 @@ withDefaults(
   --setup-accent-soft: var(--danger-soft);
   --setup-accent-line: var(--danger-line);
   /* 隐藏语气卡在明暗主题下都更「内敛」：以页面底色混出凹陷感 */
-  background: color-mix(in srgb, var(--bg) 55%, var(--surface));
+  --setup-card-bg: color-mix(in srgb, var(--bg) 55%, var(--surface));
+  background: var(--setup-card-bg);
 }
 .setup-card.tone-input {
   --setup-accent: var(--ink-3);
@@ -70,7 +81,7 @@ withDefaults(
   flex: none;
   padding: 4px 10px;
   border-radius: var(--r-control);
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-weight: 750;
   letter-spacing: 0.02em;
   line-height: 1.4;
@@ -106,6 +117,7 @@ withDefaults(
 }
 @media (max-width: 640px) {
   .setup-card {
+    --scroll-tail-inset: 16px;
     padding: 14px 16px;
   }
   .setup-card-head {

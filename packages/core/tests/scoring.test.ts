@@ -9,7 +9,7 @@ import {
   evaluateLesson,
   speedTiers,
   tierOf,
-} from '../src/scoring.ts'
+} from '../src/lesson.ts'
 
 function lessonWith(passCriteria: PassCriteria, kind: LessonDef['kind'] = 'drill'): LessonDef {
   return {
@@ -24,6 +24,7 @@ function lessonWith(passCriteria: PassCriteria, kind: LessonDef['kind'] = 'drill
     prerequisites: [],
     wordPlan: { maxUnfamiliar: 0, lengthRange: [2, 3] },
     passCriteria,
+    zeroExamples: [],
     tips: [],
     atomMeta: {},
   }
@@ -107,7 +108,7 @@ describe('evaluateLesson · 通关考核（准确率+速度）', () => {
 
 describe('evaluateLesson · 入门课', () => {
   it('完成即通过并统一记三星，不需要 passCriteria', () => {
-    const intro = lessonWith({ accuracy: 0 }, 'intro')
+    const intro = lessonWith({ accuracy: 0, mode: 'accuracy' }, 'intro')
     expect(evaluateLesson(intro, { accuracy: 0, cpm: 0, revealed: false })).toEqual({
       passed: true,
       stars: 3,

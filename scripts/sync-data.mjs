@@ -1,106 +1,89 @@
 #!/usr/bin/env node
 /**
- * 原子同步：data/（唯一数据源）→ apps/web/public/data/（Vite 静态资源）。
+ * 单向原子同步：data/（唯一数据源）→ apps/web/public/data/（Vite 静态资源）。
  *
- * 同步规则：
- *   - 先写临时目录，全部成功后再整体替换，失败不会留下半成品；
- *   - 同步 schemes/curriculum 源视图 + 统一 Lexicon + 运行时 packages + manifest.json；
- *   - manifest = { generatedAt, versions:{curriculum,lexicon}, defaultScheme, courses, files:[{file,bytes}] }。
+ * 运行时只读 4 类文件（紧凑 JSON，无缩进，减少传输体积）：
+ *   index.json             ← data/schemes/index.json
+ *   schemes/<id>.json      ← data/schemes/<id>/scheme.json
+ *   curriculum/<id>.json   ← data/schemes/<id>/curriculum.json
+ *   lexicon/lexicon.json   ← data/lexicon/lexicon.json
+ *
+ * 不再生成 manifest / packages / 独立课程索引等中间层；
+ * 版本信息由 index.json + 各 curriculum.dataVersion + lexicon.dataVersion 现算并打印。
+ *
+ * 同步规则：先写临时目录，全部成功后再整体替换，失败不会留下半成品。
  *
  * 用法：node scripts/sync-data.mjs
  */
 import fs from 'node:fs'
 import path from 'node:path'
 import {
-  CURRICULUM_INDEX_FILE,
-  LEXICON_FILE,
   PUBLIC_DATA_DIR,
-  SCHEME_DIR,
   SCHEME_INDEX_FILE,
+  publicDataPlan,
   readJSON,
-  writeJSON,
   replaceDirAtomically,
+  writeJSON,
 } from './lib/data-contract.mjs'
-import { buildSchemePackages } from './scheme-packages/build.mjs'
 
-function walkFiles(dir, base = '') {
-  const out = []
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    const rel = base ? `${base}/${entry.name}` : entry.name
-    if (entry.isDirectory()) out.push(...walkFiles(path.join(dir, entry.name), rel))
-    else out.push(rel)
-  }
-  return out
-}
-
-function buildFilePlan() {
+function buildPlan() {
   const schemeIndex = readJSON(SCHEME_INDEX_FILE)
-  const curriculumIndex = readJSON(CURRICULUM_INDEX_FILE)
-  const courses = curriculumIndex.schemes.map((scheme) => scheme.schemeId)
-  const supported = schemeIndex.courseSupported ?? []
-  if (courses.length === 0) throw new Error('课程索引为空，请先运行 node scripts/generate-universal-curriculum.mjs')
-  if (new Set(courses).size !== courses.length) throw new Error('课程索引有重复方案')
-  for (const schemeId of supported) {
-    if (!courses.includes(schemeId)) throw new Error(`courseSupported ${schemeId} 缺少课程文件`)
+  const schemes = schemeIndex.schemes ?? []
+  const schemeIds = schemes.map((summary) => summary.id)
+  const courses = schemeIndex.courseSupported ?? []
+  if (schemeIds.length === 0) throw new Error('方案索引为空')
+  if (courses.length === 0) {
+    throw new Error('课程索引为空，请先运行 node scripts/generate-universal-curriculum.mjs')
   }
+  if (new Set(schemeIds).size !== schemeIds.length) throw new Error('方案索引有重复方案')
+  if (new Set(courses).size !== courses.length) throw new Error('courseSupported 有重复方案')
   for (const schemeId of courses) {
-    if (!supported.includes(schemeId)) throw new Error(`课程 ${schemeId} 未登记在 courseSupported 中`)
+    if (!schemeIds.includes(schemeId)) throw new Error(`courseSupported 含未知方案：${schemeId}`)
   }
   const defaultScheme = schemeIndex.defaultScheme ?? courses[0]
-  if (!courses.includes(defaultScheme)) throw new Error(`defaultScheme ${defaultScheme} 不在课程列表中`)
+  if (!courses.includes(defaultScheme)) throw new Error(`defaultScheme ${defaultScheme} 不在课程方案中`)
 
-  const plan = []
-  const add = (srcFile, relOut) => {
+  const files = publicDataPlan(schemeIndex).map(({ relOut, srcFile }) => {
     if (!fs.existsSync(srcFile)) throw new Error(`缺少数据源文件：${srcFile}`)
-    plan.push({ srcFile, relOut })
-  }
-  add(SCHEME_INDEX_FILE, 'schemes/index.json')
-  add(CURRICULUM_INDEX_FILE, 'curriculum/index.json')
-  for (const schemeId of courses) {
-    add(path.join(SCHEME_DIR, schemeId, 'scheme.json'), `schemes/${schemeId}.json`)
-    add(path.join(SCHEME_DIR, schemeId, 'curriculum.json'), `curriculum/${schemeId}.curriculum.json`)
-  }
-  add(LEXICON_FILE, 'lexicon/lexicon.json')
+    return { relOut, data: readJSON(srcFile) }
+  })
+  const curricula = files
+    .filter((file) => file.relOut.startsWith('curriculum/'))
+    .map((file) => ({ id: path.basename(file.relOut, '.json'), dataVersion: file.data.dataVersion }))
+  const lexiconVersion = files.find((file) => file.relOut === 'lexicon/lexicon.json').data.dataVersion
+
   return {
-    plan,
-    defaultScheme,
+    files,
+    schemeIds,
     courses,
-    versions: {
-      curriculum: readJSON(path.join(SCHEME_DIR, 'xiaohe', 'curriculum.json')).dataVersion,
-      lexicon: readJSON(LEXICON_FILE).dataVersion,
-    },
+    defaultScheme,
+    curricula,
+    lexiconVersion,
   }
 }
 
 function main() {
-  const { plan, defaultScheme, courses, versions } = buildFilePlan()
-  let files = []
+  const { files, schemeIds, courses, defaultScheme, curricula, lexiconVersion } = buildPlan()
   replaceDirAtomically(PUBLIC_DATA_DIR, (tmpDir) => {
-    for (const entry of plan) {
-      const target = path.join(tmpDir, entry.relOut)
-      fs.mkdirSync(path.dirname(target), { recursive: true })
-      fs.copyFileSync(entry.srcFile, target)
+    for (const file of files) {
+      writeJSON(path.join(tmpDir, file.relOut), file.data, { pretty: false })
     }
-    buildSchemePackages(path.join(tmpDir, 'packages'))
-    files = walkFiles(tmpDir)
-      .filter((file) => file !== 'manifest.json')
-      .map((file) => ({ file, bytes: fs.statSync(path.join(tmpDir, file)).size }))
-    writeJSON(path.join(tmpDir, 'manifest.json'), {
-      generatedAt: new Date().toISOString(),
-      versions,
-      defaultScheme,
-      courses,
-      files,
-    })
   })
-  const totalBytes = files.reduce((sum, file) => sum + file.bytes, 0)
-  console.log(
-    `[sync] ${files.length} 个数据文件 + manifest → apps/web/public/data/ ` +
-      `(${(totalBytes / 1024 / 1024).toFixed(2)} MB)`,
+  const bytes = files.reduce(
+    (sum, file) => sum + fs.statSync(path.join(PUBLIC_DATA_DIR, file.relOut)).size,
+    0,
   )
+  const versions = {
+    defaultScheme,
+    curricula: Object.fromEntries(curricula.map((item) => [item.id, item.dataVersion])),
+    lexicon: lexiconVersion,
+  }
   console.log(
-    `[sync] versions=${JSON.stringify(versions)} default=${defaultScheme} courses=${courses.join(',')}`,
+    `[sync] ${files.length} 个数据文件（紧凑 JSON）→ apps/web/public/data/ ` +
+      `（${(bytes / 1024 / 1024).toFixed(2)} MB，原子替换）`,
   )
+  console.log(`[sync] 方案 ${schemeIds.length} 套 / 课程 ${courses.length} 套 / default=${defaultScheme}`)
+  console.log(`[sync] versions=${JSON.stringify(versions)}`)
 }
 
 main()

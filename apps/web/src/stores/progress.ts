@@ -1,19 +1,29 @@
 /**
- * 学习进度持久化（localStorage）：只读写/校验，不重新判星（判定由 core evaluateLesson 负责）。
- * 键：shuangpin-next:progress:<schemeId>；值：Record<lessonId, LessonProgress>。
+ * 学习进度持久化：只读写/校验，不重新判星（判定由 core evaluateLesson 负责）。
+ * 存储键：STORAGE_KEYS.progress(schemeId)；值：Record<lessonId, LessonProgress>。
  */
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
-import type { LessonProgress, LessonResult, PracticeStage } from '@shuangpin/core'
-
-const progressKey = (schemeId: string): string => `shuangpin-next:progress:${schemeId}`
+import {
+  PRACTICE_STAGES,
+  type LessonProgress,
+  type LessonResult,
+  type PracticeStage,
+} from '@shuangpin/core'
+import { STORAGE_KEYS, readJSON, writeJSON } from '@/lib/storage'
 
 function isFiniteNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value)
 }
 
-/** 逐条校验 localStorage 内容；损坏的条目直接丢弃，不阻塞启动。 */
-const STAGE_VALUES = new Set(['single', 'word', 'exam'])
+const STAGE_VALUES: ReadonlySet<string> = new Set(PRACTICE_STAGES)
+
+/** 星级只允许 0–3（与 core LessonResult['stars'] 同一类型口径） */
+type Stars = LessonResult['stars']
+
+function clampStars(value: number): Stars {
+  return Math.max(0, Math.min(3, Math.floor(value))) as Stars
+}
 
 function sanitizeClearedStages(value: unknown): PracticeStage[] | undefined {
   if (!Array.isArray(value)) return undefined
@@ -23,7 +33,8 @@ function sanitizeClearedStages(value: unknown): PracticeStage[] | undefined {
   return stages.length > 0 ? [...new Set(stages)] : undefined
 }
 
-function sanitizeProgress(raw: unknown): Record<string, LessonProgress> {
+/** 逐条校验持久化内容；损坏的条目直接丢弃，不阻塞启动。 */
+export function sanitizeProgress(raw: unknown): Record<string, LessonProgress> {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {}
   const result: Record<string, LessonProgress> = {}
   for (const [lessonId, value] of Object.entries(raw as Record<string, unknown>)) {
@@ -35,7 +46,7 @@ function sanitizeProgress(raw: unknown): Record<string, LessonProgress> {
     const clearedStages = sanitizeClearedStages(entry.clearedStages)
     result[lessonId] = {
       passed: entry.passed,
-      stars: Math.max(0, Math.min(3, Math.floor(entry.stars))),
+      stars: clampStars(entry.stars),
       bestAccuracy: Math.max(0, Math.min(1, entry.bestAccuracy)),
       attempts: Math.max(0, Math.floor(entry.attempts)),
       updatedAt: entry.updatedAt,
@@ -47,13 +58,7 @@ function sanitizeProgress(raw: unknown): Record<string, LessonProgress> {
 
 function readProgress(schemeId: string): Record<string, LessonProgress> {
   if (!schemeId) return {}
-  try {
-    const raw = localStorage.getItem(progressKey(schemeId))
-    if (!raw) return {}
-    return sanitizeProgress(JSON.parse(raw) as unknown)
-  } catch {
-    return {}
-  }
+  return readJSON(STORAGE_KEYS.progress(schemeId), sanitizeProgress) ?? {}
 }
 
 export const useProgressStore = defineStore('progress', () => {
@@ -67,11 +72,7 @@ export const useProgressStore = defineStore('progress', () => {
 
   function persist(): void {
     if (!schemeId.value) return
-    try {
-      localStorage.setItem(progressKey(schemeId.value), JSON.stringify(records.value))
-    } catch {
-      /* 存储空间不足/隐私模式：保留内存中的进度，不中断练习 */
-    }
+    writeJSON(STORAGE_KEYS.progress(schemeId.value), records.value)
   }
 
   /** 记录一次完整阶段结果：passed 与星级取历史最优，attempts 累加。 */

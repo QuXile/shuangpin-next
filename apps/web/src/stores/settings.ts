@@ -1,9 +1,12 @@
+/**
+ * 主题偏好（浅色 / 深色）：系统主题为默认，用户选择持久化。
+ * 首屏防闪白的同口径读取在 index.html 内联脚本中（应用启动前执行，键名与这里保持一致）。
+ */
 import { computed, ref, watch } from 'vue'
 import { defineStore } from 'pinia'
+import { STORAGE_KEYS, readString, writeString } from '@/lib/storage'
 
 type Theme = 'light' | 'dark'
-
-const THEME_KEY = 'shuangpin-next:theme'
 
 function systemTheme(): Theme {
   if (typeof window === 'undefined' || !window.matchMedia) return 'light'
@@ -11,38 +14,30 @@ function systemTheme(): Theme {
 }
 
 function readTheme(): Theme {
-  try {
-    const saved = localStorage.getItem(THEME_KEY)
-    if (saved === 'dark' || saved === 'light') return saved
-  } catch {
-    /* 隐私模式/禁用存储：回退系统主题 */
-  }
+  const saved = readString(STORAGE_KEYS.theme)
+  if (saved === 'dark' || saved === 'light') return saved
   return systemTheme()
+}
+
+function applyTheme(theme: Theme): void {
+  document.documentElement.dataset.theme = theme
+  document.documentElement.style.colorScheme = theme
 }
 
 export const useSettingsStore = defineStore('settings', () => {
   const theme = ref<Theme>(readTheme())
   const isDark = computed(() => theme.value === 'dark')
 
-  function applyTheme(): void {
-    document.documentElement.dataset.theme = theme.value
-    document.documentElement.style.colorScheme = theme.value
-  }
-
-  watch(theme, () => {
-    try {
-      localStorage.setItem(THEME_KEY, theme.value)
-    } catch {
-      /* 写入失败不影响界面 */
-    }
-    applyTheme()
+  watch(theme, (value) => {
+    writeString(STORAGE_KEYS.theme, value)
+    applyTheme(value)
   })
 
   function toggleTheme(): void {
     theme.value = theme.value === 'dark' ? 'light' : 'dark'
   }
 
-  applyTheme()
+  applyTheme(theme.value)
 
   return { theme, isDark, toggleTheme }
 })

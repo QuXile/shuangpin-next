@@ -62,7 +62,7 @@ function onToggle(event: Event): void {
 .setup-group-head strong {
   flex: none;
   color: var(--ink);
-  font-size: 12.5px;
+  font-size: var(--text-sm);
   font-weight: 750;
   letter-spacing: -0.01em;
 }
@@ -88,7 +88,7 @@ function onToggle(event: Event): void {
   user-select: none;
   transition: color var(--dur-fast);
 }
-.setup-select-all:hover {
+.setup-select-all:not(.is-disabled):hover {
   color: var(--setup-accent-ink, var(--brand-ink));
 }
 .setup-select-all input {

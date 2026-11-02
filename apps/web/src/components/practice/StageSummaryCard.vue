@@ -2,8 +2,10 @@
 /**
  * 练习总结卡片：课程阶段结束与练习场文章练习完成共用。
  * 纯展示：统计、错误键位、评分标准、可选星级评分与操作按钮。
+ * tone 由 base.css 的 .tone-success / .tone-danger 提供 --tone-* 变量。
  */
 import type { PassCriteriaLine } from '@shuangpin/core'
+import StarRating from '@/components/common/StarRating.vue'
 
 export interface SummaryStat {
   value: string | number
@@ -43,8 +45,8 @@ withDefaults(
 
 <template>
   <article
-    class="summary-card"
-    :class="{ 'is-success': tone === 'success', 'is-danger': tone === 'danger' }"
+    class="summary-card panel"
+    :class="tone === 'success' ? 'tone-success' : tone === 'danger' ? 'tone-danger' : undefined"
   >
     <div class="summary-head">
       <div class="summary-copy">
@@ -54,12 +56,13 @@ withDefaults(
       <div
         v-if="rating"
         class="summary-rating"
-        :class="{ 'is-passed': rating.passed }"
-        aria-label="本次考核评分"
+        role="group"
+        :aria-label="rating.passed ? `本次评分 ${rating.stars} 星` : '本次评分未通过'"
       >
         <span class="summary-rating-label">本次评分</span>
         <strong class="summary-rating-stars">
-          {{ rating.passed ? '★'.repeat(rating.stars) + '☆'.repeat(3 - rating.stars) : '未通过' }}
+          <StarRating v-if="rating.passed" :stars="rating.stars" size="lg" />
+          <template v-else>未通过</template>
         </strong>
         <span v-if="rating.passed" class="summary-rating-note">{{ rating.stars }} 星</span>
       </div>
@@ -89,7 +92,7 @@ withDefaults(
 
       <section v-if="rules.length" class="summary-block">
         <header>本课评分标准</header>
-        <p v-for="line in rules" :key="line.label" class="summary-rule">
+        <p v-for="line in rules" :key="line.label" class="criteria-line">
           <b>{{ line.label }}</b>
           <span>{{ line.text }}</span>
         </p>
@@ -109,23 +112,17 @@ withDefaults(
 .summary-card {
   width: 100%;
   padding: 18px 20px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-xl);
-  background: var(--surface);
-  box-shadow: var(--shadow-md);
   display: flex;
   flex-direction: column;
   gap: 16px;
-  animation: ui-fade-up 280ms var(--ease);
+  animation: ui-fade-up var(--dur-slow) var(--ease);
 }
-.summary-card.is-success {
-  border-color: var(--state-success-line);
-  background: var(--state-success-bg);
+.summary-card.tone-success,
+.summary-card.tone-danger {
+  background: var(--tone-bg);
+  border-color: var(--tone-line);
 }
-.summary-card.is-danger {
-  border-color: var(--state-danger-line);
-  background: var(--state-danger-bg);
-}
+
 .summary-head {
   display: flex;
   align-items: flex-start;
@@ -142,37 +139,24 @@ withDefaults(
   width: fit-content;
   padding: 3px 9px;
   border-radius: var(--r-control);
-  color: var(--ink-3);
-  background: var(--surface-3);
-  font-size: 10px;
+  color: var(--tone-ink, var(--ink-3));
+  background: var(--tone-surface, var(--surface-3));
+  font-size: var(--text-2xs);
   font-weight: 800;
   letter-spacing: 0.08em;
-}
-.summary-card.is-success .summary-kicker {
-  color: var(--state-success-ink);
-  background: var(--state-success-surface);
-}
-.summary-card.is-danger .summary-kicker {
-  color: var(--state-danger-ink);
-  background: var(--state-danger-surface);
 }
 .summary-text {
   margin: 0;
   color: var(--ink-3);
-  font-size: 12px;
+  font-size: var(--text-sm);
   line-height: 1.6;
 }
 .summary-text strong {
-  color: var(--ink);
-  font-size: 14px;
+  color: var(--tone-ink, var(--ink));
+  font-size: var(--text-base);
   font-weight: 700;
 }
-.summary-card.is-success .summary-text strong {
-  color: var(--state-success-ink);
-}
-.summary-card.is-danger .summary-text strong {
-  color: var(--state-danger-ink);
-}
+
 .summary-rating {
   flex: none;
   min-width: 148px;
@@ -181,43 +165,28 @@ withDefaults(
   align-items: center;
   gap: 2px;
   padding: 10px 14px 9px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-sm);
-  background: var(--surface);
+  border: 1px solid var(--tone-line, var(--line));
+  border-radius: var(--r-card);
+  background: var(--tone-surface, var(--surface));
   box-shadow: var(--shadow-sm);
 }
-.summary-rating.is-passed {
-  border-color: var(--state-success-line);
-}
-.summary-card.is-success .summary-rating {
-  background: var(--state-success-surface);
-  border-color: color-mix(in srgb, var(--state-success-line) 72%, transparent);
-}
-.summary-card.is-danger .summary-rating {
-  background: var(--state-danger-surface);
-  border-color: color-mix(in srgb, var(--state-danger-line) 72%, transparent);
-}
-.summary-rating-label {
+.summary-rating-label,
+.summary-rating-note {
   color: var(--ink-4);
-  font-size: 10px;
+  font-size: var(--text-2xs);
   font-weight: 650;
   letter-spacing: 0.06em;
 }
 .summary-rating-stars {
   color: var(--danger);
-  font-size: 21px;
+  font-size: var(--text-lg);
   font-weight: 800;
-  letter-spacing: 2px;
   line-height: 1.25;
 }
 .summary-rating.is-passed .summary-rating-stars {
-  color: var(--star-bright);
+  color: var(--star);
 }
-.summary-rating-note {
-  color: var(--ink-3);
-  font-size: 10px;
-  font-weight: 650;
-}
+
 .summary-stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
@@ -226,16 +195,16 @@ withDefaults(
 .summary-stat {
   min-width: 0;
   padding: 10px 12px;
-  border: 1px solid var(--line-faint);
-  border-radius: var(--r-sm);
-  background: var(--surface-2);
+  border: 1px solid color-mix(in srgb, var(--tone-line, var(--line)) 55%, transparent);
+  border-radius: var(--r-card);
+  background: var(--tone-surface, var(--surface-2));
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 .summary-stat b {
   color: var(--ink);
-  font-size: 18px;
+  font-size: var(--text-lg);
   font-weight: 780;
   font-variant-numeric: tabular-nums;
   line-height: 1.2;
@@ -243,30 +212,15 @@ withDefaults(
 .summary-stat b small {
   margin-left: 2px;
   color: var(--ink-3);
-  font-size: 9px;
+  font-size: var(--text-2xs);
   font-weight: 600;
 }
 .summary-stat > span {
   color: var(--ink-3);
-  font-size: 10px;
+  font-size: var(--text-2xs);
   font-weight: 600;
 }
-.summary-card.is-success .summary-stat,
-.summary-card.is-success .summary-block {
-  background: var(--state-success-surface);
-  border-color: color-mix(in srgb, var(--state-success-line) 55%, transparent);
-}
-.summary-card.is-danger .summary-stat,
-.summary-card.is-danger .summary-block {
-  background: var(--state-danger-surface);
-  border-color: color-mix(in srgb, var(--state-danger-line) 55%, transparent);
-}
-.summary-card.is-danger .summary-key-errors li {
-  background: color-mix(in srgb, var(--state-danger-surface) 72%, var(--surface));
-}
-.summary-card.is-danger .summary-rule b {
-  color: var(--state-danger-ink);
-}
+
 .summary-details {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
@@ -278,14 +232,14 @@ withDefaults(
 .summary-block {
   min-width: 0;
   padding: 12px;
-  border: 1px solid var(--line-faint);
-  border-radius: var(--r-sm);
-  background: color-mix(in srgb, var(--surface) 86%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tone-line, var(--line)) 55%, transparent);
+  border-radius: var(--r-card);
+  background: var(--tone-surface, color-mix(in srgb, var(--surface) 86%, transparent));
 }
 .summary-block > header {
   margin-bottom: 7px;
   color: var(--ink-2);
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-weight: 700;
 }
 .summary-key-errors {
@@ -302,52 +256,35 @@ withDefaults(
   justify-content: space-between;
   gap: 10px;
   padding: 5px 8px;
-  border-radius: var(--r-sm);
+  border-radius: var(--r-control);
   background: var(--surface-2);
   color: var(--ink-3);
-  font-size: 11px;
+  font-size: var(--text-xs);
 }
 .summary-key-errors b,
 .summary-key-errors em {
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--text-sm);
   font-style: normal;
 }
 .summary-key-errors b {
   color: var(--ink);
   font-weight: 700;
 }
-.summary-key-errors em {
+.summary-key-errors em,
+.summary-key-errors strong {
   color: var(--danger);
   font-weight: 700;
 }
 .summary-key-errors strong {
   flex: none;
-  color: var(--danger);
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-variant-numeric: tabular-nums;
-}
-.summary-rule {
-  margin: 0;
-  display: grid;
-  grid-template-columns: 2.6em minmax(0, 1fr);
-  column-gap: 7px;
-  color: var(--ink-3);
-  font-size: 10px;
-  line-height: 1.55;
-}
-.summary-rule + .summary-rule {
-  margin-top: 3px;
-}
-.summary-rule b {
-  color: var(--brand-ink);
-  font-weight: 800;
-  letter-spacing: 0.04em;
 }
 .summary-rule-note {
   margin: 6px 0 0;
   color: var(--ink-4);
-  font-size: 10px;
+  font-size: var(--text-2xs);
 }
 .summary-actions {
   display: flex;
@@ -355,51 +292,12 @@ withDefaults(
   gap: 8px;
 }
 .summary-actions :slotted(.btn) {
-  height: 34px;
+  height: var(--h-control);
   padding: 0 13px;
   font-size: var(--text-sm);
 }
-.summary-actions :slotted(.btn--primary) {
-  transition: background var(--dur-fast), border-color var(--dur-fast), transform var(--dur-fast);
-}
-.summary-card.is-success .summary-actions :slotted(.btn--primary) {
-  background: var(--state-success-fill);
-  border-color: var(--state-success-fill);
-  box-shadow: 0 2px 0 var(--state-success-fill-hover);
-}
-.summary-card.is-success .summary-actions :slotted(.btn--primary:hover:not(:disabled)) {
-  background: var(--state-success-fill-hover);
-  border-color: var(--state-success-fill-hover);
-}
-.summary-card.is-success .summary-actions :slotted(.btn:not(.btn--primary)) {
-  background: var(--state-success-surface);
-  border-color: color-mix(in srgb, var(--state-success-line) 72%, transparent);
-  color: var(--state-success-ink);
-}
-.summary-card.is-success .summary-actions :slotted(.btn:not(.btn--primary):hover:not(:disabled)) {
-  background: color-mix(in srgb, var(--state-success-surface) 82%, var(--state-success-fill) 18%);
-  border-color: var(--state-success-line);
-  color: var(--state-success-ink);
-}
-.summary-card.is-danger .summary-actions :slotted(.btn--primary) {
-  background: var(--danger);
-  border-color: var(--danger);
-  color: var(--on-accent);
-}
-.summary-card.is-danger .summary-actions :slotted(.btn:not(.btn--primary)) {
-  background: var(--state-danger-surface);
-  border-color: color-mix(in srgb, var(--state-danger-line) 72%, transparent);
-  color: var(--state-danger-ink);
-}
-.summary-card.is-danger .summary-actions :slotted(.btn:not(.btn--primary):hover:not(:disabled)) {
-  background: color-mix(in srgb, var(--state-danger-surface) 82%, var(--danger) 18%);
-  border-color: var(--state-danger-line);
-  color: var(--state-danger-ink);
-}
-.summary-actions :slotted(.btn kbd) {
-  margin-left: 2px;
-}
-@media (max-width: 700px) {
+
+@media (max-width: 640px) {
   .summary-card {
     padding: 12px;
   }

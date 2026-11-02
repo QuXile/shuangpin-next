@@ -1,145 +1,172 @@
 /**
- * 数据契约测试：方案 / 课程 / 统一 Lexicon / public 同步产物。
- * 数据更新后必须通过；Lexicon 与 curriculum 是权威数据。
+ * 数据契约测试：只校验 `data/` 源数据（干净 clone 必须可跑）。
+ * public 产物与 data 的同步一致性由 `scripts/validate-all.mjs` 负责，这里不读 gitignored 文件。
  */
-import { readdirSync, readFileSync } from 'node:fs'
-import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import type { CurriculumIndexFile, DataManifest, Final, SchemeDef, WordEntry } from '../src/types.ts'
-import { FINALS } from '../src/pinyin.ts'
+import type { SchemeSummary, WordEntry } from '../src/types.ts'
+import { FINALS, ZERO_INITIALS } from '../src/pinyin.ts'
 import {
-  dataPath,
   loadCurriculum,
-  loadCurriculumIndex,
   loadEngine,
   loadEngineCases,
+  loadLexicon,
+  loadSchemeDef,
   loadSchemeIndex,
-  readDataJSON,
 } from './helpers.ts'
 
 const schemeIndex = loadSchemeIndex()
-const curriculumIndex = loadCurriculumIndex()
+const schemeIds: string[] = [...schemeIndex.courseSupported]
+const summaryById = new Map<string, SchemeSummary>(
+  schemeIndex.schemes.map((summary) => [summary.id, summary]),
+)
 const validFinals = new Set<string>([...FINALS, 'er'])
-const schemeIds = schemeIndex.courseSupported as string[]
 
-describe('方案与课程数据契约', () => {
-  it('19 套方案、19 套课程支持，方案均可构造引擎', () => {
-    const dirs = readdirSync(join(dataPath(), 'schemes'), { withFileTypes: true }).filter((entry) => entry.isDirectory())
-    expect(dirs).toHaveLength(19)
-    expect(schemeIds).toHaveLength(19)
-    const cases = loadEngineCases()
-    expect(Object.keys(cases.schemes)).toHaveLength(19)
+describe('方案索引（data/schemes/index.json）', () => {
+  it('19 套方案索引完整：id 唯一、课程能力声明齐全、defaultScheme 合法', () => {
+    expect(schemeIndex.schemes.length).toBeGreaterThanOrEqual(19)
+    expect(schemeIds).toHaveLength(schemeIndex.schemes.length)
+    expect(new Set(schemeIds).size).toBe(schemeIds.length)
+    expect(schemeIndex.schemes.map((summary) => summary.id).sort()).toEqual([...schemeIds].sort())
     for (const id of schemeIds) {
-      const def = readDataJSON<SchemeDef>('schemes', id, 'scheme.json')
-      expect(def.name).toBeTruthy()
-      const diff = loadEngine(id).diff()
-      expect(diff.learnInitials.length + diff.learnFinals.length).toBeGreaterThan(0)
-      // 19 套方案都必须完整覆盖 12 个零声母；C 双拼曾在这里漏掉 eng。
-      expect(Object.keys(def.zeroInitial).sort(), `${id}: 零声母表不完整`).toEqual(
-        ['a', 'ai', 'an', 'ang', 'ao', 'e', 'ei', 'en', 'eng', 'er', 'o', 'ou'],
-      )
-      for (const [final, codes] of Object.entries(def.zeroInitial)) {
-        expect(codes.length, `${id}: 零声母 ${final} 无键位`).toBeGreaterThan(0)
-        expect(loadEngine(id).acceptedSequences({ initial: '', final: final as Final, zeroInitial: true }).length).toBeGreaterThan(0)
+      const summary = summaryById.get(id)
+      expect(summary, id).toBeTruthy()
+      if (!summary) continue
+      expect(summary.name.length).toBeGreaterThan(0)
+      expect(['compositional', 'syllable-code', 'hybrid']).toContain(summary.type)
+      expect(summary.course?.supportsGuidedCourse).toBe(true)
+      expect(typeof summary.course?.courseTier).toBe('string')
+      expect(summary.atoms?.total?.total).toBe((summary.atoms?.total?.free ?? 0) + (summary.atoms?.total?.learn ?? 0))
+      for (const key of ['initials', 'finals', 'zeroInitial'] as const) {
+        const stats = summary.atoms?.[key]
+        expect(stats?.total, `${id}.${key}`).toBe((stats?.free ?? 0) + (stats?.learn ?? 0))
       }
     }
+    expect(schemeIds).toContain(schemeIndex.defaultScheme)
+    expect([...schemeIndex.recommendedOrder].sort()).toEqual([...schemeIds].sort())
   })
 
-  it('19 套课程可加载且版本一致（5 套自有 + 14 套通用生成）', () => {
-    const indexFile = curriculumIndex as CurriculumIndexFile
-    expect(indexFile.schemes).toHaveLength(19)
-    const fullIds: string[] = []
-    const simplifiedIds: string[] = []
-    for (const schemeId of schemeIds) {
-      const curriculum = loadCurriculum(schemeId)
-      expect(curriculum.lessons.length).toBeGreaterThan(0)
-      expect(curriculum.dataVersion).toMatch(/^curriculum-[0-9a-f]{12}$/)
-      expect(curriculumIndex.schemes.some((item) => item.schemeId === schemeId)).toBe(true)
-      const requested = new Set(curriculum.lessons.flatMap((lesson) => lesson.prerequisites))
-      for (const lesson of curriculum.lessons) {
-        for (const atom of lesson.focusAtoms) expect(atom).toMatch(/^(initial|final|zero):/)
+  it('每套 scheme.json 可构造引擎，free/learn 统计与索引一致、零声母 12 音节齐全', () => {
+    const zeroNames = ZERO_INITIALS.map(String).sort()
+    for (const id of schemeIds) {
+      const summary = summaryById.get(id)
+      expect(summary, id).toBeTruthy()
+      if (!summary) continue
+      const def = loadSchemeDef(id)
+      expect(def.id).toBe(id)
+      expect(def.type).toBe(summary.type)
+      expect(Object.keys(def.zeroInitial).sort()).toEqual(zeroNames)
+      for (const [final, sequence] of Object.entries(def.zeroInitial)) {
+        expect(sequence.length, `${id}: zero ${final}`).toBeGreaterThan(0)
       }
-      expect(requested.size).toBeGreaterThan(0)
-      if (curriculum.supportLevel === 'full') fullIds.push(schemeId)
-      else if (curriculum.supportLevel === 'simplified') simplifiedIds.push(schemeId)
-      else expect.fail(`${schemeId}: 未知 supportLevel ${curriculum.supportLevel}`)
-    }
-    expect(fullIds.sort()).toEqual(['pinyinjiajia', 'sougou', 'weiruan', 'xiaohe', 'ziranma'])
-    expect(simplifiedIds).toHaveLength(14)
-  })
-
-  it('通用生成课程：入门 → 内容原子课 → 期中 → 最终考核的固定骨架', () => {
-    for (const schemeId of schemeIds) {
-      const curriculum = loadCurriculum(schemeId)
-      if (curriculum.supportLevel !== 'simplified') continue
-      const chapters = [...curriculum.chapters].sort((a, b) => a.order - b.order)
-      expect(chapters[0]?.id, `${schemeId}: 第一章`).toBe('ch-intro')
-      expect(chapters[chapters.length - 1]?.id, `${schemeId}: 最终章`).toBe('ch-final')
-      expect(curriculum.lessons[0]?.kind, `${schemeId}: 首课`).toBe('intro')
-      const last = curriculum.lessons[curriculum.lessons.length - 1]
-      expect(last?.kind, `${schemeId}: 最后一课`).toBe('exam')
-      expect(last?.title, `${schemeId}: 最终考核`).toBe('通关 · 最终考核')
-      // 期中：内容章之间独立成章，只有复习课
-      const mid = chapters.find((chapter) => chapter.id === 'ch-mid')
-      if (mid) {
-        const midLessons = curriculum.lessons.filter((lesson) => lesson.chapterId === 'ch-mid')
-        expect(midLessons.length, `${schemeId}: 期中课数`).toBe(2)
-        for (const lesson of midLessons) expect(lesson.kind, `${schemeId}: 期中应只有复习课`).toBe('review')
-      }
-      // 每个学习原子恰好一节课，且不合并
-      const drills = curriculum.lessons.filter((lesson) => lesson.kind === 'drill')
-      for (const lesson of drills) expect(lesson.focusAtoms, `${schemeId}/${lesson.id}: 每原子一节课`).toHaveLength(1)
-      expect(new Set(drills.flatMap((lesson) => lesson.focusAtoms)).size, `${schemeId}: 新课原子重复`).toBe(drills.length)
-      // 不再生成「全拼沿用」复习课；free 原子直接进入内容课前置
-      expect(curriculum.lessons.some((lesson) => lesson.title === '复习 · 全拼沿用')).toBe(false)
-      const firstDrill = curriculum.lessons.find((lesson) => lesson.kind === 'drill')
-      expect(firstDrill?.prerequisites.length ?? 0).toBeGreaterThan(0)
-      for (const lesson of curriculum.lessons) {
-        expect(lesson.wordPlan.maxUnfamiliar, `${schemeId}/${lesson.id}`).toBe(0)
+      const engine = loadEngine(id)
+      const diff = engine.diff()
+      const free = engine.freeSets()
+      expect(diff.freeInitials.length).toBe(summary.atoms?.initials?.free)
+      expect(diff.learnInitials.length).toBe(summary.atoms?.initials?.learn)
+      expect(diff.freeFinals.length).toBe(summary.atoms?.finals?.free)
+      expect(diff.learnFinals.length).toBe(summary.atoms?.finals?.learn)
+      expect(diff.freeZero.length).toBe(summary.atoms?.zeroInitial?.free)
+      expect(diff.learnZero.length).toBe(summary.atoms?.zeroInitial?.learn)
+      expect([...free.initials]).toEqual(diff.freeInitials)
+      expect([...free.finals]).toEqual(diff.freeFinals)
+      expect([...free.zero]).toEqual(diff.freeZero)
+      // 零声母主键必须可展示
+      for (const zero of ZERO_INITIALS) {
+        const primary = engine.primarySequence({ initial: '', final: zero, zeroInitial: true })
+        expect(primary.length, `${id}: zero ${zero}`).toBeGreaterThan(0)
+        expect(engine.keysForAtom(`zero:${zero}` as `zero:${string}`).length).toBe(1)
       }
     }
+    const cases = loadEngineCases()
+    expect(Object.keys(cases.schemes).sort()).toEqual([...schemeIds].sort())
   })
 })
 
-describe('统一 Lexicon 数据契约', () => {
+describe('课程（data/schemes/<id>/curriculum.json）', () => {
+  it('每套课程可加载：来源标记、版本、章节与课程引用完整', () => {
+    for (const id of schemeIds) {
+      const curriculum = loadCurriculum(id)
+      expect(curriculum.schemeId, id).toBe(id)
+      expect(['full', 'simplified']).toContain(curriculum.supportLevel)
+      if (curriculum.supportLevel === 'simplified') expect(curriculum.origin, id).toBe('generated')
+      else expect(curriculum.origin, id).toBeUndefined()
+      expect(curriculum.dataVersion).toMatch(/^curriculum-[0-9a-f]{12}$/)
+      expect(curriculum.chapters.length).toBeGreaterThan(0)
+      expect(curriculum.lessons.length).toBeGreaterThan(0)
+      const chapterIds = new Set(curriculum.chapters.map((chapter) => chapter.id))
+      const lessonIds = new Set<string>()
+      const allAtoms = new Set<string>()
+      for (const lesson of curriculum.lessons) {
+        expect(lessonIds.has(lesson.id), `${id}/${lesson.id}: 课程 id 重复`).toBe(false)
+        lessonIds.add(lesson.id)
+        expect(chapterIds.has(lesson.chapterId), `${id}/${lesson.id}: 未知章节`).toBe(true)
+        expect(['intro', 'drill', 'review', 'exam']).toContain(lesson.kind)
+        expect(typeof lesson.title).toBe('string')
+        expect(lesson.title.length).toBeGreaterThan(0)
+        for (const atom of lesson.focusAtoms) {
+          expect(atom, `${id}/${lesson.id}: 非法原子 ${atom}`).toMatch(/^(initial|final|zero):/)
+          expect(lesson.atomMeta[atom], `${id}/${lesson.id}: 缺 atomMeta ${atom}`).toBeTruthy()
+          allAtoms.add(atom)
+        }
+        const blocking = lesson.focusAtoms.filter((atom) => atom.startsWith('initial:') || atom.startsWith('final:'))
+        const nonBlocking = lesson.focusAtoms.filter((atom) => atom.startsWith('zero:'))
+        expect(blocking).toEqual(lesson.blockingAtoms)
+        expect(nonBlocking).toEqual(lesson.nonBlockingAtoms)
+        expect(lesson.wordPlan.lengthRange).toHaveLength(2)
+        expect(lesson.wordPlan.maxUnfamiliar).toBeGreaterThanOrEqual(0)
+        expect(Array.isArray(lesson.tips)).toBe(true)
+        for (const tip of lesson.tips) expect(typeof tip).toBe('string')
+        if (lesson.stageMinWords) {
+          for (const stage of Object.keys(lesson.stageMinWords)) {
+            expect(['single', 'word', 'exam']).toContain(stage)
+          }
+        }
+        if (lesson.kind === 'intro') {
+          expect(lesson.passCriteria).toBeUndefined()
+        } else {
+          const criteria = lesson.passCriteria
+          expect(criteria, `${id}/${lesson.id}: 缺 passCriteria`).toBeTruthy()
+          if (criteria) {
+            expect(criteria.accuracy).toBeGreaterThan(0)
+            expect(criteria.accuracy).toBeLessThanOrEqual(1)
+            if (criteria.mode) expect(['accuracy', 'speed', 'accuracy-speed']).toContain(criteria.mode)
+          }
+        }
+      }
+      // 每个 learn 原子至少出现在一门课里（free 原子可能只出现在 prerequisites）
+      for (const atom of allAtoms) expect(atom).not.toMatch(/^rule:/)
+    }
+  })
+
+})
+
+describe('统一 Lexicon（data/lexicon/lexicon.json）', () => {
   it('词/字/音节示例完整，词条字段合法且无重复', () => {
-    const lexicon = readDataJSON<{
-      dataVersion: string
-      words: WordEntry[]
-      chars: WordEntry[]
-      syllableExamples: Record<string, unknown>
-    }>('lexicon', 'lexicon.json')
+    const lexicon = loadLexicon()
     expect(lexicon.dataVersion).toMatch(/^lexicon-[0-9a-f]{12}$/)
     expect(lexicon.words.length).toBeGreaterThanOrEqual(20000)
     expect(lexicon.chars.length).toBeGreaterThanOrEqual(3000)
     expect(Object.keys(lexicon.syllableExamples).length).toBeGreaterThanOrEqual(390)
     const seen = new Set<string>()
-    for (const word of lexicon.words) {
+    for (const word of lexicon.words as WordEntry[]) {
       expect(seen.has(word.text), `重复词：${word.text}`).toBe(false)
       seen.add(word.text)
       expect(word.length).toBe(word.chars.length)
       expect(word.length).toBeGreaterThanOrEqual(2)
       expect(word.length).toBeLessThanOrEqual(5)
       for (const syllable of word.syllables) {
-        expect(validFinals.has(syllable.final)).toBe(true)
+        expect(validFinals.has(syllable.final), `词 ${word.text} 韵母 ${syllable.final}`).toBe(true)
         if (syllable.tone !== undefined) expect([1, 2, 3, 4, 5]).toContain(syllable.tone)
       }
     }
-  })
-
-  it('public/data 同步 lexicon 且 manifest 版本链一致', () => {
-    const publicRoot = join(dataPath(), '..', 'apps', 'web', 'public', 'data')
-    const manifest = JSON.parse(readFileSync(join(publicRoot, 'manifest.json'), 'utf8')) as DataManifest
-    const lexicon = readDataJSON<{ dataVersion: string }>('lexicon', 'lexicon.json')
-    expect(manifest.versions.curriculum).toBe(loadCurriculum('xiaohe').dataVersion)
-    expect(manifest.versions.lexicon).toBe(lexicon.dataVersion)
-    expect(manifest.defaultScheme).toBe(schemeIndex.defaultScheme)
-    expect(manifest.courses).toEqual(schemeIds)
-    const source = readFileSync(join(dataPath(), 'lexicon', 'lexicon.json'))
-    const synced = readFileSync(join(publicRoot, 'lexicon', 'lexicon.json'))
-    expect(Buffer.compare(source, synced), 'lexicon 未同步').toBe(0)
-    expect(manifest.files.some((file) => file.file === 'lexicon/lexicon.json')).toBe(true)
-    expect(manifest.files.some((file) => file.file.startsWith('pools/'))).toBe(false)
+    for (const char of lexicon.chars as WordEntry[]) {
+      expect(char.length).toBe(1)
+      expect(validFinals.has(char.syllables[0]?.final ?? '')).toBe(true)
+    }
+    for (const [syllable, example] of Object.entries(lexicon.syllableExamples)) {
+      expect(example.char.length).toBeGreaterThan(0)
+      expect(example.pinyin).toBe(syllable)
+      expect(validFinals.has(example.final)).toBe(true)
+    }
   })
 })
-

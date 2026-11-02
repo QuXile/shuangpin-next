@@ -2,9 +2,9 @@
  * 阶段计划与内容装配测试：lessonStages / 阶段门槛 / 单字 / 词语 / 教学示例。
  */
 import { describe, expect, it } from 'vitest'
-import { ZERO_INITIALS } from '../src/pinyin.ts'
 import {
   KIND_STAGE_MIN_WORDS,
+  PRACTICE_STAGES,
   buildSingleCharWords,
   buildTutorialWords,
   buildWordStageWords,
@@ -12,7 +12,7 @@ import {
   lessonStageMinWords,
   lessonStages,
   stageGate,
-} from '../src/stages.ts'
+} from '../src/lesson.ts'
 import { findLesson, loadCurriculum, loadEngine, loadPool } from './helpers.ts'
 
 const curriculum = loadCurriculum('xiaohe')
@@ -93,6 +93,13 @@ describe('lessonStages / lessonStageMinWords（三阶段词口径）', () => {
     const failed = stageGate(exam, 'exam', { accuracy: 0.9, cpm: 44, completedWords: 100 })
     expect(failed.met).toBe(false)
     expect(failed.reasons.join()).toMatch(/速度/)
+  })
+})
+
+describe('PRACTICE_STAGES', () => {
+  it('阶段顺序唯一运行时值：single → word → exam', () => {
+    expect(PRACTICE_STAGES).toEqual(['single', 'word', 'exam'])
+    expect(Object.keys(KIND_STAGE_MIN_WORDS.drill)).toEqual([...PRACTICE_STAGES])
   })
 })
 
@@ -231,11 +238,12 @@ describe('buildTutorialWords', () => {
     for (const word of words) expect(word.caps.length).toBeGreaterThan(0)
   })
 
-  it('L2.4：12 个零声母示例，顺序 = 课程 focus 顺序', () => {
+  it('L2.4：零声母示例数量 = 课程 focus，顺序一致', () => {
     const lesson = findLesson(curriculum, 'L2.4')
+    const expected = lesson.focusAtoms.map((atom) => atom.slice('zero:'.length))
     const words = buildTutorialWords({ engine, lesson, pool: loadPool('L2.4') })
-    expect(words).toHaveLength(12)
-    expect(words.map((word) => word.syllables[0]?.final)).toEqual([...ZERO_INITIALS])
+    expect(words).toHaveLength(expected.length)
+    expect(words.map((word) => word.syllables[0]?.final)).toEqual(expected)
   })
 
   it('L9.1：综合课示例覆盖全部音节', () => {

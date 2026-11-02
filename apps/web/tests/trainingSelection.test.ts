@@ -1,0 +1,284 @@
+import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import { describe, expect, it } from 'vitest'
+import {
+  freeTrainingAtoms,
+  type Curriculum,
+  type LessonDef,
+  type LessonProgress,
+  type SchemeDef,
+} from '@shuangpin/core'
+import {
+  groupStateOf,
+  hiddenCandidatesOf,
+  learnedSelectionOf,
+  parseTrainingConfig,
+  parseTrainingPreset,
+  passedFocusAtomsOf,
+  presetSelectionOf,
+  sanitizeTrainingConfig,
+  selectableAtomsOf,
+  shrinkHiddenSets,
+  type AtomOptions,
+  type AtomSet,
+  type ScopedSets,
+  type TrainingConfigSnapshot,
+} from '../src/lib/trainingSelection.ts'
+
+const scheme = JSON.parse(
+  readFileSync(fileURLToPath(new URL('../../../data/schemes/xiaohe/scheme.json', import.meta.url)), 'utf8'),
+) as SchemeDef
+const curriculum = JSON.parse(
+  readFileSync(
+    fileURLToPath(new URL('../../../data/schemes/xiaohe/curriculum.json', import.meta.url)),
+    'utf8',
+  ),
+) as Curriculum
+
+const options: AtomOptions = {
+  initials: Object.keys(scheme.initials),
+  finals: Object.keys(scheme.finals),
+  zeroFinals: Object.keys(scheme.zeroInitial),
+}
+const common = freeTrainingAtoms(scheme)
+
+function lessonOf(id: string): LessonDef {
+  const lesson = curriculum.lessons.find((item) => item.id === id)
+  if (!lesson) throw new Error(`lesson ${id} missing`)
+  return lesson
+}
+
+function emptyConfig(): TrainingConfigSnapshot {
+  return {
+    tab: 'drill',
+    articleInputMode: 'input',
+    selectedInitials: [],
+    selectedFinals: [],
+    selectedZeroFinals: [],
+    hiddenInitials: [],
+    hiddenFinals: [],
+    hiddenZeroFinals: [],
+    articleHiddenInitials: [],
+    articleHiddenFinals: [],
+    articleHiddenZeroFinals: [],
+  }
+}
+
+describe('trainingSelection · 组选状态', () => {
+  it('胶囊算作组内一个项目，参与全选与部分选中', () => {
+    expect(groupStateOf(3, 3, true, false)).toEqual({
+      selected: 3,
+      total: 4,
+      all: false,
+      indeterminate: true,
+    })
+    expect(groupStateOf(3, 3, true, true)).toMatchObject({ selected: 4, all: true, indeterminate: false })
+    expect(groupStateOf(0, 0, false, false)).toMatchObject({ total: 0, all: false, indeterminate: false })
+    expect(groupStateOf(2, 5, false, false)).toMatchObject({ selected: 2, total: 5, indeterminate: true })
+  })
+})
+
+describe('trainingSelection · 配置解析/裁剪', () => {
+  it('损坏/缺省配置回退默认值', () => {
+    expect(parseTrainingConfig(null)).toBeNull()
+    expect(parseTrainingConfig('x')).toBeNull()
+    expect(parseTrainingConfig([])).toBeNull()
+    const parsed = parseTrainingConfig({ tab: 'article', articleInputMode: 'import', selectedInitials: ['zh', 1, null] })
+    expect(parsed).toMatchObject({
+      tab: 'article',
+      articleInputMode: 'import',
+      selectedInitials: ['zh'],
+      selectedFinals: [],
+    })
+  })
+
+  it('裁剪掉当前方案不存在的原子；隐藏项必须属于出现集合', () => {
+    const config = {
+      ...emptyConfig(),
+      selectedInitials: ['zh', 'not-an-initial'],
+      hiddenInitials: ['zh', 'not-an-initial', 'b'],
+      articleHiddenInitials: ['zh', 'not-an-initial'],
+    }
+    const sanitized = sanitizeTrainingConfig(config, options)
+    expect(sanitized.selectedInitials).toEqual(['zh'])
+    // b 未被出现集合选中 → 专项隐藏被丢弃；文章隐藏只要求是合法原子
+    expect(sanitized.hiddenInitials).toEqual(['zh'])
+    expect(sanitized.articleHiddenInitials).toEqual(['zh'])
+  })
+})
+
+describe('trainingSelection · 已学原子', () => {
+  it('只统计已通过课程的 focus 原子', () => {
+    const passLesson = lessonOf('L2.1')
+    expect(passLesson.focusAtoms).toContain('initial:zh')
+    const progress: Record<string, LessonProgress> = {
+      [passLesson.id]: {
+        passed: true,
+        stars: 3,
+        bestAccuracy: 1,
+        attempts: 1,
+        updatedAt: 1,
+      },
+      L9_9: {
+        passed: false,
+        stars: 0,
+        bestAccuracy: 0,
+        attempts: 1,
+        updatedAt: 1,
+      },
+    }
+    const passed = passedFocusAtomsOf(curriculum.lessons, progress)
+    expect(passed.initials.has('zh')).toBe(true)
+    expect(passed.finals.size).toBe(0)
+    expect(passed.zeroFinals.size).toBe(0)
+  })
+})
+
+describe('trainingSelection · 课程预设', () => {
+  const lesson = lessonOf('L2.1')
+
+  it('single：出现范围 = 全拼沿用 ∪ 已学 focus，无隐藏', () => {
+    const preset = presetSelectionOf({
+      lesson,
+      lessons: curriculum.lessons,
+      stage: 'single',
+      common,
+      options,
+    })
+    for (const item of common.initials) expect(preset.selectedInitials).toContain(item)
+    expect(preset.selectedInitials).toContain('zh')
+    expect(preset.hiddenInitials).toEqual([])
+    expect(preset.hiddenFinals).toEqual([])
+    expect(preset.hiddenZeroFinals).toEqual([])
+  })
+
+  it('word：隐藏本课新学映射，零声母只取课程教过的', () => {
+    const preset = presetSelectionOf({
+      lesson,
+      lessons: curriculum.lessons,
+      stage: 'word',
+      common,
+      options,
+    })
+    expect(preset.hiddenInitials).toEqual(['zh'])
+    expect(preset.hiddenFinals).toEqual([])
+    // 免费的零声母不进出现集合（只取 lesson focus 中学过的）
+    for (const item of common.zeroFinals) expect(preset.selectedZeroFinals).not.toContain(item)
+    for (const item of preset.hiddenZeroFinals) {
+      expect(preset.selectedZeroFinals).toContain(item)
+    }
+  })
+
+  it('exam：隐藏全部出现项', () => {
+    const preset = presetSelectionOf({
+      lesson,
+      lessons: curriculum.lessons,
+      stage: 'exam',
+      common,
+      options,
+    })
+    expect([...preset.hiddenInitials].sort()).toEqual([...preset.selectedInitials].sort())
+    expect([...preset.hiddenFinals].sort()).toEqual([...preset.selectedFinals].sort())
+    expect([...preset.hiddenZeroFinals].sort()).toEqual([...preset.selectedZeroFinals].sort())
+  })
+
+  it('所有出现项都来自当前方案原子表，隐藏项是出现项子集', () => {
+    for (const stage of ['single', 'word', 'exam'] as const) {
+      const preset = presetSelectionOf({
+        lesson,
+        lessons: curriculum.lessons,
+        stage,
+        common,
+        options,
+      })
+      expect(preset.selectedInitials.every((item) => options.initials.includes(item))).toBe(true)
+      expect(preset.selectedFinals.every((item) => options.finals.includes(item))).toBe(true)
+      expect(preset.selectedZeroFinals.every((item) => options.zeroFinals.includes(item))).toBe(true)
+      expect(preset.hiddenInitials.every((item) => preset.selectedInitials.includes(item))).toBe(true)
+      expect(preset.hiddenFinals.every((item) => preset.selectedFinals.includes(item))).toBe(true)
+      expect(preset.hiddenZeroFinals.every((item) => preset.selectedZeroFinals.includes(item))).toBe(true)
+    }
+  })
+})
+
+describe('trainingSelection · 原子集合派生', () => {
+  it('selectableAtomsOf 去掉全拼沿用覆盖的 free 原子', () => {
+    const selectable = selectableAtomsOf(options, common)
+    expect(selectable.initials).toHaveLength(options.initials.length - common.initials.length)
+    for (const item of common.initials) expect(selectable.initials).not.toContain(item)
+    expect(selectable.initials.every((item) => options.initials.includes(item))).toBe(true)
+  })
+
+  it('hiddenCandidatesOf：专项只列出现范围选中的非公共原子，文章列全部普通候选', () => {
+    const allSelected = {
+      initials: new Set(options.initials),
+      finals: new Set(options.finals),
+      zeroFinals: new Set(options.zeroFinals),
+    }
+    const drill = hiddenCandidatesOf('drill', options, common, allSelected)
+    for (const item of common.initials) expect(drill.initials).not.toContain(item)
+
+    const partial = {
+      initials: new Set([...common.initials, 'zh']),
+      finals: new Set<string>(),
+      zeroFinals: new Set<string>(),
+    }
+    const scoped = hiddenCandidatesOf('drill', options, common, partial)
+    expect(scoped.initials).toEqual(['zh'])
+
+    const article = hiddenCandidatesOf('article', options, common, allSelected)
+    expect(article.initials).toHaveLength(options.initials.length - common.initials.length)
+  })
+
+  it('shrinkHiddenSets 把隐藏集合收缩到出现范围/合法原子内', () => {
+    const sets: ScopedSets = {
+      appear: {
+        initials: new Set(['zh']),
+        finals: new Set(['ai']),
+        zeroFinals: new Set<string>(),
+      },
+      drill: {
+        initials: new Set(['zh', 'ch']),
+        finals: new Set(['ai', 'ei']),
+        zeroFinals: new Set(['a']),
+      },
+      article: {
+        initials: new Set(['zh', 'not-an-atom']),
+        finals: new Set(['ai']),
+        zeroFinals: new Set<string>(),
+      },
+    }
+    const shrunk = shrinkHiddenSets(sets, options)
+    expect([...shrunk.drill.initials]).toEqual(['zh'])
+    expect([...shrunk.drill.finals]).toEqual(['ai'])
+    expect([...shrunk.drill.zeroFinals]).toEqual([])
+    expect([...shrunk.article.initials]).toEqual(['zh'])
+  })
+
+  it('learnedSelectionOf 在全拼沿用上叠加已通过课程的 focus', () => {
+    const passLesson = lessonOf('L2.1')
+    const progress: Record<string, LessonProgress> = {
+      [passLesson.id]: { passed: true, stars: 3, bestAccuracy: 1, attempts: 1, updatedAt: 1 },
+    }
+    const current: AtomSet = {
+      initials: new Set(common.initials),
+      finals: new Set(common.finals),
+      zeroFinals: new Set<string>(),
+    }
+    const learned = learnedSelectionOf({ lessons: curriculum.lessons, progress, common, options, current })
+    expect(learned.selectedInitials).toContain('zh')
+    expect(learned.selectedInitials).toEqual(expect.arrayContaining([...common.initials]))
+  })
+
+  it('parseTrainingPreset 校验缺字段/非法阶段', () => {
+    expect(parseTrainingPreset(null)).toBeNull()
+    expect(parseTrainingPreset('{bad')).toBeNull()
+    expect(parseTrainingPreset(JSON.stringify({ from: 'L2.1', stage: 'nope', scheme: '' }))).toBeNull()
+    expect(parseTrainingPreset(JSON.stringify({ from: '', stage: 'word', scheme: '' }))).toBeNull()
+    expect(parseTrainingPreset(JSON.stringify({ from: 'L2.1', stage: 'word', scheme: 'xiaohe' }))).toEqual({
+      from: 'L2.1',
+      stage: 'word',
+      scheme: 'xiaohe',
+    })
+  })
+})

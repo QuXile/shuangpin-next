@@ -4,7 +4,10 @@ import type { AtomId, LessonDef, PracticeWord } from '@shuangpin/core'
 import type { PassCriteriaLine } from '@shuangpin/core'
 import { describePassCriteria } from '@shuangpin/core'
 import FocusTagList from '@/components/FocusTagList.vue'
+import KeyCap from '@/components/common/KeyCap.vue'
+import ScrollTail from '@/components/common/ScrollTail.vue'
 import TutorialExamples from './TutorialExamples.vue'
+import AnchorTips from './AnchorTips.vue'
 import {
   buildAnchorViews,
   lessonKindLabel,
@@ -28,6 +31,9 @@ const props = withDefaults(
 
 const emit = defineEmits<{ start: [] }>()
 
+const focusScrollRef = ref<HTMLElement | null>(null)
+const notesBodyRef = ref<HTMLElement | null>(null)
+
 /** 记忆锚点：仅在本课 focus 的 initial/final 原子 ≤3 个时显示 */
 const anchorRows = computed(() => buildAnchorViews(props.lesson, props.focusItems))
 
@@ -38,34 +44,44 @@ const ratingLines = computed<PassCriteriaLine[]>(() => {
 })
 
 const allTips = computed(() => props.notes.flatMap((note) => note.bullets))
-/** 把生成课程的「编码补充」长句拆成推荐码 / 兼容映射两组；普通 tips 单独展示。 */
-const recommendedTips = computed(() => {
-  const lines: string[] = []
+interface CodeTipLine {
+  kind: 'recommended' | 'compat'
+  syllable: string
+  codes: string[]
+}
+/** 生成课程的编码说明：解析成「音节 + 键位序列」，键位用键帽渲染。 */
+const codeTips = computed<CodeTipLine[]>(() => {
+  const lines: CodeTipLine[] = []
   for (const tip of allTips.value) {
-    const body = tip.replace(/^编码补充（[^）]*）：/, '')
-    for (const part of body.split('；')) {
-      const [recommended, compat] = part.split(/，兼容码/)
-      if (recommended?.includes('推荐码')) lines.push(recommended.trim())
-      if (compat) lines.push(`兼容码 ${compat.trim()}`)
+    for (const part of tip.split('；')) {
+      const line = part.trim()
+      const recommended = /^推荐码：(.+?) 所推荐的键位组合为特别的 (.+)$/.exec(line)
+      if (recommended) {
+        lines.push({
+          kind: 'recommended',
+          syllable: recommended[1]!,
+          codes: recommended[2]!.split(/\s*\/\s*/).filter(Boolean),
+        })
+        continue
+      }
+      const compat = /^兼容映射：(.+?) 兼容的特别键位组合还包括 (.+)$/.exec(line)
+      if (compat) {
+        lines.push({
+          kind: 'compat',
+          syllable: compat[1]!,
+          codes: compat[2]!.split(/\s*\/\s*/).filter(Boolean),
+        })
+      }
     }
   }
   return lines
 })
-const compatTips = computed(() => recommendedTips.value.filter((tip) => tip.startsWith('兼容码')))
-const recommendedOnlyTips = computed(() => recommendedTips.value.filter((tip) => !tip.startsWith('兼容码')))
-const otherTips = computed(() =>
-  allTips.value.filter((tip) => !/推荐码|兼容|编码补充/.test(tip)),
-)
+const otherTips = computed(() => allTips.value.filter((tip) => !/^(推荐码：|兼容映射：)/.test(tip.trim())))
 const hasTips = computed(
-  () =>
-    recommendedOnlyTips.value.length > 0 ||
-    compatTips.value.length > 0 ||
-    otherTips.value.length > 0 ||
-    anchorRows.value.length > 0,
+  () => codeTips.value.length > 0 || otherTips.value.length > 0 || anchorRows.value.length > 0,
 )
 
-/** 悬停示例时，课程技巧收起到标题行，示例向上占满。 */
-const examplesHovered = ref(false)
+/** 只有悬停示例时才把课程技巧收起到标题行；悬停技巧本身不触发任何布局变化。 */
 </script>
 
 <template>
@@ -87,13 +103,16 @@ const examplesHovered = ref(false)
         </header>
 
         <div class="tutorial-range">
-          <header class="range-head panel-head">
-            <h2 class="panel-title">课程范围</h2>
-            <span class="count-badge">{{ focusItems.length }} 个映射</span>
-          </header>
-          <div class="focus-block thin-scroll" :class="{ 'is-wide': focusItems.length > 8 }">
-            <FocusTagList :items="focusItems" />
-            <span v-if="focusItems.length === 0" class="focus-empty">键位总览 · 无新键</span>
+          <div class="focus-block" :class="{ 'is-wide': focusItems.length > 8 }">
+            <header class="range-head panel-head">
+              <h2 class="panel-title">课程范围</h2>
+              <span class="count-badge">{{ focusItems.length }} 个映射</span>
+            </header>
+            <div ref="focusScrollRef" class="focus-scroll thin-scroll scroll-y">
+              <FocusTagList :items="focusItems" />
+              <span v-if="focusItems.length === 0" class="empty-note">键位总览 · 无新键</span>
+            </div>
+            <ScrollTail :scroller="focusScrollRef" />
           </div>
         </div>
 
@@ -102,8 +121,8 @@ const examplesHovered = ref(false)
             <h2 class="panel-title">评分标准</h2>
             <span class="count-badge">{{ ratingLines.length }} 档</span>
           </header>
-          <div class="rating-lines thin-scroll">
-            <p v-for="line in ratingLines" :key="line.label" class="rating-line">
+          <div class="rating-lines thin-scroll scroll-y">
+            <p v-for="line in ratingLines" :key="line.label" class="criteria-line">
               <b>{{ line.label }}</b>
               <span>{{ line.text }}</span>
             </p>
@@ -111,69 +130,64 @@ const examplesHovered = ref(false)
         </section>
       </section>
 
-      <aside class="tutorial-side">
-        <section
-          v-if="hasTips"
-          class="tutorial-notes panel"
-          :class="{ 'is-collapsed': examplesHovered }"
-          aria-label="课程技巧"
-        >
+      <aside class="tutorial-side" :class="{ 'no-tips': !hasTips }">
+        <section v-if="hasTips" class="tutorial-notes panel" aria-label="课程技巧">
           <header class="panel-head tutorial-side-head">
             <h2 class="panel-title">课程技巧</h2>
             <span class="count-badge">本课</span>
           </header>
-          <div v-show="!examplesHovered" class="notes-body thin-scroll">
-            <section v-if="recommendedOnlyTips.length" class="tip-section">
-              <h3>推荐码</h3>
+          <div ref="notesBodyRef" class="notes-body thin-scroll scroll-y">
+            <section v-if="codeTips.length" class="tip-section">
               <ul class="tip-bullets">
-                <li v-for="tip in recommendedOnlyTips" :key="tip">{{ tip }}</li>
-              </ul>
-            </section>
-
-            <section v-if="compatTips.length" class="tip-section">
-              <h3>兼容映射</h3>
-              <ul class="tip-bullets">
-                <li v-for="tip in compatTips" :key="tip">{{ tip }}</li>
+                <li
+                  v-for="(tip, index) in codeTips"
+                  :key="`${tip.kind}-${tip.syllable}-${index}`"
+                  class="tip-code"
+                  :class="tip.kind === 'recommended' ? 'is-recommended' : 'is-compat'"
+                >
+                  <template v-if="tip.kind === 'recommended'">
+                    推荐码：<b>{{ tip.syllable }}</b> 所推荐的键位组合为特别的
+                    <span class="code-keys">
+                      <template v-for="(code, codeIndex) in tip.codes" :key="code">
+                        <span v-if="codeIndex > 0" class="code-sep">/</span>
+                        <KeyCap :text="code" variant="primary" />
+                      </template>
+                    </span>
+                  </template>
+                  <template v-else>
+                    兼容映射：<b>{{ tip.syllable }}</b> 兼容的特别键位组合还包括
+                    <span class="code-keys">
+                      <template v-for="(code, codeIndex) in tip.codes" :key="code">
+                        <span v-if="codeIndex > 0" class="code-sep">/</span>
+                        <KeyCap :text="code" variant="compat" />
+                      </template>
+                    </span>
+                  </template>
+                </li>
               </ul>
             </section>
 
             <section v-if="anchorRows.length" class="tip-section">
-              <h3>助记</h3>
-              <div class="anchors-list">
-                <div v-for="row in anchorRows" :key="row.atomId" class="anchor-row">
-                  <span class="anchor-label" :class="`is-${row.type}`">{{ row.label.toUpperCase() }}</span>
-                  <span v-if="row.keys.length" class="anchor-key">
-                    {{ row.keys.map((key) => key.toUpperCase()).join(' + ') }} 键
-                  </span>
-                  <span v-if="row.mnemonic" class="anchor-mnemonic">{{ row.mnemonic }}</span>
-                  <span v-if="row.anchors.length" class="anchor-chips">
-                    <span v-for="anchor in row.anchors" :key="anchor" class="anchor-chip">{{ anchor }}</span>
-                  </span>
-                </div>
-              </div>
+              <AnchorTips :rows="anchorRows" />
             </section>
 
             <section v-if="otherTips.length" class="tip-section">
-              <h3>其他技巧</h3>
               <ul class="tip-bullets">
                 <li v-for="tip in otherTips" :key="tip">{{ tip }}</li>
               </ul>
             </section>
           </div>
+          <ScrollTail :scroller="notesBodyRef" />
         </section>
 
-        <section
-          class="tutorial-examples panel"
-          :class="{ 'is-expanded': examplesHovered }"
-          aria-label="示例"
-          @mouseenter="examplesHovered = true"
-          @mouseleave="examplesHovered = false"
-        >
+        <section class="tutorial-examples panel" aria-label="示例">
           <header class="panel-head tutorial-side-head">
             <h2 class="panel-title">示例</h2>
             <span class="count-badge">{{ examples.length }} 张</span>
           </header>
-          <TutorialExamples :words="examples" :focus-atoms="focusAtoms" :focus-badge="focusBadge" />
+          <div class="examples-body">
+            <TutorialExamples :words="examples" :focus-atoms="focusAtoms" :focus-badge="focusBadge" />
+          </div>
         </section>
       </aside>
     </div>
@@ -186,7 +200,7 @@ const examplesHovered = ref(false)
   min-height: 0;
   display: flex;
   flex-direction: column;
-  animation: ui-fade-up 240ms var(--ease);
+  animation: ui-fade-up var(--dur-mid) var(--ease);
 }
 .tutorial-top {
   display: grid;
@@ -194,7 +208,7 @@ const examplesHovered = ref(false)
   gap: 16px;
   align-items: stretch;
   width: 100%;
-  max-width: 1080px;
+  max-width: var(--content-narrow);
   flex: 1;
   min-height: 0;
   margin: 0 auto;
@@ -230,7 +244,7 @@ const examplesHovered = ref(false)
 .tutorial-title {
   margin: 0;
   color: var(--ink);
-  font-size: 24px;
+  font-size: var(--text-display-sm);
   font-weight: 800;
   letter-spacing: -0.03em;
   line-height: 1.22;
@@ -252,35 +266,36 @@ const examplesHovered = ref(false)
   flex: none;
   margin-bottom: 10px;
 }
-.panel-head .panel-title {
-  font-size: 13px;
+
+.tutorial-eyebrow {
+  font-size: var(--text-xs);
+}
+.tutorial-card :deep(.focus-tag) {
+  font-size: var(--text-sm);
+}
+.tutorial-card :deep(.focus-keys kbd) {
+  font-size: var(--text-xs);
 }
 .focus-block {
+  /* 「还有内容」提示的渐隐底色与课程范围卡背景一致 */
+  --scroll-tail-bg: var(--surface-2);
+  --scroll-tail-inset: 14px;
+  position: relative;
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
-  scrollbar-gutter: stable;
-  overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
   padding: 14px;
-  border-radius: var(--r-md);
+  border-radius: var(--r-card);
   background: var(--surface-2);
-  border: 1px solid var(--line-faint);
+  border: 1px solid var(--line);
+  overflow: hidden;
 }
+
 .focus-block.is-wide :deep(.focus-tag-list) {
   padding-right: 6px;
 }
-.focus-empty {
-  align-self: center;
-  display: inline-block;
-  padding: 5px 10px;
-  border-radius: var(--r-control);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  color: var(--ink-3);
-  font-size: var(--text-sm);
-}
+
 .tutorial-rating {
   flex: none;
   max-height: 40%;
@@ -289,65 +304,54 @@ const examplesHovered = ref(false)
   min-height: 0;
   margin-top: 12px;
   padding-top: 12px;
-  border-top: 1px solid var(--line-faint);
+  border-top: 1px solid var(--line);
 }
 .tutorial-side {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
   gap: 12px;
   min-height: 0;
   overflow: hidden;
 }
-.tutorial-notes {
-  flex: 0 1 auto;
-  max-height: 48%;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  padding: 16px;
-  overflow: hidden;
+/* 课程技巧 / 示例：固定两等分面板，正文各自滚动；不做任何悬浮/展开的高度动画。 */
+.tutorial-side.no-tips {
+  grid-template-rows: minmax(0, 1fr);
 }
-.tutorial-notes.is-collapsed {
-  flex: 0 0 auto;
-  max-height: none;
-}
-.tutorial-notes.is-collapsed .tutorial-side-head {
-  margin-bottom: 0;
-}
+.tutorial-notes,
 .tutorial-examples {
-  flex: 1 1 0;
+  --scroll-tail-inset: 16px;
+  position: relative;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: 16px;
   overflow: hidden;
+  padding: 16px;
+  box-shadow: none;
 }
-.tutorial-examples.is-expanded {
-  flex: 1 1 auto;
+.notes-body,
+.examples-body {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding-right: 2px;
+}
+.notes-body {
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
+}
+.examples-body {
+  display: flex;
+  flex-direction: column;
 }
 .tutorial-side-head {
   flex: none;
   margin-bottom: 10px;
 }
-.notes-body {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  scrollbar-gutter: stable;
-  overscroll-behavior: contain;
-  padding-right: 2px;
-}
 .tip-section + .tip-section {
   margin-top: 12px;
   padding-top: 10px;
-  border-top: 1px dashed var(--line-faint);
-}
-.tip-section h3 {
-  margin: 0 0 6px;
-  color: var(--ink-3);
-  font-size: 11px;
-  font-weight: 750;
-  letter-spacing: 0.05em;
+  border-top: 1px dashed var(--line);
 }
 .tip-bullets {
   margin: 0;
@@ -358,121 +362,89 @@ const examplesHovered = ref(false)
 }
 .tip-bullets li {
   color: var(--ink-2);
-  font-size: 11px;
-  line-height: 1.65;
+  font-size: var(--text-base);
+  line-height: 1.7;
 }
-.anchors-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+.tip-code {
+  font-weight: 700;
 }
-.anchor-row {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 3px 8px;
-  min-width: 0;
-}
-.anchor-label {
-  flex: none;
-  padding: 2px 7px;
-  border-radius: 6px;
-  font-family: var(--font-mono);
-  font-size: 11px;
+.tip-code.is-recommended { color: var(--brand); }
+.tip-code.is-compat { color: var(--fin); }
+.tip-code b {
+  color: inherit;
   font-weight: 800;
-  line-height: 1.4;
 }
-.anchor-label.is-initial {
-  color: var(--focus-initial);
-  background: color-mix(in srgb, var(--focus-initial) 12%, transparent);
-}
-.anchor-label.is-final {
-  color: var(--focus-final);
-  background: color-mix(in srgb, var(--focus-final) 14%, transparent);
-}
-.anchor-label.is-zero {
-  color: var(--brand-ink);
-  background: var(--brand-soft);
-}
-.anchor-key {
-  flex: none;
-  color: var(--ink-3);
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  font-weight: 650;
-}
-.anchor-mnemonic {
-  flex: 1 1 auto;
-  min-width: 0;
-  color: var(--ink-2);
-  font-size: 11px;
-  font-weight: 600;
-  overflow-wrap: anywhere;
-}
-.anchor-chips {
+.code-keys {
   display: inline-flex;
-  flex-wrap: wrap;
-  gap: 4px;
+  align-items: center;
+  gap: 3px;
+  vertical-align: middle;
 }
-.anchor-chip {
-  padding: 1px 7px;
-  border-radius: 5px;
-  border: 1px solid var(--line);
-  background: var(--surface);
-  color: var(--ink-3);
-  font-size: 10px;
-  line-height: 1.5;
+.code-sep {
+  color: var(--ink-4);
+  font-size: var(--text-xs);
 }
-.rating-lines {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  scrollbar-gutter: stable;
-  overscroll-behavior: contain;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding-right: 2px;
-}
-.rating-line {
-  margin: 0;
-  display: grid;
-  grid-template-columns: 2.6em minmax(0, 1fr);
-  column-gap: 8px;
-  align-items: baseline;
-  color: var(--ink-3);
-  font-size: 11px;
-  line-height: 1.55;
-}
-.rating-line b {
-  flex: none;
-  color: var(--star);
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  font-variant-numeric: tabular-nums;
-}
-.rating-line span {
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-@media (max-width: 980px) {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@media (max-width: 1024px) {
+  /* 平板/窄屏不再做“固定视口两栏”，而是自然流式布局，页面自身滚动。 */
   .tutorial-top {
-    grid-template-columns: 1fr;
-    grid-template-rows: minmax(0, 2.2fr) minmax(0, 1.2fr);
+    display: flex;
+    flex-direction: column;
     gap: 10px;
     min-height: 0;
     max-width: 640px;
+    flex: none;
   }
   .tutorial-card,
   .tutorial-side {
+    flex: none;
     min-height: 0;
   }
-  .tutorial-notes {
-    max-height: 45%;
+  .tutorial-range {
+    flex: none;
   }
-  .anchor-mnemonic {
-    flex-basis: 100%;
-    width: 100%;
+  .focus-block {
+    flex: none;
+    max-height: 300px;
+    overflow: hidden;
+  }
+  .focus-scroll {
+    overflow-y: auto;
+  }
+  .tutorial-side {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow: visible;
+  }
+  .tutorial-notes,
+  .tutorial-examples {
+    min-height: 0;
+    overflow: visible;
+  }
+  .tutorial-examples {
+    max-height: 430px;
+  }
+  .examples-body {
+    overflow-y: auto;
+  }
+  .tutorial-examples .example-grid {
+    max-height: none;
   }
 }
 @media (max-width: 640px) {
@@ -502,7 +474,7 @@ const examplesHovered = ref(false)
     margin-left: 0;
   }
   .tutorial-title {
-    font-size: 20px;
+    font-size: var(--text-lg);
   }
   .tutorial-range {
     flex: none;
@@ -512,6 +484,11 @@ const examplesHovered = ref(false)
     flex: none;
     overflow: visible;
     padding: 12px;
+  }
+  .focus-scroll {
+    flex: none;
+    overflow: visible;
+    max-height: none;
   }
   .tutorial-rating {
     max-height: none;
@@ -528,10 +505,14 @@ const examplesHovered = ref(false)
     max-height: none;
     overflow: visible;
     padding: 12px;
+    transition: none;
   }
   .notes-body {
     flex: none;
+    max-height: none;
     overflow: visible;
+    opacity: 1;
+    transition: none;
   }
   .tutorial-examples {
     flex: none;
@@ -539,25 +520,16 @@ const examplesHovered = ref(false)
     min-height: 300px;
     padding: 12px 12px 8px;
   }
-  .tutorial-notes.is-collapsed .notes-body {
-    display: none;
-  }
   .tutorial-side-head {
     margin-bottom: 6px;
   }
   .rating-line {
-    font-size: 10px;
+    font-size: var(--text-2xs);
     line-height: 1.45;
     gap: 4px;
   }
-  .anchor-chips {
-    display: none;
-  }
-  .anchor-chip {
-    display: none;
-  }
   .tip-bullets li {
-    font-size: 10px;
+    font-size: var(--text-2xs);
     line-height: 1.5;
   }
 }

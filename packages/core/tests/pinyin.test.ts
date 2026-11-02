@@ -5,7 +5,6 @@ import { describe, expect, it } from 'vitest'
 import {
   FINALS,
   INITIALS,
-  JQXY,
   ZERO_INITIALS,
   atomDisplayLabel,
   atomId,
@@ -14,6 +13,8 @@ import {
   parseAtomId,
   splitPinyin,
   splitSyllable,
+  atomMatchesWord,
+  focusHitsOf,
   toToneMarks,
 } from '../src/pinyin.ts'
 
@@ -27,10 +28,6 @@ describe('拼音常量', () => {
     expect(INITIALS).toContain('zh')
     expect(INITIALS).toContain('ch')
     expect(INITIALS).toContain('sh')
-  })
-
-  it('JQXY 集合', () => {
-    expect([...JQXY].sort().join('')).toBe('jqxy')
   })
 })
 
@@ -112,9 +109,8 @@ describe('splitSyllable', () => {
       initial: 'zh',
       final: 'ong',
       tone: 1,
-      zeroInitial: false,
     })
-    expect(splitSyllable('ài')?.zeroInitial).toBe(true)
+    expect(splitPinyin('ài')?.zeroInitial).toBe(true)
   })
 })
 
@@ -152,6 +148,20 @@ describe('parseAtomId / atomId', () => {
   })
 })
 
+
+describe('atomMatchesWord · 知识点按类型严格命中', () => {
+  const word = (...syllables: Array<readonly [string, string]>) => ({
+    syllables: syllables.map(([initial, final]) => ({ initial, final })),
+  })
+
+  it('final 只命中带声母音节，zero 只命中零声母音节', () => {
+    expect(atomMatchesWord('final:ao', word(['m', 'ao']))).toBe(true)
+    expect(atomMatchesWord('final:ao', word(['', 'ao']))).toBe(false)
+    expect(atomMatchesWord('zero:ao', word(['', 'ao']))).toBe(true)
+    expect(atomMatchesWord('zero:ao', word(['m', 'ao']))).toBe(false)
+    expect(focusHitsOf(word(['', 'ao']), ['final:ao'])).toEqual([])
+  })
+})
 
 describe('atomDisplayLabel · 知识点显示标签（全项目唯一规则）', () => {
   it('零声母一律带「零 」前缀，声母/韵母原样', () => {

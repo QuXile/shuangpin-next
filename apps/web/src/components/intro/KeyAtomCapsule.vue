@@ -6,7 +6,7 @@
  * - 所有键均为合法输入，组件不做「只允许主键」的暗示。
  */
 import type { KeyAtom } from './introLessonModel'
-import KeyChip from './KeyChip.vue'
+import KeyCap from '@/components/common/KeyCap.vue'
 
 withDefaults(
   defineProps<{
@@ -27,7 +27,7 @@ const KIND_LABEL = { initial: '声母', final: '韵母', zero: '零声母' } as 
     <span class="atom-label">{{ atom.label }}</span>
     <span class="atom-arrow" aria-hidden="true">→</span>
     <span class="atom-keys">
-      <KeyChip
+      <KeyCap
         v-for="key in atom.keys"
         :key="key.sequence"
         :text="key.sequence"
@@ -57,14 +57,14 @@ const KIND_LABEL = { initial: '声母', final: '韵母', zero: '零声母' } as 
   background: var(--surface-3);
   color: var(--ink-3);
   font-family: var(--font-ui);
-  font-size: 10px;
+  font-size: var(--text-2xs);
   font-weight: 700;
   line-height: 1.5;
 }
 .atom-label {
   color: var(--ink);
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: var(--text-base);
   font-weight: 750;
   line-height: 1.2;
   white-space: nowrap;
@@ -80,7 +80,7 @@ const KIND_LABEL = { initial: '声母', final: '韵母', zero: '零声母' } as 
 }
 .atom-arrow {
   color: var(--ink-4);
-  font-size: 11px;
+  font-size: var(--text-xs);
   line-height: 1;
 }
 .atom-keys {
@@ -96,7 +96,7 @@ const KIND_LABEL = { initial: '声母', final: '韵母', zero: '零声母' } as 
   background: var(--surface-3);
   color: var(--ink-4);
   font-family: var(--font-ui);
-  font-size: 10px;
+  font-size: var(--text-2xs);
   font-weight: 650;
   line-height: 1.5;
   white-space: nowrap;
@@ -106,6 +106,6 @@ const KIND_LABEL = { initial: '声母', final: '韵母', zero: '零声母' } as 
   padding: 4px 7px;
 }
 .is-compact .atom-label {
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 </style>

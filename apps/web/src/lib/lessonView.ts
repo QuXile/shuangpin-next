@@ -1,6 +1,7 @@
 /**
  * 课程展示视图模型：FocusAtomView、课程备注、记忆锚点、章节/课程视图。
  * 只做展示映射；课程范围只有 initial / final / zero 三类具体键位映射。
+ * 学习进度 / 解锁规则在 core progress.ts，本文件不再实现。
  */
 import type {
   AtomId,
@@ -11,12 +12,13 @@ import type {
   LessonDef,
   LessonKind,
   LessonProgress,
+  LessonState,
   PracticeStage,
   SchemeEngine,
 } from '@shuangpin/core'
-import { atomDisplayLabel, parseAtomId } from '@shuangpin/core'
+import { atomDisplayLabel, isFreeAtom, lessonState, parseAtomId } from '@shuangpin/core'
 
-export type FocusBadge = '新' | '含'
+type FocusBadge = '新' | '含'
 
 export interface FocusAtomView {
   atomId: AtomId
@@ -45,8 +47,6 @@ export interface AnchorView {
   mnemonic?: string
   anchors: string[]
 }
-
-export type LessonState = 'passed' | 'available' | 'locked'
 
 export interface LessonView extends LessonDef {
   /** 该课在全部课程中的序号（从 0 开始） */
@@ -100,11 +100,11 @@ export function lessonFocusItems(lesson: LessonDef, engine: SchemeEngine): Focus
   const seen = new Set<AtomId>()
   const items: FocusAtomView[] = []
   for (const atomId of lesson.focusAtoms) {
-    if (seen.has(atomId) || parseAtomId(atomId) === null) continue
+    if (seen.has(atomId)) continue
+    if (!parseAtomId(atomId) || isFreeAtom(engine, atomId)) continue
     seen.add(atomId)
     items.push(buildFocusItem(atomId, lesson, engine, badge))
   }
-
   return items
 }
 
@@ -119,7 +119,7 @@ export function buildLessonNotes(lesson: LessonDef): LessonNote[] {
  * 记忆锚点（键位技巧）的唯一展示规则：
  * - 只在新课（drill）出现；复习/考核课一律不显示；
  * - 有改造键位（initial/final）时，逐键展示其 mnemonic + 高频字；
- * - 零声母全表课没有改造键位，则用一条程序生成的「零声母」汇总行展示 12 音映射；
+ * - 零声母全表课没有改造键位，则用一条程序生成的「零声母」汇总行展示本次课程涉及的零声母映射；
  * - 不按 focus 数量等条件做启发式判断。
  */
 export function buildAnchorViews(
@@ -149,7 +149,7 @@ export function buildAnchorViews(
       label: '零声母',
       type: 'zero',
       keys: [],
-      mnemonic: `12 音映射：${zeros
+      mnemonic: `${zeros.length} 音映射：${zeros
         .map((item) => `${item.label.replace(/^零 /, '')} = ${item.keys.map((key) => key.toUpperCase()).join('')}`)
         .join('、')}`,
       anchors: [],
@@ -171,58 +171,7 @@ export function lessonKindLabel(kind: LessonKind): string {
   return { intro: '入门', drill: '新课', review: '复习', exam: '考核' }[kind]
 }
 
-// ── 章节 / 进度视图 ──────────────────────────────────────────
-
-export function lessonState(
-  lessons: readonly LessonDef[],
-  progress: Readonly<Record<string, LessonProgress>>,
-  lessonId: string,
-  unlockedAll = false,
-): LessonState {
-  if (progress[lessonId]?.passed) return 'passed'
-  const index = lessons.findIndex((lesson) => lesson.id === lessonId)
-  if (index <= 0 || unlockedAll) return 'available'
-  const previous = lessons[index - 1]
-  if (!previous) return 'locked'
-  return progress[previous.id]?.passed ? 'available' : 'locked'
-}
-
-export function canStartLesson(
-  lessons: readonly LessonDef[],
-  progress: Readonly<Record<string, LessonProgress>>,
-  lessonId: string,
-  unlockedAll = false,
-): boolean {
-  return lessonState(lessons, progress, lessonId, unlockedAll) !== 'locked'
-}
-
-export function nextLessonId(lessons: readonly LessonDef[], lessonId: string): string | undefined {
-  const index = lessons.findIndex((lesson) => lesson.id === lessonId)
-  return index >= 0 ? lessons[index + 1]?.id : undefined
-}
-
-export function currentLessonId(
-  lessons: readonly LessonDef[],
-  progress: Readonly<Record<string, LessonProgress>>,
-  unlockedAll = false,
-): string | undefined {
-  for (const lesson of lessons) {
-    if (
-      !progress[lesson.id]?.passed &&
-      lessonState(lessons, progress, lesson.id, unlockedAll) !== 'locked'
-    ) {
-      return lesson.id
-    }
-  }
-  return lessons[0]?.id
-}
-
-export function passedLessonCount(
-  lessons: readonly LessonDef[],
-  progress: Readonly<Record<string, LessonProgress>>,
-): number {
-  return lessons.filter((lesson) => progress[lesson.id]?.passed).length
-}
+// ── 章节视图 ─────────────────────────────────────────────────
 
 export function buildChapterViews(
   curriculum: Curriculum,

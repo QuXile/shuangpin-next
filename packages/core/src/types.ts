@@ -1,11 +1,12 @@
 /**
  * @shuangpin/core 公共类型契约（唯一权威）。
  *
- * 设计说明见 docs/ARCHITECTURE.md。
- * Web 端只依赖这里的类型与 index.ts 暴露的函数，不在 UI 层改判题/统计/评分规则。
+ * 数据文件契约与 `data/schemes/index.json` / `data/schemes/<id>/scheme.json` /
+ * `data/schemes/<id>/curriculum.json` / `data/lexicon/lexicon.json` 的真实结构一致；
+ * 运行期模型（practice / session / lesson）也集中在这里，业务模块只 import 不重复声明。
  */
 
-// ── 拼音基础 ──────────────────────────────────────────────────
+// ── 拼音 / 知识点 ─────────────────────────────────────────────
 
 export type Initial =
   | '' | 'b' | 'p' | 'm' | 'f' | 'd' | 't' | 'n' | 'l' | 'g' | 'k' | 'h'
@@ -25,6 +26,7 @@ export type SyllableFinal = Final | 'er'
 
 export type Tone = 1 | 2 | 3 | 4 | 5
 
+/** 规范音节（零声母由 initial === '' 表达；tone 缺省 = 轻声/无调） */
 export interface Syllable {
   /** 对应汉字 */
   text: string
@@ -33,11 +35,12 @@ export interface Syllable {
   initial: Initial
   final: SyllableFinal
   tone?: Tone
-  /** 无（零）声母音节 */
-  zeroInitial: boolean
 }
 
-/** 音节查询入参（与 Syllable 解耦，避免 text/tone 干扰） */
+/** 词库/课程数据中的音节与 Syllable 同构（数据文件不写 zeroInitial） */
+export type WordSyllable = Syllable
+
+/** 音节查询入参（无 text/tone；zeroInitial 可省略，initial === '' 即零声母） */
 export interface SyllableSpec {
   initial: Initial
   final: SyllableFinal
@@ -46,19 +49,17 @@ export interface SyllableSpec {
 
 export type SplitResult = { initial: Initial; final: SyllableFinal; zeroInitial: boolean } | null
 
-// ── 知识点 ────────────────────────────────────────────────────
-
 export type AtomType = 'initial' | 'final' | 'zero'
 export type AtomId = `${AtomType}:${string}`
 
 export interface AtomRef {
   atomId: AtomId
   type: AtomType
-  /** 声母/韵母/零声母音节名，或规则名 */
+  /** 声母/韵母/零声母音节名 */
   key: string
 }
 
-// ── 方案 ──────────────────────────────────────────────────────
+// ── 方案（data/schemes/<id>/scheme.json + index.json） ────────
 
 export type SchemeType = 'compositional' | 'syllable-code' | 'hybrid'
 
@@ -67,27 +68,34 @@ export interface SameKeyGroup {
   finals: string[]
 }
 
+export interface SchemeSource {
+  repo: string
+  file: string
+  note: string
+}
+
+/** 单套方案键位数据（data/schemes/<id>/scheme.json 的真实字段） */
 export interface SchemeDef {
   id: string
   name: string
   type: SchemeType
-  /** 普通声母 → 键位数组（数组 = 多键/飞键） */
+  /** 普通声母 → 键位数组（数组 = 多键/飞键，任一命中即正确） */
   initials: Record<string, string[]>
   /** 33 韵母 → 键位数组 */
   finals: Record<string, string[]>
-  /** 12 个零声母音节 → 完整键序列 */
+  /** 12 个零声母音节 → 完整键序列（首条为主键） */
   zeroInitial: Record<string, string[]>
   /** 音节的推荐/标答键序列（完整音节 key → 完整键序列） */
   recommended?: Record<string, string>
   /** 推荐码之外的额外接受序列（完整音节 key → 完整键序列数组） */
   compatCodes?: Record<string, string[]>
-  umlautNote?: string
-  sameKeyGroups?: SameKeyGroup[]
-  source?: { repo?: string; file?: string; note?: string }
-  notes?: string[]
+  umlautNote: string
+  sameKeyGroups: SameKeyGroup[]
+  source: SchemeSource
+  notes: string[]
 }
 
-/** 与全拼习惯的差异（由方案数据推导，见 engine.diff()） */
+/** 与全拼习惯的差异（由 engine.diff() 推导） */
 export interface SchemeDiff {
   freeInitials: string[]
   learnInitials: string[]
@@ -95,6 +103,13 @@ export interface SchemeDiff {
   learnFinals: string[]
   learnZero: string[]
   freeZero: string[]
+}
+
+/** 与全拼拼写完全一致的键位集合 */
+export interface FreeAtomSets {
+  readonly initials: ReadonlySet<string>
+  readonly finals: ReadonlySet<string>
+  readonly zero: ReadonlySet<string>
 }
 
 /** 键位图上的一个键：该键在方案中的角色（声母/韵母知识点） */
@@ -115,19 +130,167 @@ export interface SchemeEngine {
   keysForAtom(atomId: AtomId): string[]
   /** 与全拼习惯的差异 */
   diff(): SchemeDiff
+  /** 与全拼一致的 free 集合（缓存；课程/训练场/键位图共用唯一口径） */
+  freeSets(): FreeAtomSets
+  /** 声母键 × 韵母键的笛卡尔积（零声母为 zeroInitial 序列）；不受 recommended/compat 影响 */
+  compositionSequence(syl: SyllableSpec): string[][]
   /** 键盘布局（3 行 qwerty；方案用到的 ';' 也会出现） */
   keyMap(): LetterKey[][]
 }
 
-// ── 词库 ──────────────────────────────────────────────────────
-
-export interface WordSyllable {
-  text: string
-  pinyin: string
+export interface SchemeCodeEntry {
+  syllable: string
   initial: Initial
   final: SyllableFinal
-  tone?: Tone
+  zeroInitial: boolean
+  /** 该音节命中的知识点（零声母 1 个，普通音节声母 + 韵母 2 个） */
+  atoms: AtomId[]
+  /** 主键组合：首个声母键 + 首个韵母键；零声母为该音节的整段序列 */
+  composition: string
+  /** 推荐码；仅当 scheme.recommended 存在时非 null（可能等于 composition） */
+  recommended: string | null
+  /** recommended 是否覆盖了组合（即推荐码 != 组合） */
+  recommendedOverride: boolean
+  /** 额外接受的兼容码（排除组合与推荐码、去重保序） */
+  compat: string[]
+  /** 标答（primarySequence join） */
+  primary: string
+  /** 全部可接受序列（acceptedSequences join） */
+  accepted: string[]
 }
+
+export interface SchemeCodeAnalysis {
+  entries: SchemeCodeEntry[]
+  /** 无法在方案数据中解析的音节（recommended / compatCodes 里出现） */
+  unresolved: string[]
+  stats: {
+    /** recommended 覆盖组合的条目数 */
+    recommendedOverrides: number
+    /** 带额外兼容码的条目数 */
+    compat: number
+  }
+}
+
+// ── 方案索引（data/schemes/index.json 的真实结构） ────────────
+
+export interface SchemeAtomStats {
+  total: number
+  free: number
+  learn: number
+}
+
+export interface SchemeKeysStats {
+  initials: number
+  finals: number
+  zeroInitial: number
+  flyingInitials: string[]
+  multiKeyFinals: string[]
+  sameKeyGroups: number
+  recommended: number
+  compatCodes: number
+}
+
+export interface SchemeAmbiguityExample {
+  code: string
+  pinyin: string[]
+}
+
+export interface SchemeAmbiguity {
+  codes: number
+  ambiguousCodes: number
+  examples: SchemeAmbiguityExample[]
+  missingSyllables: string[]
+}
+
+export interface SchemeCourseInfo {
+  supportsGuidedCourse: boolean
+  courseTier: string
+  reason: string
+  courseNotes: string
+}
+
+export interface SchemeRecommendation {
+  rank: number
+  reason: string
+}
+
+/** 单套方案在索引中的摘要（与 data/schemes/index.json.schemes[i] 一致） */
+export interface SchemeSummary {
+  id: string
+  name: string
+  type: SchemeType
+  file: string
+  keys: SchemeKeysStats
+  atoms: {
+    initials: SchemeAtomStats
+    finals: SchemeAtomStats
+    zeroInitial: SchemeAtomStats
+    total: SchemeAtomStats
+  }
+  zeroInitialFamily: string
+  zeroInitialRule: string
+  ambiguity: SchemeAmbiguity
+  course: SchemeCourseInfo
+  recommendation: SchemeRecommendation
+  dataGaps: unknown[]
+}
+
+export interface SchemeReferenceEntry {
+  repo: string
+  url: string
+  commit: string
+  license: string
+  file?: string
+  version?: string
+  commitShort?: string
+}
+
+export interface SchemeReference {
+  primary: SchemeReferenceEntry
+  custom: SchemeReferenceEntry
+  fallback: SchemeReferenceEntry
+}
+
+/** 方案语义说明（索引内嵌文档） */
+export type SchemeSemantics = Record<string, string>
+
+export interface SchemeCrossCheck {
+  available: boolean
+  comparable: boolean
+  note?: string
+  zeroMismatches: unknown[]
+  finalMismatches: unknown[]
+  judgeOnlyFinals: string[]
+}
+
+export interface SchemeUniversalAmbiguity {
+  code: string
+  pinyin: string[]
+  affectedSchemes: string[]
+  note: string
+}
+
+export interface SchemeDataQuality {
+  universalAmbiguities: SchemeUniversalAmbiguity[]
+  crossCheckKeyboard: Record<string, SchemeCrossCheck>
+  dataGaps: unknown[]
+  riskNotes: string[]
+}
+
+/** data/schemes/index.json（W2 原样拷贝为 public/data/index.json） */
+export interface SchemeIndexFile {
+  version: number
+  generatedBy: string
+  reference: SchemeReference
+  semantics: SchemeSemantics
+  defaultScheme: string
+  recommendedOrder: string[]
+  courseSupported: string[]
+  schemes: SchemeSummary[]
+  dataQuality: SchemeDataQuality
+}
+
+// ── 词库 / Lexicon（data/lexicon/lexicon.json） ──────────────
 
 export interface WordEntry {
   text: string
@@ -137,11 +300,41 @@ export interface WordEntry {
   freqRank?: number
   syllables: WordSyllable[]
   chars: string[]
-  minCharRank?: number
   polyphone?: boolean
 }
 
-// ── 课程 ──────────────────────────────────────────────────────
+/** 单个音节的代表字示例（lexicon.syllableExamples 的值） */
+export interface SyllableExample {
+  char: string
+  pinyin: string
+  pinyinTone: string
+  initial: Initial
+  final: SyllableFinal
+  tone?: Tone
+}
+
+export interface Lexicon {
+  schemaVersion: number
+  description: string
+  source: Record<string, string>
+  dataVersion: string
+  words: WordEntry[]
+  chars: WordEntry[]
+  syllableExamples: Record<string, SyllableExample>
+}
+
+/** buildLessonPool 只需词表三件套（web LexiconFile 结构兼容） */
+export type LexiconLike = Pick<Lexicon, 'words' | 'chars' | 'syllableExamples'>
+
+/** 单课派生词池：words/chars 来自统一 Lexicon，examples 按 lesson.focusAtoms 展开 */
+export interface LessonPool {
+  lessonId: string
+  words: WordEntry[]
+  chars: WordEntry[]
+  examples: SyllableExample[]
+}
+
+// ── 课程（data/schemes/<id>/curriculum.json） ─────────────────
 
 export type LessonKind = 'intro' | 'drill' | 'review' | 'exam'
 
@@ -154,8 +347,8 @@ export type PassMode = 'accuracy' | 'speed' | 'accuracy-speed'
 
 export interface PassCriteria {
   accuracy: number
-  /** accuracy：普通准确率课；speed：速度训练；accuracy-speed：准确率+速度考核 */
-  mode?: PassMode
+  /** accuracy：普通准确率课；speed：速度训练；accuracy-speed：准确率 + 速度考核 */
+  mode: PassMode
   /** 通过所需的最低速度（正确字/分钟） */
   minCpm?: number
   /** 速度星级的三个门槛：1★通过、2★、3★ */
@@ -168,9 +361,9 @@ export interface AtomMeta {
   pinyin: string
   keys: string[]
   free: boolean
-  /** 键位记忆锚点：与该知识点绑定的高频字（零声母/韵母）或词（声母），1–5 个 */
+  /** 键位记忆锚点：与该知识点绑定的高频字/词，1–5 个 */
   anchors?: string[]
-  /** 一句话记忆法（如「D + AI = DAI：带 呆 待 代 戴」），由按键与音组合生成 */
+  /** 一句话记忆法 */
   mnemonic?: string
 }
 
@@ -189,17 +382,17 @@ export interface LessonDef {
   focusAtoms: AtomId[]
   /** 会阻塞选词的原子（只有 initial/final） */
   blockingAtoms: AtomId[]
-  /** 不阻塞选词的 focus（zero/rule） */
+  /** 不阻塞选词的 focus（zero） */
   nonBlockingAtoms: AtomId[]
   prerequisites: AtomId[]
   wordPlan: WordPlan
   /** 入门课无评分门槛（完成即通过） */
   passCriteria?: PassCriteria
   atomMeta: Record<string, AtomMeta>
-  zeroExamples?: ZeroExample[]
-  /** 本课备注与技巧（教学中展示；1 条以上，由内容库 + 方案键位生成） */
+  zeroExamples: ZeroExample[]
+  /** 本课备注与技巧 */
   tips: string[]
-  /** 各阶段最低完成词数（达到后主按钮可点）；缺省按课程类型使用 core 默认值 */
+  /** 各阶段最低完成词数（缺省按课程类型使用 core 默认值） */
   stageMinWords?: Partial<Record<PracticeStage, number>>
   /** 复习课的家族标记（数据生成期使用，运行时仅作信息） */
   reviewFamily?: string
@@ -209,7 +402,7 @@ export interface ChapterDef {
   id: string
   order: number
   title: string
-  subtitle?: string
+  subtitle: string
 }
 
 export interface Curriculum {
@@ -219,14 +412,16 @@ export interface Curriculum {
   version: string
   templateVersion: string
   generatedAt: string
-  supportLevel: 'full' | 'simplified' | 'free-only'
+  supportLevel: 'full' | 'simplified'
+  /** 课程来源：仅生成课程写 generated；定制课程不写该字段 */
+  origin?: 'generated'
   /** 课程内容 hash：curriculum-<12hex> */
   dataVersion: string
   chapters: ChapterDef[]
   lessons: LessonDef[]
 }
 
-// ── 展示 / 练习模型 ───────────────────────────────────────────
+// ── 练习展示模型 ───────────────────────────────────────────────
 
 export interface PracticeCap {
   key: string
@@ -254,8 +449,6 @@ export interface PracticeWord {
   chars: string[]
   syllables: PracticeSyllable[]
   caps: PracticeCap[]
-  freq?: number
-  polyphone?: boolean
 }
 
 // ── 选词 ──────────────────────────────────────────────────────
@@ -264,7 +457,7 @@ export interface SelectWordsInput {
   words: readonly WordEntry[]
   engine: SchemeEngine
   lesson: LessonDef
-  /** 已学原子（不含 free；free 由 engine.diff() 自动视为已学） */
+  /** 已学原子（不含 free；free 由 engine.freeSets() 自动视为已学） */
   learnedAtoms: readonly AtomId[]
   count: number
   seed?: number
@@ -288,6 +481,13 @@ export type FeedbackKind =
   | 'word-complete'
   | 'session-complete'
 
+/** 错误键位的一条：实际按下的键 / 应该按的键 / 次数（由 SessionState.keyErrors 解析） */
+export interface KeyErrorEntry {
+  typed: string
+  expected: string
+  count: number
+}
+
 export interface SessionFeedback {
   kind: FeedbackKind
   message?: string
@@ -304,7 +504,7 @@ export interface SessionWordState {
   /** 当前字已输入的键 */
   input: string[]
   /** 已完成字的实际输入（保留别名，不强行改写成主键） */
-  charInputs?: string[][]
+  charInputs: string[][]
 }
 
 export interface SessionStats {
@@ -316,21 +516,32 @@ export interface SessionStats {
   startedAt: number
   finishedAt?: number
   totalMs: number
-  accuracy: number
 }
 
 export interface SessionState {
   words: SessionWordState[]
   index: number
   phase: SessionPhase
-  startedAt: number
   lastFeedback: SessionFeedback
   stats: SessionStats
+  /** 已触发过「第 3 次错误揭示答案」的字（cell key = `${wordIndex}:${charIndex}`） */
+  revealed: ReadonlySet<string>
+  /** 当前字最近一次错误输入（提交整字时记录；退格/清空解除） */
+  wrongInputs: ReadonlyMap<string, string[]>
+  /** 每个字累计错误次数（第 3 次错误触发 revealed） */
+  cellErrors: ReadonlyMap<string, number>
+  /** 错误键位统计：key 为「实际按下的键|应该按的键」，value 为次数 */
+  keyErrors: ReadonlyMap<string, number>
 }
 
 export interface SessionOptions {
   words: PracticeWord[]
   now?: number
+}
+
+/** 延伸批次选项：批次末词完成后调用，返回空数组表示结束延伸（会话结束） */
+export interface ExtendWordsOptions {
+  extendWords?: () => PracticeWord[]
 }
 
 export interface KeyResult {
@@ -347,7 +558,7 @@ export interface SessionMetrics {
   finished: boolean
 }
 
-// ── 阶段 / 评分 ───────────────────────────────────────────────
+// ── 阶段 / 评分 / 组卷 ────────────────────────────────────────
 
 export type PracticeStage = 'single' | 'word' | 'exam'
 
@@ -387,98 +598,95 @@ export interface PassCriteriaLine {
   text: string
 }
 
-// ── 数据文件契约（apps/web 与数据管线共用） ───────────────────
-
-export interface SchemeSummary {
-  id: string
-  name: string
-  type: SchemeType
-  file: string
-  atoms?: {
-    initials?: { total?: number; free?: number; learn?: number }
-    finals?: { total?: number; free?: number; learn?: number }
-    zeroInitial?: { total?: number; free?: number; learn?: number }
-    recommended?: { total?: number; free?: number; learn?: number }
-    compatCodes?: { total?: number; free?: number; learn?: number }
-    total?: { total?: number; free?: number; learn?: number }
-  }
-  course?: { supportsGuidedCourse?: boolean; courseTier?: string; reason?: string }
-  recommendation?: { rank?: number; reason?: string }
+/** 指标档位（展示用；数值已是百分数或 WPM，不参与核心判定） */
+export interface MetricTier {
+  /** 本档下界（含）；null 表示低于第一档。 */
+  min: number | null
+  /** 本档上界（不含）；null 表示高于最后一档。 */
+  max: number | null
+  /** 展示标签，例如 `<85%`、`85–90%`、`≥95%`。 */
+  label: string
+  /** 该档对应星级；null 表示该指标只作通过底线，不参与星级分档。 */
+  stars: 0 | 1 | 2 | 3 | null
 }
 
-export interface SchemeIndexFile {
-  version: string
-  generatedBy?: string
-  reference?: { repo?: string; license?: string }
-  semantics?: Record<string, string>
-  defaultScheme: string
-  recommendedOrder: string[]
-  courseSupported: string[]
-  schemes: SchemeSummary[]
+export interface StageInput {
+  engine: SchemeEngine
+  lesson: LessonDef
+  pool: LessonPool
+  learnedAtoms: readonly AtomId[]
+  /** 单字阶段：最多生成多少张单字卡 */
+  count: number
+  seed?: number
 }
 
-export interface CurriculumSummary {
-  schemeId: string
-  schemeName: string
-  supportLevel: string
-  file: string
+export interface WordStageInput {
+  engine: SchemeEngine
+  lesson: LessonDef
+  pool: LessonPool
+  learnedAtoms: readonly AtomId[]
+  /** 词语/考核阶段：抽词直到词数 ≥ targetWords */
+  targetWords: number
+  seed?: number
 }
 
-export interface CurriculumIndexFile {
-  generatedAt: string
-  templateVersion: string
-  schemes: CurriculumSummary[]
+export interface TutorialInput {
+  engine: SchemeEngine
+  lesson: LessonDef
+  pool: LessonPool
 }
 
-export interface PoolLessonMeta {
-  id: string
-  title: string
-  kind: LessonKind
-  words: number
-  chars: number
-  file: string
+// ── 训练场装配 ────────────────────────────────────────────────
+
+export interface TrainingScope {
+  /** 选中的声母 */
+  initials: readonly string[]
+  finals: readonly string[]
+  /** 选中的零声母音节（按韵母名，如 a/ai/an…）；空数组表示不练零声母 */
+  zeroFinals?: readonly string[]
 }
 
-export interface PoolIndexFile {
-  dataVersion: string
-  generatedAt: string
-  sources: { curriculum: string; dict: string }
-  targetWordsPerLesson: number
-  minWordsPerLesson: number
-  totalEntries: number
-  uniqueWords: number
-  lessons: PoolLessonMeta[]
+export interface ParsedArticle {
+  chars: string[]
+  /** 每行 1–5 个汉字（由标点/非汉字或满 5 触发换行） */
+  lines: string[][]
 }
 
-export interface PoolExample {
+/**
+ * 与全拼拼写完全一致的键位集合（训练场「全拼沿用」胶囊的数组视图）。
+ *
+ * 引擎侧的规范形状是 `FreeAtomSets`（Set，字段名 `zero`）；本类型是训练场消费的
+ * 数组 adapter（字段名 `zeroFinals`）。两者由 `freeTrainingAtoms()` / `freeAtomsOf()` 转换，
+ * 不要在同一调用链里混用。
+ */
+export interface TrainingCommonAtoms {
+  initials: string[]
+  finals: string[]
+  zeroFinals: string[]
+}
+
+export interface TrainingAtomOptions {
+  initials: string[]
+  finals: string[]
+  /** 零声母音节（按方案 zeroInitial 的键） */
+  zeroFinals: string[]
+}
+
+export interface ArticleCell {
   char: string
-  pinyin: string
-  pinyinTone: string
-  initial: Initial
-  final: SyllableFinal
-  tone?: Tone
+  /** 训练序列中的词下标；null = 字库外跳过 */
+  wordIndex: number | null
 }
 
-export interface LessonPool {
-  lessonId: string
-  words: WordEntry[]
-  chars: WordEntry[]
-  examples: PoolExample[]
+export interface ArticlePlan {
+  cells: ArticleCell[][]
+  chars: string[]
+  skipped: number
 }
 
-export interface DataManifest {
-  generatedAt: string
-  versions: {
-    curriculum: string
-    lexicon: string
-    pools?: string
-    words?: string
-    training?: string
-  }
-  defaultScheme: string
-  courses: string[]
-  files: { file: string; bytes: number }[]
-}
+// ── 课程进度 ──────────────────────────────────────────────────
+
+export type LessonState = 'passed' | 'available' | 'locked'
 
 export interface LessonProgress {
   passed: boolean

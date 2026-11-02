@@ -7,20 +7,20 @@ import { fileURLToPath } from 'node:url'
 import type {
   AtomId,
   Curriculum,
-  CurriculumIndexFile,
   LessonDef,
   LessonPool,
+  Lexicon,
   SchemeDef,
   SchemeEngine,
   SchemeIndexFile,
-  Syllable,
-  SyllableFinal,
   Tone,
   WordEntry,
+  WordSyllable,
 } from '../src/types.ts'
 import { createSchemeEngine } from '../src/scheme.ts'
-import { FINALS, INITIALS, splitPinyin, toToneMarks } from '../src/pinyin.ts'
-import { buildPracticeWord } from '../src/practice.ts'
+import { splitPinyin } from '../src/pinyin.ts'
+import { buildPracticeWord } from '../src/session.ts'
+import { buildLessonPool } from '../src/lesson.ts'
 
 // ── 数据读取 ──────────────────────────────────────────────────
 
@@ -59,59 +59,16 @@ export function loadCurriculum(schemeId: string): Curriculum {
   return readDataJSON<Curriculum>('schemes', schemeId, 'curriculum.json')
 }
 
-export function loadCurriculumIndex(): CurriculumIndexFile {
-  return readDataJSON<CurriculumIndexFile>('schemes', 'curriculum-index.json')
-}
-
-export interface LexiconFile {
-  dataVersion: string
-  words: WordEntry[]
-  chars: WordEntry[]
-  syllableExamples: Record<string, { char: string; pinyin: string; pinyinTone: string; initial: string; final: string; tone?: number }>
-}
+export type LexiconFile = Lexicon
 
 export function loadLexicon(): LexiconFile {
   return readDataJSON<LexiconFile>('lexicon', 'lexicon.json')
 }
 
-/** 与 Web 层一致的“从 Lexicon 派生当前课视图”。 */
+/** 课池派生统一走 core `buildLessonPool`（与 web 同一实现）。 */
 export function loadPool(lessonId: string): LessonPool {
   const lesson = findLesson(loadCurriculum('xiaohe'), lessonId)
-  const lexicon = loadLexicon()
-  const examples: LessonPool['examples'] = []
-  const seen = new Set<string>()
-  const zeroBySyllable = new Map((lesson.zeroExamples ?? []).map((item) => [item.syllable, item]))
-  const add = (syllable: string, isZero: boolean) => {
-    if (seen.has(syllable)) return
-    const example = lexicon.syllableExamples[syllable]
-    if (example) {
-      examples.push(example as LessonPool['examples'][number])
-      seen.add(syllable)
-      return
-    }
-    if (!isZero) return
-    const zero = zeroBySyllable.get(syllable)
-    if (!zero) return
-    examples.push({
-      char: zero.char,
-      pinyin: syllable,
-      pinyinTone: zero.tone === undefined ? syllable : toToneMarks(syllable, zero.tone as 1 | 2 | 3 | 4 | 5),
-      initial: '' as LessonPool['examples'][number]['initial'],
-      final: syllable as LessonPool['examples'][number]['final'],
-      ...(zero.tone !== undefined ? { tone: zero.tone as 1 | 2 | 3 | 4 | 5 } : {}),
-    })
-    seen.add(syllable)
-  }
-  for (const atom of lesson.focusAtoms) {
-    if (atom.startsWith('initial:')) {
-      const initial = atom.slice('initial:'.length)
-      for (const final of [...FINALS, 'er']) add(`${initial}${final}`, false)
-    } else if (atom.startsWith('final:')) {
-      const final = atom.slice('final:'.length)
-      for (const initial of ['', ...INITIALS]) add(`${initial}${final}`, initial === '')
-    } else if (atom.startsWith('zero:')) add(atom.slice('zero:'.length), true)
-  }
-  return { lessonId, words: lexicon.words, chars: lexicon.chars, examples }
+  return buildLessonPool(lesson, loadLexicon())
 }
 
 export function loadWordBank(): WordEntry[] {
@@ -179,15 +136,14 @@ export function makeWordEntry(
   if (chars.length !== pinyins.length) {
     throw new Error(`词 ${text} 字数与拼音数不一致`)
   }
-  const syllables: Syllable[] = pinyins.map((pinyin, index) => {
+  const syllables: WordSyllable[] = pinyins.map((pinyin, index) => {
     const split = splitPinyin(pinyin)
     if (!split) throw new Error(`非法拼音 ${pinyin}（词 ${text}）`)
-    const syllable: Syllable = {
+    const syllable: WordSyllable = {
       text: chars[index] as string,
       pinyin: `${split.initial}${split.final}`,
       initial: split.initial,
-      final: split.final as SyllableFinal,
-      zeroInitial: split.zeroInitial,
+      final: split.final,
     }
     const tone = tones?.[index]
     if (tone !== undefined) syllable.tone = tone
@@ -200,7 +156,6 @@ export function makeWordEntry(
     freqRank: 1000,
     syllables,
     chars,
-    minCharRank: 500,
   }
 }
 

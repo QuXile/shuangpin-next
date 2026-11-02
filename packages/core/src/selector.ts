@@ -1,7 +1,7 @@
 /**
- * 选词组卷：确定性 focus 槽位 + 加权随机。
+ * 确定性选词 + 随机原语（合并原 selector.ts + random.ts）。
  *
- * 口径：
+ * 选词口径：
  * - 每个 focus 原子每轮获得一个槽位；
  * - 候选词必须包含当前 focus，并符合已学/预览原子约束；
  * - 多命中其他「本轮尚未覆盖」的 focus 会获得更高权重；
@@ -9,9 +9,41 @@
  * - 没有候选词时使用字符兜底。
  */
 import type { AtomId, SelectWordsInput, WordEntry } from './types.ts'
-import { focusHitsOf } from './atoms.ts'
-import { parseAtomId } from './pinyin.ts'
-import { mulberry32, shuffle } from './random.ts'
+import { atomId, focusHitsOf } from './pinyin.ts'
+import { isFreeAtom } from './scheme.ts'
+
+// ── 随机原语（确定性：同一 seed 同一结果） ────────────────────
+
+/** mulberry32：32 位种子伪随机数生成器（返回 [0, 1)） */
+export function mulberry32(seed: number): () => number {
+  let a = seed >>> 0
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0
+    let t = a
+    t = Math.imul(t ^ (t >>> 15), t | 1)
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+/** Fisher–Yates 洗牌（不修改入参） */
+export function shuffle<T>(items: readonly T[], rng: () => number): T[] {
+  const result = [...items]
+  for (let index = result.length - 1; index > 0; index--) {
+    const swap = Math.floor(rng() * (index + 1))
+    const value = result[index] as T
+    result[index] = result[swap] as T
+    result[swap] = value
+  }
+  return result
+}
+
+/** 以数值 seed 洗牌的便捷函数（同 seed 完全可复现） */
+export function shuffleSeeded<T>(items: readonly T[], seed: number): T[] {
+  return shuffle(items, mulberry32(seed))
+}
+
+// ── 选词 ──────────────────────────────────────────────────────
 
 interface Candidate {
   word: WordEntry
@@ -27,40 +59,26 @@ function blockingAtomsOf(
   const atoms = new Set<AtomId>()
   for (const syllable of word.syllables) {
     if (syllable.initial === '') continue
-    if (!freeInitials.has(syllable.initial)) atoms.add(`initial:${syllable.initial}` as AtomId)
-    if (!freeFinals.has(syllable.final)) atoms.add(`final:${syllable.final}` as AtomId)
+    if (!freeInitials.has(syllable.initial)) atoms.add(atomId('initial', syllable.initial))
+    if (!freeFinals.has(syllable.final)) atoms.add(atomId('final', syllable.final))
   }
   return [...atoms]
 }
 
-function isFreeAtom(
-  atom: AtomId,
-  freeInitials: ReadonlySet<string>,
-  freeFinals: ReadonlySet<string>,
-): boolean {
-  const ref = parseAtomId(atom)
-  if (!ref) return false
-  if (ref.type === 'initial') return freeInitials.has(ref.key)
-  if (ref.type === 'final') return freeFinals.has(ref.key)
-  return false
-}
-
 function buildCandidates(input: SelectWordsInput): Candidate[] {
   const { engine, lesson, words } = input
-  const diff = engine.diff()
-  const freeInitials = new Set(diff.freeInitials)
-  const freeFinals = new Set(diff.freeFinals)
+  const free = engine.freeSets()
   const learned = new Set(input.learnedAtoms)
   const [minLength, maxLength] = input.lengthRange ?? lesson.wordPlan.lengthRange ?? [2, 3]
   const maxUnfamiliar = Math.max(0, Math.floor(input.maxUnfamiliar ?? lesson.wordPlan.maxUnfamiliar ?? 0))
   const fullFocus = lesson.focusAtoms
   const newFocus = lesson.blockingAtoms.filter(
-    (atom) => !learned.has(atom) && !isFreeAtom(atom, freeInitials, freeFinals),
+    (atom) => !learned.has(atom) && !isFreeAtom(engine, atom),
   )
   const newFocusSet = new Set(newFocus)
   const focusSet = new Set(fullFocus)
   const zeroKnown = (final: string): boolean => {
-    const atom = `zero:${final}` as AtomId
+    const atom = atomId('zero', final)
     return focusSet.has(atom) || learned.has(atom)
   }
 
@@ -70,7 +88,7 @@ function buildCandidates(input: SelectWordsInput): Candidate[] {
     if (seen.has(word.text)) return
     if (!allowShort && (word.length < minLength || word.length > maxLength)) return
     if (word.syllables.some((syllable) => syllable.initial === '' && !zeroKnown(syllable.final))) return
-    const blocking = blockingAtomsOf(word, freeInitials, freeFinals)
+    const blocking = blockingAtomsOf(word, free.initials, free.finals)
     const unknown = blocking.filter((atom) => !learned.has(atom))
     const hits = focusHitsOf(word, fullFocus)
     if (newFocus.length > 0) {
@@ -82,7 +100,6 @@ function buildCandidates(input: SelectWordsInput): Candidate[] {
       // 无 newFocus 的复习课（尤其是全拼沿用）允许少量预习原子：
       // 只有在课程数据显式给出 maxUnfamiliar > 0 时才放宽。
       if (unknown.length > maxUnfamiliar) return
-      if (fullFocus.length > 0 && hits.length === 0) return
     }
     if (hits.length === 0 && fullFocus.length > 0) return
     seen.add(word.text)
@@ -129,9 +146,7 @@ function weightedPick(
   return eligible[eligible.length - 1] ?? null
 }
 
-/**
- * 为一节课选出一组练习词（确定性 focus 槽位 + seeded 加权随机）。
- */
+/** 为一节课选出一组练习词（确定性 focus 槽位 + seeded 加权随机）。 */
 export function selectWords(input: SelectWordsInput): WordEntry[] {
   const { lesson } = input
   const count = Math.max(1, Math.floor(input.count))
@@ -164,34 +179,16 @@ export function selectWords(input: SelectWordsInput): WordEntry[] {
     if (pickedThisRound === 0) break
     round += 1
     // 一轮全部用完后进入下一轮，允许重复，但轮内不重复。
-    if (result.length < count && used.size >= candidates.length) {
-      used.clear()
-    }
+    if (result.length < count && used.size >= candidates.length) used.clear()
   }
   return result.slice(0, count)
 }
 
-/** 目标音的逐音节出现次数（同一音在一个词中出现多次会计多次）。 */
-export function targetCountsOf(word: WordEntry, focusAtoms: readonly AtomId[]): Map<AtomId, number> {
-  if (focusAtoms.length === 0) return new Map()
-  const focus = new Set(focusAtoms)
-  const counts = new Map<AtomId, number>()
-  for (const syllable of word.syllables) {
-    if (syllable.initial === '') {
-      const atom = `zero:${syllable.final}` as AtomId
-      if (focus.has(atom)) counts.set(atom, (counts.get(atom) ?? 0) + 1)
-      continue
-    }
-    const initialAtom = `initial:${syllable.initial}` as AtomId
-    if (focus.has(initialAtom)) counts.set(initialAtom, (counts.get(initialAtom) ?? 0) + 1)
-    const finalAtom = `final:${syllable.final}` as AtomId
-    if (focus.has(finalAtom)) counts.set(finalAtom, (counts.get(finalAtom) ?? 0) + 1)
-  }
-  return counts
-}
-
 /** 便于测试/诊断：统计一组词中每个 focus 原子的出现次数 */
-export function countFocusHits(words: readonly WordEntry[], focusAtoms: readonly AtomId[]): Record<string, number> {
+export function countFocusHits(
+  words: readonly WordEntry[],
+  focusAtoms: readonly AtomId[],
+): Record<string, number> {
   const result: Record<string, number> = {}
   for (const atom of focusAtoms) result[atom] = 0
   for (const word of words) {

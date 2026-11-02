@@ -437,7 +437,7 @@
       "course": {
         "supportsGuidedCourse": true,
         "courseTier": "simplified",
-        "reason": "没有自有课程路线：使用自动生成的通用课程（learn 原子逐课 + 期中 / 最终章）。",
+        "reason": "没有定制课程路线：使用自动生成的通用课程，learn 原子逐课 + 期中 / 最终章。",
         "courseNotes": "通用课程由 scripts/generate-universal-curriculum.mjs 生成；推荐码 / 兼容编码信息写在对应原子课 tips。"
       },
       "recommendation": {
@@ -567,7 +567,7 @@
       "course": {
         "supportsGuidedCourse": true,
         "courseTier": "simplified",
-        "reason": "没有自有课程路线：使用自动生成的通用课程（learn 原子逐课 + 期中 / 最终章）。",
+        "reason": "没有定制课程路线：使用自动生成的通用课程，learn 原子逐课 + 期中 / 最终章。",
         "courseNotes": "通用课程由 scripts/generate-universal-curriculum.mjs 生成；推荐码 / 兼容编码信息写在对应原子课 tips。"
       },
       "recommendation": {
@@ -632,7 +632,7 @@
       "course": {
         "supportsGuidedCourse": true,
         "courseTier": "simplified",
-        "reason": "没有自有课程路线：使用自动生成的通用课程（learn 原子逐课 + 期中 / 最终章）。",
+        "reason": "没有定制课程路线：使用自动生成的通用课程，learn 原子逐课 + 期中 / 最终章。",
         "courseNotes": "通用课程由 scripts/generate-universal-curriculum.mjs 生成；推荐码 / 兼容编码信息写在对应原子课 tips。"
       },
       "recommendation": {
@@ -697,7 +697,7 @@
       "course": {
         "supportsGuidedCourse": true,
         "courseTier": "simplified",
-        "reason": "没有自有课程路线：使用自动生成的通用课程（learn 原子逐课 + 期中 / 最终章）。",
+        "reason": "没有定制课程路线：使用自动生成的通用课程，learn 原子逐课 + 期中 / 最终章。",
         "courseNotes": "通用课程由 scripts/generate-universal-curriculum.mjs 生成；推荐码 / 兼容编码信息写在对应原子课 tips。"
       },
       "recommendation": {
@@ -762,7 +762,7 @@
       "course": {
         "supportsGuidedCourse": true,
         "courseTier": "simplified",
-        "reason": "没有自有课程路线：使用自动生成的通用课程（learn 原子逐课 + 期中 / 最终章）。",
+        "reason": "没有定制课程路线：使用自动生成的通用课程，learn 原子逐课 + 期中 / 最终章。",
         "courseNotes": "通用课程由 scripts/generate-universal-curriculum.mjs 生成；推荐码 / 兼容编码信息写在对应原子课 tips。"
       },
       "recommendation": {
@@ -827,7 +827,7 @@
       "course": {
         "supportsGuidedCourse": true,
         "courseTier": "simplified",
-        "reason": "没有自有课程路线：使用自动生成的通用课程（learn 原子逐课 + 期中 / 最终章）。",
+        "reason": "没有定制课程路线：使用自动生成的通用课程，learn 原子逐课 + 期中 / 最终章。",
         "courseNotes": "通用课程由 scripts/generate-universal-curriculum.mjs 生成；推荐码 / 兼容编码信息写在对应原子课 tips。"
       },
       "recommendation": {
@@ -894,7 +894,7 @@
       "course": {
         "supportsGuidedCourse": true,
         "courseTier": "simplified",
-        "reason": "没有自有课程路线：使用自动生成的通用课程（learn 原子逐课 + 期中 / 最终章）。",
+        "reason": "没有定制课程路线：使用自动生成的通用课程，learn 原子逐课 + 期中 / 最终章。",
         "courseNotes": "通用课程由 scripts/generate-universal-curriculum.mjs 生成；推荐码 / 兼容编码信息写在对应原子课 tips。"
       },
       "recommendation": {
@@ -987,7 +987,7 @@
       "course": {
         "supportsGuidedCourse": true,
         "courseTier": "simplified",
-        "reason": "没有自有课程路线：使用自动生成的通用课程（learn 原子逐课 + 期中 / 最终章）。",
+        "reason": "没有定制课程路线：使用自动生成的通用课程，learn 原子逐课 + 期中 / 最终章。",
         "courseNotes": "通用课程由 scripts/generate-universal-curriculum.mjs 生成；推荐码 / 兼容编码信息写在对应原子课 tips。"
       },
       "recommendation": {
@@ -1066,7 +1066,7 @@
       "course": {
         "supportsGuidedCourse": true,
         "courseTier": "simplified",
-        "reason": "没有自有课程路线：使用自动生成的通用课程（learn 原子逐课 + 期中 / 最终章）。",
+        "reason": "没有定制课程路线：使用自动生成的通用课程，learn 原子逐课 + 期中 / 最终章。",
         "courseNotes": "通用课程由 scripts/generate-universal-curriculum.mjs 生成；推荐码 / 兼容编码信息写在对应原子课 tips。"
       },
       "recommendation": {
@@ -1183,7 +1183,7 @@
       "course": {
         "supportsGuidedCourse": true,
         "courseTier": "simplified",
-        "reason": "没有自有课程路线：使用自动生成的通用课程（learn 原子逐课 + 期中 / 最终章）。",
+        "reason": "没有定制课程路线：使用自动生成的通用课程，learn 原子逐课 + 期中 / 最终章。",
         "courseNotes": "通用课程由 scripts/generate-universal-curriculum.mjs 生成；推荐码 / 兼容编码信息写在对应原子课 tips。"
       },
       "recommendation": {
@@ -1255,7 +1255,7 @@
       "course": {
         "supportsGuidedCourse": true,
         "courseTier": "simplified",
-        "reason": "没有自有课程路线：使用自动生成的通用课程（learn 原子逐课 + 期中 / 最终章）。",
+        "reason": "没有定制课程路线：使用自动生成的通用课程，learn 原子逐课 + 期中 / 最终章。",
         "courseNotes": "通用课程由 scripts/generate-universal-curriculum.mjs 生成；推荐码 / 兼容编码信息写在对应原子课 tips。"
       },
       "recommendation": {
@@ -1372,7 +1372,7 @@
       "course": {
         "supportsGuidedCourse": true,
         "courseTier": "simplified",
-        "reason": "没有自有课程路线：使用自动生成的通用课程（learn 原子逐课 + 期中 / 最终章）。",
+        "reason": "没有定制课程路线：使用自动生成的通用课程，learn 原子逐课 + 期中 / 最终章。",
         "courseNotes": "通用课程由 scripts/generate-universal-curriculum.mjs 生成；推荐码 / 兼容编码信息写在对应原子课 tips。"
       },
       "recommendation": {
@@ -1491,7 +1491,7 @@
       "course": {
         "supportsGuidedCourse": true,
         "courseTier": "simplified",
-        "reason": "没有自有课程路线：使用自动生成的通用课程（learn 原子逐课 + 期中 / 最终章）。",
+        "reason": "没有定制课程路线：使用自动生成的通用课程，learn 原子逐课 + 期中 / 最终章。",
         "courseNotes": "通用课程由 scripts/generate-universal-curriculum.mjs 生成；推荐码 / 兼容编码信息写在对应原子课 tips。"
       },
       "recommendation": {
@@ -1611,7 +1611,7 @@
       "course": {
         "supportsGuidedCourse": true,
         "courseTier": "simplified",
-        "reason": "没有自有课程路线：使用自动生成的通用课程（learn 原子逐课 + 期中 / 最终章）。",
+        "reason": "没有定制课程路线：使用自动生成的通用课程，learn 原子逐课 + 期中 / 最终章。",
         "courseNotes": "通用课程由 scripts/generate-universal-curriculum.mjs 生成；推荐码 / 兼容编码信息写在对应原子课 tips。"
       },
       "recommendation": {
@@ -1621,58 +1621,6 @@
       "dataGaps": []
     }
   ],
-  "stats": {
-    "schemes": 19,
-    "byType": {
-      "compositional": 15,
-      "hybrid": 3,
-      "syllable-code": 1
-    },
-    "zeroInitialFamilies": {
-      "字母式": 6,
-      "o+键": 4,
-      "a+键": 1,
-      "双家族": 1,
-      "混合式": 1,
-      "e+键": 2,
-      "v+键": 1,
-      "x+键": 2,
-      "整音节表": 1
-    },
-    "caseTotals": {
-      "positive": 1725,
-      "negative": 180
-    },
-    "referenceParity": {
-      "syllablesChecked": 7678,
-      "consistent": true
-    },
-    "learnAtoms": {
-      "min": 35,
-      "max": 352,
-      "byTier": {
-        "xiaohe": 35,
-        "ziranma": 35,
-        "weiruan": 43,
-        "sougou": 43,
-        "zhinengabc": 42,
-        "pinyinjiajia": 42,
-        "ziguang": 42,
-        "lantian": 35,
-        "baiyun": 35,
-        "xiaoyue": 35,
-        "guobiao": 42,
-        "xiaoguan": 35,
-        "xiaolang": 39,
-        "yunbiaokuaipin": 41,
-        "xingkong": 42,
-        "daniu": 50,
-        "jiandao3": 52,
-        "jiandao6": 84,
-        "c": 353
-      }
-    }
-  },
   "dataQuality": {
     "universalAmbiguities": [
       {

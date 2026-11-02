@@ -71,6 +71,8 @@ function onKeydown(event: KeyboardEvent): void {
   event.stopPropagation()
 }
 
+// 例外说明：快捷键面板是 modal，需要在 capture 阶段拦截并阻断页面级快捷键，
+// 因此这里直接注册 document 监听（不经过 useGlobalKeys）；新增页面级快捷键仍必须走 useGlobalKeys。
 onMounted(() => document.addEventListener('keydown', onKeydown, true))
 onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown, true))
 </script>
@@ -93,7 +95,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown, true))
             <p class="eyebrow">KEYBOARD MAP</p>
             <h2 id="shortcut-help-title">快捷键</h2>
           </div>
-          <button ref="closeButton" class="shortcut-close" type="button" title="关闭（Esc）" @click="close">
+          <button ref="closeButton" class="shortcut-close" type="button" title="关闭 Esc" @click="close">
             关闭
             <kbd>Esc</kbd>
           </button>
@@ -132,19 +134,19 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown, true))
   padding: 24px;
   background: color-mix(in srgb, var(--bg) 58%, transparent);
   backdrop-filter: blur(7px);
-  animation: ui-fade-in 160ms var(--ease);
+  animation: ui-fade-in var(--dur-mid) var(--ease);
 }
 .shortcut-dialog {
-  width: min(1080px, 100%);
+  width: min(var(--content-narrow), 100%);
   max-height: min(760px, calc(100vh - 48px));
   display: flex;
   flex-direction: column;
   border: 1px solid var(--line);
-  border-radius: var(--r-xl);
+  border-radius: var(--r-panel);
   background: var(--surface);
   box-shadow: var(--shadow-md);
   overflow: hidden;
-  animation: ui-fade-up 200ms var(--ease);
+  animation: ui-fade-up var(--dur-mid) var(--ease);
 }
 .shortcut-head {
   flex: none;
@@ -153,12 +155,12 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown, true))
   justify-content: space-between;
   gap: 16px;
   padding: 20px 22px 16px;
-  border-bottom: 1px solid var(--line-faint);
+  border-bottom: 1px solid var(--line);
 }
 .shortcut-head h2 {
   margin: 4px 0 0;
   color: var(--ink);
-  font-size: 24px;
+  font-size: var(--text-xl);
   font-weight: 800;
   letter-spacing: -0.03em;
 }
@@ -193,7 +195,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown, true))
 .shortcut-groups:focus-visible {
   outline: 2px solid var(--brand-line);
   outline-offset: -3px;
-  border-radius: var(--r-md);
+  border-radius: var(--r-card);
 }
 .shortcut-group {
   min-width: 0;
@@ -201,7 +203,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown, true))
 .shortcut-group h3 {
   margin: 0 0 8px;
   color: var(--brand-ink);
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-weight: 800;
   letter-spacing: 0.09em;
 }
@@ -237,17 +239,17 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown, true))
 .shortcut-foot {
   flex: none;
   padding: 12px 22px 16px;
-  border-top: 1px solid var(--line-faint);
+  border-top: 1px solid var(--line);
   color: var(--ink-4);
   font-size: var(--text-xs);
   line-height: 1.7;
 }
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
   .shortcut-group ul {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
-@media (max-width: 700px) {
+@media (max-width: 640px) {
   .shortcut-overlay {
     padding: 10px;
     align-items: flex-end;

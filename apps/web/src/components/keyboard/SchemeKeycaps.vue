@@ -1,11 +1,11 @@
 <script setup lang="ts">
 /**
- * 文本 → 双拼键帽（方案名 / 练习场等）。
- * 文本中的汉字先取声母/韵母，再通过当前方案 engine 求实际按键；字母原样作为键帽。
- * 键帽订阅统一输入管线：物理键盘和键位图点击都会驱动；正确键变绿，全部完成后退场并换一组新的随机排布。
+ * 文本 → 双拼键帽（方案名 / 练习场）。
+ * 逻辑全部来自 lib/keyboardView 纯函数；本组件只负责轮次状态机、声音与动效。
  */
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { atomId, createSchemeEngine, type SchemeDef } from '@shuangpin/core'
+import { createSchemeEngine, type SchemeDef } from '@shuangpin/core'
+import { isFallbackCaps, keycapsOf, scatterLayout, splitKeycapLines } from '@/lib/keyboardView'
 import { useSoundStore } from '@/stores/sound'
 import { useKeyInput } from '@/composables/useKeyInput'
 
@@ -20,186 +20,24 @@ const props = withDefaults(
 )
 const sound = useSoundStore()
 
-/** 键帽文本固定读音表；标题里出现的拉丁字母原样展示。 */
-const CHAR_PINYIN: Record<string, [string, string]> = {
-  小: ['x', 'iao'],
-  鹤: ['h', 'e'],
-  双: ['sh', 'uang'],
-  拼: ['p', 'in'],
-  自: ['z', 'i'],
-  然: ['r', 'an'],
-  码: ['m', 'a'],
-  微: ['w', 'ei'],
-  软: ['r', 'uan'],
-  搜: ['s', 'ou'],
-  狗: ['g', 'ou'],
-  智: ['zh', 'i'],
-  能: ['n', 'eng'],
-  训: ['x', 'un'],
-  练: ['l', 'ian'],
-  场: ['ch', 'ang'],
-  习: ['x', 'i'],
-  音: ['y', 'in'],
-  加: ['j', 'ia'],
-  紫: ['z', 'i'],
-  光: ['g', 'uang'],
-  蓝: ['l', 'an'],
-  天: ['t', 'ian'],
-  白: ['b', 'ai'],
-  云: ['y', 'un'],
-  月: ['y', 'ue'],
-  国: ['g', 'uo'],
-  标: ['b', 'iao'],
-  开: ['k', 'ai'],
-  源: ['y', 'uan'],
-  鹳: ['g', 'uan'],
-  浪: ['l', 'ang'],
-  韵: ['y', 'un'],
-  块: ['k', 'uai'],
-  星: ['x', 'ing'],
-  空: ['k', 'ong'],
-  大: ['d', 'a'],
-  牛: ['n', 'iu'],
-  键: ['j', 'ian'],
-  道: ['d', 'ao'],
-}
-
 const engine = computed(() => createSchemeEngine(props.scheme))
-
-const FALLBACK_CAPS = ['E', 'R', 'R', 'O', 'R'] as const
-
-interface CapSpec {
-  key: string
-  /** 同一个汉字的声母键 + 韵母键：不能在中间断开。 */
-  chineseGroup?: number
-  /** 连续英文属于同一 run：尽量不在中间断开。 */
-  latinRun?: number
-  error?: boolean
-}
-
-const MAX_CAPS = 10
-const MAX_PER_ROW = 5
-
-const capSpecs = computed<CapSpec[]>(() => {
-  const groups: CapSpec[][] = []
-  let chineseGroup = 0
-  let latinRun = 0
-  let inLatinRun = false
-  for (const char of props.text) {
-    if (/^[A-Za-z]$/.test(char)) {
-      if (!inLatinRun) latinRun += 1
-      inLatinRun = true
-      groups.push([{ key: char.toUpperCase(), latinRun }])
-      continue
-    }
-    inLatinRun = false
-    const pinyin = CHAR_PINYIN[char]
-    if (!pinyin) continue
-    const [initial, final] = pinyin
-    const group: CapSpec[] = []
-    for (const id of [atomId('initial', initial), atomId('final', final)]) {
-      const key = engine.value.keysForAtom(id)[0]
-      if (key) group.push({ key: key.toUpperCase(), chineseGroup })
-    }
-    if (group.length > 0) {
-      chineseGroup += 1
-      groups.push(group)
-    }
-  }
-
-  // 最多 10 个键帽；汉字组只能整组保留，不能为了凑满 10 而劈开。
-  const out: CapSpec[] = []
-  for (const group of groups) {
-    if (out.length + group.length > MAX_CAPS) break
-    out.push(...group)
-  }
-  return out.length > 0 ? out : FALLBACK_CAPS.map((key) => ({ key, error: true }))
-})
-
-const caps = computed<string[]>(() => capSpecs.value.map((spec) => spec.key))
+const specs = computed(() => keycapsOf(props.text, engine.value))
+const caps = computed(() => specs.value.map((spec) => spec.key))
+const rows = computed(() => splitKeycapLines(specs.value, { singleRow: props.singleRow }))
+const isErrorCaps = computed(() => isFallbackCaps(specs.value))
 
 const roundCaps = ref<string[]>([])
 const doneFlags = ref<boolean[]>([])
 const errorIndex = ref<number | null>(null)
 const leaving = ref(false)
 const roundNonce = ref(0)
-const IDLE_REFRESH_MS = 8000
+const layouts = ref<ReturnType<typeof scatterLayout>>([])
+const IDLE_REFRESH_MS = 5000
 
-const isErrorCaps = computed(() => capSpecs.value.every((spec) => spec.error === true))
-
-/**
- * 在 capSpecs 的相邻键之间找断点（只分两行，每行最多 5 个）：
- * 1. 汉字两键内部绝不断；连续英文内部尽量不断。
- * 2. 优先分行：只要存在「不切断汉字组、且不切断连续英文」的断点，就分行；
- *    在候选里选左右差最小的位置。
- * 3. 不允许切断连续英文时若没有候选，可退一步；若仍找不到合法断点，
- *    不超过 5 个时保持单行，超过 5 个时从中间兜底。
- */
-function chooseBreakIndex(
-  specs: readonly CapSpec[],
-  requirePreferred: boolean,
-): number | null {
-  const n = specs.length
-  const candidates: Array<{ index: number; soft: boolean; balance: number }> = []
-  for (let i = 1; i < n; i += 1) {
-    if (i > MAX_PER_ROW || n - i > MAX_PER_ROW) continue
-    const left = specs[i - 1]
-    const right = specs[i]
-    if (left?.chineseGroup !== undefined && left.chineseGroup === right?.chineseGroup) continue
-    const soft = left?.latinRun !== undefined && left.latinRun === right?.latinRun
-    candidates.push({ index: i, soft, balance: Math.abs(i - (n - i)) })
-  }
-  const preferred = candidates.filter((item) => !item.soft)
-  if (preferred.length === 0 && requirePreferred) return null
-  const pool = preferred.length > 0 ? preferred : candidates
-  pool.sort((a, b) => a.balance - b.balance || a.index - b.index)
-  return pool[0]?.index ?? null
-}
-
-const rows = computed<Array<{ offset: number; caps: string[] }>>(() => {
-  const list = roundCaps.value
-  if (list.length === 0) return []
-  if (props.singleRow || isErrorCaps.value || list.length <= 1) return [{ offset: 0, caps: list }]
-
-  // 1–5 个键帽也优先分行；只有找不到不破坏约束的断点时才保持单行。
-  if (list.length <= MAX_PER_ROW) {
-    const preferredBreak = chooseBreakIndex(capSpecs.value, true)
-    if (preferredBreak === null) return [{ offset: 0, caps: list }]
-    return [
-      { offset: 0, caps: list.slice(0, preferredBreak) },
-      { offset: preferredBreak, caps: list.slice(preferredBreak) },
-    ]
-  }
-
-  const breakIndex = chooseBreakIndex(capSpecs.value, false) ?? Math.floor(list.length / 2)
-  return [
-    { offset: 0, caps: list.slice(0, breakIndex) },
-    { offset: breakIndex, caps: list.slice(breakIndex) },
-  ]
-})
-
-interface CapLayout {
-  transform: string
-  zIndex: string
-}
-
-const layouts = ref<CapLayout[]>([])
-
-/** 借鉴 Demo：每次渲染重新随机散落，带轻微旋转和层级。 */
 function randomizeLayout(): void {
   // 每次重新排布都重建键帽节点，确保浮现动画从头播放。
   roundNonce.value += 1
-  layouts.value = roundCaps.value.map((_, index) => {
-    const dx = (Math.random() * 2 - 1) * 5
-    const dy = (Math.random() * 2 - 1) * 7
-    const rot = (Math.random() * 2 - 1) * 5
-    return {
-      transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) rotate(${rot.toFixed(1)}deg)`,
-      // 保持原来的随机离位/旋转，只把层叠顺序固定成阅读顺序：
-      // 同一行右侧键帽压住左侧，下一行压住上一行。
-      zIndex: String(index + 1),
-    }
-  })
+  layouts.value = scatterLayout(roundCaps.value)
 }
 
 let completeTimer: number | undefined
@@ -324,6 +162,7 @@ defineExpose({ refreshKeycaps })
   <div
     class="scheme-keycaps"
     :class="{ 'is-leaving': leaving, 'is-single-row': rows.length <= 1 }"
+    role="group"
     :aria-label="`${text}键帽`"
   >
     <div v-for="(row, rowIndex) in rows" :key="`${rowIndex}-${roundNonce}`" class="cap-row">
@@ -344,7 +183,7 @@ defineExpose({ refreshKeycaps })
 .scheme-keycaps {
   --cap: clamp(46px, 5.2vw, 88px);
   --cap-gap: 13px;
-  transition: opacity 220ms ease, transform 220ms ease;
+  transition: opacity var(--dur-mid) ease, transform var(--dur-mid) ease;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -368,8 +207,8 @@ defineExpose({ refreshKeycaps })
 .keycap {
   position: relative;
   flex: 0 0 auto;
-  animation: cap-in 360ms var(--ease) both;
-  transition: background 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+  animation: cap-in var(--dur-slow) var(--ease) both;
+  transition: background var(--dur-mid) ease, border-color var(--dur-mid) ease, box-shadow var(--dur-mid) ease;
   width: var(--cap);
   height: calc(var(--cap) * 1.08);
   border: 1px solid var(--keycap-border);
@@ -383,11 +222,11 @@ defineExpose({ refreshKeycaps })
 .keycap.is-done {
   border-color: var(--success);
   background: var(--success-soft);
-  box-shadow: 0 6px 0 var(--state-success-line-strong), 0 9px 16px var(--success-glow);
-  animation: cap-correct 340ms var(--ease);
+  box-shadow: 0 6px 0 var(--success-line), 0 9px 16px var(--success-glow);
+  animation: cap-correct var(--dur-slow) var(--ease);
 }
 .keycap.is-done b {
-  animation: cap-letter-pop 300ms var(--ease);
+  animation: cap-letter-pop var(--dur-mid) var(--ease);
 }
 .keycap.is-done b {
   color: var(--success);
@@ -399,7 +238,7 @@ defineExpose({ refreshKeycaps })
 }
 .keycap.is-error b {
   color: var(--danger);
-  animation: cap-letter-shake 300ms var(--ease);
+  animation: cap-letter-shake var(--dur-mid) var(--ease);
 }
 .scheme-keycaps.is-leaving {
   opacity: 0;
@@ -419,13 +258,13 @@ defineExpose({ refreshKeycaps })
 }
 @keyframes cap-correct {
   0% {
-    box-shadow: 0 0 0 0 var(--success-glow-soft), 0 6px 0 var(--state-success-line-strong), 0 9px 16px var(--success-glow);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--success) 30%, transparent), 0 6px 0 var(--success-line), 0 9px 16px var(--success-glow);
   }
   55% {
-    box-shadow: 0 0 0 6px var(--success-glow), 0 6px 0 var(--state-success-line-strong), 0 9px 16px var(--success-glow);
+    box-shadow: 0 0 0 6px var(--success-glow), 0 6px 0 var(--success-line), 0 9px 16px var(--success-glow);
   }
   100% {
-    box-shadow: 0 6px 0 var(--state-success-line-strong), 0 9px 16px var(--success-glow);
+    box-shadow: 0 6px 0 var(--success-line), 0 9px 16px var(--success-glow);
   }
 }
 @keyframes cap-letter-pop {
@@ -453,7 +292,7 @@ defineExpose({ refreshKeycaps })
   line-height: 1;
   letter-spacing: 0.01em;
 }
-@media (max-width: 800px) {
+@media (max-width: 1024px) {
   .scheme-keycaps {
     --cap: clamp(46px, 12vw, 72px);
     min-height: 170px;
@@ -463,7 +302,7 @@ defineExpose({ refreshKeycaps })
     gap: 10px;
   }
 }
-@media (max-width: 560px) {
+@media (max-width: 640px) {
   .scheme-keycaps {
     --cap: clamp(40px, 13vw, 58px);
     min-height: 140px;

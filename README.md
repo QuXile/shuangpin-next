@@ -8,29 +8,29 @@
 
 ## 特点
 
-- **19 套双拼方案**：5 套手写完整课程、14 套按方案数据自动生成通用课程，19 套都可进入学习路线与练习场；覆盖主流方案及 C、键道、大牛等特色方案。
+- **19 套双拼方案**：5 套定制完整课程、14 套按方案数据自动生成通用课程，19 套都可进入学习路线与练习场；覆盖主流方案及 C、键道、大牛等特色方案。
 - **自由练习**：可按声母 / 韵母 / 零声母组合范围，支持词语和文章练习。
 - **易于扩展**：新增方案可复用键位图与练习场，并按方案数据自动生成通用课程。
 - **纯前端、无账号**：进度和设置只保存在浏览器本地，也提供可离线使用的静态包。
 
 ## 结构化学习路线
 
-19 套课程（5 套手写 + 14 套自动生成）都按「入门 → 新课 → 复习 → 期中 / 综合 → 通关」推进；每课按「单字完整提示 → 词语部分提示 → 无提示考核」进行。
+19 套课程由 5 套定制课程与 14 套自动生成课程组成，都按「入门 → 新课 → 复习 → 期中 / 综合 → 通关」推进；每课按「单字完整提示 → 词语部分提示 → 无提示考核」进行。
 
 - 每课只引入一个新的声母或韵母，题目只包含已学内容；
 - 同样的知识点每次随机出题，避免背答案；
-- 练习模拟日常词汇输入，内置 25000+ 离线词库，题量够大。
+- 练习模拟日常词汇输入，内置 29,660 条离线词库，题量够大。
 
-课型、阶段和星级规则见[学习指南](docs/LEARNING.md)。
+课型、阶段和星级规则见[使用说明](docs/USAGE.md#学习路线与课程)。
 
 ## 19 套双拼方案
 
 | 类型 | 方案 |
 |---|---|
-| 手写完整课程（5） | 小鹤双拼（默认）、微软双拼、自然码、拼音加加、搜狗双拼 |
-| 通用生成课程（14） | 智能ABC、紫光双拼、蓝天双拼、白云双拼、小月双拼、国标双拼、开源小鹳、小浪双拼、韵标块拼、星空双拼、大牛双拼、键道双拼 3、键道双拼 6、C 双拼 |
+| 定制完整课程 | 小鹤双拼为默认，另含微软双拼、自然码、拼音加加、搜狗双拼，共 5 套 |
+| 通用生成课程 | 智能ABC、紫光双拼、蓝天双拼、白云双拼、小月双拼、国标双拼、开源小鹳、小浪双拼、韵标块拼、星空双拼、大牛双拼、键道双拼 3、键道双拼 6、C 双拼，共 14 套 |
 
-方案数据、推荐码与兼容编码的适配方式见[适配新方案](docs/SCHEMES.md)。
+方案数据、推荐码与兼容编码的适配方式见[适配新方案](docs/DATA.md#适配新方案)。
 
 ## 核心功能
 
@@ -44,7 +44,7 @@
 
 - **在线使用**：<https://quxile.github.io/shuangpin-next/>，无需安装。
 - **离线静态包**：从 [GitHub Releases](https://github.com/QuXile/shuangpin-next/releases) 下载 `shuangpin-next-<版本>-static.zip`，解压后运行 `python start.py`，详见[使用说明](docs/USAGE.md)。
-- **本地开发**（Node.js ≥ 24、pnpm 11.28.5）：
+- **本地开发**，Node.js ≥ 24、pnpm 11.28.5：
 
   ```bash
   pnpm install --frozen-lockfile
@@ -55,17 +55,11 @@
 
 | 文档 | 内容 |
 |---|---|
-| [学习指南](docs/LEARNING.md) | 课型、阶段、星级、入门课、进度解锁 |
-| [练习场](docs/TRAINING.md) | 专项 / 文章练习、范围与设置 |
-| [快捷键](docs/SHORTCUTS.md) | 全局与各页面快捷键 |
-| [使用说明](docs/USAGE.md) | 在线使用、静态包、本地数据与常见问题 |
-| [界面与设计](docs/UI.md) | 布局、设计 token、共享原语、键位图与键帽 |
-| [界面截图](docs/SCREENSHOTS.md) | 主要界面截图 |
-| [架构说明](docs/ARCHITECTURE.md) | 领域层、选词与评分、Web 层与数据契约 |
-| [数据说明](docs/DATA.md) | 方案 / 课程 / 统一词表数据与校验 |
-| [适配新方案](docs/SCHEMES.md) | 新增方案、推荐码与兼容编码规则 |
-| [发布说明](docs/RELEASE.md) | 构建、静态包与 GitHub Actions |
-| [贡献指南](docs/CONTRIBUTING.md) | 开发环境、命令与提交前检查 |
+| [使用说明](docs/USAGE.md) | 在线使用、离线包、学习路线、练习场与快捷键 |
+| [架构说明](docs/ARCHITECTURE.md) | 领域层、Web 分层、选词评分与数据契约 |
+| [界面与设计](docs/UI.md) | 设计 token、共享原语、布局与键位图规则 |
+| [数据说明](docs/DATA.md) | 数据源、运行时产物、校验与适配新方案 |
+| [贡献指南](docs/CONTRIBUTING.md) | 开发环境、命令、验证与发布 |
 
 ## 已知限制
 
@@ -75,10 +69,10 @@
 
 ## 许可证
 
-本项目采用 **GNU General Public License v3.0（GPL-3.0-only）** 授权，完整文本见 [LICENSE](LICENSE)。Copyright (C) 2026 QuXile。
+本项目采用 **GNU General Public License v3.0，GPL-3.0-only** 授权，完整文本见 [LICENSE](LICENSE)。Copyright (C) 2026 QuXile。
 
 ## 来源与第三方许可
 
-- 双拼键位规则来自 [fcitx/libime](https://github.com/fcitx/libime) 与 [fcitx5-chinese-addons](https://github.com/fcitx/fcitx5-chinese-addons)（LGPL-2.1-or-later）：libime 内建规则 `Xiaohe`、`Ziranma`、`MS`、`ABC`、`PinyinJiaJia`、`Ziguang`、`GB` 分别对应小鹤、自然码、微软、智能 ABC、拼音加加、紫光、国标；C 双拼使用 fcitx5-chinese-addons 的 `sp.dat` 示例。
-- fcitx 无对应规则的搜狗、蓝天、白云、小月、开源小鹳、小浪、韵标块拼、星空、大牛、键道双拼 3、键道双拼 6 来自 [BlueSky-07/Shuang](https://github.com/BlueSky-07/Shuang)（GPL-3.0）；推荐码 / 兼容编码补充数据同样参考该项目。
-- 词表与词频来自 [jieba](https://github.com/fxsjy/jieba)（MIT），拼音转换使用 [pinyin-pro](https://github.com/zh-lx/pinyin-pro)（MIT），二者只用于生成数据。
+- 双拼键位规则来自 [fcitx/libime](https://github.com/fcitx/libime) 与 [fcitx5-chinese-addons](https://github.com/fcitx/fcitx5-chinese-addons)，LGPL-2.1-or-later：libime 内建规则 `Xiaohe`、`Ziranma`、`MS`、`ABC`、`PinyinJiaJia`、`Ziguang`、`GB` 分别对应小鹤、自然码、微软、智能 ABC、拼音加加、紫光、国标；C 双拼使用 fcitx5-chinese-addons 的 `sp.dat` 示例。
+- fcitx 无对应规则的搜狗、蓝天、白云、小月、开源小鹳、小浪、韵标块拼、星空、大牛、键道双拼 3、键道双拼 6 来自 [BlueSky-07/Shuang](https://github.com/BlueSky-07/Shuang)，GPL-3.0；推荐码 / 兼容编码补充数据同样参考该项目。
+- 词表与词频来自 [jieba](https://github.com/fxsjy/jieba)，MIT，拼音转换使用 [pinyin-pro](https://github.com/zh-lx/pinyin-pro)，MIT，二者只用于生成数据。

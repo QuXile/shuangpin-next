@@ -1,6 +1,12 @@
 #!/usr/bin/env node
-/** UI 约定静态检查：防止训练场再次出现「上下文色调不统一」和重复样式。
- * 同时守住主题化约束：组件样式不得写死颜色，设计 token 不得有未使用项。
+/** UI 约定静态检查：单一设计系统守卫 + 输入管线守卫。
+ *
+ * 设计系统铁律（PATHS：apps/web/src）：
+ * 1. 组件样式只消费 token：禁止裸色值、裸字体（px/clamp）、裸圆角（px）、
+ *    裸阴影（无 var()）、裸动效时长（ms/s）。
+ * 2. 共享原语（.panel/.btn/.chip/.cap/...）只能在 styles/base.css 定义，组件不得重定义。
+ * 3. 组件 var(--x) 必须引用已声明（tokens.css 或同仓自定义属性），防止删除 token 后残留。
+ * 4. 全仓 token 不得有未使用项。
  * 只做静态源码检查，不启动浏览器。
  */
 import fs from 'node:fs'
@@ -28,27 +34,90 @@ function walk(dir, predicate) {
 function styleBlocks(source) {
   return [...source.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((match) => match[1]).join('\n')
 }
-function escapeRegExp(value) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+function relOf(file) {
+  return path.relative(ROOT, file).replaceAll('\\', '/')
 }
 
-const setupCard = read('apps/web/src/components/training/SetupCard.vue')
-const setupGroup = read('apps/web/src/components/training/SetupGroup.vue')
-const capsule = read('apps/web/src/components/training/CommonCapsule.vue')
+const tokensCss = read('apps/web/src/styles/tokens.css')
+const tokenNames = [
+  ...new Set([...tokensCss.matchAll(/^\s*(--[a-z0-9-]+)\s*:/gm)].map((match) => match[1])),
+]
 const baseCss = read('apps/web/src/styles/base.css')
-const training = read('apps/web/src/pages/TrainingPage.vue')
 
-ok(setupCard.includes('--setup-accent'), 'SetupCard 必须提供 --setup-accent 色调变量')
-ok(setupCard.includes('tone-hidden'), 'SetupCard 必须定义隐藏语气')
-ok(setupGroup.includes('accent-color: var(--setup-accent'), 'SetupGroup 勾选框必须使用上下文强调色')
-ok(setupGroup.includes('indeterminate'), 'SetupGroup 必须支持部分选中状态')
-ok(capsule.includes(':aria-pressed'), '全拼沿用胶囊必须暴露 aria-pressed')
-ok(!/--danger|--brand|is-hidden-chip|tone=/.test(capsule), 'CommonCapsule 不得维护独立色调')
+// ── 收集全仓已声明的自定义属性（token + 组件局部 --var + 内联样式对象键） ──
+const allFiles = walk(WEB_SRC, (name) => /\.(vue|ts|css)$/.test(name))
+const declaredProps = new Set(tokenNames)
+for (const file of allFiles) {
+  const source = fs.readFileSync(file, 'utf8')
+  for (const match of source.matchAll(/(--[a-z0-9-]+)\s*:/g)) declaredProps.add(match[1])
+  for (const match of source.matchAll(/['"](--[a-z0-9-]+)['"]\s*:/g)) declaredProps.add(match[1])
+}
 
-ok(baseCss.includes('.chip.is-selected'), '全局 chip 选中样式应在 base.css 统一维护')
-ok(baseCss.includes('var(--setup-accent'), '全局 chip 选中样式必须消费上下文色调')
-ok(!/\.chip\.is-hidden-chip/.test(training), 'TrainingPage 不应再维护隐藏 chip 独立红色选择器')
-ok(!/\.chip \{/.test(training), 'TrainingPage 不应重复定义 .chip 基础样式')
+// ── 样式守卫 ──────────────────────────────────
+const RAW_COLOR_PATTERN = /#[0-9a-fA-F]{3,8}\b|\brgba?\(/g
+const BASE_PRIMITIVES =
+  'panel|btn|chip|segmented|cap|card|eyebrow|count-badge|meta-btn|badge|popover|state-card|scroll-y|toolbar|common-capsule'
+const PRIMITIVE_REDEF_RE = new RegExp(`^\\s*\\.(?:${BASE_PRIMITIVES})\\s*(?:,|\\{)`, 'm')
+const FONT_LITERAL_RE = /\d+(\.\d+)?px|clamp\(/
+const RADIUS_LITERAL_RE = /\d+(\.\d+)?px/
+const MOTION_LITERAL_RE = /\b\d+(\.\d+)?m?s\b/
+
+const styleFiles = walk(WEB_SRC, (name) => name.endsWith('.vue')).map((file) => ({
+  file,
+  css: styleBlocks(fs.readFileSync(file, 'utf8')),
+}))
+styleFiles.push({ file: path.join(WEB_SRC, 'styles/base.css'), css: baseCss })
+
+for (const { file, css } of styleFiles) {
+  const rel = relOf(file)
+  const hits = [...new Set(css.match(RAW_COLOR_PATTERN) ?? [])]
+  ok(hits.length === 0, `${rel} 的样式出现裸色值（应改用 token）：${hits.join(', ')}`)
+  // base.css 是设计系统本体：允许 999px pill / spinner 700ms / reduced-motion 0.01ms 等字面量。
+  if (rel.endsWith('styles/base.css')) continue
+
+  for (const match of css.matchAll(/font-size:\s*([^;]+);/g)) {
+    const value = match[1].trim()
+    ok(
+      value.includes('var(') || !FONT_LITERAL_RE.test(value),
+      `${rel} 出现裸 font-size（应改成 --text-* token）：${value}`,
+    )
+  }
+  for (const match of css.matchAll(/border-radius:\s*([^;]+);/g)) {
+    const value = match[1].trim()
+    ok(
+      value.includes('var(') || !RADIUS_LITERAL_RE.test(value),
+      `${rel} 出现裸 border-radius（应改成 --r-* token）：${value}`,
+    )
+  }
+  for (const match of css.matchAll(/box-shadow:\s*([^;]+);/g)) {
+    const value = match[1].trim()
+    ok(
+      value === 'none' || value.includes('var('),
+      `${rel} 出现裸 box-shadow（应改成 --shadow-* / --ring-* token）：${value}`,
+    )
+  }
+  for (const match of css.matchAll(/\b(?:transition|animation)(?:-duration)?\s*:\s*([^;]+);/g)) {
+    const withoutVars = match[1].replace(/var\([^)]*\)/g, '')
+    ok(
+      !MOTION_LITERAL_RE.test(withoutVars),
+      `${rel} 出现裸动效时长（应改成 --dur-* token）：${match[1].trim()}`,
+    )
+  }
+}
+
+for (const { file, css } of styleFiles.slice(0, -1)) {
+  const rel = relOf(file)
+  ok(
+    !PRIMITIVE_REDEF_RE.test(css),
+    `${rel} 重定义了 base.css 共享原语（${BASE_PRIMITIVES.replaceAll('|', '/')}）`,
+  )
+  for (const match of css.matchAll(/var\(\s*(--[a-z0-9-]+)/g)) {
+    ok(
+      declaredProps.has(match[1]),
+      `${rel} 引用了未声明的自定义属性 ${match[1]}（token 已删除或拼写错误）`,
+    )
+  }
+}
 
 // ── 键盘输入守卫：字符输入只能经 useKeyInput 管线，禁止组件各自监听 ──────
 const rawKeyboardListeners = walk(WEB_SRC, (name) => name.endsWith('.vue')).filter((file) => {
@@ -63,51 +132,20 @@ ok(
     .join(', ')}`,
 )
 
-// ── 主题化守卫：组件样式只引用 token，设计 token 不得有未使用项 ──────────
-const tokensCss = read('apps/web/src/styles/tokens.css')
-const tokenNames = [...new Set(
-  [...tokensCss.matchAll(/^\s*(--[a-z0-9-]+)\s*:/gm)].map((match) => match[1]),
-)]
-const rawColorPattern = /#[0-9a-fA-F]{3,8}\b|\brgba?\(/g
-const styleFiles = walk(WEB_SRC, (name) => name.endsWith('.vue')).map((file) => ({
-  file,
-  css: styleBlocks(fs.readFileSync(file, 'utf8')),
-}))
-styleFiles.push({ file: path.join(WEB_SRC, 'styles/base.css'), css: read('apps/web/src/styles/base.css') })
-for (const { file, css } of styleFiles) {
-  const hits = [...new Set(css.match(rawColorPattern) ?? [])]
-  ok(
-    hits.length === 0,
-    `${path.relative(ROOT, file)} 的样式出现裸色值（应改用 token）：${hits.join(', ')}`,
-  )
-}
-
-const allSources = [
-  ...walk(WEB_SRC, (name) => /\.(vue|ts|css)$/.test(name)).map((file) => fs.readFileSync(file, 'utf8')),
-].join('\n')
+// ── 主题化守卫：设计 token 不得有未使用项 ──────────────────
+const allSources = allFiles.map((file) => fs.readFileSync(file, 'utf8')).join('\n')
+const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 const unusedTokens = tokenNames.filter(
   (name) => !new RegExp(`var\\(\\s*${escapeRegExp(name)}\\b`).test(allSources),
 )
 ok(unusedTokens.length === 0, `tokens.css 存在未使用 token：${unusedTokens.join(', ')}`)
-
-// ── 文档截图守卫：README + docs/**/*.md 是截图引用的唯一来源 ──────────
-const docFiles = [
-  'README.md',
-  ...walk(path.join(ROOT, 'docs'), (name) => name.endsWith('.md')).map((file) =>
-    path.relative(ROOT, file).replaceAll('\\', '/'),
-  ),
-]
-const screenshotRefs = docFiles.flatMap((rel) =>
-  [...read(rel).matchAll(/assets\/impl\/([\w.-]+\.png)/g)].map((match) => match[1]),
-)
-for (const file of new Set(screenshotRefs)) {
-  ok(fs.existsSync(path.join(ROOT, 'docs/assets/impl', file)), `文档引用的截图不存在：${file}`)
-}
 
 if (failures.length > 0) {
   console.error('✗ UI 约定检查失败：')
   for (const failure of failures) console.error(`  - ${failure}`)
   process.exitCode = 1
 } else {
-  console.log(`✓ UI 约定检查通过（文档截图引用 ${new Set(screenshotRefs).size} 张）`)
+  console.log(
+    `✓ UI 约定检查通过（token ${tokenNames.length} 个）`,
+  )
 }

@@ -1,19 +1,19 @@
 <script setup lang="ts">
 /**
  * 学习地图：Hero + 章节/课程卡 + 方案切换 + 进度操作。
- * 数据引导/章节视图/锁课规则分别来自 useCourseBootstrap、lib/lessonView、stores。
+ * 数据引导/章节视图/锁课规则分别来自 course store、lib/lessonView、stores。
  */
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { onBeforeRouteLeave, useRouter } from 'vue-router'
-import { createSchemeEngine } from '@shuangpin/core'
 import ChapterSection from '@/components/map/ChapterSection.vue'
 import CurrentLearningCard from '@/components/map/CurrentLearningCard.vue'
-import HeroPanel from '@/components/map/HeroPanel.vue'
+import SchemeHero from '@/components/common/SchemeHero.vue'
 import LearningProgressCard from '@/components/map/LearningProgressCard.vue'
 import MapKeymapPanel from '@/components/map/MapKeymapPanel.vue'
 import StateCard from '@/components/common/StateCard.vue'
 import BackToTop from '@/components/common/BackToTop.vue'
-import { useCourseBootstrap } from '@/composables/useCourseBootstrap'
+import { useSchemeView } from '@/composables/useSchemeView'
+import { getStorage, readString, writeString, STORAGE_KEYS } from '@/lib/storage'
 import { useGlobalKeys, type KeyBinding } from '@/composables/useGlobalKeys'
 import { buildChapterViews } from '@/lib/lessonView'
 import { useCourseStore } from '@/stores/course'
@@ -24,7 +24,12 @@ const router = useRouter()
 const course = useCourseStore()
 const progress = useProgressStore()
 const sound = useSoundStore()
-const { status, error, retry } = useCourseBootstrap()
+const { engine, freeAtomIds } = useSchemeView()
+const status = computed(() => course.status)
+const error = computed(() => course.error)
+function retry(): void {
+  void course.init()
+}
 const busy = ref(false)
 const errorText = computed(() => {
   if (!error.value) return ''
@@ -38,12 +43,12 @@ const errorHint = computed(() => {
   if (typeof window !== 'undefined' && window.location.protocol === 'file:') {
     return '检测到直接双击 index.html：浏览器不允许读取本地 JSON 数据。请解压后运行 python start.py，再访问终端中显示的地址。'
   }
-  return '请通过静态服务器启动（推荐解压后运行 python start.py），不要直接双击 index.html；同时确认 data/ 目录完整。'
+  return '请通过静态服务器启动，推荐解压后运行 python start.py；不要直接双击 index.html；同时确认 data/ 目录完整。'
 })
 
 // ── 学习地图滚动位置：按方案记忆；返回地图/课程页时恢复，而不是每次置顶 ──
-const SCROLL_KEY = 'shuangpin-next:map-scroll'
-const scrollKey = (): string => `${SCROLL_KEY}:${course.schemeId || 'default'}`
+const scrollStorage = getStorage('session')
+const scrollKey = (): string => STORAGE_KEYS.mapScroll(course.schemeId || 'default')
 let scrollRestored = false
 let scrollFrame: number | undefined
 /** 首次渲染先隐藏地图，等滚动位置恢复后再显示，避免先闪到顶部再跳 */
@@ -57,20 +62,12 @@ let suppressScrollSave = false
 let suppressTimer: number | undefined
 
 function readSavedScroll(): number {
-  try {
-    const value = Number(sessionStorage.getItem(scrollKey()))
-    return Number.isFinite(value) && value > 0 ? value : 0
-  } catch {
-    return 0
-  }
+  const value = Number(readString(scrollKey(), scrollStorage))
+  return Number.isFinite(value) && value > 0 ? value : 0
 }
 
 function saveScroll(): void {
-  try {
-    sessionStorage.setItem(scrollKey(), String(lastScrollY))
-  } catch {
-    /* 隐私模式：不阻断页面 */
-  }
+  writeString(scrollKey(), String(lastScrollY), scrollStorage)
 }
 
 function onScroll(): void {
@@ -123,9 +120,6 @@ onBeforeUnmount(() => {
 })
 
 
-const engine = computed(() =>
-  course.scheme ? createSchemeEngine(course.scheme) : null,
-)
 const chapters = computed(() =>
   engine.value && course.curriculum
     ? buildChapterViews(course.curriculum, engine.value, progress.records, course.unlockedAll)
@@ -153,7 +147,7 @@ watch(
   { immediate: true, flush: 'post' },
 )
 const currentId = computed(() => course.currentLesson())
-const heroPanelRef = ref<InstanceType<typeof HeroPanel> | null>(null)
+const heroPanelRef = ref<InstanceType<typeof SchemeHero> | null>(null)
 /** 继续学习卡固定跟随 Hero 高度，避免映射多时反向撑高 Hero。 */
 const heroHeight = ref<number | null>(null)
 let heroResizeObserver: ResizeObserver | undefined
@@ -332,8 +326,11 @@ useGlobalKeys(bindings)
 
     <div v-else class="course-board" :class="{ 'is-restoring': restorePending }">
       <div class="hero-overview">
-        <HeroPanel
+        <SchemeHero
           ref="heroPanelRef"
+          eyebrow="SHUANGPIN · DAILY PRACTICE"
+          :title-lines="['学习双拼', '让输入成为直觉']"
+          :keycap-text="schemeName"
           :scheme-options="schemeOptions"
           :primary-scheme-ids="primarySchemeIds"
           :scheme-id="course.schemeId"
@@ -359,6 +356,7 @@ useGlobalKeys(bindings)
           :special-initials="engine?.diff().learnInitials ?? []"
           :zero-initials="course.scheme?.zeroInitial"
           :compat-codes="course.scheme?.compatCodes"
+          :free-atom-ids="freeAtomIds"
           :scheme-name="schemeName"
         />
         <LearningProgressCard
@@ -379,6 +377,7 @@ useGlobalKeys(bindings)
       <section class="course-section panel">
         <header class="course-header">
           <h2 class="panel-title">学习路线</h2>
+          <span v-if="course.curriculum?.origin === 'generated'" class="count-badge route-origin">自动生成</span>
           <span class="route-hint">
             <kbd>↑</kbd><kbd>↓</kbd> 选课
             <span aria-hidden="true">·</span>
@@ -444,16 +443,22 @@ useGlobalKeys(bindings)
 .course-header {
   display: flex;
   align-items: center;
+  gap: 8px;
   justify-content: space-between;
   padding: 16px 16px 12px;
   border-bottom: 1px solid var(--line);
+}
+.route-origin {
+  margin-right: auto;
+  background: var(--fin-soft);
+  color: var(--fin-strong);
 }
 .route-hint {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   color: var(--ink-4);
-  font-size: 10px;
+  font-size: var(--text-2xs);
   font-weight: 600;
 }
 .route-hint kbd {
@@ -476,10 +481,10 @@ useGlobalKeys(bindings)
   height: 46px;
   display: grid;
   place-items: center;
-  border-radius: 12px;
+  border-radius: var(--r-control);
   background: var(--brand-soft);
   color: var(--brand);
-  font-size: 24px;
+  font-size: var(--text-xl);
   font-weight: 800;
 }
 .route-placeholder-mark svg {
@@ -490,10 +495,10 @@ useGlobalKeys(bindings)
   display: block;
   margin-bottom: 4px;
   color: var(--ink);
-  font-size: 15px;
+  font-size: var(--text-md);
 }
 .route-placeholder p {
-  max-width: 620px;
+  max-width: var(--content-reading);
   line-height: 1.65;
   font-size: var(--text-sm);
 }
@@ -515,7 +520,7 @@ useGlobalKeys(bindings)
   color: var(--ink-3);
   font-size: var(--text-sm);
 }
-@media (max-width: 1050px) {
+@media (max-width: 1024px) {
   .hero-overview {
     grid-template-columns: minmax(0, 1.15fr) minmax(340px, 0.95fr);
   }
@@ -523,7 +528,7 @@ useGlobalKeys(bindings)
     grid-template-columns: minmax(0, 1.6fr) minmax(260px, 0.75fr);
   }
 }
-@media (max-width: 800px) {
+@media (max-width: 1024px) {
   .hero-overview {
     grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
   }
@@ -547,7 +552,7 @@ useGlobalKeys(bindings)
     padding-bottom: 6px;
   }
 }
-@media (max-width: 560px) {
+@media (max-width: 640px) {
   .page {
     padding: var(--page-top-gap) 10px 26px;
   }

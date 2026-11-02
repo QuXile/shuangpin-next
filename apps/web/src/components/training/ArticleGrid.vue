@@ -6,7 +6,7 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import type { AtomId, PracticeCap, SessionState } from '@shuangpin/core'
 import CharacterCard from '@/components/practice/CharacterCard.vue'
-import type { ArticlePlan } from '@/lib/training'
+import type { ArticlePlan } from '@shuangpin/core'
 
 const props = defineProps<{
   plan: ArticlePlan
@@ -179,9 +179,9 @@ watch(
   display: grid;
   place-items: center;
   color: var(--ink-4);
-  font-size: 13px;
+  font-size: var(--text-base);
   border: 1px dashed var(--line);
-  border-radius: var(--r-sm);
+  border-radius: var(--r-card);
   background: var(--surface-2);
 }
 @media (max-width: 640px) {
@@ -193,7 +193,7 @@ watch(
   }
   .article-skipped {
     width: 22px;
-    font-size: 11px;
+    font-size: var(--text-xs);
   }
 }
 </style>

@@ -2,7 +2,7 @@
  * 练习展示模型测试：真实词池数据 + 多方案（小鹤/微软）的键帽、零声母、判定序列一致性。
  */
 import { describe, expect, it } from 'vitest'
-import { buildPracticeWord, buildPracticeWordFromSyllable } from '../src/practice.ts'
+import { buildPracticeWord, buildPracticeWordFromSyllable } from '../src/session.ts'
 import { loadEngine, loadPool, loadWordBank, findWord, makeSingleCharEntry } from './helpers.ts'
 
 const xiaohe = loadEngine('xiaohe')
@@ -18,7 +18,6 @@ describe('buildPracticeWord · 真实词库', () => {
       ['y', 'b'],
       ['h', 'h'],
     ])
-    expect(word.polyphone).toBe(true)
     expect(word.caps).toHaveLength(4)
   })
 
@@ -75,7 +74,6 @@ describe('buildPracticeWord · 单字与结构不变量', () => {
       initial: '',
       final: 'ai',
       tone: 4,
-      zeroInitial: true,
     })
     expect(word.caps.map((cap) => cap.key)).toEqual(['a', 'i'])
     expect(word.text).toBe('爱')
@@ -100,7 +98,6 @@ describe('buildPracticeWord · 单字与结构不变量', () => {
       initial: '',
       final: 'eng',
       tone: 1,
-      zeroInitial: true,
     })
     expect(word.caps.map((cap) => cap.key)).toEqual(['e', 'g'])
     expect(word.syllables[0]?.accepted).toEqual(['eg'])
@@ -118,7 +115,6 @@ describe('buildPracticeWord · 真实词池示例', () => {
         initial: example.initial,
         final: example.final,
         tone: example.tone,
-        zeroInitial: example.initial === '',
       })
       expect(word.caps.length, example.char).toBeGreaterThan(0)
     }

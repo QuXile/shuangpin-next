@@ -1,19 +1,20 @@
 <script setup lang="ts">
 /**
- * 底部键位图的展开/收起容器。
- * 通过测量内容高度来做 height 过渡，保证桌面/移动端收起时页面真实回填；
- * 收起后 inert + aria-hidden，避免隐藏键位仍进入 Tab 顺序。
+ * 底部键位图的展开/收起容器：测量内容高度做 height 过渡，
+ * 收起后 inert + aria-hidden，避免隐藏键位进入 Tab 顺序。
  */
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 const props = defineProps<{ open: boolean }>()
 
-const inner = ref<HTMLElement | null>(null)
+/** 内容自然高度 */
 const contentHeight = ref(0)
+const inner = ref<HTMLElement | null>(null)
 let observer: ResizeObserver | undefined
 
 function measure(): void {
-  contentHeight.value = inner.value?.scrollHeight ?? 0
+  const height = inner.value?.scrollHeight ?? 0
+  if (height !== contentHeight.value) contentHeight.value = height
 }
 
 watch(
@@ -32,7 +33,11 @@ onMounted(() => {
     observer.observe(inner.value)
   }
 })
-onBeforeUnmount(() => observer?.disconnect())
+
+onBeforeUnmount(() => {
+  observer?.disconnect()
+  observer = undefined
+})
 </script>
 
 <template>
@@ -55,18 +60,13 @@ onBeforeUnmount(() => observer?.disconnect())
   overflow: hidden;
   opacity: 0;
   transition:
-    height 260ms var(--ease),
-    opacity 180ms var(--ease);
+    height var(--dur-mid) var(--ease),
+    opacity var(--dur-mid) var(--ease);
 }
 .dock-reveal.is-open {
   opacity: 1;
 }
 .dock-reveal-inner {
   min-height: 0;
-}
-@media (prefers-reduced-motion: reduce) {
-  .dock-reveal {
-    transition-duration: 1e-5s;
-  }
 }
 </style>

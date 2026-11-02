@@ -5,7 +5,6 @@ import { RouterView, useRoute, useRouter } from 'vue-router'
 import Topbar from '@/components/layout/Topbar.vue'
 import BottomDockHost from '@/components/keyboard/BottomDockHost.vue'
 import ShortcutHelp from '@/components/layout/ShortcutHelp.vue'
-import { useCourseBootstrap } from '@/composables/useCourseBootstrap'
 import { useGlobalKeys } from '@/composables/useGlobalKeys'
 import { useKeyInput } from '@/composables/useKeyInput'
 import { usePointerBlur } from '@/composables/usePointerBlur'
@@ -20,14 +19,16 @@ const settings = useSettingsStore()
 const sound = useSoundStore()
 const course = useCourseStore()
 const layout = useLayoutStore()
-useCourseBootstrap()
 usePointerBlur()
 useKeyInput()
 
 onMounted(() => {
+  void course.init()
   const unlockAudio = (): void => sound.unlock()
-  window.addEventListener('pointerdown', unlockAudio, { capture: true, once: true })
-  window.addEventListener('keydown', unlockAudio, { capture: true, once: true })
+  // 浏览器会在长时间无操作后自动 suspend AudioContext；每次手势都先恢复，
+  // 避免下一次按键的声音等到 resume 完成才播放。
+  window.addEventListener('pointerdown', unlockAudio, { capture: true })
+  window.addEventListener('keydown', unlockAudio, { capture: true })
 })
 
 const isPractice = computed(() => route.path.startsWith('/practice') || route.path === '/training')
@@ -137,7 +138,7 @@ useGlobalKeys(() => [
 }
 :global(.page-enter-active),
 :global(.page-leave-active) {
-  transition: opacity 200ms var(--ease), transform 200ms var(--ease);
+  transition: opacity var(--dur-mid) var(--ease), transform var(--dur-mid) var(--ease);
 }
 :global(.page-enter-from) {
   opacity: 0;
@@ -146,11 +147,5 @@ useGlobalKeys(() => [
 :global(.page-leave-to) {
   opacity: 0;
   transform: translateY(-4px);
-}
-@media (prefers-reduced-motion: reduce) {
-  :global(.page-enter-active),
-  :global(.page-leave-active) {
-    transition-duration: 1e-5s;
-  }
 }
 </style>

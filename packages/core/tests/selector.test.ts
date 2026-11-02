@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest'
 import type { AtomId, LessonDef } from '../src/types.ts'
 import { countFocusHits, selectWords } from '../src/selector.ts'
-import { atomMatchesWord } from '../src/atoms.ts'
+import { atomMatchesWord } from '../src/pinyin.ts'
 import {
   findLesson,
   hasZeroSyllable,

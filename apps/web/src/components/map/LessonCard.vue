@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import MappingTagArea from './MappingTagArea.vue'
+import StarRating from '@/components/common/StarRating.vue'
 import { lessonKindLabel, type LessonView } from '@/lib/lessonView'
 
 const props = withDefaults(defineProps<{ lesson: LessonView; current?: boolean }>(), {
@@ -22,7 +23,7 @@ const statusClass = computed(() => {
     class="lesson-card"
     :class="statusClass"
     :disabled="lesson.state === 'locked'"
-    :title="lesson.state === 'locked' ? '完成前一课后解锁' : '开始练习（Enter）'"
+    :title="lesson.state === 'locked' ? '完成前一课后解锁' : '开始练习 Enter'"
     @click="emit('start', lesson.id)"
   >
     <span class="card-top">
@@ -33,9 +34,7 @@ const statusClass = computed(() => {
         </span>
         <span class="card-title">{{ lesson.title }}</span>
       </span>
-      <span class="stars" :aria-label="`${lesson.stars} 星`">
-        <span v-for="n in 3" :key="n" :class="{ on: n <= lesson.stars }">★</span>
-      </span>
+      <StarRating :stars="lesson.stars" />
     </span>
 
     <span v-if="lesson.focusKeys.length" class="card-main">
@@ -76,7 +75,7 @@ const statusClass = computed(() => {
   padding: 16px 18px;
   text-align: left;
   color: var(--ink);
-  border: 1.5px solid var(--line);
+  border: 1px solid var(--line);
   border-radius: var(--r-card);
   background: var(--surface);
   transition: border-color var(--dur-mid) var(--ease), box-shadow var(--dur-mid) var(--ease),
@@ -85,7 +84,7 @@ const statusClass = computed(() => {
 .lesson-card:hover:not(:disabled) {
   z-index: 10;
   border-color: color-mix(in srgb, var(--brand) 42%, var(--line));
-  box-shadow: var(--hover-shadow);
+  box-shadow: var(--shadow-md);
   transform: translateY(-2px);
 }
 .lesson-card:active:not(:disabled) {
@@ -94,14 +93,14 @@ const statusClass = computed(() => {
 .lesson-card.is-done {
   --mapping-more-bg: var(--success-soft);
   background: var(--success-soft);
-  border-color: var(--state-success-line);
+  border-color: var(--success-line);
 }
 .lesson-card.is-done:hover:not(:disabled) {
-  border-color: var(--state-success-line-hover);
+  border-color: var(--success-line-hover);
 }
 .lesson-card.is-active {
   border-color: var(--brand);
-  box-shadow: 0 0 0 3px var(--brand-soft);
+  box-shadow: var(--ring-brand);
 }
 .lesson-card.is-locked {
   --mapping-more-bg: var(--surface-2);
@@ -119,42 +118,14 @@ const statusClass = computed(() => {
   justify-content: space-between;
   gap: 10px;
 }
-.card-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  min-width: 0;
-}
-.card-type {
-  color: var(--ink-3);
-  font-size: 11px;
-  font-weight: 750;
-  letter-spacing: 0.02em;
-}
-.card-type span {
-  margin-left: 4px;
-  color: var(--ink-4);
-  font-family: var(--font-mono);
-}
 .card-title {
   overflow: hidden;
   color: var(--ink);
-  font-size: 15px;
+  font-size: var(--text-md);
   font-weight: 850;
   line-height: 1.3;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-.stars {
-  flex: none;
-  display: flex;
-  gap: 2px;
-  color: var(--surface-3);
-  font-size: 14px;
-  line-height: 1;
-}
-.stars .on {
-  color: var(--star-bright);
 }
 .card-main {
   display: flex;
@@ -200,7 +171,7 @@ const statusClass = computed(() => {
     gap: 8px;
   }
   .card-title {
-    font-size: 14px;
+    font-size: var(--text-base);
   }
 }
 </style>

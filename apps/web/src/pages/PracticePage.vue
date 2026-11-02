@@ -11,12 +11,14 @@ import PracticeStream from '@/components/practice/PracticeStream.vue'
 import SessionBar from '@/components/layout/SessionBar.vue'
 import TutorialStage from '@/components/practice/TutorialStage.vue'
 import { usePractice } from '@/composables/usePractice'
+import { useSchemeView } from '@/composables/useSchemeView'
 import { useKeyInput } from '@/composables/useKeyInput'
 import { useBottomDockContent } from '@/composables/useBottomDockContent'
 import { useLayoutStore, type DockContent } from '@/stores/layout'
 import { useSoundStore } from '@/stores/sound'
 const router = useRouter()
 const practice = usePractice()
+const schemeView = useSchemeView()
 const layout = useLayoutStore()
 const sound = useSoundStore()
 const {
@@ -31,11 +33,11 @@ const {
   revealed,
   wrongInputs,
   tutorialWords,
+  engine,
   scheme,
   introWords,
   focusItems,
   focusAtomIds,
-  focusBadge,
   notes,
   tier,
   conceal,
@@ -48,9 +50,7 @@ const {
   accuracyPercent,
   accuracyTier,
   speedTier,
-  keyMapRows,
   highlightAtomIds,
-  specialInitials,
   primary,
   retryStage,
   previousStage,
@@ -71,6 +71,11 @@ onBeforeUnmount(() => {
 
 const accuracyBelowTarget = computed(() => hasStarted.value && accuracyTier.value?.min === null)
 const speedBelowTarget = computed(() => hasStarted.value && speedTier.value?.min === null)
+
+/** 答案卡徽标：复习/考核显示「含」，新学显示「新」。 */
+const focusBadge = computed(() =>
+  lesson.value?.kind === 'review' || lesson.value?.kind === 'exam' ? '含' : '新',
+)
 
 /** 档位 + 对应星级；只作通过底线的档位没有星级。 */
 function tierText(tier: MetricTier | null): string {
@@ -107,13 +112,10 @@ useKeyInput((input) => {
   else onKeymapKey(input.key)
 })
 
+
 const dockContent = computed<DockContent>(() => ({
-  rows: keyMapRows.value,
-  schemeName: scheme.value?.name,
+  ...schemeView.baseDockContent.value,
   highlightAtomIds: stage.value === 'tutorial' || stage.value === 'single' ? highlightAtomIds.value : [],
-  specialInitials: specialInitials.value,
-  zeroInitials: scheme.value?.zeroInitial,
-  compatCodes: scheme.value?.compatCodes,
   conceal: conceal.value,
 }))
 useBottomDockContent(() => dockContent.value)
@@ -129,7 +131,7 @@ useBottomDockContent(() => dockContent.value)
     >
       <button class="btn btn--primary" type="button" @click="onExit">
         返回学习路线
-        <kbd>Esc</kbd>
+        <kbd>Alt+H</kbd>
       </button>
     </StateCard>
 
@@ -167,7 +169,7 @@ useBottomDockContent(() => dockContent.value)
       <div v-else class="practice-stage">
         <SessionBar :success="primary?.enabled ?? false">
           <template #left>
-            <button class="session-btn" type="button" @click="previousStage">
+            <button class="session-btn" type="button" aria-keyshortcuts="Alt+ArrowLeft" @click="previousStage">
               <svg class="icon session-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M19.5 12h-15" /><path d="m10.5 6-6 6 6 6" />
               </svg>
@@ -183,7 +185,7 @@ useBottomDockContent(() => dockContent.value)
             class="session-item"
             :class="{ 'session-danger': accuracyBelowTarget }"
           >
-            正确率 {{ accuracyPercent }}%<template v-if="accuracyTier">（{{ tierText(accuracyTier) }}）</template>
+            正确率 {{ accuracyPercent }}%<template v-if="accuracyTier"> · {{ tierText(accuracyTier) }}</template>
           </span>
           <span v-else class="session-item">正确率 --%</span>
           <span class="session-sep" aria-hidden="true">·</span>
@@ -192,19 +194,19 @@ useBottomDockContent(() => dockContent.value)
               class="session-item"
               :class="{ 'session-danger': speedBelowTarget, 'session-speed': !speedBelowTarget }"
             >
-              速度 {{ cpm }}<template v-if="speedTier">（{{ tierText(speedTier) }}）</template><template v-else> WPM</template>
+              速度 {{ cpm }}<template v-if="speedTier"> · {{ tierText(speedTier) }}</template><template v-else> WPM</template>
             </span>
           </template>
           <span v-else class="session-item">速度 -- WPM</span>
 
           <template #right>
-            <button class="session-btn" type="button" @click="retryStage">
+            <button class="session-btn" type="button" aria-keyshortcuts="Alt+R" @click="retryStage">
               重新开始
               <kbd>Alt+R</kbd>
             </button>
             <button
               class="btn btn--primary session-primary"
-              type="button"
+              type="button" aria-keyshortcuts="Enter"
               :disabled="!(primary?.enabled ?? false)"
               @click="primary?.run()"
             >
@@ -258,7 +260,7 @@ useBottomDockContent(() => dockContent.value)
   min-height: 0;
   width: 100%;
   /* 媒体查询外保持内容区 1080（与教学页 / 入门课一致），padding 走 28/16 节奏 */
-  max-width: calc(1080px + 2 * var(--page-pad-x));
+  max-width: calc(var(--content-narrow) + 2 * var(--page-pad-x));
   margin: 0 auto;
   padding: 16px var(--page-pad-x) 0;
   display: flex;
@@ -266,11 +268,11 @@ useBottomDockContent(() => dockContent.value)
 }
 .practice-inner {
   width: 100%;
-  max-width: 1080px;
+  max-width: var(--content-narrow);
   margin: 0 auto;
 }
-@media (min-width: 1200px) {
-  .practice-inner { width: 1080px; }
+@media (min-width: 1280px) {
+  .practice-inner { width: var(--content-narrow); }
 }
 .practice-page.is-tutorial .practice-scroll { overflow: hidden; padding-bottom: 16px; }
 .practice-page.is-tutorial .practice-inner {

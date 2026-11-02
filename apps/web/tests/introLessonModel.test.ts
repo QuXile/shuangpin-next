@@ -1,6 +1,6 @@
 /**
  * 通用入门课模型校验：直接遍历 data/schemes 下的全部方案。
- * 对应设计文档 tmp/intro-lesson-design.md §8 的验收项：
+ * 入门课模型验收项：
  * 原子数量 / 全部键位 / 主键唯一 / 条件 section / 示例来自数据 / 不含方案名与专有术语。
  */
 import { readdirSync, readFileSync } from 'node:fs'

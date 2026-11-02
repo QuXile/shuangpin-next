@@ -131,7 +131,7 @@ function shortLabel(name: string): string {
   border-radius: var(--r-control);
   background: color-mix(in srgb, var(--surface) 80%, transparent);
   color: var(--ink-2);
-  font-size: 12px;
+  font-size: var(--text-sm);
   font-weight: 750;
   transition:
     border-color var(--dur-fast),
@@ -153,7 +153,7 @@ function shortLabel(name: string): string {
   background: var(--brand);
   border-color: var(--brand);
   color: var(--on-accent);
-  box-shadow: var(--brand-glow-strong);
+  box-shadow: var(--brand-glow);
 }
 .scheme-btn.active:hover:not(:disabled) {
   background: var(--brand-fill-hover);
@@ -174,7 +174,7 @@ function shortLabel(name: string): string {
   border-radius: var(--r-control);
   background: color-mix(in srgb, var(--surface) 72%, transparent);
   color: var(--ink-3);
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-weight: 700;
   white-space: nowrap;
   backdrop-filter: blur(8px);
@@ -210,7 +210,7 @@ function shortLabel(name: string): string {
   border-color: var(--brand-fill-hover);
   color: var(--brand-ink);
   background: var(--brand-soft);
-  box-shadow: 0 0 0 3px var(--brand-soft);
+  box-shadow: var(--ring-brand);
 }
 .scheme-more select {
   position: absolute;
@@ -223,8 +223,8 @@ function shortLabel(name: string): string {
   cursor: wait;
 }
 .scheme-more kbd {
-  font-size: 9px;
-  transition: background var(--dur-fast), color var(--dur-fast), transform var(--dur-fast);
+  font-size: var(--text-2xs);
+  transition: background var(--dur-fast), color var(--dur-fast);
 }
 .scheme-more:hover kbd,
 .scheme-more:focus-within kbd,
@@ -232,13 +232,12 @@ function shortLabel(name: string): string {
 .scheme-more.active:focus-within kbd {
   background: var(--surface);
   color: var(--brand);
-  transform: translateY(-1px);
 }
 .scheme-more svg {
   width: 12px;
   height: 12px;
 }
-@media (max-width: 560px) {
+@media (max-width: 640px) {
   .scheme-btn {
     flex: 1 1 auto;
     justify-content: center;

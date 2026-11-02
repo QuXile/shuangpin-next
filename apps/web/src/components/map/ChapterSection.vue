@@ -62,14 +62,14 @@ const emit = defineEmits<{ start: [lessonId: string] }>()
   border-radius: 50%;
   background: var(--surface);
   color: var(--ink);
-  font-size: 13px;
+  font-size: var(--text-base);
   font-weight: 850;
   box-shadow: var(--shadow-sm);
 }
 .chapter-name {
   overflow: hidden;
   color: var(--ink);
-  font-size: 17px;
+  font-size: var(--text-md);
   font-weight: 850;
   letter-spacing: -0.01em;
   text-overflow: ellipsis;
@@ -81,7 +81,7 @@ const emit = defineEmits<{ start: [lessonId: string] }>()
   align-items: center;
   gap: 12px;
   color: var(--ink-3);
-  font-size: 12px;
+  font-size: var(--text-sm);
   font-weight: 750;
   font-variant-numeric: tabular-nums;
 }
@@ -105,7 +105,7 @@ const emit = defineEmits<{ start: [lessonId: string] }>()
   gap: 14px;
   padding: 16px 26px 24px;
 }
-@media (max-width: 1050px) {
+@media (max-width: 1024px) {
   .lesson-grid {
     grid-template-columns: 1fr;
   }
@@ -118,16 +118,16 @@ const emit = defineEmits<{ start: [lessonId: string] }>()
     gap: 8px;
   }
   .chapter-name {
-    font-size: 15px;
+    font-size: var(--text-md);
   }
   .chapter-num {
     width: 28px;
     height: 28px;
-    font-size: 12px;
+    font-size: var(--text-sm);
   }
   .chapter-progress {
     gap: 8px;
-    font-size: 11px;
+    font-size: var(--text-xs);
   }
   .progress-bar-mini {
     width: 60px;

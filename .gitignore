@@ -9,22 +9,22 @@ data/raw/*.json
 # 构建 / 同步 / 测试产物
 dist/
 apps/web/public/data/
+apps/web/public/.data.tmp-*
+apps/web/public/.data.old-*
 release/
 .vite/
 coverage/
 playwright-report/
 test-results/
-.playwright-cli/
 *.tsbuildinfo
 
 # 临时文件与协作目录
-tmp/
 *.tmp
-.refactor/
 
 # 本地缓存与日志
 *.local
 *.log
+.playwright-cli/
 
 # 编辑器 / 系统
 .DS_Store

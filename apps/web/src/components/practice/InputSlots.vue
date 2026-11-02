@@ -111,10 +111,10 @@ onBeforeUnmount(() => {
   box-shadow: 0 2px 0 var(--brand-soft-2);
 }
 .input-slot.is-popping {
-  animation: ui-slot-pop 190ms var(--ease);
+  animation: ui-slot-pop var(--dur-mid) var(--ease);
 }
 .input-slots.is-correct-pulse .input-slot {
-  animation: ui-slot-success 440ms var(--ease);
+  animation: ui-slot-success var(--dur-slow) var(--ease);
 }
 /* 错误 / 成功态：与 CharacterCard、KeyCap 共用 danger / success 语义色 */
 .input-slots.is-wrong .input-slot {
@@ -125,7 +125,7 @@ onBeforeUnmount(() => {
   box-shadow: none;
 }
 .input-slots.is-correct .input-slot {
-  color: var(--state-success-ink);
+  color: var(--success-ink);
   background: var(--success-soft);
   border-color: var(--success-strong);
   border-style: solid;

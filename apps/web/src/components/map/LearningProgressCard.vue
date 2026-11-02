@@ -67,17 +67,17 @@ onBeforeUnmount(() => observer?.disconnect())
           type="button"
           :disabled="!canClear"
           aria-keyshortcuts="Alt+C"
-          title="清除当前方案进度（Alt+C）"
+          title="清除当前方案进度 Alt+C"
           @click="emit('clear-progress')"
         >
           清除进度
           <kbd>Alt+C</kbd>
         </button>
         <button
-          class="meta-btn is-accent"
+          class="meta-btn"
           type="button"
           aria-keyshortcuts="Alt+U"
-          :title="`${unlockedAll ? '恢复锁定' : '解锁全部课程'}（Alt+U）`"
+          :title="`${unlockedAll ? '恢复锁定' : '解锁全部课程'} Alt+U`"
           @click="emit('toggle-unlock')"
         >
           {{ unlockedAll ? '恢复锁定' : '解锁全部课程' }}
@@ -157,7 +157,7 @@ onBeforeUnmount(() => observer?.disconnect())
 .pct-label {
   flex: none;
   color: var(--ink-3);
-  font-size: 13px;
+  font-size: var(--text-base);
   font-weight: 750;
   letter-spacing: 0;
   line-height: 1.2;
@@ -174,27 +174,27 @@ onBeforeUnmount(() => observer?.disconnect())
 .learning-stats > div {
   min-width: 0;
   padding: 12px 10px;
-  border-radius: var(--r-sm);
+  border-radius: var(--r-card);
   background: var(--surface-2);
 }
 .learning-stats strong {
   display: block;
   color: var(--ink);
-  font-size: 20px;
+  font-size: var(--text-lg);
   font-weight: 850;
   line-height: 1.2;
   white-space: nowrap;
 }
 .learning-stats small {
   color: var(--ink-3);
-  font-size: 12px;
+  font-size: var(--text-sm);
   font-weight: 650;
 }
 .learning-stats span {
   display: block;
   margin-top: 6px;
   color: var(--ink-3);
-  font-size: 12px;
+  font-size: var(--text-sm);
   line-height: 1.4;
 }
 .learning-track {
@@ -212,7 +212,7 @@ onBeforeUnmount(() => observer?.disconnect())
   background: var(--brand);
   transition: width var(--dur-slow) var(--ease);
 }
-@media (max-width: 1050px) {
+@media (max-width: 1024px) {
   .learning-card {
     padding: 16px;
   }
@@ -223,7 +223,7 @@ onBeforeUnmount(() => observer?.disconnect())
     padding: 10px 8px;
   }
   .learning-stats strong {
-    font-size: 18px;
+    font-size: var(--text-lg);
   }
 }
 @media (max-width: 640px) {
@@ -241,10 +241,10 @@ onBeforeUnmount(() => observer?.disconnect())
     padding: 9px 7px;
   }
   .learning-stats strong {
-    font-size: 17px;
+    font-size: var(--text-md);
   }
   .learning-stats span {
-    font-size: 11px;
+    font-size: var(--text-xs);
   }
 }
 </style>

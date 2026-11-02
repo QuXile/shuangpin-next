@@ -1,6 +1,7 @@
 <script setup lang="ts">
 /** 映射标签区：继续学习与学习路线共用的溢出 / 截断 / 浮层逻辑。 */
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useResizeObserver } from '@/composables/useResizeObserver'
 import type { FocusAtomView } from '@/lib/lessonView'
 import FocusTagList from '@/components/FocusTagList.vue'
 
@@ -10,7 +11,6 @@ const areaRef = ref<HTMLElement | null>(null)
 const scrollRef = ref<HTMLElement | null>(null)
 const overflowing = ref(false)
 const popupDown = ref(false)
-let resizeObserver: ResizeObserver | undefined
 
 function measure(): void {
   const el = scrollRef.value
@@ -21,13 +21,7 @@ function measure(): void {
   overflowing.value = el.scrollHeight > el.clientHeight + 1
 }
 
-function observe(): void {
-  resizeObserver?.disconnect()
-  if (!scrollRef.value) return
-  resizeObserver = new ResizeObserver(measure)
-  resizeObserver.observe(scrollRef.value)
-  measure()
-}
+useResizeObserver(scrollRef, () => measure())
 
 function updatePopupPlacement(): void {
   const rect = areaRef.value?.getBoundingClientRect()
@@ -39,17 +33,20 @@ function updatePopupPlacement(): void {
 
 watch(
   () => props.items,
-  () => { void nextTick(observe) },
+  () => { void nextTick(measure) },
   { immediate: true, deep: true, flush: 'post' },
 )
-onMounted(() => { void nextTick(observe) })
-onBeforeUnmount(() => { resizeObserver?.disconnect() })
+onMounted(() => { void nextTick(measure) })
+
 </script>
 
 <template>
   <div
     ref="areaRef"
     class="mapping-tag-area"
+    role="group"
+    :tabindex="overflowing ? 0 : undefined"
+    :aria-label="`${items.length} 个映射`"
     @mouseenter="updatePopupPlacement"
     @focusin="updatePopupPlacement"
   >
@@ -89,7 +86,7 @@ onBeforeUnmount(() => { resizeObserver?.disconnect() })
   padding-top: 12px;
   color: var(--brand);
   background: linear-gradient(transparent, var(--mapping-more-bg, var(--surface)) 58%);
-  font-size: 10.5px;
+  font-size: var(--text-2xs);
   font-weight: 750;
   line-height: 1.4;
   pointer-events: none;
@@ -107,10 +104,10 @@ onBeforeUnmount(() => { resizeObserver?.disconnect() })
   padding: 14px;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: var(--r-sm);
-  box-shadow: var(--pop-shadow);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-pop);
   pointer-events: auto;
-  animation: ui-pop-in 160ms var(--ease);
+  animation: ui-pop-in var(--dur-mid) var(--ease);
 }
 .mapping-popup.is-down {
   top: calc(100% + 8px);

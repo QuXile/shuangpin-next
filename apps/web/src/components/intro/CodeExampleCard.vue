@@ -5,7 +5,7 @@
  */
 import { computed } from 'vue'
 import type { CodeExample } from './introLessonModel'
-import KeyChip from './KeyChip.vue'
+import KeyCap from '@/components/common/KeyCap.vue'
 
 const props = defineProps<{ example: CodeExample }>()
 
@@ -37,27 +37,27 @@ function variantOf(sequence: string): 'primary' | 'neutral' | 'compat' {
     <div class="code-row">
       <span class="code-label">标答</span>
       <span class="code-values">
-        <KeyChip :text="example.primary" variant="primary" />
+        <KeyCap :text="example.primary" variant="primary" />
       </span>
     </div>
     <div v-if="mainKeysDiff" class="code-row">
       <span class="code-label">主键组合</span>
       <span class="code-values">
-        <KeyChip :text="example.mainKeys ?? ''" />
+        <KeyCap :text="example.mainKeys ?? ''" />
         <span class="code-note">默认组合，同样算对</span>
       </span>
     </div>
     <div v-if="extraVisible" class="code-row">
       <span class="code-label">兼容</span>
       <span class="code-values">
-        <KeyChip :text="example.extra" variant="compat" />
+        <KeyCap :text="example.extra" variant="compat" />
         <span class="code-note">额外接受</span>
       </span>
     </div>
     <div class="code-row">
       <span class="code-label">接受</span>
       <span class="code-values">
-        <KeyChip
+        <KeyCap
           v-for="sequence in example.accepted"
           :key="sequence"
           :text="sequence"
@@ -74,8 +74,8 @@ function variantOf(sequence: string): 'primary' | 'neutral' | 'compat' {
   flex-direction: column;
   gap: 6px;
   padding: 12px 14px;
-  border: 1px solid var(--line-faint);
-  border-radius: var(--r-md);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
   background: var(--surface);
 }
 .code-card.is-compat {
@@ -91,7 +91,7 @@ function variantOf(sequence: string): 'primary' | 'neutral' | 'compat' {
 .code-syllable {
   color: var(--ink);
   font-family: var(--font-mono);
-  font-size: 16px;
+  font-size: var(--text-md);
   font-weight: 800;
   letter-spacing: -0.01em;
   line-height: 1.2;
@@ -102,7 +102,7 @@ function variantOf(sequence: string): 'primary' | 'neutral' | 'compat' {
   border-radius: var(--r-pill);
   background: var(--brand-soft);
   color: var(--brand-ink);
-  font-size: 10px;
+  font-size: var(--text-2xs);
   font-weight: 750;
   line-height: 1.5;
 }
@@ -121,7 +121,7 @@ function variantOf(sequence: string): 'primary' | 'neutral' | 'compat' {
   width: 52px;
   padding-top: 4px;
   color: var(--ink-4);
-  font-size: 10.5px;
+  font-size: var(--text-2xs);
   font-weight: 650;
   line-height: 1.3;
 }
@@ -134,7 +134,7 @@ function variantOf(sequence: string): 'primary' | 'neutral' | 'compat' {
 }
 .code-note {
   color: var(--ink-4);
-  font-size: 10px;
+  font-size: var(--text-2xs);
   line-height: 1.4;
 }
 </style>

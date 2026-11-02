@@ -7,8 +7,9 @@
  * - KeyboardMap / SchemeKeycaps / 页面练习处理器都订阅这里。
  */
 import { onScopeDispose, readonly, ref } from 'vue'
+import { isEditableTarget, isImeOrRepeat, letterKeyOf } from '@/lib/dom'
 
-export type KeyInputEvent =
+type KeyInputEvent =
   | { type: 'letter'; key: string }
   | { type: 'backspace' }
 
@@ -18,19 +19,6 @@ const listeners = new Set<KeyInputHandler>()
 const pressed = ref<string[]>([])
 let pressTimer: number | undefined
 let installed = false
-
-const EDITABLE_TAGS = new Set(['INPUT', 'TEXTAREA', 'SELECT'])
-
-function isEditableTarget(target: EventTarget | null): boolean {
-  if (!(target instanceof HTMLElement)) return false
-  if (EDITABLE_TAGS.has(target.tagName)) return true
-  return target.isContentEditable
-}
-
-function normalizeLetter(raw: string): string | null {
-  const key = raw.trim().toLowerCase()
-  return /^[a-z;]$/.test(key) ? key : null
-}
 
 function flashPressed(key: string): void {
   pressed.value = [key]
@@ -46,7 +34,7 @@ function dispatch(event: KeyInputEvent): void {
 }
 
 function onWindowKeydown(event: KeyboardEvent): void {
-  if (event.isComposing || event.keyCode === 229 || event.repeat) return
+  if (isImeOrRepeat(event)) return
   if (event.altKey || event.ctrlKey || event.metaKey) return
   if (isEditableTarget(event.target)) return
 
@@ -54,7 +42,7 @@ function onWindowKeydown(event: KeyboardEvent): void {
   if (event.key === 'Backspace') {
     input = { type: 'backspace' }
   } else {
-    const key = normalizeLetter(event.key)
+    const key = letterKeyOf(event.key)
     if (key) input = { type: 'letter', key }
   }
   if (!input) return
@@ -81,7 +69,7 @@ export function useKeyInput(handler?: KeyInputHandler) {
   return {
     pressedKeys: readonly(pressed),
     pressKey(raw: string): void {
-      const key = normalizeLetter(raw)
+      const key = letterKeyOf(raw)
       if (key) dispatch({ type: 'letter', key })
     },
     pressBackspace(): void {

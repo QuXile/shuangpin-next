@@ -19,7 +19,6 @@ function entry(text: string, syllables: Array<{ initial: string; final: string }
       tone: 1,
     })),
     chars: Array.from(text),
-    minCharRank: 100,
   }
 }
 

@@ -6,9 +6,9 @@
  * 4) keyMap 与 diff() 数据一致性。
  */
 import { describe, expect, it } from 'vitest'
-import type { Final, Initial, SyllableFinal, SyllableSpec } from '../src/types.ts'
+import type { AtomId, Final, Initial, SyllableFinal, SyllableSpec } from '../src/types.ts'
 import { splitPinyin } from '../src/pinyin.ts'
-import { createSchemeEngine } from '../src/scheme.ts'
+import { createSchemeEngine, freeAtomIdsOf, isFreeAtom } from '../src/scheme.ts'
 import {
   loadEngine,
   loadEngineCases,
@@ -201,6 +201,29 @@ describe('方案引擎 · keyMap / diff', () => {
       expect(diff.freeZero.length, summary.id).toBe(stats?.zeroInitial?.free)
       expect(diff.learnInitials.length + diff.freeInitials.length, summary.id).toBe(stats?.initials?.total)
     }
+  })
+
+  it('freeAtomIdsOf / isFreeAtom：与 engine.freeSets() 同源同序', () => {
+    for (const id of schemeIndex.courseSupported) {
+      const engine = loadEngine(id)
+      const free = engine.freeSets()
+      const expected: AtomId[] = [
+        ...[...free.initials].map((key) => `initial:${key}` as const),
+        ...[...free.finals].map((key) => `final:${key}` as const),
+        ...[...free.zero].map((key) => `zero:${key}` as const),
+      ]
+      expect(freeAtomIdsOf(engine), id).toEqual(expected)
+      for (const atom of expected) expect(isFreeAtom(engine, atom), `${id} ${atom}`).toBe(true)
+      const diff = engine.diff()
+      const learn = [
+        ...diff.learnInitials.map((key) => `initial:${key}` as const),
+        ...diff.learnFinals.map((key) => `final:${key}` as const),
+        ...diff.learnZero.map((key) => `zero:${key}` as const),
+      ]
+      for (const atom of learn) expect(isFreeAtom(engine, atom), `${id} ${atom}`).toBe(false)
+    }
+    expect(freeAtomIdsOf(loadEngine('xiaohe')).length).toBeGreaterThan(0)
+    expect(isFreeAtom(loadEngine('xiaohe'), 'unknown:xx' as never)).toBe(false)
   })
 
   it('judge 支持字符串/数组两种输入，大小写不敏感', () => {

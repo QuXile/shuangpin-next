@@ -5,6 +5,7 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import type { AtomId, LetterKey } from '@shuangpin/core'
+import type { MappingTogglePayload } from '@/lib/keyboardView'
 
 export interface DockContent {
   rows: LetterKey[][]
@@ -16,6 +17,10 @@ export interface DockContent {
   hiddenAtomIds?: readonly AtomId[]
   zeroInitials?: Readonly<Record<string, readonly string[]>>
   compatCodes?: Readonly<Record<string, readonly string[]>>
+  freeAtomIds?: readonly AtomId[]
+  /** 练习场配置页：映射可点击切换出现范围（兼容映射不参与） */
+  interactiveMappings?: boolean
+  onMappingToggle?: (payload: MappingTogglePayload) => void
 }
 
 export const useLayoutStore = defineStore('layout', () => {

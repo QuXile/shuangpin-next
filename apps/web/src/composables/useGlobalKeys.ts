@@ -3,6 +3,7 @@
  * 所有页面级快捷键都必须通过本 composable 注册，禁止再直接 window.addEventListener('keydown')。
  */
 import { onMounted, onScopeDispose, toValue, type MaybeRefOrGetter } from 'vue'
+import { isEditableTarget, isImeOrRepeat, isLetterKey } from '@/lib/dom'
 
 export interface KeyBinding {
   /** 精确键名（大小写不敏感），例如 'Enter' | 'Escape' | 'Backspace' | 'ArrowLeft' | 't' */
@@ -21,15 +22,6 @@ export interface KeyBinding {
   run: (event: KeyboardEvent) => void
 }
 
-const INPUT_TAGS = new Set(['INPUT', 'TEXTAREA', 'SELECT'])
-
-function isEditableTarget(event: KeyboardEvent): boolean {
-  const target = event.target
-  if (!(target instanceof HTMLElement)) return false
-  if (INPUT_TAGS.has(target.tagName)) return true
-  return target.isContentEditable
-}
-
 function modifierMatches(event: KeyboardEvent, binding: KeyBinding): boolean {
   if ((binding.alt ?? false) !== event.altKey) return false
   if ((binding.ctrl ?? false) !== event.ctrlKey) return false
@@ -39,7 +31,7 @@ function modifierMatches(event: KeyboardEvent, binding: KeyBinding): boolean {
 }
 
 function keyMatches(event: KeyboardEvent, binding: KeyBinding): boolean {
-  if (binding.letter) return /^[a-zA-Z;]$/.test(event.key)
+  if (binding.letter) return isLetterKey(event.key)
   if (binding.key !== undefined) return event.key.toLowerCase() === binding.key.toLowerCase()
   return false
 }
@@ -53,9 +45,9 @@ export function useGlobalKeys(
   enabled: MaybeRefOrGetter<boolean> = true,
 ): void {
   function onKeydown(event: KeyboardEvent): void {
-    if (event.isComposing || event.keyCode === 229 || event.repeat) return
+    if (isImeOrRepeat(event)) return
     if (!toValue(enabled)) return
-    const editable = isEditableTarget(event)
+    const editable = isEditableTarget(event.target)
     for (const binding of toValue(bindings)) {
       if (editable && binding.allowInInput !== true) continue
       if (!modifierMatches(event, binding)) continue

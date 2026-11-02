@@ -35,8 +35,8 @@ onBeforeUnmount(() => window.removeEventListener('scroll', onScroll))
       v-if="visible"
       class="back-top"
       type="button"
-      title="回到顶部（Home）"
-      aria-label="回到顶部（Home）"
+      title="回到顶部 Home"
+      aria-label="回到顶部 Home"
       aria-keyshortcuts="Home"
       @click="scrollToTop"
     >
@@ -66,7 +66,7 @@ onBeforeUnmount(() => window.removeEventListener('scroll', onScroll))
   border-radius: var(--r-control);
   background: color-mix(in srgb, var(--surface) 92%, transparent);
   color: var(--ink-2);
-  font-size: 12px;
+  font-size: var(--text-sm);
   font-weight: 700;
   white-space: nowrap;
   box-shadow: var(--shadow-sm);
@@ -84,7 +84,7 @@ onBeforeUnmount(() => window.removeEventListener('scroll', onScroll))
 }
 .back-top kbd {
   padding: 1px 5px;
-  font-size: 9px;
+  font-size: var(--text-2xs);
   line-height: 1.35;
 }
 .back-top:hover {
@@ -99,7 +99,7 @@ onBeforeUnmount(() => window.removeEventListener('scroll', onScroll))
 }
 .back-top-enter-active,
 .back-top-leave-active {
-  transition: opacity 180ms var(--ease), transform 180ms var(--ease);
+  transition: opacity var(--dur-mid) var(--ease), transform var(--dur-mid) var(--ease);
 }
 .back-top-enter-from,
 .back-top-leave-to {
@@ -112,14 +112,7 @@ onBeforeUnmount(() => window.removeEventListener('scroll', onScroll))
     bottom: max(14px, env(safe-area-inset-bottom));
     height: 34px;
     padding: 0 10px;
-    font-size: 11px;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .back-top,
-  .back-top-enter-active,
-  .back-top-leave-active {
-    transition-duration: 1e-5s;
+    font-size: var(--text-xs);
   }
 }
 </style>

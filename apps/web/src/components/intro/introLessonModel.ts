@@ -1,17 +1,16 @@
 /**
  * 通用入门课模型：只消费当前 SchemeDef / SchemeEngine / 词表，不写死任何方案名或键位。
  *
- * 口径见 tmp/intro-lesson-design.md：
+ * 口径由本模型与 core 方案引擎定义。
  * - 声母 / 韵母 / 零声母原子全部由方案数据生成，数组第一条为主键，其余为副键；
  * - 多键 section 仅当存在多键原子时生成；
  * - 推荐码 / 兼容编码 section 仅当方案数据非空时生成；
  * - 不出现「对偶」等某个方案专有术语，不假设任何方案的编码形态。
  */
-import { splitPinyin, toToneMarks } from '@shuangpin/core'
+import { analyzeSchemeCodes, atomDisplayLabel, splitPinyin, toToneMarks } from '@shuangpin/core'
 import type {
   AtomId,
   SchemeDef,
-  SchemeDiff,
   SchemeEngine,
   SyllableFinal,
   SyllableSpec,
@@ -45,6 +44,8 @@ export interface ComposeExample {
   final: KeyAtom
   /** 主键序列，大写 */
   primary: string[]
+  /** 每个结果键是否使用对应原子的主键 */
+  primaryVariants: Array<'primary' | 'neutral'>
   /** 全部被接受的序列，大写 */
   accepted: string[]
 }
@@ -185,8 +186,8 @@ function atomOf(
   return {
     atomId: `${kind}:${name}` as AtomId,
     kind,
-    // 零声母与同音韵母同名，统一加「零 」前缀区分（与课程 / 键位图显示口径一致）。
-    label: kind === 'zero' ? `零 ${name}` : name,
+    // 零声母与同音韵母同名，统一加「零 」前缀区分（core 唯一口径）。
+    label: atomDisplayLabel(`${kind}:${name}` as AtomId, name),
     keys: sequences.map((sequence, index) => ({ sequence, primary: index === 0 })),
     free,
   }
@@ -235,12 +236,18 @@ function composeExample(
   if (!primary.length) return null
   const accepted = engine.acceptedSequences(spec).map((sequence) => sequence.join('').toUpperCase())
   const syllable = `${spec.initial}${spec.final}`
+  const initialPrimary = initial.keys.find((key) => key.primary)?.sequence
+  const finalPrimary = final.keys.find((key) => key.primary)?.sequence
   return {
     syllable,
     display: toToneMarks(syllable),
     initial,
     final,
     primary: primary.map((key) => key.toUpperCase()),
+    primaryVariants: primary.map((key, index) => {
+      const primaryKey = index === 0 ? initialPrimary : finalPrimary
+      return key.toUpperCase() === primaryKey ? 'primary' : 'neutral'
+    }),
     accepted,
   }
 }
@@ -356,70 +363,36 @@ function findSharedKey(scheme: SchemeDef): SharedKeyNote | null {
 
 // ── 推荐码 / 兼容编码 ────────────────────────────────────────
 
-/** 主键组合：主声母键 × 主韵母键；零声母取 zeroInitial 第一条序列。 */
-function mainComposition(scheme: SchemeDef, spec: SyllableSpec): string | null {
-  if (spec.zeroInitial) {
-    return normalizedSequences(scheme.zeroInitial[spec.final])[0] ?? null
-  }
-  const initialKeys = normalizedSequences(scheme.initials[spec.initial])
-  const finalKeys = normalizedSequences(scheme.finals[spec.final])
-  if (!initialKeys.length || !finalKeys.length) return null
-  return `${initialKeys[0]}${finalKeys[0]}`
-}
-
-function buildRecommendedExample(
-  scheme: SchemeDef,
-  engine: SchemeEngine,
-  syllable: string,
+function codeExampleOf(
+  entry: ReturnType<typeof analyzeSchemeCodes>['entries'][number],
+  kind: 'recommended' | 'compat',
 ): CodeExample | null {
-  const spec = specOf(syllable)
-  if (!spec) return null
-  const primary = engine.primarySequence(spec)
-  if (!primary.length) return null
-  const primaryText = primary.join('').toUpperCase()
-  const accepted = engine.acceptedSequences(spec).map((sequence) => sequence.join('').toUpperCase())
-  if (!accepted.includes(primaryText)) accepted.unshift(primaryText)
-  const mainKeys = mainComposition(scheme, spec)
-  return {
-    syllable,
-    display: toToneMarks(syllable),
-    zeroInitial: spec.zeroInitial === true,
-    primary: primaryText,
+  const primary = entry.primary.toUpperCase()
+  if (!primary) return null
+  const accepted = entry.accepted.map((sequence) => sequence.toUpperCase())
+  if (!accepted.includes(primary)) accepted.unshift(primary)
+  const mainKeys = entry.composition ? entry.composition.toUpperCase() : null
+  const base = {
+    syllable: entry.syllable,
+    display: toToneMarks(entry.syllable),
+    zeroInitial: entry.zeroInitial,
+    primary,
     accepted,
     mainKeys,
-    extra: primaryText,
-    reason: mainKeys !== null && mainKeys !== primaryText ? 'recommended-override' : 'recommended-default',
   }
-}
-
-function buildCompatExample(
-  scheme: SchemeDef,
-  engine: SchemeEngine,
-  syllable: string,
-  code: string,
-): CodeExample | null {
-  const spec = specOf(syllable)
-  if (!spec) return null
-  const compatKeys = normalizedSequences([code])
-  const compatText = compatKeys[0]
-  if (!compatText) return null
-  const primarySequence = engine.primarySequence(spec)
-  if (!primarySequence.length) return null
-  const primaryText = primarySequence.join('').toUpperCase()
-  const accepted = engine.acceptedSequences(spec).map((sequence) => sequence.join('').toUpperCase())
+  if (kind === 'recommended') {
+    if (!entry.recommended) return null
+    return {
+      ...base,
+      extra: primary,
+      reason: mainKeys !== null && mainKeys !== primary ? 'recommended-override' : 'recommended-default',
+    }
+  }
+  const compat = entry.compat[0]?.toUpperCase()
+  if (!compat) return null
   // 兼容码必须真的被判题接受，否则说明数据异常，跳过该示例。
-  if (!accepted.includes(compatText)) return null
-  if (!accepted.includes(primaryText)) accepted.unshift(primaryText)
-  return {
-    syllable,
-    display: toToneMarks(syllable),
-    zeroInitial: spec.zeroInitial === true,
-    primary: primaryText,
-    accepted,
-    mainKeys: mainComposition(scheme, spec),
-    extra: compatText,
-    reason: 'compat-extra',
-  }
+  if (!accepted.includes(compat)) return null
+  return { ...base, extra: compat, reason: 'compat-extra' }
 }
 
 interface PickedCodes {
@@ -430,28 +403,49 @@ interface PickedCodes {
   compatTotal: number
 }
 
-function pickCodeExamples(scheme: SchemeDef, engine: SchemeEngine): PickedCodes {
-  const recommendedEntries = Object.entries(scheme.recommended ?? {})
-  const overrideExamples: CodeExample[] = []
-  const defaultExamples: CodeExample[] = []
-  for (const [syllable] of recommendedEntries) {
-    const example = buildRecommendedExample(scheme, engine, syllable)
-    if (!example) continue
-    if (example.reason === 'recommended-override') overrideExamples.push(example)
-    else defaultExamples.push(example)
-  }
+/** 展示取样/排序策略层；编码判定与去重口径全部来自 core analyzeSchemeCodes。 */
+function pickCodeExamples(scheme: SchemeDef): PickedCodes {
+  const analysis = analyzeSchemeCodes(scheme)
+  const entries = analysis.entries
+
+  const overrideExamples = entries
+    .filter((entry) => entry.recommended !== null && entry.recommendedOverride)
+    .map((entry) => codeExampleOf(entry, 'recommended'))
+    .filter((example): example is CodeExample => example !== null)
+  const defaultExamples = entries
+    .filter((entry) => entry.recommended !== null && !entry.recommendedOverride)
+    .map((entry) => codeExampleOf(entry, 'recommended'))
+    .filter((example): example is CodeExample => example !== null)
   // 推荐码默认示例：优先非零声母音节，避免与「零声母」页的例子重复。
   defaultExamples.sort((left, right) => Number(left.zeroInitial) - Number(right.zeroInitial))
   const recommended = (overrideExamples.length > 0 ? overrideExamples : defaultExamples).slice(0, 2)
 
   const usedSyllables = new Set(recommended.map((example) => example.syllable))
   // 兼容编码示例：优先「额外接受码确实不同于标答」且未在推荐码示例里出现的音节。
-  const compatCandidates: CodeExample[] = []
-  for (const [syllable, codes] of Object.entries(scheme.compatCodes ?? {})) {
-    const first = codes?.[0]
-    if (!first) continue
-    const example = buildCompatExample(scheme, engine, syllable, first)
-    if (example) compatCandidates.push(example)
+  const compatCandidates = entries
+    .filter((entry) => entry.compat.length > 0)
+    .map((entry) => codeExampleOf(entry, 'compat'))
+    .filter((example): example is CodeExample => example !== null)
+  if (compatCandidates.length === 0) {
+    // 数据有 compatCodes、但 core 分析去重后没有「额外码」时，回退到原始数据首码（仍需判题接受）。
+    const entryBySyllable = new Map(entries.map((entry) => [entry.syllable, entry]))
+    for (const [syllable, codes] of Object.entries(scheme.compatCodes ?? {})) {
+      const entry = entryBySyllable.get(syllable)
+      const code = codes?.[0]?.toUpperCase()
+      if (!entry || !code) continue
+      const accepted = entry.accepted.map((sequence) => sequence.toUpperCase())
+      if (!accepted.includes(code)) continue
+      compatCandidates.push({
+        syllable,
+        display: toToneMarks(syllable),
+        zeroInitial: entry.zeroInitial,
+        primary: entry.primary.toUpperCase(),
+        accepted,
+        mainKeys: entry.composition ? entry.composition.toUpperCase() : null,
+        extra: code,
+        reason: 'compat-extra',
+      })
+    }
   }
   const compatRank = (example: CodeExample): number =>
     (example.extra !== example.primary ? 0 : 2) +
@@ -468,47 +462,29 @@ function pickCodeExamples(scheme: SchemeDef, engine: SchemeEngine): PickedCodes 
     recommended,
     compat,
     hasOverride: overrideExamples.length > 0,
-    recommendedTotal: recommendedEntries.length,
+    recommendedTotal: Object.keys(scheme.recommended ?? {}).length,
     compatTotal: Object.keys(scheme.compatCodes ?? {}).length,
   }
 }
 
 // ── 入口 ─────────────────────────────────────────────────────
 
-function diffOf(engine: SchemeEngine, scheme: SchemeDef): SchemeDiff {
-  return engine.diff() ?? {
-    freeInitials: [],
-    learnInitials: Object.keys(scheme.initials),
-    freeFinals: [],
-    learnFinals: Object.keys(scheme.finals),
-    learnZero: Object.keys(scheme.zeroInitial),
-    freeZero: [],
-  }
-}
-
-/**
- * 生成通用入门课模型。
- *
- * @param scheme 当前方案
- * @param engine 当前方案的引擎（由调用方创建，保证判题口径一致）
- * @param words  词表（用于抽取真实音节示例；允许为空）
- */
 export function buildIntroLessonModel(
   scheme: SchemeDef,
   engine: SchemeEngine,
   words: readonly WordEntry[] = [],
 ): IntroLessonModel {
-  const diff = diffOf(engine, scheme)
-  const initials = buildAtoms(scheme.initials, 'initial', new Set(diff.freeInitials))
-  const finals = buildAtoms(scheme.finals, 'final', new Set(diff.freeFinals))
-  const zeroInitials = buildAtoms(scheme.zeroInitial, 'zero', new Set(diff.freeZero))
+  const free = engine.freeSets()
+  const initials = buildAtoms(scheme.initials, 'initial', free.initials)
+  const finals = buildAtoms(scheme.finals, 'final', free.finals)
+  const zeroInitials = buildAtoms(scheme.zeroInitial, 'zero', free.zero)
 
   const multiInitials = initials.filter(isMulti)
   const multiFinals = finals.filter(isMulti)
   const multiZeros = zeroInitials.filter(isMulti)
   const multiTotal = multiInitials.length + multiFinals.length + multiZeros.length
 
-  const codes = pickCodeExamples(scheme, engine)
+  const codes = pickCodeExamples(scheme)
   const hasRecommended = codes.recommendedTotal > 0
   const hasCompat = codes.compatTotal > 0
   const hasCodes = hasRecommended || hasCompat

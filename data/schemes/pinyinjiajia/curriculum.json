@@ -88,11 +88,7 @@
       },
       "atomMeta": {},
       "zeroExamples": [],
-      "tips": [
-        "本课学习：。",
-        "所有列出的键位都可以使用；主键只决定展示顺序。",
-        "先看提示打对，再逐步撤掉提示。"
-      ],
+      "tips": [],
       "stageMinWords": {}
     },
     {
@@ -137,9 +133,8 @@
       },
       "zeroExamples": [],
       "tips": [
-        "遇到多音字按词语读音取键；j/q/x/y 后的 ü 写作 u，仍按 U 键（如「去」= QU）。",
-        "新键位：声母 zh → v（多键均可用）。",
-        "先看提示打对，再逐步撤掉提示。"
+        "遇到多音字按词语读音取键；j/q/x/y 后的 ü 写作 u，仍按 U 键，如「去」= QU。",
+        "兼容映射：ju 兼容的特别键位组合还包括 JV；兼容映射：qu 兼容的特别键位组合还包括 QV；兼容映射：xu 兼容的特别键位组合还包括 XV；兼容映射：yu 兼容的特别键位组合还包括 YV"
       ],
       "passCriteria": {
         "accuracy": 0.85,
@@ -194,11 +189,7 @@
         }
       },
       "zeroExamples": [],
-      "tips": [
-        "本课学习：ch。",
-        "所有列出的键位都可以使用；主键只决定展示顺序。",
-        "先看提示打对，再逐步撤掉提示。"
-      ],
+      "tips": [],
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy"
@@ -253,11 +244,7 @@
         }
       },
       "zeroExamples": [],
-      "tips": [
-        "本课学习：sh。",
-        "所有列出的键位都可以使用；主键只决定展示顺序。",
-        "先看提示打对，再逐步撤掉提示。"
-      ],
+      "tips": [],
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy"
@@ -273,7 +260,7 @@
       "chapterId": "ch-basic",
       "kind": "drill",
       "title": "零声母 · 12 个音节",
-      "desc": "逐个列出 12 个零声母音节的两键映射（字母式 / o+ 式由方案决定）",
+      "desc": "逐个列出 12 个需要记忆的零声母音节的两键映射，其余零声母与全拼一致",
       "focusAtoms": [
         "zero:a",
         "zero:ai",
@@ -499,11 +486,7 @@
           "tone": 3
         }
       ],
-      "tips": [
-        "本课学习：a / ai / an / ang / ao / e / ei / en / eng / er / o / ou。",
-        "所有列出的键位都可以使用；主键只决定展示顺序。",
-        "先看提示打对，再逐步撤掉提示。"
-      ],
+      "tips": [],
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy"
@@ -519,7 +502,7 @@
       "chapterId": "ch-basic",
       "kind": "review",
       "title": "复习 · 声母与零声母",
-      "desc": "范围：声母改造 + 零声母全表（按学习顺序累计复习）",
+      "desc": "范围：声母改造 + 零声母全表，按学习顺序累计复习",
       "focusAtoms": [
         "initial:zh",
         "initial:ch",
@@ -815,11 +798,7 @@
           "tone": 3
         }
       ],
-      "tips": [
-        "本课学习：zh / ch / sh / a / ai / an / ang / ao / e / ei / en / eng / er / o / ou。",
-        "所有列出的键位都可以使用；主键只决定展示顺序。",
-        "先看提示打对，再逐步撤掉提示。"
-      ],
+      "tips": [],
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy",
@@ -886,11 +865,7 @@
         }
       },
       "zeroExamples": [],
-      "tips": [
-        "本课学习：ai。",
-        "所有列出的键位都可以使用；主键只决定展示顺序。",
-        "先看提示打对，再逐步撤掉提示。"
-      ],
+      "tips": [],
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy"
@@ -959,11 +934,7 @@
         }
       },
       "zeroExamples": [],
-      "tips": [
-        "本课学习：ao。",
-        "所有列出的键位都可以使用；主键只决定展示顺序。",
-        "先看提示打对，再逐步撤掉提示。"
-      ],
+      "tips": [],
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy"
@@ -979,7 +950,7 @@
       "chapterId": "ch-a",
       "kind": "drill",
       "title": "韵母 · an",
-      "desc": "新键：韵母 an（前鼻音）",
+      "desc": "新键：韵母 an，前鼻音",
       "focusAtoms": [
         "final:an"
       ],
@@ -1033,11 +1004,7 @@
         }
       },
       "zeroExamples": [],
-      "tips": [
-        "本课学习：an。",
-        "所有列出的键位都可以使用；主键只决定展示顺序。",
-        "先看提示打对，再逐步撤掉提示。"
-      ],
+      "tips": [],
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy"
@@ -1053,7 +1020,7 @@
       "chapterId": "ch-a",
       "kind": "drill",
       "title": "韵母 · ang",
-      "desc": "新键：韵母 ang（后鼻音）",
+      "desc": "新键：韵母 ang，后鼻音",
       "focusAtoms": [
         "final:ang"
       ],
@@ -1108,11 +1075,7 @@
         }
       },
       "zeroExamples": [],
-      "tips": [
-        "本课学习：ang。",
-        "所有列出的键位都可以使用；主键只决定展示顺序。",
-        "先看提示打对，再逐步撤掉提示。"
-      ],
+      "tips": [],
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy"
@@ -1133,11 +1096,7 @@
         "final:ai",
         "final:ao",
         "final:an",
-        "final:ang",
-        "zero:ai",
-        "zero:an",
-        "zero:ang",
-        "zero:ao"
+        "final:ang"
       ],
       "blockingAtoms": [
         "final:ai",
@@ -1145,12 +1104,7 @@
         "final:an",
         "final:ang"
       ],
-      "nonBlockingAtoms": [
-        "zero:ai",
-        "zero:an",
-        "zero:ang",
-        "zero:ao"
-      ],
+      "nonBlockingAtoms": [],
       "prerequisites": [
         "initial:zh",
         "initial:ch",
@@ -1247,75 +1201,10 @@
             "张"
           ],
           "mnemonic": "ANG 在 g 键：上、让、当、长、张"
-        },
-        "zero:ai": {
-          "atomId": "zero:ai",
-          "type": "zero",
-          "pinyin": "ai",
-          "keys": [
-            "as"
-          ],
-          "free": false,
-          "mnemonic": "零 ai = as"
-        },
-        "zero:an": {
-          "atomId": "zero:an",
-          "type": "zero",
-          "pinyin": "an",
-          "keys": [
-            "af"
-          ],
-          "free": false,
-          "mnemonic": "零 an = af"
-        },
-        "zero:ang": {
-          "atomId": "zero:ang",
-          "type": "zero",
-          "pinyin": "ang",
-          "keys": [
-            "ag"
-          ],
-          "free": false,
-          "mnemonic": "零 ang = ag"
-        },
-        "zero:ao": {
-          "atomId": "zero:ao",
-          "type": "zero",
-          "pinyin": "ao",
-          "keys": [
-            "ad"
-          ],
-          "free": false,
-          "mnemonic": "零 ao = ad"
         }
       },
-      "zeroExamples": [
-        {
-          "syllable": "ai",
-          "char": "爱",
-          "tone": 4
-        },
-        {
-          "syllable": "an",
-          "char": "按",
-          "tone": 4
-        },
-        {
-          "syllable": "ang",
-          "char": "昂",
-          "tone": 2
-        },
-        {
-          "syllable": "ao",
-          "char": "奥",
-          "tone": 4
-        }
-      ],
-      "tips": [
-        "本课学习：ai / ao / an / ang / ai / an / ang / ao。",
-        "所有列出的键位都可以使用；主键只决定展示顺序。",
-        "先看提示打对，再逐步撤掉提示。"
-      ],
+      "zeroExamples": [],
+      "tips": [],
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy",
@@ -1331,7 +1220,7 @@
       "chapterId": "ch-a",
       "kind": "drill",
       "title": "同键 · ia / ua",
-      "desc": "新键：ia / ua（同键双韵）",
+      "desc": "新键：ia / ua，同键双韵",
       "focusAtoms": [
         "final:ia",
         "final:ua"
@@ -1406,11 +1295,7 @@
         }
       },
       "zeroExamples": [],
-      "tips": [
-        "本课学习：ia / ua。",
-        "所有列出的键位都可以使用；主键只决定展示顺序。",
-        "先看提示打对，再逐步撤掉提示。"
-      ],
+      "tips": [],
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy"
@@ -1484,11 +1369,7 @@
         }
       },
       "zeroExamples": [],
-      "tips": [
-        "本课学习：iao。",
-        "所有列出的键位都可以使用；主键只决定展示顺序。",
-        "先看提示打对，再逐步撤掉提示。"
-      ],
+      "tips": [],
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy"
@@ -1563,11 +1444,7 @@
         }
       },
       "zeroExamples": [],
-      "tips": [
-        "本课学习：ian。",
-        "所有列出的键位都可以使用；主键只决定展示顺序。",
-        "先看提示打对，再逐步撤掉提示。"
-      ],
+      "tips": [],
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy"
@@ -1583,7 +1460,7 @@
       "chapterId": "ch-a",
       "kind": "drill",
       "title": "同键 · iang / uang",
-      "desc": "新键：iang / uang（同键双韵）",
+      "desc": "新键：iang / uang，同键双韵",
       "focusAtoms": [
         "final:iang",
         "final:uang"
@@ -1662,11 +1539,7 @@
         }
       },
       "zeroExamples": [],
-      "tips": [
-        "本课学习：iang / uang。",
-        "所有列出的键位都可以使用；主键只决定展示顺序。",
-        "先看提示打对，再逐步撤掉提示。"
-      ],
+      "tips": [],
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy"
@@ -1744,11 +1617,7 @@
         }
       },
       "zeroExamples": [],
-      "tips": [
-        "本课学习：uai。",
-        "所有列出的键位都可以使用；主键只决定展示顺序。",
-        "先看提示打对，再逐步撤掉提示。"
-      ],
+      "tips": [],
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy"
@@ -1827,11 +1696,7 @@
         }
       },
       "zeroExamples": [],
-      "tips": [
-        "本课学习：uan。",
-        "所有列出的键位都可以使用；主键只决定展示顺序。",
-        "先看提示打对，再逐步撤掉提示。"
-      ],
+      "tips": [],
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy"
@@ -1860,11 +1725,7 @@
         "final:ua",
         "final:uai",
         "final:uan",
-        "final:uang",
-        "zero:ai",
-        "zero:an",
-        "zero:ang",
-        "zero:ao"
+        "final:uang"
       ],
       "blockingAtoms": [
         "final:ai",
@@ -1880,12 +1741,7 @@
         "final:uan",
         "final:uang"
       ],
-      "nonBlockingAtoms": [
-        "zero:ai",
-        "zero:an",
-        "zero:ang",
-        "zero:ao"
-      ],
+      "nonBlockingAtoms": [],
       "prerequisites": [
         "initial:zh",
         "initial:ch",
@@ -2126,75 +1982,10 @@
             "床"
           ],
           "mnemonic": "UANG 在 h 键：黄、光、双、装、床"
-        },
-        "zero:ai": {
-          "atomId": "zero:ai",
-          "type": "zero",
-          "pinyin": "ai",
-          "keys": [
-            "as"
-          ],
-          "free": false,
-          "mnemonic": "零 ai = as"
-        },
-        "zero:an": {
-          "atomId": "zero:an",
-          "type": "zero",
-          "pinyin": "an",
-          "keys": [
-            "af"
-          ],
-          "free": false,
-          "mnemonic": "零 an = af"
-        },
-        "zero:ang": {
-          "atomId": "zero:ang",
-          "type": "zero",
-          "pinyin": "ang",
-          "keys": [
-            "ag"
-          ],
-          "free": false,
-          "mnemonic": "零 ang = ag"
-        },
-        "zero:ao": {
-          "atomId": "zero:ao",
-          "type": "zero",
-          "pinyin": "ao",
-          "keys": [
-            "ad"
-          ],
-          "free": false,
-          "mnemonic": "零 ao = ad"
         }
       },
-      "zeroExamples": [
-        {
-          "syllable": "ai",
-          "char": "爱",
-          "tone": 4
-        },
-        {
-          "syllable": "an",
-          "char": "按",
-          "tone": 4
-        },
-        {
-          "syllable": "ang",
-          "char": "昂",
-          "tone": 2
-        },
-        {
-          "syllable": "ao",
-          "char": "奥",
-          "tone": 4
-        }
-      ],
-      "tips": [
-        "本课学习：ai / ao / an / ang / ia / iao / ian / iang / ua / uai / uan / uang / ai / an / ang / ao。",
-        "所有列出的键位都可以使用；主键只决定展示顺序。",
-        "先看提示打对，再逐步撤掉提示。"
-      ],
+      "zeroExamples": [],
+      "tips": [],
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy",
@@ -2274,11 +2065,7 @@
         }
       },
       "zeroExamples": [],
-      "tips": [
-        "本课学习：uo。",
-        "所有列出的键位都可以使用；主键只决定展示顺序。",
-        "先看提示打对，再逐步撤掉提示。"
-      ],
+      "tips": [],
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy"
@@ -2359,11 +2146,7 @@
         }
       },
       "zeroExamples": [],
-      "tips": [
-        "本课学习：ou。",
-        "所有列出的键位都可以使用；主键只决定展示顺序。",
-        "先看提示打对，再逐步撤掉提示。"
-      ],
+      "tips": [],
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy"
@@ -2379,7 +2162,7 @@
       "chapterId": "ch-o",
       "kind": "drill",
       "title": "同键 · ong / iong",
-      "desc": "新键：ong / iong（同键双韵）",
+      "desc": "新键：ong / iong，同键双韵",
       "focusAtoms": [
         "final:ong",
         "final:iong"
@@ -2462,11 +2245,7 @@
         }
       },
       "zeroExamples": [],
-      "tips": [
-        "本课学习：ong / iong。",
-        "所有列出的键位都可以使用；主键只决定展示顺序。",
-        "先看提示打对，再逐步撤掉提示。"
-      ],
+      "tips": [],
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy"
@@ -2487,9 +2266,7 @@
         "final:uo",
         "final:ou",
         "final:ong",
-        "final:iong",
-        "zero:o",
-        "zero:ou"
+        "final:iong"
       ],
       "blockingAtoms": [
         "final:uo",
@@ -2497,10 +2274,7 @@
         "final:ong",
         "final:iong"
       ],
-      "nonBlockingAtoms": [
-        "zero:o",
-        "zero:ou"
-      ],
+      "nonBlockingAtoms": [],
       "prerequisites": [
         "initial:zh",
         "initial:ch",
@@ -2607,45 +2381,10 @@
             "囧"
           ],
           "mnemonic": "IONG 在 y 键：兄、穷、囧"
-        },
-        "zero:o": {
-          "atomId": "zero:o",
-          "type": "zero",
-          "pinyin": "o",
-          "keys": [
-            "oo"
-          ],
-          "free": false,
-          "mnemonic": "零 o = oo"
-        },
-        "zero:ou": {
-          "atomId": "zero:ou",
-          "type": "zero",
-          "pinyin": "ou",
-          "keys": [
-            "op"
-          ],
-          "free": false,
-          "mnemonic": "零 ou = op"
         }
       },
-      "zeroExamples": [
-        {
-          "syllable": "o",
-          "char": "哦",
-          "tone": 4
-        },
-        {
-          "syllable": "ou",
-          "char": "藕",
-          "tone": 3
-        }
-      ],
-      "tips": [
-        "本课学习：uo / ou / ong / iong / o / ou。",
-        "所有列出的键位都可以使用；主键只决定展示顺序。",
-        "先看提示打对，再逐步撤掉提示。"
-      ],
+      "zeroExamples": [],
+      "tips": [],
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy",
@@ -3275,11 +3014,7 @@
           "tone": 3
         }
       ],
-      "tips": [
-        "本课学习：zh / ch / sh / a / ai / an / ang / ao / e / ei / en / eng / er / o / ou / ai / ao / an / ang / ia / ua / iao / ian / iang / uang / uai / uan / uo / ou / ong / iong。",
-        "所有列出的键位都可以使用；主键只决定展示顺序。",
-        "先看提示打对，再逐步撤掉提示。"
-      ],
+      "tips": [],
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy",
@@ -3908,11 +3643,7 @@
           "tone": 3
         }
       ],
-      "tips": [
-        "本课学习：zh / ch / sh / a / ai / an / ang / ao / e / ei / en / eng / er / o / ou / ai / ao / an / ang / ia / ua / iao / ian / iang / uang / uai / uan / uo / ou / ong / iong。",
-        "所有列出的键位都可以使用；主键只决定展示顺序。",
-        "先看提示打对，再逐步撤掉提示。"
-      ],
+      "tips": [],
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "speed",
@@ -4000,11 +3731,7 @@
         }
       },
       "zeroExamples": [],
-      "tips": [
-        "本课学习：ei。",
-        "所有列出的键位都可以使用；主键只决定展示顺序。",
-        "先看提示打对，再逐步撤掉提示。"
-      ],
+      "tips": [],
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy"
@@ -4089,11 +3816,7 @@
         }
       },
       "zeroExamples": [],
-      "tips": [
-        "本课学习：en。",
-        "所有列出的键位都可以使用；主键只决定展示顺序。",
-        "先看提示打对，再逐步撤掉提示。"
-      ],
+      "tips": [],
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy"
@@ -4109,7 +3832,7 @@
       "chapterId": "ch-e",
       "kind": "drill",
       "title": "韵母 · eng",
-      "desc": "新键：韵母 eng（与 en 对比）",
+      "desc": "新键：韵母 eng，与 en 对比",
       "focusAtoms": [
         "final:eng"
       ],
@@ -4179,11 +3902,7 @@
         }
       },
       "zeroExamples": [],
-      "tips": [
-        "本课学习：eng。",
-        "所有列出的键位都可以使用；主键只决定展示顺序。",
-        "先看提示打对，再逐步撤掉提示。"
-      ],
+      "tips": [],
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy"
@@ -4203,23 +3922,14 @@
       "focusAtoms": [
         "final:ei",
         "final:en",
-        "final:eng",
-        "zero:ei",
-        "zero:en",
-        "zero:eng",
-        "zero:er"
+        "final:eng"
       ],
       "blockingAtoms": [
         "final:ei",
         "final:en",
         "final:eng"
       ],
-      "nonBlockingAtoms": [
-        "zero:ei",
-        "zero:en",
-        "zero:eng",
-        "zero:er"
-      ],
+      "nonBlockingAtoms": [],
       "prerequisites": [
         "initial:zh",
         "initial:ch",
@@ -4314,75 +4024,10 @@
             "成"
           ],
           "mnemonic": "ENG 在 t 键：鞥、等、能、更、成"
-        },
-        "zero:ei": {
-          "atomId": "zero:ei",
-          "type": "zero",
-          "pinyin": "ei",
-          "keys": [
-            "ew"
-          ],
-          "free": false,
-          "mnemonic": "零 ei = ew"
-        },
-        "zero:en": {
-          "atomId": "zero:en",
-          "type": "zero",
-          "pinyin": "en",
-          "keys": [
-            "er"
-          ],
-          "free": false,
-          "mnemonic": "零 en = er"
-        },
-        "zero:eng": {
-          "atomId": "zero:eng",
-          "type": "zero",
-          "pinyin": "eng",
-          "keys": [
-            "et"
-          ],
-          "free": false,
-          "mnemonic": "零 eng = et"
-        },
-        "zero:er": {
-          "atomId": "zero:er",
-          "type": "zero",
-          "pinyin": "er",
-          "keys": [
-            "eq"
-          ],
-          "free": false,
-          "mnemonic": "零 er = eq"
         }
       },
-      "zeroExamples": [
-        {
-          "syllable": "ei",
-          "char": "诶",
-          "tone": 1
-        },
-        {
-          "syllable": "en",
-          "char": "恩",
-          "tone": 1
-        },
-        {
-          "syllable": "eng",
-          "char": "鞥",
-          "tone": 1
-        },
-        {
-          "syllable": "er",
-          "char": "而",
-          "tone": 2
-        }
-      ],
-      "tips": [
-        "本课学习：ei / en / eng / ei / en / eng / er。",
-        "所有列出的键位都可以使用；主键只决定展示顺序。",
-        "先看提示打对，再逐步撤掉提示。"
-      ],
+      "zeroExamples": [],
+      "tips": [],
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy",
@@ -4469,11 +4114,7 @@
         }
       },
       "zeroExamples": [],
-      "tips": [
-        "本课学习：in。",
-        "所有列出的键位都可以使用；主键只决定展示顺序。",
-        "先看提示打对，再逐步撤掉提示。"
-      ],
+      "tips": [],
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy"
@@ -4489,7 +4130,7 @@
       "chapterId": "ch-i",
       "kind": "drill",
       "title": "韵母 · ing",
-      "desc": "新键：韵母 ing（与 in 对比）",
+      "desc": "新键：韵母 ing，与 in 对比",
       "focusAtoms": [
         "final:ing"
       ],
@@ -4561,11 +4202,7 @@
         }
       },
       "zeroExamples": [],
-      "tips": [
-        "本课学习：ing。",
-        "所有列出的键位都可以使用；主键只决定展示顺序。",
-        "先看提示打对，再逐步撤掉提示。"
-      ],
+      "tips": [],
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy"
@@ -4654,11 +4291,7 @@
         }
       },
       "zeroExamples": [],
-      "tips": [
-        "本课学习：ie。",
-        "所有列出的键位都可以使用；主键只决定展示顺序。",
-        "先看提示打对，再逐步撤掉提示。"
-      ],
+      "tips": [],
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy"
@@ -4748,11 +4381,7 @@
         }
       },
       "zeroExamples": [],
-      "tips": [
-        "本课学习：iu。",
-        "所有列出的键位都可以使用；主键只决定展示顺序。",
-        "先看提示打对，再逐步撤掉提示。"
-      ],
+      "tips": [],
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy"
@@ -4900,11 +4529,7 @@
         }
       },
       "zeroExamples": [],
-      "tips": [
-        "本课学习：in / ing / ie / iu。",
-        "所有列出的键位都可以使用；主键只决定展示顺序。",
-        "先看提示打对，再逐步撤掉提示。"
-      ],
+      "tips": [],
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy",
@@ -4995,11 +4620,7 @@
         }
       },
       "zeroExamples": [],
-      "tips": [
-        "本课学习：ui。",
-        "所有列出的键位都可以使用；主键只决定展示顺序。",
-        "先看提示打对，再逐步撤掉提示。"
-      ],
+      "tips": [],
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy"
@@ -5091,11 +4712,7 @@
         }
       },
       "zeroExamples": [],
-      "tips": [
-        "本课学习：un。",
-        "所有列出的键位都可以使用；主键只决定展示顺序。",
-        "先看提示打对，再逐步撤掉提示。"
-      ],
+      "tips": [],
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy"
@@ -5114,13 +4731,11 @@
       "desc": "新键：üe 的 ue / ve 两种拼写",
       "focusAtoms": [
         "final:ue",
-        "final:ve",
-        "final:v"
+        "final:ve"
       ],
       "blockingAtoms": [
         "final:ue",
-        "final:ve",
-        "final:v"
+        "final:ve"
       ],
       "nonBlockingAtoms": [],
       "prerequisites": [
@@ -5202,28 +4817,10 @@
             "虐"
           ],
           "mnemonic": "VE 在 x 键：略、虐"
-        },
-        "final:v": {
-          "atomId": "final:v",
-          "type": "final",
-          "pinyin": "v",
-          "keys": [
-            "v"
-          ],
-          "free": true,
-          "anchors": [
-            "女",
-            "率"
-          ],
-          "mnemonic": "V 在 v 键：女、率"
         }
       },
       "zeroExamples": [],
-      "tips": [
-        "本课学习：ue / ve / v。",
-        "所有列出的键位都可以使用；主键只决定展示顺序。",
-        "先看提示打对，再逐步撤掉提示。"
-      ],
+      "tips": [],
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy"
@@ -5239,7 +4836,7 @@
       "chapterId": "ch-u",
       "kind": "review",
       "title": "复习 · u 与 ü 家族",
-      "desc": "范围：u 与 ü 家族（ui/un/ue/ve）",
+      "desc": "范围：u 与 ü 家族，ui/un/ue/ve",
       "focusAtoms": [
         "final:ui",
         "final:un",
@@ -5295,8 +4892,7 @@
         "final:ui",
         "final:un",
         "final:ue",
-        "final:ve",
-        "final:v"
+        "final:ve"
       ],
       "wordPlan": {
         "maxUnfamiliar": 0,
@@ -5372,11 +4968,7 @@
         }
       },
       "zeroExamples": [],
-      "tips": [
-        "本课学习：ui / un / ue / ve。",
-        "所有列出的键位都可以使用；主键只决定展示顺序。",
-        "先看提示打对，再逐步撤掉提示。"
-      ],
+      "tips": [],
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy",
@@ -5435,8 +5027,7 @@
         "final:ui",
         "final:un",
         "final:ue",
-        "final:ve",
-        "final:v"
+        "final:ve"
       ],
       "blockingAtoms": [
         "initial:zh",
@@ -5468,8 +5059,7 @@
         "final:ui",
         "final:un",
         "final:ue",
-        "final:ve",
-        "final:v"
+        "final:ve"
       ],
       "nonBlockingAtoms": [
         "zero:a",
@@ -5527,8 +5117,7 @@
         "final:ui",
         "final:un",
         "final:ue",
-        "final:ve",
-        "final:v"
+        "final:ve"
       ],
       "wordPlan": {
         "maxUnfamiliar": 0,
@@ -6161,20 +5750,6 @@
             "虐"
           ],
           "mnemonic": "VE 在 x 键：略、虐"
-        },
-        "final:v": {
-          "atomId": "final:v",
-          "type": "final",
-          "pinyin": "v",
-          "keys": [
-            "v"
-          ],
-          "free": true,
-          "anchors": [
-            "女",
-            "率"
-          ],
-          "mnemonic": "V 在 v 键：女、率"
         }
       },
       "zeroExamples": [
@@ -6239,11 +5814,7 @@
           "tone": 3
         }
       ],
-      "tips": [
-        "本课学习：zh / ch / sh / a / ai / an / ang / ao / e / ei / en / eng / er / o / ou / ai / ao / an / ang / ia / ua / iao / ian / iang / uang / uai / uan / uo / ou / ong / iong / ei / en / eng / in / ing / ie / iu / ui / un / ue / ve / v。",
-        "所有列出的键位都可以使用；主键只决定展示顺序。",
-        "先看提示打对，再逐步撤掉提示。"
-      ],
+      "tips": [],
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy",
@@ -6301,8 +5872,7 @@
         "final:ui",
         "final:un",
         "final:ue",
-        "final:ve",
-        "final:v"
+        "final:ve"
       ],
       "blockingAtoms": [
         "initial:zh",
@@ -6334,8 +5904,7 @@
         "final:ui",
         "final:un",
         "final:ue",
-        "final:ve",
-        "final:v"
+        "final:ve"
       ],
       "nonBlockingAtoms": [
         "zero:a",
@@ -6393,8 +5962,7 @@
         "final:ui",
         "final:un",
         "final:ue",
-        "final:ve",
-        "final:v"
+        "final:ve"
       ],
       "wordPlan": {
         "maxUnfamiliar": 0,
@@ -7027,20 +6595,6 @@
             "虐"
           ],
           "mnemonic": "VE 在 x 键：略、虐"
-        },
-        "final:v": {
-          "atomId": "final:v",
-          "type": "final",
-          "pinyin": "v",
-          "keys": [
-            "v"
-          ],
-          "free": true,
-          "anchors": [
-            "女",
-            "率"
-          ],
-          "mnemonic": "V 在 v 键：女、率"
         }
       },
       "zeroExamples": [
@@ -7105,11 +6659,7 @@
           "tone": 3
         }
       ],
-      "tips": [
-        "本课学习：zh / ch / sh / a / ai / an / ang / ao / e / ei / en / eng / er / o / ou / ai / ao / an / ang / ia / ua / iao / ian / iang / uang / uai / uan / uo / ou / ong / iong / ei / en / eng / in / ing / ie / iu / ui / un / ue / ve / v。",
-        "所有列出的键位都可以使用；主键只决定展示顺序。",
-        "先看提示打对，再逐步撤掉提示。"
-      ],
+      "tips": [],
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "speed",
@@ -7129,7 +6679,7 @@
       "chapterId": "ch-exam",
       "kind": "exam",
       "title": "通关 · 最终考核",
-      "desc": "无提示 + 限时；正确率与速度同时分档（准确率 85/90/95，速度 45/60/75 WPM）",
+      "desc": "无提示 + 限时；正确率与速度同时分档，准确率 85/90/95，速度 45/60/75 WPM",
       "focusAtoms": [
         "initial:zh",
         "initial:ch",
@@ -7172,8 +6722,7 @@
         "final:ui",
         "final:un",
         "final:ue",
-        "final:ve",
-        "final:v"
+        "final:ve"
       ],
       "blockingAtoms": [
         "initial:zh",
@@ -7205,8 +6754,7 @@
         "final:ui",
         "final:un",
         "final:ue",
-        "final:ve",
-        "final:v"
+        "final:ve"
       ],
       "nonBlockingAtoms": [
         "zero:a",
@@ -7264,8 +6812,7 @@
         "final:ui",
         "final:un",
         "final:ue",
-        "final:ve",
-        "final:v"
+        "final:ve"
       ],
       "wordPlan": {
         "maxUnfamiliar": 0,
@@ -7898,20 +7445,6 @@
             "虐"
           ],
           "mnemonic": "VE 在 x 键：略、虐"
-        },
-        "final:v": {
-          "atomId": "final:v",
-          "type": "final",
-          "pinyin": "v",
-          "keys": [
-            "v"
-          ],
-          "free": true,
-          "anchors": [
-            "女",
-            "率"
-          ],
-          "mnemonic": "V 在 v 键：女、率"
         }
       },
       "zeroExamples": [
@@ -7976,11 +7509,7 @@
           "tone": 3
         }
       ],
-      "tips": [
-        "本课学习：zh / ch / sh / a / ai / an / ang / ao / e / ei / en / eng / er / o / ou / ai / ao / an / ang / ia / ua / iao / ian / iang / uang / uai / uan / uo / ou / ong / iong / ei / en / eng / in / ing / ie / iu / ui / un / ue / ve / v。",
-        "所有列出的键位都可以使用；主键只决定展示顺序。",
-        "先看提示打对，再逐步撤掉提示。"
-      ],
+      "tips": [],
       "passCriteria": {
         "accuracy": 0.85,
         "mode": "accuracy-speed",
@@ -7996,5 +7525,5 @@
       }
     }
   ],
-  "dataVersion": "curriculum-750d2ca75102"
+  "dataVersion": "curriculum-449664eb44fc"
 }

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import type { AtomId, PracticeCap } from '@shuangpin/core'
-import KeyCap from './KeyCap.vue'
+import KeyCap from '@/components/common/KeyCap.vue'
 import InputSlots from './InputSlots.vue'
 
 const props = withDefaults(
@@ -111,6 +111,7 @@ function hidden(cap: PracticeCap): boolean {
       <KeyCap
         v-for="(cap, index) in caps"
         :key="index"
+        size="practice"
         :cap="cap"
         :hidden="hidden(cap)"
         :focus="focusSet.has(cap.atomId)"
@@ -135,18 +136,18 @@ function hidden(cap: PracticeCap): boolean {
   min-width: 0;
   aspect-ratio: 340 / 430;
   padding: 8px 7px;
-  border: 1.1px solid var(--line);
-  border-radius: var(--r-md);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
   background: var(--surface);
   box-shadow: var(--shadow-sm);
-  transition: border-color 130ms, box-shadow 130ms, background 130ms, transform 130ms;
+  transition: border-color var(--dur-fast), box-shadow var(--dur-fast), background var(--dur-fast), transform var(--dur-fast);
 }
 .char-card.has-input {
   aspect-ratio: 340 / 450;
 }
 .char-card.is-active {
   border-color: var(--brand);
-  box-shadow: 0 0 0 3px var(--brand-soft), var(--shadow-sm);
+  box-shadow: var(--ring-brand), var(--shadow-sm);
 }
 .char-card.is-completed {
   background: var(--surface-2);
@@ -156,10 +157,10 @@ function hidden(cap: PracticeCap): boolean {
   background: var(--danger-soft);
 }
 .char-card.is-just-wrong {
-  animation: ui-shake 340ms var(--ease);
+  animation: ui-shake var(--dur-slow) var(--ease);
 }
 .char-card.is-just-completed {
-  animation: ui-success-pulse 440ms var(--ease);
+  animation: ui-success-pulse var(--dur-slow) var(--ease);
 }
 .char-glyph {
   font-size: 34cqw;

@@ -20,7 +20,6 @@
     "validate": "node scripts/validate-all.mjs",
     "data:curriculum": "node scripts/generate-universal-curriculum.mjs",
     "data:sync": "node scripts/sync-data.mjs",
-    "data:packages": "node scripts/scheme-packages/build.mjs",
     "lint:ui": "node scripts/check-ui-conventions.mjs"
   },
   "devDependencies": {

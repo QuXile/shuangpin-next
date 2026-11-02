@@ -4,48 +4,46 @@
  * 标签、内容、溢出计数、hover/focus 浮层和滚动行为都由这里统一决定。
  */
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useResizeObserver } from '@/composables/useResizeObserver'
+import type { MappingItemView, MappingTogglePayload } from '@/lib/keyboardView'
 
-interface MappingItem {
-  label: string
-  /** 每个编码拆成单字符，统一渲染成按键小格 */
-  codes: string[][]
-  title: string
-  emphasized?: boolean
+const props = withDefaults(
+  defineProps<{
+    label: string
+    items: readonly MappingItemView[]
+    /** 练习场配置页：映射可点击切换 */
+    interactive?: boolean
+    onToggle?: (payload: MappingTogglePayload) => void
+  }>(),
+  { interactive: false, onToggle: undefined },
+)
+
+function toggle(item: MappingItemView, event: Event): void {
+  if (!props.interactive || !props.onToggle || !item.toggle) return
+  event.stopPropagation()
+  props.onToggle(item.toggle)
 }
-
-const props = defineProps<{
-  label: string
-  items: readonly MappingItem[]
-}>()
 
 const contentRef = ref<HTMLElement | null>(null)
 const overflow = ref(false)
-let observer: ResizeObserver | undefined
 
 function measure(): void {
   const el = contentRef.value
   overflow.value = Boolean(el && el.scrollWidth > el.clientWidth + 1)
 }
 
-function observe(): void {
-  observer?.disconnect()
-  if (!contentRef.value) return
-  observer = new ResizeObserver(measure)
-  observer.observe(contentRef.value)
-  measure()
-}
+useResizeObserver(contentRef, () => measure())
 
 watch(
   () => props.items,
-  () => { void nextTick(observe) },
+  () => { void nextTick(measure) },
   { immediate: true, deep: true, flush: 'post' },
 )
 onMounted(() => {
-  observe()
+  measure()
   window.addEventListener('resize', measure)
 })
 onBeforeUnmount(() => {
-  observer?.disconnect()
   window.removeEventListener('resize', measure)
 })
 </script>
@@ -54,6 +52,7 @@ onBeforeUnmount(() => {
   <div
     class="mapping-strip"
     :tabindex="overflow ? 0 : undefined"
+    role="group"
     :aria-label="label"
   >
     <span class="mapping-title">{{ label }}</span>
@@ -63,18 +62,18 @@ onBeforeUnmount(() => {
           v-for="item in items"
           :key="item.label"
           class="mapping-chip"
-          :class="{ 'is-emphasized': item.emphasized }"
+          :class="{ 'is-emphasized': item.emphasized, 'is-tappable': interactive }"
           :title="item.title"
+          :role="interactive ? 'button' : undefined"
+          :tabindex="interactive ? 0 : undefined"
+          :aria-pressed="interactive ? Boolean(item.emphasized) : undefined"
+          @click="toggle(item, $event)"
+          @keydown.enter.stop.prevent="toggle(item, $event)"
+          @keydown.space.stop.prevent="toggle(item, $event)"
         >
           <b>{{ item.label }}</b>
           <span class="mapping-keys">
-            <kbd
-              v-for="(code, codeIndex) in item.codes"
-              :key="codeIndex"
-              class="mapping-code"
-            >
-              <span v-for="(key, keyIndex) in code" :key="keyIndex">{{ key }}</span>
-            </kbd>
+            <template v-for="(code, codeIndex) in item.codes" :key="codeIndex"><span v-if="codeIndex > 0" class="mapping-sep">/</span><kbd class="mapping-key" :class="{ 'is-emphasized': item.emphasized }">{{ code.join('') }}</kbd></template>
           </span>
         </span>
       </span>
@@ -85,13 +84,17 @@ onBeforeUnmount(() => {
         v-for="item in items"
         :key="item.label"
         class="mapping-chip"
-        :class="{ 'is-emphasized': item.emphasized }"
+        :class="{ 'is-emphasized': item.emphasized, 'is-tappable': interactive }"
+        :role="interactive ? 'button' : undefined"
+        :tabindex="interactive ? 0 : undefined"
+        :aria-pressed="interactive ? Boolean(item.emphasized) : undefined"
+        @click="toggle(item, $event)"
+        @keydown.enter.stop.prevent="toggle(item, $event)"
+        @keydown.space.stop.prevent="toggle(item, $event)"
       >
         <b>{{ item.label }}</b>
         <span class="mapping-keys">
-          <kbd v-for="(code, codeIndex) in item.codes" :key="codeIndex" class="mapping-code">
-            <span v-for="(key, keyIndex) in code" :key="keyIndex">{{ key }}</span>
-          </kbd>
+          <template v-for="(code, codeIndex) in item.codes" :key="codeIndex"><span v-if="codeIndex > 0" class="mapping-sep">/</span><kbd class="mapping-key" :class="{ 'is-emphasized': item.emphasized }">{{ code.join('') }}</kbd></template>
         </span>
       </span>
     </span>
@@ -104,10 +107,10 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 8px;
-  padding: 3px 2px;
+  margin-top: 4px;
+  padding: 2px;
   min-width: 0;
-  border-radius: 5px;
+  border-radius: var(--r-xs);
 }
 .mapping-strip:focus-visible {
   outline: 2px solid var(--brand-line);
@@ -116,7 +119,7 @@ onBeforeUnmount(() => {
 .mapping-title {
   flex: none;
   color: var(--ink-4);
-  font-size: 9px;
+  font-size: var(--text-2xs);
   font-weight: 800;
   letter-spacing: 0.04em;
   white-space: nowrap;
@@ -126,7 +129,7 @@ onBeforeUnmount(() => {
   min-width: 0;
   overflow: hidden;
   color: var(--ink-3);
-  font-size: 10px;
+  font-size: var(--text-2xs);
   line-height: 1.5;
 }
 .mapping-track {
@@ -144,45 +147,75 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 3px;
   padding: 2px 5px;
-  border-radius: 5px;
+  border-radius: var(--r-xs);
   background: var(--surface);
   color: var(--ink-3);
-  font-size: 10px;
+  font-size: var(--text-2xs);
   line-height: 1.4;
+}
+.mapping-chip.is-tappable {
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease),
+    filter var(--dur-fast) var(--ease);
+}
+/* 普通 chip：hover 提亮底色；已强调 chip 只做明暗反馈，避免把强调色盖成灰色 */
+.mapping-chip.is-tappable:not(.is-emphasized):hover {
+  background: var(--surface-3);
+}
+.mapping-chip.is-tappable.is-emphasized:hover {
+  filter: brightness(1.08);
+}
+.mapping-chip.is-tappable:active {
+  filter: brightness(0.9);
+}
+.mapping-chip.is-tappable:focus-visible {
+  outline: 2px solid var(--mapping-focus-line);
+  outline-offset: 1px;
 }
 .mapping-chip b {
   color: var(--ink-2);
   font-weight: 700;
 }
 .mapping-chip.is-emphasized {
-  background: var(--state-info-bg, var(--brand-soft));
-  color: var(--brand-ink);
-  box-shadow: inset 0 0 0 1px var(--brand-line);
+  background: var(--mapping-focus-soft);
+  color: var(--mapping-focus-ink);
+  box-shadow: inset 0 0 0 1px var(--mapping-focus-line);
 }
 .mapping-keys {
   display: inline-flex;
   gap: 2px;
 }
-.mapping-code {
-  display: inline-flex;
-  gap: 1px;
+.mapping-key {
+  display: inline-grid;
+  place-items: center;
+  min-width: 14px;
+  height: 16px;
   padding: 0 3px;
-  border: 0;
-  border-radius: 3px;
+  border: 1px solid var(--line);
+  border-bottom-width: 2px;
+  border-radius: var(--r-xs);
   background: var(--surface-3);
   color: var(--ink-2);
   font-family: var(--font-mono);
-  font-size: 8px;
-  line-height: 1.4;
+  font-size: var(--text-2xs);
+  font-weight: 650;
+  line-height: 1;
   white-space: nowrap;
 }
-.mapping-code + .mapping-code {
-  margin-left: 2px;
+.mapping-key.is-emphasized {
+  border-color: var(--mapping-focus);
+  background: var(--mapping-focus);
+  color: var(--on-accent);
+}
+.mapping-sep {
+  margin: 0 1px;
+  color: var(--ink-4);
+  font-size: var(--text-2xs);
 }
 .mapping-count {
   flex: none;
   color: var(--ink-4);
-  font-size: 10px;
+  font-size: var(--text-2xs);
   white-space: nowrap;
 }
 .mapping-popup {
@@ -195,14 +228,15 @@ onBeforeUnmount(() => {
   padding: 12px;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: var(--r-sm);
-  box-shadow: var(--pop-shadow);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-pop);
   pointer-events: auto;
   overscroll-behavior: contain;
 }
 .mapping-strip:hover .mapping-popup,
 .mapping-strip:focus-within .mapping-popup {
   display: flex;
+  animation: ui-fade-in var(--dur-fast) var(--ease);
   flex-wrap: wrap;
   gap: 5px 12px;
   align-content: flex-start;

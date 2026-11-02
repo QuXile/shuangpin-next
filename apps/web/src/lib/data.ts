@@ -1,34 +1,23 @@
 /**
  * 数据加载层：读取 apps/web/public/data/（由 scripts/sync-data.mjs 从根 data/ 生成）。
- * - 同一数据只加载一次；
- * - 加载失败不缓存 rejected Promise，允许重试；
- * - 类型全部来自 @shuangpin/core 的数据文件契约。
+ *
+ * 运行时只读 4 类文件（单份数据）：
+ *   index.json             方案索引（SchemeIndexFile）
+ *   schemes/<id>.json      SchemeDef
+ *   curriculum/<id>.json   Curriculum（仅课程方案有）
+ *   lexicon/lexicon.json   统一词库 LexiconFile
+ *
+ * 约定：同一数据只加载一次；加载失败不缓存 rejected Promise，允许重试。
  */
 import type {
   Curriculum,
-  PoolExample,
+  Lexicon,
   SchemeDef,
   SchemeIndexFile,
-  WordEntry,
 } from '@shuangpin/core'
 
-export interface SchemePackageManifest {
-  schemaVersion: number
-  id: string
-  name: string
-  version: string
-  license: string
-  capabilities: {
-    course: boolean
-    training: boolean
-    article: boolean
-    zeroInitial: boolean
-    customStages: boolean
-  }
-  curriculum: { profile: string; version: string; file: string } | null
-  data: { scheme: string }
-  shared: { lexicon?: string; pools?: string; words?: string; training?: string }
-}
+/** 统一词库文件契约（与 core Lexicon 一致；buildLessonPool 只消费其中三件套） */
+export type LexiconFile = Lexicon
 
 const cache = new Map<string, Promise<unknown>>()
 
@@ -36,7 +25,7 @@ async function getJSON<T>(relPath: string): Promise<T> {
   const url = `${import.meta.env.BASE_URL}data/${relPath}`
   const response = await fetch(url)
   if (!response.ok) {
-    throw new Error(`加载数据失败：${relPath}（HTTP ${response.status}）`)
+    throw new Error(`加载数据失败：${relPath} HTTP ${response.status}`)
   }
   return (await response.json()) as T
 }
@@ -52,50 +41,18 @@ function cached<T>(key: string, loader: () => Promise<T>): Promise<T> {
   return promise
 }
 
-export const loadSchemeIndex = (): Promise<SchemeIndexFile> =>
-  cached('schemes-index', () => getJSON<SchemeIndexFile>('packages/index.json'))
+/** 方案索引：默认方案、推荐顺序、课程能力、19 套方案摘要。 */
+export const loadIndex = (): Promise<SchemeIndexFile> =>
+  cached('index', () => getJSON<SchemeIndexFile>('index.json'))
 
+/** 单个方案的键位定义。 */
 export const loadScheme = (id: string): Promise<SchemeDef> =>
-  cached(`scheme:${id}`, () => getJSON<SchemeDef>(`packages/${id}/scheme.json`))
+  cached(`scheme:${id}`, () => getJSON<SchemeDef>(`schemes/${id}.json`))
 
+/** 单个方案的课程数据（仅 courseSupported 方案有）。 */
 export const loadCurriculum = (id: string): Promise<Curriculum> =>
-  cached(`curriculum:${id}`, () => getJSON<Curriculum>(`packages/${id}/curriculum.json`))
+  cached(`curriculum:${id}`, () => getJSON<Curriculum>(`curriculum/${id}.json`))
 
-/** 读取单个方案包的 manifest；practice-only 包读取时没有 curriculum。 */
-export const loadSchemePackage = (id: string): Promise<SchemePackageManifest> =>
-  cached(`package:${id}`, () => getJSON<SchemePackageManifest>(`packages/${id}/manifest.json`))
-
-/** 统一公共词表：课程与练习场共用。 */
-export interface LexiconFile {
-  schemaVersion: number
-  dataVersion: string
-  description?: string
-  source?: Record<string, string>
-  words: WordEntry[]
-  chars: WordEntry[]
-  syllableExamples: Record<string, PoolExample>
-}
-
+/** 统一词库：课程、入门课与练习场共用。 */
 export const loadLexicon = (): Promise<LexiconFile> =>
   cached('lexicon', () => getJSON<LexiconFile>('lexicon/lexicon.json'))
-
-/** 练习场训练库（词语，一次加载缓存） */
-export interface TrainingBank {
-  schemaVersion: string
-  dataVersion: string
-  generatedAt?: string
-  description?: string
-  chars: WordEntry[]
-}
-
-export interface CommonWordsFile {
-  dataVersion: string
-  count: number
-  words: WordEntry[]
-}
-
-export const loadTrainingBank = (): Promise<TrainingBank> =>
-  cached('training-bank', () => getJSON<TrainingBank>('training/bank.json'))
-
-export const loadCommonWords = (): Promise<CommonWordsFile> =>
-  cached('common-words', () => getJSON<CommonWordsFile>('words/words.sample.json'))

@@ -153,7 +153,7 @@ watch(
 <template>
   <div class="stream-shell">
     <p class="sr-only" aria-live="polite">{{ liveMessage }}</p>
-    <div ref="viewport" class="stream-viewport thin-scroll">
+    <div ref="viewport" class="stream-viewport thin-scroll scroll-y">
       <div class="stream-inner" :class="`is-${mode}`">
         <div
           v-for="(wordState, wordIndex) in session.words"
@@ -232,10 +232,10 @@ watch(
   flex: 1;
   min-height: 0;
   width: 100%;
-  max-width: 860px;
+  max-width: var(--content-session);
   margin: 0 auto;
   padding-bottom: 4px;
-  animation: ui-fade-up 220ms var(--ease);
+  animation: ui-fade-up var(--dur-mid) var(--ease);
 }
 .stream-viewport {
   position: relative;
@@ -243,8 +243,8 @@ watch(
   min-height: 0;
   height: auto;
   width: 100%;
-  border-radius: var(--r-lg);
-  clip-path: inset(0 round var(--r-lg));
+  border-radius: var(--r-panel);
+  clip-path: inset(0 round var(--r-panel));
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-gutter: stable;
@@ -267,7 +267,7 @@ watch(
 .stream-word {
   display: flex;
   justify-content: center;
-  border-radius: var(--r-lg);
+  border-radius: var(--r-panel);
   padding: 4px;
   width: fit-content;
   max-width: 100%;
@@ -281,7 +281,7 @@ watch(
 .stream-word.is-active {
   background: color-mix(in srgb, var(--brand-soft) 72%, transparent);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand) 16%, transparent);
-  animation: ui-row-focus 220ms var(--ease);
+  animation: ui-row-focus var(--dur-mid) var(--ease);
 }
 .stream-word.is-active.has-error {
   background: color-mix(in srgb, var(--danger-soft) 62%, transparent);
@@ -317,7 +317,7 @@ watch(
 .end-summary-wrap {
   margin: 12px 4px 20px;
 }
-@media (max-width: 700px) {
+@media (max-width: 640px) {
   .end-summary-wrap {
     margin: 8px 2px 14px;
   }

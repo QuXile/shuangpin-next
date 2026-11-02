@@ -1,9 +1,9 @@
 /**
- * 拼音基础：规范声母/韵母常量、音节拆分（y/w 作声母、ü→v、jqxy 后 u 系口径）、
- * 声调符号转换与知识点 ID 解析。
+ * 拼音与知识点（atom）基础：规范声母/韵母常量、音节拆分、声调显示、AtomId 与词/原子匹配谓词。
  *
  * 纯 TS，无框架/DOM/Node 依赖；运行期只消费预计算数据，不引第三方拼音库。
- * 「哪些键位是 free（与全拼一致）」属于方案属性，由 SchemeEngine.diff() 推导，本文件不硬编码。
+ * 「哪些键位是 free（与全拼一致）」属于方案属性，由 SchemeEngine.freeSets()/diff() 推导，本文件不硬编码。
+ * 合并自原 pinyin.ts + atoms.ts：知识点标记与匹配谓词和拼音同属一个领域。
  */
 import type {
   AtomId,
@@ -40,9 +40,6 @@ export const ZERO_INITIALS: readonly SyllableFinal[] = [
   'a', 'ai', 'an', 'ang', 'ao', 'e', 'ei', 'en', 'eng', 'er', 'o', 'ou',
 ]
 
-/** j/q/x/y：与 ü 相拼时全拼写作 u，因此主键取 U 键 */
-export const JQXY: ReadonlySet<string> = new Set(['j', 'q', 'x', 'y'])
-
 const INITIAL_SET: ReadonlySet<string> = new Set(INITIALS)
 const FINAL_SET: ReadonlySet<string> = new Set(FINALS)
 const ZERO_SET: ReadonlySet<string> = new Set(ZERO_INITIALS)
@@ -50,34 +47,34 @@ const ZERO_SET: ReadonlySet<string> = new Set(ZERO_INITIALS)
 /** 最长匹配优先的声母顺序（zh/ch/sh 必须先于 z/c/s） */
 const LONGEST_INITIALS: readonly string[] = ['zh', 'ch', 'sh']
 
+/** 零声母判定（initial === '' 即零声母；zeroInitial 显式传入只用于外部数据的兼容写法） */
+export function isZeroSyllable(syllable: { initial: string; zeroInitial?: boolean }): boolean {
+  return syllable.zeroInitial === true || syllable.initial === ''
+}
+
 // ── 声调符号 ──────────────────────────────────────────────────
 
-const TONE_MARK_TO_BASE: Readonly<Record<string, string>> = {
-  'ā': 'a', 'á': 'a', 'ǎ': 'a', 'à': 'a',
-  'ō': 'o', 'ó': 'o', 'ǒ': 'o', 'ò': 'o',
-  'ē': 'e', 'é': 'e', 'ě': 'e', 'è': 'e',
-  'ī': 'i', 'í': 'i', 'ǐ': 'i', 'ì': 'i',
-  'ū': 'u', 'ú': 'u', 'ǔ': 'u', 'ù': 'u',
-  'ǖ': 'v', 'ǘ': 'v', 'ǚ': 'v', 'ǜ': 'v',
-}
-
-const TONE_MARK_TO_LEVEL: Readonly<Record<string, Tone>> = {
-  'ā': 1, 'á': 2, 'ǎ': 3, 'à': 4,
-  'ō': 1, 'ó': 2, 'ǒ': 3, 'ò': 4,
-  'ē': 1, 'é': 2, 'ě': 3, 'è': 4,
-  'ī': 1, 'í': 2, 'ǐ': 3, 'ì': 4,
-  'ū': 1, 'ú': 2, 'ǔ': 3, 'ù': 4,
-  'ǖ': 1, 'ǘ': 2, 'ǚ': 3, 'ǜ': 4,
-}
-
-const VOWEL_TONE_MARKS: Readonly<Record<string, readonly string[]>> = {
+/**
+ * 带调字符唯一来源（ü 记 v）：vowel → [一声, 二声, 三声, 四声]。
+ * normalize / detectTone / toToneMarks 全部由这张表派生，避免三份手工映射漂移。
+ */
+const TONE_MARKS: Readonly<Record<string, readonly [string, string, string, string]>> = {
   a: ['ā', 'á', 'ǎ', 'à'],
   o: ['ō', 'ó', 'ǒ', 'ò'],
   e: ['ē', 'é', 'ě', 'è'],
   i: ['ī', 'í', 'ǐ', 'ì'],
   u: ['ū', 'ú', 'ǔ', 'ù'],
-  'ü': ['ǖ', 'ǘ', 'ǚ', 'ǜ'],
+  v: ['ǖ', 'ǘ', 'ǚ', 'ǜ'],
 }
+
+const TONE_MARK_TO_BASE: ReadonlyMap<string, string> = new Map(
+  Object.entries(TONE_MARKS).flatMap(([base, marks]) => marks.map((mark) => [mark, base] as const)),
+)
+const TONE_MARK_TO_LEVEL: ReadonlyMap<string, Tone> = new Map(
+  Object.entries(TONE_MARKS).flatMap(([, marks]) =>
+    marks.map((mark, index) => [mark, (index + 1) as Tone] as const),
+  ),
+)
 
 // ── 规范化与拆分 ──────────────────────────────────────────────
 
@@ -94,7 +91,7 @@ export function normalizePinyin(input: string): string {
       out += 'v'
       continue
     }
-    const base = TONE_MARK_TO_BASE[ch]
+    const base = TONE_MARK_TO_BASE.get(ch)
     if (base) {
       out += base
       continue
@@ -109,7 +106,7 @@ export function normalizePinyin(input: string): string {
 export function detectTone(input: string): Tone | undefined {
   const text = input.trim().toLowerCase()
   for (const ch of text) {
-    const tone = TONE_MARK_TO_LEVEL[ch]
+    const tone = TONE_MARK_TO_LEVEL.get(ch)
     if (tone) return tone
   }
   const matched = /([1-5])\s*$/.exec(text)
@@ -145,18 +142,17 @@ export function splitPinyin(pinyin: string): SplitResult {
   return finalizeSplit(first as Initial, text.slice(1))
 }
 
-/** 带调拼音 → 规范音节（含声调与零声母标记）；text 可选（对应汉字） */
+/** 带调拼音 → 规范音节（含声调；text 可选，对应汉字） */
 export function splitSyllable(pinyinWithTone: string, text?: string): Syllable | null {
   const split = splitPinyin(pinyinWithTone)
   if (!split) return null
-  const tone = detectTone(pinyinWithTone)
   const syllable: Syllable = {
     text: text ?? '',
     pinyin: `${split.initial}${split.final}`,
     initial: split.initial,
     final: split.final,
-    zeroInitial: split.zeroInitial,
   }
+  const tone = detectTone(pinyinWithTone)
   if (tone !== undefined) syllable.tone = tone
   return syllable
 }
@@ -191,13 +187,13 @@ export function toToneMarks(pinyin: string, tone?: Tone): string {
   if (index < 0) return joint
   const vowel = chars[index]
   if (!vowel) return joint
-  const mark = VOWEL_TONE_MARKS[vowel]?.[tone - 1]
-  if (!mark) return joint
-  chars[index] = mark
+  const toneMark = vowel === 'ü' ? TONE_MARKS.v?.[tone - 1] : TONE_MARKS[vowel]?.[tone - 1]
+  if (!toneMark) return joint
+  chars[index] = toneMark
   return chars.join('')
 }
 
-// ── 知识点 ID ─────────────────────────────────────────────────
+// ── 知识点 ID / 匹配谓词 ─────────────────────────────────────
 
 const ATOM_TYPES: readonly AtomType[] = ['initial', 'final', 'zero']
 
@@ -213,10 +209,7 @@ export function atomDisplayLabel(atomId: AtomId, label?: string): string {
   return ref.type === 'zero' ? `零 ${text}` : text
 }
 
-/**
- * 解析 AtomId（如 'initial:zh'、'final:ai'、'zero:er'）。
- * 非法输入返回 null。
- */
+/** 解析 AtomId（如 'initial:zh'、'final:ai'、'zero:er'）；非法输入返回 null */
 export function parseAtomId(atomId: AtomId | string): AtomRef | null {
   if (typeof atomId !== 'string') return null
   const index = atomId.indexOf(':')
@@ -227,7 +220,35 @@ export function parseAtomId(atomId: AtomId | string): AtomRef | null {
   return { atomId: atomId as AtomId, type: type as AtomType, key }
 }
 
-/** 组合 AtomId 的便捷函数 */
+/** 组合 AtomId */
 export function atomId(type: AtomType, key: string): AtomId {
   return `${type}:${key}`
+}
+
+/** 匹配只需要 (initial, final)：词条与展示模型都满足该结构 */
+type MatchableSyllable = { readonly initial: string; readonly final: string }
+type MatchableWord = { readonly syllables: readonly MatchableSyllable[] }
+
+/** 该知识点是否在本词中命中（initial / final / zero 三类具体键位） */
+export function atomMatchesWord(atom: AtomId, word: MatchableWord): boolean {
+  const ref = parseAtomId(atom)
+  if (!ref) return false
+  switch (ref.type) {
+    case 'initial':
+      return word.syllables.some((syllable) => syllable.initial === ref.key)
+    case 'final':
+      // final 只匹配有真实声母的音节；零声母音节是另一类知识点。
+      return word.syllables.some(
+        (syllable) => syllable.initial !== '' && syllable.final === ref.key,
+      )
+    case 'zero':
+      return word.syllables.some((syllable) => syllable.initial === '' && syllable.final === ref.key)
+    default:
+      return false
+  }
+}
+
+/** 本词命中的全部 focus 原子（保持 focus 顺序） */
+export function focusHitsOf(word: MatchableWord, focusAtoms: readonly AtomId[]): AtomId[] {
+  return focusAtoms.filter((atom) => atomMatchesWord(atom, word))
 }

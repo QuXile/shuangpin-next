@@ -3,6 +3,7 @@ import type { ChapterView, LessonView } from '@/lib/lessonView'
 import { lessonKindLabel } from '@/lib/lessonView'
 import MappingTagArea from './MappingTagArea.vue'
 import CardHeader from '@/components/common/CardHeader.vue'
+import StarRating from '@/components/common/StarRating.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -26,7 +27,7 @@ const emit = defineEmits<{ start: [] }>()
 
     <div
       v-if="lesson"
-      class="current-card"
+      class="current-card" role="button" aria-label="继续学习当前课程"
       tabindex="0"
       @click="emit('start')"
       @keydown.enter="emit('start')"
@@ -39,9 +40,7 @@ const emit = defineEmits<{ start: [] }>()
           </div>
           <h3 class="card-title">{{ lesson.title }}</h3>
         </div>
-        <div class="stars" :aria-label="`${lesson.stars} 星`">
-          <span v-for="n in 3" :key="n" :class="{ on: n <= lesson.stars }">★</span>
-        </div>
+        <StarRating :stars="lesson.stars" />
       </div>
 
       <div class="card-main">
@@ -83,16 +82,16 @@ const emit = defineEmits<{ start: [] }>()
   flex-direction: column;
   gap: 12px;
   padding: 18px 20px;
-  border: 1.5px solid var(--brand);
+  border: 1px solid var(--brand);
   border-radius: var(--r-card);
   background: var(--surface);
-  box-shadow: 0 0 0 3px var(--brand-soft);
+  box-shadow: var(--ring-brand);
   cursor: pointer;
   transition: transform var(--dur-mid) var(--ease), box-shadow var(--dur-mid) var(--ease);
 }
 .current-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 0 0 3px var(--brand-soft), var(--hover-shadow);
+  box-shadow: var(--ring-brand), var(--shadow-md);
 }
 .current-card:active {
   transform: translateY(-1px) scale(0.995);
@@ -103,40 +102,12 @@ const emit = defineEmits<{ start: [] }>()
   justify-content: space-between;
   gap: 12px;
 }
-.card-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  min-width: 0;
-}
-.card-type {
-  color: var(--ink-3);
-  font-size: 11px;
-  font-weight: 750;
-  letter-spacing: 0.02em;
-}
-.card-type span {
-  margin-left: 4px;
-  color: var(--ink-4);
-  font-family: var(--font-mono);
-}
 .card-title {
   margin: 0;
   color: var(--ink);
-  font-size: 16px;
+  font-size: var(--text-md);
   font-weight: 850;
   line-height: 1.3;
-}
-.stars {
-  flex: none;
-  display: flex;
-  gap: 2px;
-  color: var(--surface-3);
-  font-size: 14px;
-  line-height: 1;
-}
-.stars .on {
-  color: var(--star-bright);
 }
 .card-main {
   display: flex;
@@ -172,7 +143,7 @@ const emit = defineEmits<{ start: [] }>()
   min-width: 0;
   overflow: hidden;
   color: var(--ink-3);
-  font-size: 11px;
+  font-size: var(--text-xs);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -185,7 +156,7 @@ const emit = defineEmits<{ start: [] }>()
   border-radius: var(--r-control);
   background: var(--brand);
   color: var(--on-accent);
-  font-size: 12px;
+  font-size: var(--text-sm);
   font-weight: 800;
   white-space: nowrap;
   box-shadow: var(--brand-glow);
@@ -206,12 +177,12 @@ const emit = defineEmits<{ start: [] }>()
   justify-content: center;
   padding: 28px 16px;
   color: var(--ink-3);
-  font-size: 12px;
+  font-size: var(--text-sm);
   text-align: center;
 }
 /* 1440 宽时继续学习卡高度由有数据状态驱动；空态补足相同主体高度，
    避免 hero-overview grid 行高缩短导致 Hero 跳 12px。 */
-@media (min-width: 1400px) {
+@media (min-width: 1280px) {
   .current-empty {
     min-height: 187.4px;
   }
