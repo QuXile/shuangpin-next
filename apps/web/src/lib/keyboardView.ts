@@ -173,8 +173,14 @@ function chooseBreakIndex(specs: readonly CapSpec[], requirePreferred: boolean):
 }
 
 interface CapLayout {
+  /** 基础散落 transform（测试与无动效时的静态样式） */
   transform: string
   zIndex: string
+  dx: number
+  dy: number
+  rot: number
+  /** 指针跟随强度（越大移动越明显） */
+  depth: number
 }
 
 /** 每次渲染重新随机散落，带轻微旋转和层级（同一行右侧压左侧、下行压上行）。 */
@@ -189,6 +195,10 @@ export function scatterLayout(
     return {
       transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) rotate(${rot.toFixed(1)}deg)`,
       zIndex: String(index + 1),
+      dx,
+      dy,
+      rot,
+      depth: 0.35 + random() * 0.75,
     }
   })
 }

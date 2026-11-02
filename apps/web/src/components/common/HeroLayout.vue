@@ -3,11 +3,65 @@
  * 课程 / 练习场共用 Hero 骨架。
  * 英文眉题置顶、中文标语贴键帽区底边；方案选择在两者较低处下方固定 18px；
  * 卡片高度完全由内容撑开，保证两个页面天然使用同一套间距和字号。
+ * 指针在卡片内移动时叠加一层跟随光斑（触屏 / reduced-motion 关闭）。
  */
+import { computed, onBeforeUnmount, ref } from 'vue'
+
+const rootRef = ref<HTMLElement | null>(null)
+/** 指针位置（卡片内百分比），null 表示指针已离开 */
+const spot = ref<{ x: number; y: number } | null>(null)
+let raf = 0
+let pending: { x: number; y: number } | null = null
+
+const spotStyle = computed(() =>
+  spot.value
+    ? { '--spot-x': `${spot.value.x.toFixed(1)}%`, '--spot-y': `${spot.value.y.toFixed(1)}%`, '--spot-on': '1' }
+    : { '--spot-on': '0' },
+)
+
+const reducedMotion = (): boolean =>
+  typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+    ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    : false
+
+function applySpot(): void {
+  raf = 0
+  const el = rootRef.value
+  if (!el || !pending) return
+  const rect = el.getBoundingClientRect()
+  if (rect.width <= 0 || rect.height <= 0) return
+  spot.value = {
+    x: ((pending.x - rect.left) / rect.width) * 100,
+    y: ((pending.y - rect.top) / rect.height) * 100,
+  }
+}
+
+function onPointerMove(event: PointerEvent): void {
+  if (event.pointerType !== 'mouse' || reducedMotion()) return
+  pending = { x: event.clientX, y: event.clientY }
+  if (raf === 0) raf = requestAnimationFrame(applySpot)
+}
+
+function onPointerLeave(): void {
+  pending = null
+  if (raf !== 0) cancelAnimationFrame(raf)
+  raf = 0
+  spot.value = null
+}
+
+onBeforeUnmount(() => {
+  if (raf !== 0) cancelAnimationFrame(raf)
+})
 </script>
 
 <template>
-  <section class="hero-layout panel">
+  <section
+    ref="rootRef"
+    class="hero-layout panel"
+    :style="spotStyle"
+    @pointermove="onPointerMove"
+    @pointerleave="onPointerLeave"
+  >
     <div class="hero-copy">
       <slot name="eyebrow" />
       <slot name="title" />
@@ -44,6 +98,21 @@
 .hero-layout > * {
   position: relative;
   z-index: 1;
+}
+/* 指针跟随光斑：叠加在底色之上、内容之下 */
+.hero-layout::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: var(--spot-on, 0);
+  transition: opacity var(--dur-mid) var(--ease);
+  background: radial-gradient(
+    circle at var(--spot-x, 50%) var(--spot-y, 50%),
+    color-mix(in srgb, var(--brand) 14%, transparent),
+    transparent 55%
+  );
 }
 .hero-copy {
   grid-column: 1;

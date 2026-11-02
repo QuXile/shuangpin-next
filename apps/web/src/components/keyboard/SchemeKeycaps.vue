@@ -15,8 +15,10 @@ const props = withDefaults(
     text: string
     /** 练习页强制单行展示（不参与优先分行）。 */
     singleRow?: boolean
+    /** 键帽是否跟随鼠标轻微浮动（触屏与 reduced-motion 下自动关闭）。 */
+    pointerMotion?: boolean
   }>(),
-  {},
+  { pointerMotion: true },
 )
 const sound = useSoundStore()
 
@@ -25,6 +27,62 @@ const specs = computed(() => keycapsOf(props.text, engine.value))
 const caps = computed(() => specs.value.map((spec) => spec.key))
 const rows = computed(() => splitKeycapLines(specs.value, { singleRow: props.singleRow }))
 const isErrorCaps = computed(() => isFallbackCaps(specs.value))
+
+const rootRef = ref<HTMLElement | null>(null)
+/** 指针相对键帽区中心的归一化位置（-1..1），null 表示指针已离开 */
+const pointer = ref<{ x: number; y: number } | null>(null)
+const hoverIndex = ref(-1)
+let pointerRaf = 0
+let pendingPoint: { x: number; y: number } | null = null
+
+const reducedMotion = (): boolean =>
+  typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+    ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    : false
+
+function applyPointer(): void {
+  pointerRaf = 0
+  const point = pendingPoint
+  const el = rootRef.value
+  if (!point || !el) return
+  const rect = el.getBoundingClientRect()
+  if (rect.width <= 0 || rect.height <= 0) return
+  pointer.value = {
+    x: Math.max(-1, Math.min(1, ((point.x - rect.left) / rect.width) * 2 - 1)),
+    y: Math.max(-1, Math.min(1, ((point.y - rect.top) / rect.height) * 2 - 1)),
+  }
+}
+
+function onPointerMove(event: PointerEvent): void {
+  if (!props.pointerMotion || event.pointerType !== 'mouse' || reducedMotion()) return
+  pendingPoint = { x: event.clientX, y: event.clientY }
+  if (pointerRaf === 0) pointerRaf = requestAnimationFrame(applyPointer)
+}
+
+function resetPointer(): void {
+  pendingPoint = null
+  if (pointerRaf !== 0) cancelAnimationFrame(pointerRaf)
+  pointerRaf = 0
+  pointer.value = null
+  hoverIndex.value = -1
+}
+
+/** 单枚键帽的 transform：基础散落 + 指针视差 + 悬浮抬升。 */
+function capStyle(index: number): Record<string, string> {
+  const layout = layouts.value[index]
+  if (!layout) return {}
+  const motion = pointer.value
+  const hovered = hoverIndex.value === index
+  const depth = layout.depth
+  const dx = layout.dx + (motion ? motion.x * 12 * depth : 0)
+  const dy = layout.dy + (motion ? motion.y * 10 * depth : 0) - (hovered ? 3 : 0)
+  const rot = layout.rot + (motion ? motion.x * 1.6 * depth : 0)
+  const scale = hovered ? 1.03 : 1
+  return {
+    transform: `translate(${dx.toFixed(2)}px, ${dy.toFixed(2)}px) rotate(${rot.toFixed(2)}deg) scale(${scale})`,
+    zIndex: hovered ? '99' : layout.zIndex,
+  }
+}
 
 const roundCaps = ref<string[]>([])
 const doneFlags = ref<boolean[]>([])
@@ -152,6 +210,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   window.removeEventListener('resize', onResize)
   clearTimers()
+  resetPointer()
   if (resizeTimer !== undefined) window.clearTimeout(resizeTimer)
 })
 
@@ -160,18 +219,28 @@ defineExpose({ refreshKeycaps })
 
 <template>
   <div
+    ref="rootRef"
     class="scheme-keycaps"
     :class="{ 'is-leaving': leaving, 'is-single-row': rows.length <= 1 }"
     role="group"
     :aria-label="`${text}键帽`"
+    @pointermove="onPointerMove"
+    @pointerleave="resetPointer"
+    @pointercancel="resetPointer"
   >
     <div v-for="(row, rowIndex) in rows" :key="`${rowIndex}-${roundNonce}`" class="cap-row">
       <span
         v-for="(cap, index) in row.caps"
         :key="`${cap}-${index}`"
         class="keycap"
-        :class="{ 'is-done': doneFlags[row.offset + index], 'is-error': errorIndex === row.offset + index }"
-        :style="[layouts[row.offset + index] ?? {}, { animationDelay: `${(row.offset + index) * 26}ms` }]"
+        :class="{
+          'is-done': doneFlags[row.offset + index],
+          'is-error': errorIndex === row.offset + index,
+          'is-hovered': hoverIndex === row.offset + index,
+        }"
+        :style="[capStyle(row.offset + index), { animationDelay: `${(row.offset + index) * 26}ms` }]"
+        @pointerenter="hoverIndex = row.offset + index"
+        @pointerleave="hoverIndex = -1"
       >
         <b>{{ cap }}</b>
       </span>
@@ -208,7 +277,11 @@ defineExpose({ refreshKeycaps })
   position: relative;
   flex: 0 0 auto;
   animation: cap-in var(--dur-slow) var(--ease) both;
-  transition: background var(--dur-mid) ease, border-color var(--dur-mid) ease, box-shadow var(--dur-mid) ease;
+  transition:
+    transform var(--dur-mid) var(--ease),
+    background var(--dur-mid) ease,
+    border-color var(--dur-mid) ease,
+    box-shadow var(--dur-mid) ease;
   width: var(--cap);
   height: calc(var(--cap) * 1.08);
   border: 1px solid var(--keycap-border);
@@ -218,6 +291,10 @@ defineExpose({ refreshKeycaps })
   display: flex;
   align-items: center;
   justify-content: center;
+}
+.keycap.is-hovered {
+  border-color: var(--brand-line);
+  box-shadow: var(--keycap-shadow), 0 0 0 3px var(--brand-soft);
 }
 .keycap.is-done {
   border-color: var(--success);
