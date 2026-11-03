@@ -6,6 +6,7 @@
 import type { TrainingSelection } from '@/composables/useTrainingSelection'
 import SetupCard from './SetupCard.vue'
 import SetupGroup from './SetupGroup.vue'
+import SelectionSummary from './SelectionSummary.vue'
 
 const props = defineProps<{ selection: TrainingSelection }>()
 
@@ -32,18 +33,12 @@ const hasCandidates = (): boolean =>
 <template>
   <SetupCard pill="焦点" tone="focus" subtitle="每个词至少包含一个">
     <template #head-extra>
-      <div class="focus-actions">
-        <span class="focus-count">已选 {{ focusCount }}</span>
-        <button
-          class="meta-btn"
-          type="button"
-          :disabled="focusCount === 0"
-          title="清空焦点，恢复不限"
-          @click="clearFocus"
-        >
-          清空
-        </button>
-      </div>
+      <SelectionSummary
+        :count="focusCount"
+        :disabled="focusCount === 0"
+        clear-title="清空焦点，恢复不限"
+        @clear="clearFocus"
+      />
     </template>
 
     <template v-if="hasCandidates()">
@@ -117,20 +112,7 @@ const hasCandidates = (): boolean =>
   </SetupCard>
 </template>
 
-<style scoped>
-.focus-actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-left: auto;
-}
-.focus-count {
-  color: var(--mapping-focus-ink);
-  font-size: var(--text-xs);
-  font-weight: 750;
-  font-variant-numeric: tabular-nums;
-}
-.focus-note {
+<style scoped>.focus-note {
   margin: 0;
   color: var(--ink-4);
   font-size: var(--text-xs);

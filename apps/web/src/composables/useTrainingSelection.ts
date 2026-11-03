@@ -24,6 +24,7 @@ import {
   hiddenCandidatesOf as hiddenCandidatesOfPure,
   hiddenGroupStateOf,
   hiddenSnapshotOf,
+  learnedSelectionApplied,
   learnedSelectionSets,
   presetSelectionOf,
   readStoredTrainingConfig,
@@ -154,6 +155,10 @@ export function useTrainingSelection() {
     applySets(clearGroupSets(scopedSets.value, group))
   }
 
+  function clearAppear(): void {
+    writeAppear({ initials: new Set(), finals: new Set(), zeroFinals: new Set() })
+  }
+
   function selectLearnedAtoms(): void {
     if (!atomOptions.value) return
     applySets(
@@ -166,6 +171,19 @@ export function useTrainingSelection() {
       }),
     )
   }
+
+  /** 当前出现范围已经等于「已学」范围时，按钮置灰。 */
+  const learnedApplied = computed(() => {
+    const options = atomOptions.value
+    if (!options) return false
+    return learnedSelectionApplied({
+      lessons: course.lessons,
+      progress: course.progress,
+      common: commonAtoms.value,
+      options,
+      current: appearSet.value,
+    })
+  })
 
   const commonEntriesFor = (scopeKind: SelectionScope, group: SelectionGroup) =>
     commonEntriesForPure(commonAtoms.value, scopeKind, group, appearSet.value)
@@ -263,6 +281,10 @@ export function useTrainingSelection() {
     writeHidden(scopeKind, toggleAtomSet(scopeSetsFor(scopedSets.value, scopeKind), group, value))
   const toggleHiddenZeroFinal = (scopeKind: 'drill' | 'article', value: string): void =>
     toggleHidden(scopeKind, 'zero', value)
+
+  function clearHidden(scopeKind: 'drill' | 'article'): void {
+    writeHidden(scopeKind, { initials: new Set(), finals: new Set(), zeroFinals: new Set() })
+  }
 
   function toggleHiddenAll(scopeKind: 'drill' | 'article', group: SelectionGroup): void {
     writeHidden(
@@ -398,13 +420,13 @@ export function useTrainingSelection() {
     selectableZeroFinals: computed(() => selectable.value.zeroFinals),
     appearInitialGroup, appearFinalGroup, appearZeroGroup,
     commonEntries, commonEntriesFor, commonCapsuleCount, commonAllChecked, toggleCommonAll,
-    toggleInitial, toggleFinal, toggleZeroFinal, selectAll, selectGroup, clearGroup,
-    toggleAppearAll, selectLearnedAtoms,
+    toggleInitial, toggleFinal, toggleZeroFinal, selectAll, selectGroup, clearGroup, clearAppear,
+    toggleAppearAll, selectLearnedAtoms, learnedApplied,
     hiddenInitials, hiddenFinals, hiddenZeroFinals,
     articleHiddenInitials, articleHiddenFinals, articleHiddenZeroFinals,
     hiddenCandidatesOf, hiddenGroupState, hiddenGroupAllChecked, hiddenGroupPartial,
     hiddenGroupSelected, hiddenGroupTotal, hiddenGroupDisabled,
-    toggleHidden, toggleHiddenZeroFinal, toggleHiddenAll,
+    toggleHidden, toggleHiddenZeroFinal, toggleHiddenAll, clearHidden,
     hiddenSnapshotOf: hiddenSnapshotOfScope, persist,
   }
 }

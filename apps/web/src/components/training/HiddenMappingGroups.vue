@@ -8,6 +8,7 @@ import type { TrainingSelection } from '@/composables/useTrainingSelection'
 import SetupCard from './SetupCard.vue'
 import SetupGroup from './SetupGroup.vue'
 import CommonCapsule from './CommonCapsule.vue'
+import SelectionSummary from './SelectionSummary.vue'
 
 const props = defineProps<{
   scope: 'drill' | 'article'
@@ -29,13 +30,29 @@ const {
   commonEntriesFor,
   commonAllChecked,
   toggleCommonAll,
+  clearHidden,
 } = props.selection
 
 const candidates = computed(() => props.selection.hiddenCandidatesOf(props.scope))
+const selectedCount = computed(
+  () =>
+    hiddenGroupSelected(props.scope, 'initial') +
+    hiddenGroupSelected(props.scope, 'final') +
+    hiddenGroupSelected(props.scope, 'zero'),
+)
 </script>
 
 <template>
   <SetupCard pill="隐藏" tone="hidden" subtitle="练习时不显示映射">
+    <template #head-extra>
+      <SelectionSummary
+        :count="selectedCount"
+        :disabled="selectedCount === 0"
+        clear-title="清空隐藏映射"
+        @clear="clearHidden(scope)"
+      />
+    </template>
+
     <SetupGroup
       v-if="hiddenGroupTotal(scope, 'initial') > 0"
       title="声母"

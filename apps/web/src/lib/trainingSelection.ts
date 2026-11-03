@@ -480,6 +480,38 @@ export function learnedSelectionOf(input: {
   }
 }
 
+/** 两个 AtomSet 的三组集合是否完全相等。 */
+export function atomSetsEqual(left: AtomSet, right: AtomSet): boolean {
+  const same = (a: ReadonlySet<string>, b: ReadonlySet<string>): boolean =>
+    a.size === b.size && [...a].every((item) => b.has(item))
+  return (
+    same(left.initials, right.initials) &&
+    same(left.finals, right.finals) &&
+    same(left.zeroFinals, right.zeroFinals)
+  )
+}
+
+/** 当前出现范围是否已经等于「已学」会得到的范围（焦点 / 隐藏不影响按钮）。 */
+export function learnedSelectionApplied(input: {
+  lessons: readonly LessonDef[]
+  progress: Readonly<Record<string, LessonProgress>>
+  common: TrainingCommonAtoms
+  options: AtomOptions
+  current: AtomSet
+}): boolean {
+  const learned = learnedSelectionOf({
+    lessons: input.lessons,
+    progress: input.progress,
+    common: input.common,
+    options: input.options,
+  })
+  return atomSetsEqual(input.current, {
+    initials: new Set(learned.selectedInitials),
+    finals: new Set(learned.selectedFinals),
+    zeroFinals: new Set(learned.selectedZeroFinals),
+  })
+}
+
 /**
  * 从课程总结卡跳转来的无尽练习预设：
  * - 出现范围 = 全拼沿用 ∪ 到本课为止学过的原子（零声母同样包含全拼沿用）；

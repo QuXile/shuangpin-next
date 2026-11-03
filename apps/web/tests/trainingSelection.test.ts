@@ -15,6 +15,7 @@ import {
   configSnapshotOf,
   groupStateOf,
   hiddenCandidatesOf,
+  learnedSelectionApplied,
   learnedSelectionOf,
   learnedSelectionSets,
   parseTrainingConfig,
@@ -355,6 +356,34 @@ describe('trainingSelection · 原子集合派生', () => {
     expect(learned.selectedInitials).toEqual(expect.arrayContaining([...common.initials]))
     expect(learned.selectedFinals).toEqual(expect.arrayContaining([...common.finals]))
     expect(learned.selectedZeroFinals).toEqual(expect.arrayContaining([...common.zeroFinals]))
+  })
+
+  it('learnedSelectionApplied 只在出现范围完全等于已学范围时为 true', () => {
+    const passLesson = lessonOf('L2.1')
+    const learned = learnedSelectionOf({
+      lessons: curriculum.lessons,
+      progress: { [passLesson.id]: { passed: true, stars: 3, bestAccuracy: 1, attempts: 1, updatedAt: 1 } },
+      common,
+      options,
+    })
+    const target: AtomSet = {
+      initials: new Set(learned.selectedInitials),
+      finals: new Set(learned.selectedFinals),
+      zeroFinals: new Set(learned.selectedZeroFinals),
+    }
+    const input = {
+      lessons: curriculum.lessons,
+      progress: { [passLesson.id]: { passed: true, stars: 3, bestAccuracy: 1, attempts: 1, updatedAt: 1 } },
+      common,
+      options,
+    }
+    expect(learnedSelectionApplied({ ...input, current: target })).toBe(true)
+    expect(
+      learnedSelectionApplied({
+        ...input,
+        current: { ...target, initials: new Set([...target.initials].filter((item) => item !== 'zh')) },
+      }),
+    ).toBe(false)
   })
 
   it('已学操作只调整出现范围，不清除焦点', () => {

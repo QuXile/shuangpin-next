@@ -26,6 +26,7 @@ import SetupGroup from '@/components/training/SetupGroup.vue'
 import CommonCapsule from '@/components/training/CommonCapsule.vue'
 import HiddenMappingGroups from '@/components/training/HiddenMappingGroups.vue'
 import FocusMappingGroups from '@/components/training/FocusMappingGroups.vue'
+import SelectionSummary from '@/components/training/SelectionSummary.vue'
 import { useCourseStore } from '@/stores/course'
 import { useLayoutStore, type DockContent } from '@/stores/layout'
 import { useSoundStore } from '@/stores/sound'
@@ -99,6 +100,8 @@ const {
   clearGroup,
   toggleAppearAll,
   selectLearnedAtoms,
+  learnedApplied,
+  clearAppear,
   hiddenInitials,
   hiddenFinals,
   hiddenZeroFinals,
@@ -129,6 +132,12 @@ const appearZeroAll = computed(() => appearZeroGroup.value.all)
 const appearZeroPartial = computed(() => appearZeroGroup.value.indeterminate)
 const appearZeroSelectedCount = computed(() => appearZeroGroup.value.selected)
 const appearZeroTotalCount = computed(() => appearZeroGroup.value.total)
+const appearSelectedCount = computed(
+  () =>
+    appearInitialSelectedCount.value +
+    appearFinalSelectedCount.value +
+    appearZeroSelectedCount.value,
+)
 
 const drillHiddenCandidates = computed(() => hiddenCandidatesOf('drill'))
 const articleHiddenCandidates = computed(() => hiddenCandidatesOf('article'))
@@ -542,7 +551,24 @@ onMounted(async () => {
                 </button>
               </div>
 
-</div>
+              <div v-if="tab === 'drill'" class="learned-block">
+                <span class="learned-progress">当前进度 {{ passedLessonCount }}/{{ course.lessons.length }} 课</span>
+                <button
+                  type="button"
+                  class="meta-btn learned-button"
+                  :class="{ 'is-applied': learnedApplied }"
+                  :disabled="passedLessonCount === 0 || learnedApplied"
+                  :title="
+                    learnedApplied
+                      ? '当前出现范围已经是已学范围'
+                      : '选中全部全拼沿用及已学完课程覆盖的声母、韵母与零声母'
+                  "
+                  @click="selectLearnedAtoms"
+                >
+                  已学
+                </button>
+              </div>
+            </div>
           </div>
 
           <div v-if="schemeError" class="side-error" role="alert">
@@ -620,18 +646,12 @@ onMounted(async () => {
           <div class="setup-grid setup-grid--focus">
             <SetupCard pill="出现" tone="appear" subtitle="本局练习范围">
               <template #head-extra>
-                <div class="setup-progress">
-                  <span class="setup-progress-label">当前进度 {{ passedLessonCount }}/{{ course.lessons.length }} 课</span>
-                  <button
-                    type="button"
-                    class="meta-btn"
-                    :disabled="passedLessonCount === 0"
-                    title="选中全部全拼沿用及已学完课程覆盖的声母、韵母与零声母"
-                    @click="selectLearnedAtoms"
-                  >
-                    已学
-                  </button>
-                </div>
+                <SelectionSummary
+                  :count="appearSelectedCount"
+                  :disabled="appearSelectedCount === 0"
+                  clear-title="清空出现范围"
+                  @clear="clearAppear"
+                />
               </template>
               <StateCard v-if="bankStatus === 'loading'" variant="inline" message="正在加载练习字库…" />
               <template v-else-if="atomOptions">
@@ -949,6 +969,26 @@ onMounted(async () => {
   flex-wrap: wrap;
   gap: 8px;
 }
+.learned-block {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  margin-left: auto;
+}
+.learned-progress {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink-4);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.learned-button.is-applied:disabled {
+  background: var(--surface-3);
+  color: var(--ink-4);
+  opacity: 1;
+}
 .side-start {
   margin-top: auto;
   display: flex;
@@ -1032,18 +1072,6 @@ onMounted(async () => {
 }
 .setup-start {
   flex: none;
-}
-.setup-progress {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-left: auto;
-  min-width: 0;
-}
-.setup-progress-label {
-  color: var(--ink-4);
-  font-size: var(--text-xs);
-  white-space: nowrap;
 }
 
 /* ── 文章练习 ───────────────────────────────────────────── */
