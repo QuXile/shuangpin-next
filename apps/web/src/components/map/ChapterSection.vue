@@ -42,14 +42,24 @@ const lessonsId = computed(() => `chapter-lessons-${props.chapter.id}`)
       </span>
     </button>
 
-    <div v-show="!collapsed" :id="lessonsId" class="lesson-grid">
-      <LessonCard
-        v-for="lesson in chapter.lessons"
-        :key="lesson.id"
-        :lesson="lesson"
-        :current="lesson.id === currentId"
-        @start="emit('start', $event)"
-      />
+    <div
+      :id="lessonsId"
+      class="chapter-body"
+      :class="{ 'is-collapsed': collapsed }"
+      :aria-hidden="collapsed ? 'true' : undefined"
+      :inert="collapsed || undefined"
+    >
+      <div class="chapter-body-inner">
+        <div class="lesson-grid">
+          <LessonCard
+            v-for="lesson in chapter.lessons"
+            :key="lesson.id"
+            :lesson="lesson"
+            :current="lesson.id === currentId"
+            @start="emit('start', $event)"
+          />
+        </div>
+      </div>
     </div>
   </section>
 </template>
@@ -144,6 +154,18 @@ const lessonsId = computed(() => `chapter-lessons-${props.chapter.id}`)
 .is-collapsed .chapter-chevron {
   transform: rotate(-90deg);
 }
+.chapter-body {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows var(--dur-mid) var(--ease);
+}
+.chapter-body.is-collapsed {
+  grid-template-rows: 0fr;
+}
+.chapter-body-inner {
+  min-height: 0;
+  overflow: hidden;
+}
 .lesson-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -153,6 +175,12 @@ const lessonsId = computed(() => `chapter-lessons-${props.chapter.id}`)
 @media (max-width: 1024px) {
   .lesson-grid {
     grid-template-columns: 1fr;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chapter-body,
+  .chapter-chevron {
+    transition: none;
   }
 }
 @media (max-width: 640px) {

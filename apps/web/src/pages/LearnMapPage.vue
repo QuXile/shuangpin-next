@@ -15,7 +15,7 @@ import BackToTop from '@/components/common/BackToTop.vue'
 import { useSchemeView } from '@/composables/useSchemeView'
 import { getStorage, readString, writeString, STORAGE_KEYS } from '@/lib/storage'
 import { useGlobalKeys, type KeyBinding } from '@/composables/useGlobalKeys'
-import { buildChapterViews } from '@/lib/lessonView'
+import { buildChapterViews, completedChapterIds } from '@/lib/lessonView'
 import { useCourseStore } from '@/stores/course'
 import { useProgressStore } from '@/stores/progress'
 import { useSoundStore } from '@/stores/sound'
@@ -73,15 +73,21 @@ function saveScroll(): void {
 // ── 章节展开 / 收起：按方案持久化；章节头即开关 ────────────────
 const collapseStorage = getStorage('local')
 const collapseKey = (): string => STORAGE_KEYS.mapCollapsed(course.schemeId || 'default')
+const autoCollapseKey = (): string => STORAGE_KEYS.mapAutoCollapsed(course.schemeId || 'default')
 const collapsedChapterIds = ref<string[]>([])
+const autoCollapsedChapterIds = ref<string[]>([])
 
-function readCollapsedChapters(): string[] {
-  const raw = readString(collapseKey(), collapseStorage)
+function readIdList(key: string): string[] {
+  const raw = readString(key, collapseStorage)
   return raw ? raw.split(',').filter(Boolean) : []
 }
 
 function saveCollapsedChapters(): void {
   writeString(collapseKey(), collapsedChapterIds.value.join(','), collapseStorage)
+}
+
+function saveAutoCollapsedChapters(): void {
+  writeString(autoCollapseKey(), autoCollapsedChapterIds.value.join(','), collapseStorage)
 }
 
 function toggleChapter(chapterId: string): void {
@@ -99,7 +105,8 @@ function isChapterCollapsed(chapterId: string): boolean {
 watch(
   () => course.schemeId,
   () => {
-    collapsedChapterIds.value = readCollapsedChapters()
+    collapsedChapterIds.value = readIdList(collapseKey())
+    autoCollapsedChapterIds.value = readIdList(autoCollapseKey())
   },
   { immediate: true },
 )
@@ -159,6 +166,37 @@ const chapters = computed(() =>
     ? buildChapterViews(course.curriculum, engine.value, progress.records, course.unlockedAll)
     : [],
 )
+
+/**
+ * 整章第一次学完时自动收起一次，并持久化标记；
+ * 用户之后再展开不会重新自动收起（清空 / 重学也不会重触发）。
+ */
+function collapseCompletedChaptersOnce(): void {
+  if (!course.schemeId || chapters.value.length === 0) return
+  const auto = new Set(autoCollapsedChapterIds.value)
+  const collapsed = new Set(collapsedChapterIds.value)
+  let autoChanged = false
+  let collapsedChanged = false
+  for (const chapterId of completedChapterIds(chapters.value)) {
+    if (auto.has(chapterId)) continue
+    auto.add(chapterId)
+    autoChanged = true
+    if (!collapsed.has(chapterId)) {
+      collapsed.add(chapterId)
+      collapsedChanged = true
+    }
+  }
+  if (autoChanged) {
+    autoCollapsedChapterIds.value = [...auto]
+    saveAutoCollapsedChapters()
+  }
+  if (collapsedChanged) {
+    collapsedChapterIds.value = [...collapsed]
+    saveCollapsedChapters()
+  }
+}
+
+watch(chapters, collapseCompletedChaptersOnce, { immediate: true, flush: 'post' })
 watch(
   [status, chapters],
   async () => {
@@ -235,9 +273,7 @@ const currentChapterView = computed(() =>
   chapters.value.find((chapter) => chapter.lessons.some((lesson) => lesson.id === currentId.value)) ?? null,
 )
 const schemeName = computed(() => course.scheme?.name ?? '双拼方案')
-const completedChapterCount = computed(
-  () => chapters.value.filter((chapter) => chapter.lessons.length > 0 && chapter.lessons.every((lesson) => lesson.state === 'passed')).length,
-)
+const completedChapterCount = computed(() => completedChapterIds(chapters.value).length)
 const currentTitle = computed(() => {
   const lesson = currentLesson.value
   if (!lesson) return '开始学习'
@@ -306,8 +342,10 @@ function focusOtherScheme(): void {
 
 function focusLesson(step: 1 | -1): void {
   const buttons = Array.from(
-    document.querySelectorAll<HTMLButtonElement>('.lesson-card:not(:disabled)'),
-  ).filter((button) => button.getClientRects().length > 0)
+    document.querySelectorAll<HTMLButtonElement>(
+      '.chapter-body:not(.is-collapsed) .lesson-card:not(:disabled)',
+    ),
+  )
   if (buttons.length === 0) return
   const current = document.activeElement instanceof HTMLButtonElement
     ? buttons.indexOf(document.activeElement)

@@ -33,6 +33,8 @@ export const STORAGE_KEYS = {
   mapScroll: (schemeId: string): string => `shuangpin-next:map-scroll:${schemeId}`,
   /** 学习地图折叠的章节 id（localStorage，按方案，逗号分隔） */
   mapCollapsed: (schemeId: string): string => `shuangpin-next:map-collapsed:${schemeId}`,
+  /** 已触发过一次「整章学完自动收起」的章节 id（localStorage，按方案，逗号分隔） */
+  mapAutoCollapsed: (schemeId: string): string => `shuangpin-next:map-auto-collapsed:${schemeId}`,
 } as const
 
 /** 浏览器存储；不可用（无 window / 隐私模式 / 禁用存储）时返回 null。 */

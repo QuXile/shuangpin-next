@@ -60,6 +60,16 @@ export interface ChapterView extends ChapterDef {
   lessons: LessonView[]
 }
 
+/** 已学完的章节 id：章内有课程，且该章所有课程都已通过。 */
+export function completedChapterIds(chapters: readonly ChapterView[]): string[] {
+  return chapters
+    .filter(
+      (chapter) =>
+        chapter.lessons.length > 0 && chapter.lessons.every((lesson) => lesson.state === 'passed'),
+    )
+    .map((chapter) => chapter.id)
+}
+
 // ── focus 范围 ────────────────────────────────────────────────
 
 function atomKey(atomId: AtomId): string {
