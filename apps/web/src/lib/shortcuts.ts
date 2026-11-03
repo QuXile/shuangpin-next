@@ -35,6 +35,7 @@ export const SHORTCUT_GROUPS: ShortcutGroup[] = [
       { keys: ['Enter'], label: '开始当前课程' },
       { keys: ['Alt', 'U'], label: '解锁全部课程 / 恢复锁定' },
       { keys: ['Alt', 'C'], label: '清除当前方案进度' },
+      { keys: ['Alt', 'L'], label: '定位到当前课程' },
     ],
   },
   {

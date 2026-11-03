@@ -304,6 +304,11 @@ const bindings = computed<KeyBinding[]>(() => {
       run: () => clearProgress(),
     },
     {
+      key: 'l',
+      alt: true,
+      run: () => locateCurrentLesson(),
+    },
+    {
       key: 'Enter',
       when: (event) =>
         !(event.target instanceof HTMLButtonElement) && !(event.target instanceof HTMLSelectElement),

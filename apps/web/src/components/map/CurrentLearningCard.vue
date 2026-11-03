@@ -59,8 +59,8 @@ const emit = defineEmits<{ start: []; locate: [] }>()
           <button
             class="locate"
             type="button"
-            title="在学习路线中定位本课"
-            aria-label="在学习路线中定位本课"
+            title="在学习路线中定位本课（Alt+L）"
+            aria-label="在学习路线中定位本课（Alt+L）"
             @click.stop="emit('locate')"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -69,6 +69,7 @@ const emit = defineEmits<{ start: []; locate: [] }>()
               <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
             </svg>
             定位
+            <kbd>Alt+L</kbd>
           </button>
           <button class="continue" type="button" @click.stop="emit('start')">
             {{ currentTitle }}
@@ -305,6 +306,9 @@ const emit = defineEmits<{ start: []; locate: [] }>()
   }
   .locate {
     flex: none;
+  }
+  .locate kbd {
+    display: none;
   }
   .continue {
     flex: 1;
