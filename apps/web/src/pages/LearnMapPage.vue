@@ -13,7 +13,7 @@ import MapKeymapPanel from '@/components/map/MapKeymapPanel.vue'
 import StateCard from '@/components/common/StateCard.vue'
 import BackToTop from '@/components/common/BackToTop.vue'
 import { useSchemeView } from '@/composables/useSchemeView'
-import { getStorage, readString, writeString, STORAGE_KEYS } from '@/lib/storage'
+import { getStorage, readString, removeKey, writeString, STORAGE_KEYS } from '@/lib/storage'
 import { useGlobalKeys, type KeyBinding } from '@/composables/useGlobalKeys'
 import { buildChapterViews, completedChapterIds } from '@/lib/lessonView'
 import { useCourseStore } from '@/stores/course'
@@ -88,6 +88,14 @@ function saveCollapsedChapters(): void {
 
 function saveAutoCollapsedChapters(): void {
   writeString(autoCollapseKey(), autoCollapsedChapterIds.value.join(','), collapseStorage)
+}
+
+/** 清除进度后回到初始状态：全部章节重新展开，并重置“已自动收起”标记。 */
+function resetChapterCollapse(): void {
+  collapsedChapterIds.value = []
+  autoCollapsedChapterIds.value = []
+  removeKey(collapseKey(), collapseStorage)
+  removeKey(autoCollapseKey(), collapseStorage)
 }
 
 function toggleChapter(chapterId: string): void {
@@ -313,6 +321,7 @@ function clearProgress(): void {
   if (course.passedCount === 0) return
   if (!window.confirm('清除当前双拼方案的全部学习进度？此操作不可撤销。')) return
   progress.clear()
+  resetChapterCollapse()
 }
 
 const schemeOptions = computed(() => course.allSchemeOptions)
