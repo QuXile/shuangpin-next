@@ -35,6 +35,7 @@ import {
   readJSON,
   writeJSON,
 } from './lib/data-contract.mjs'
+import { resolveLexicon } from './lib/pinyin-resolve.mjs'
 import {
   CODE_TIP_COMPAT_PREFIX,
   CODE_TIP_RECOMMENDED_PREFIX,
@@ -373,7 +374,7 @@ function updateSchemeIndex(schemeIndex, courseIds) {
 /** 读取方案源数据并生成全部「无定制路线」的通用课程 + 索引。返回生成统计。 */
 function generateAll() {
   const schemeIndex = readJSON(SCHEME_INDEX_FILE)
-  const lexicon = readJSON(LEXICON_FILE)
+  const lexicon = resolveLexicon(readJSON(LEXICON_FILE))
   const generated = []
   const skipped = []
   for (const summary of schemeIndex.schemes ?? []) {

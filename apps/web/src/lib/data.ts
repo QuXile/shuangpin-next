@@ -5,19 +5,21 @@
  *   index.json             方案索引（SchemeIndexFile）
  *   schemes/<id>.json      SchemeDef
  *   curriculum/<id>.json   Curriculum（仅课程方案有）
- *   lexicon/lexicon.json   统一词库 LexiconFile
+ *   lexicon/lexicon.json   词表（entries + 音节示例，拼音运行时解析）
  *
  * 约定：同一数据只加载一次；加载失败不缓存 rejected Promise，允许重试。
  */
 import type {
   Curriculum,
   Lexicon,
+  ResolvedLexicon,
   SchemeDef,
   SchemeIndexFile,
 } from '@shuangpin/core'
+import { resolveLexicon } from './lexicon'
 
-/** 统一词库文件契约（与 core Lexicon 一致；buildLessonPool 只消费其中三件套） */
-export type LexiconFile = Lexicon
+/** 词表：磁盘只存词条与词频，加载时由 pinyin-pro 解析成运行时词表 */
+export type LexiconFile = ResolvedLexicon & { dataVersion: string }
 
 const cache = new Map<string, Promise<unknown>>()
 
@@ -53,6 +55,25 @@ export const loadScheme = (id: string): Promise<SchemeDef> =>
 export const loadCurriculum = (id: string): Promise<Curriculum> =>
   cached(`curriculum:${id}`, () => getJSON<Curriculum>(`curriculum/${id}.json`))
 
-/** 统一词库：课程、入门课与练习场共用。 */
+/** 词库源 JSON（只加载一次；解析拼音由需要词表三件套的页面触发）。 */
+const loadLexiconSource = (): Promise<Lexicon> =>
+  cached('lexicon-source', () => getJSON<Lexicon>('lexicon/lexicon.json'))
+
+/** 词库元信息：只需展示规模时用，避免提前加载 pinyin-pro 与解析全量词条。 */
+export interface LexiconMeta {
+  wordCount: number
+  dataVersion: string
+}
+
+export const loadLexiconMeta = (): Promise<LexiconMeta> =>
+  cached('lexicon-meta', async () => {
+    const source = await loadLexiconSource()
+    return {
+      wordCount: source.entries.filter((entry) => entry.text.length >= 2).length,
+      dataVersion: source.dataVersion,
+    }
+  })
+
+/** 词表：课程、入门课与练习场共用；拼音在加载时解析。 */
 export const loadLexicon = (): Promise<LexiconFile> =>
-  cached('lexicon', () => getJSON<LexiconFile>('lexicon/lexicon.json'))
+  cached('lexicon', async () => resolveLexicon(await loadLexiconSource()))

@@ -38,6 +38,7 @@ pnpm dev          # http://127.0.0.1:5199
 | `pnpm test` | core 与 web 的 Vitest 单测 |
 | `pnpm typecheck` | core `tsc --noEmit` + web `vue-tsc --noEmit` |
 | `pnpm lint:ui` | UI 约定静态检查（样式 token / 共享原语 / 输入守卫） |
+| `pnpm data:lexicon` | 从 `data/raw/jieba-dict.txt` 重建词表（规则见[数据说明](DATA.md)） |
 | `pnpm data:curriculum` | 重建 14 套 simplified 课程，并更新索引的课程能力字段 |
 | `pnpm data:sync` | 单向原子同步 `data/` → `apps/web/public/data/`（紧凑 JSON） |
 | `pnpm validate` | 数据 / 版本链 / 同步 / 文档的五域校验 |
@@ -77,7 +78,7 @@ scripts/
 |---|---|---|
 | 判题 / 选词 / 阶段 / 评分 | `packages/core/src/` | 领域规则只放在 core，改后跑 `pnpm test` |
 | 课程模板（阶段门槛 / 词量 / 章节顺序 / 边界算法） | `scripts/lib/curriculum-template.mjs` | 生成器与校验器共用；改后 `pnpm data:curriculum` 并检查 `data/` diff |
-| 词表 / 方案数据 / 定制课程 | `data/lexicon/`、`data/schemes/` | 见[数据说明](DATA.md)，改后 `pnpm data:sync` + `pnpm validate` |
+| 词表 / 方案数据 / 定制课程 | `data/lexicon/`、`data/schemes/`、`scripts/build-lexicon.mjs` | 见[数据说明](DATA.md)，改后 `pnpm data:sync` + `pnpm validate` |
 | 页面与交互 | `apps/web/src/pages/`、`composables/`、`stores/` | 页面只做编排；快捷键走 `useGlobalKeys` |
 | 视觉样式 | `apps/web/src/styles/tokens.css` + `base.css` | 只用 token / `color-mix`，禁止裸 hex / rgba / 裸字号 |
 | 快捷键 | `apps/web/src/lib/shortcuts.ts` + 各页 `useGlobalKeys` | 帮助面板与[快捷键](USAGE.md#快捷键)同步 |
@@ -115,7 +116,7 @@ node scripts/validate-all.mjs
 ## 生成数据提交规则
 
 - `apps/web/public/data/`、`dist/`、`release/` 不入库；
-- `data/` 下的方案、课程、判题用例与 Lexicon 入库，是权威源数据；`data/` 源文件保持 2 空格缩进可读；
+- `data/` 下的方案、课程、判题用例与词表入库，是权威源数据；`data/` 源文件保持 2 空格缩进可读；
 - `apps/web/public/data/` 由 `scripts/sync-data.mjs` 生成（紧凑 JSON），不要手改，可随时删除重建；
 - 14 套 simplified 课程由生成器重建，不要直接手改；定制 full 课程是权威数据，可以直接编辑，但需按内容更新 `dataVersion`；
 - 改动数据后 `pnpm validate` 必须全绿。
@@ -154,18 +155,19 @@ VITE_BASE=/shuangpin-next/ pnpm build
 
 构建时的数据链路是单向的：`data/`（权威源数据）→ `apps/web/public/data/`（`pnpm data:sync` 生成，紧凑 JSON）→ `apps/web/dist/data/`（Vite 原样拷贝 `public/`）。
 
-`dist/data/` 只包含 4 类运行时文件，共 40 个、约 10.9 MiB：
+`dist/data/` 只包含 4 类运行时文件，共 40 个、约 3.6 MiB：
 
 ```text
 dist/data/
   index.json              方案索引
   schemes/<id>.json       19 套方案
   curriculum/<id>.json    19 套课程
-  lexicon/lexicon.json    统一词表
+  lexicon/lexicon.json    词表（文本 + 词频）
 ```
 
 - `dist/data/` 只包含上述 4 类文件；运行时只按这 4 条路径加载，无需额外服务器配置。
-- 数据目录从旧版约 28 MiB 降到约 10.9 MiB（紧凑序列化 + 去掉重复镜像），静态包整体相应变小。
+- 数据目录从旧版约 28 MiB 降到约 3.6 MiB：词表不再存拼音、只保留文本与词频（当前 50,000 词 + 3,009 单字），拼音由 pinyin-pro 解析。
+- pinyin-pro 是运行时依赖（Web 侧动态 import，独立 chunk ~143 KB gzip）；构建期脚本与测试也用它解析拼音，避免存两份拼音数据。
 - 不要手工编辑 `apps/web/public/data/` 或 `apps/web/dist/data/`；改数据请改 `data/` 后重新构建，详见[数据说明](DATA.md)。
 
 ### 静态包构建

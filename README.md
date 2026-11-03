@@ -19,7 +19,7 @@
 
 - 每课只引入一个新的声母或韵母，题目只包含已学内容；
 - 同样的知识点每次随机出题，避免背答案；
-- 练习模拟日常词汇输入，内置 29,660 条离线词库，题量够大。
+- 练习模拟日常词汇输入，内置 50,000 条离线词库（含常见地名、成语与常用词），题量够大。
 
 课型、阶段和星级规则见[使用说明](docs/USAGE.md#学习路线与课程)。
 
@@ -64,7 +64,7 @@
 ## 已知限制
 
 - **只支持纯双拼，不支持音形方案**：当前编码模型只有「声母 + 韵母」两层，没有汉字形码表、字根/拆字规则、形码取码和完整编码组合逻辑。音形、形码辅助、候选窗和系统级输入法均未接入，`scheme.json` 不能直接表达这类方案。
-- **多音字不做上下文消歧**：练习词表中的字按词库读音取键，同一个字在不同词语中的特殊读音不会单独推断。
+- **多音字消歧范围**：词语/单字按词内读音解析；文章练习按上下文分词级消歧。极少数读音（如口语轻声、纯鼻音）不在双拼音节表内，会被跳过并在开始前提示。
 - **进度仅保存在浏览器本地**：没有账号和云同步；清除站点数据、换浏览器或换设备后进度不会自动迁移。
 
 ## 许可证
@@ -75,4 +75,4 @@
 
 - 双拼键位规则来自 [fcitx/libime](https://github.com/fcitx/libime) 与 [fcitx5-chinese-addons](https://github.com/fcitx/fcitx5-chinese-addons)，LGPL-2.1-or-later：libime 内建规则 `Xiaohe`、`Ziranma`、`MS`、`ABC`、`PinyinJiaJia`、`Ziguang`、`GB` 分别对应小鹤、自然码、微软、智能 ABC、拼音加加、紫光、国标；C 双拼使用 fcitx5-chinese-addons 的 `sp.dat` 示例。
 - fcitx 无对应规则的搜狗、蓝天、白云、小月、开源小鹳、小浪、韵标块拼、星空、大牛、键道双拼 3、键道双拼 6 来自 [BlueSky-07/Shuang](https://github.com/BlueSky-07/Shuang)，GPL-3.0；推荐码 / 兼容编码补充数据同样参考该项目。
-- 词表与词频来自 [jieba](https://github.com/fxsjy/jieba)，MIT，拼音转换使用 [pinyin-pro](https://github.com/zh-lx/pinyin-pro)，MIT，二者只用于生成数据。
+- 词表与词频来自 [jieba](https://github.com/fxsjy/jieba)，MIT（仅用于准备词表）；拼音由 [pinyin-pro](https://github.com/zh-lx/pinyin-pro)，MIT 解析：构建期生成课程数据，运行时按需加载（独立 chunk）。

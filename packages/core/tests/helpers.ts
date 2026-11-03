@@ -4,12 +4,14 @@
  */
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
+import { pinyin } from 'pinyin-pro'
 import type {
   AtomId,
   Curriculum,
   LessonDef,
   LessonPool,
   Lexicon,
+  ResolvedLexicon,
   SchemeDef,
   SchemeEngine,
   SchemeIndexFile,
@@ -18,7 +20,7 @@ import type {
   WordSyllable,
 } from '../src/types.ts'
 import { createSchemeEngine } from '../src/scheme.ts'
-import { splitPinyin } from '../src/pinyin.ts'
+import { entryFromPinyin, splitPinyin } from '../src/pinyin.ts'
 import { buildPracticeWord } from '../src/session.ts'
 import { buildLessonPool } from '../src/lesson.ts'
 
@@ -59,10 +61,32 @@ export function loadCurriculum(schemeId: string): Curriculum {
   return readDataJSON<Curriculum>('schemes', schemeId, 'curriculum.json')
 }
 
-export type LexiconFile = Lexicon
+export type LexiconFile = ResolvedLexicon
 
+let lexiconCache: LexiconFile | null = null
+
+/** 真实词库：磁盘只存 text+freq，测试里用 pinyin-pro 解析（与 web 运行时同一口径）。 */
 export function loadLexicon(): LexiconFile {
-  return readDataJSON<LexiconFile>('lexicon', 'lexicon.json')
+  if (lexiconCache) return lexiconCache
+  const source = readDataJSON<Lexicon>('lexicon', 'lexicon.json')
+  const words: WordEntry[] = []
+  const chars: WordEntry[] = []
+  let wordRank = 0
+  let charRank = 0
+  for (const entry of source.entries) {
+    const tokens = pinyin(entry.text, { type: 'array', toneType: 'num', toneSandhi: false })
+    const resolved = entryFromPinyin(entry.text, entry.freq, tokens)
+    if (!resolved) throw new Error(`词库词条无法解析：${entry.text}`)
+    if (resolved.length === 1) {
+      resolved.freqRank = ++charRank
+      chars.push(resolved)
+    } else {
+      resolved.freqRank = ++wordRank
+      words.push(resolved)
+    }
+  }
+  lexiconCache = { words, chars, syllableExamples: source.syllableExamples }
+  return lexiconCache
 }
 
 /** 课池派生统一走 core `buildLessonPool`（与 web 同一实现）。 */

@@ -1,7 +1,7 @@
 /**
  * 拼音与知识点（atom）基础：规范声母/韵母常量、音节拆分、声调显示、AtomId 与词/原子匹配谓词。
  *
- * 纯 TS，无框架/DOM/Node 依赖；运行期只消费预计算数据，不引第三方拼音库。
+ * 纯 TS，无框架/DOM/Node 依赖；不引第三方拼音库，外部拼音 token 由调用方传入并在此规范化为音节。
  * 「哪些键位是 free（与全拼一致）」属于方案属性，由 SchemeEngine.freeSets()/diff() 推导，本文件不硬编码。
  * 合并自原 pinyin.ts + atoms.ts：知识点标记与匹配谓词和拼音同属一个领域。
  */
@@ -15,6 +15,7 @@ import type {
   Syllable,
   SyllableFinal,
   Tone,
+  WordEntry,
 } from './types.ts'
 
 // ── 常量 ──────────────────────────────────────────────────────
@@ -191,6 +192,63 @@ export function toToneMarks(pinyin: string, tone?: Tone): string {
   if (!toneMark) return joint
   chars[index] = toneMark
   return chars.join('')
+}
+
+// ── 外部拼音结果 → 规范音节 ──────────────────────────────────
+
+/**
+ * 外部拼音库（如 pinyin-pro）的 token → (无声调拼音, 声调)。
+ * 支持 `yin2` / `lü4` / `yi0`（0 与 5 都表示轻声）；无法解析时返回 null。
+ */
+export function parsePinyinToken(token: string): { pinyin: string; tone: Tone } | null {
+  const match = /^([a-zA-Zü:]+?)([0-5])$/.exec(token.trim())
+  if (!match?.[1] || !match[2]) return null
+  const pinyin = normalizePinyin(match[1])
+  if (!pinyin) return null
+  const value = Number(match[2])
+  return { pinyin, tone: (value === 0 ? 5 : value) as Tone }
+}
+
+/** 单字 + 带调拼音 token → 规范音节；声母/韵母不在本应用口径内时返回 null。 */
+export function syllableFromPinyinToken(char: string, token: string): Syllable | null {
+  const parsed = parsePinyinToken(token)
+  if (!parsed) return null
+  const split = splitPinyin(parsed.pinyin)
+  if (!split) return null
+  const supported = split.initial === '' ? ZERO_SET.has(split.final) : FINAL_SET.has(split.final)
+  if (!supported) return null
+  return {
+    text: char,
+    pinyin: parsed.pinyin,
+    initial: split.initial,
+    final: split.final,
+    tone: parsed.tone,
+  }
+}
+
+/** 整词拼音 token 列表 → WordEntry；长度不符或任一音节不可表示时返回 null。 */
+export function entryFromPinyin(
+  text: string,
+  freq: number,
+  tokens: readonly string[],
+  freqRank?: number,
+): WordEntry | null {
+  const chars = Array.from(text)
+  if (tokens.length !== chars.length) return null
+  const syllables: Syllable[] = []
+  for (let index = 0; index < chars.length; index += 1) {
+    const syllable = syllableFromPinyinToken(chars[index]!, tokens[index]!)
+    if (!syllable) return null
+    syllables.push(syllable)
+  }
+  return {
+    text,
+    length: chars.length,
+    freq,
+    ...(freqRank !== undefined ? { freqRank } : {}),
+    syllables,
+    chars,
+  }
 }
 
 // ── 知识点 ID / 匹配谓词 ─────────────────────────────────────

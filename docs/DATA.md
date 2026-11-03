@@ -19,7 +19,7 @@ data/
       scheme.json           键位、推荐码、兼容编码（19 套）
       curriculum.json       课程（19 套：5 套定制 full + 14 套生成 simplified）
   lexicon/
-    lexicon.json            统一词表：words / chars / syllableExamples
+    lexicon.json            词表：entries（文本 + 词频）/ syllableExamples
 ```
 
 - 不再存在其它数据目录（旧的词池 / 独立词表 / 训练数据目录已删除，`pnpm validate` 会检查它们不存在）。
@@ -38,16 +38,39 @@ data/
 
 `pnpm data:curriculum` 会更新 `courseSupported` 与课程方案的 `schemes[].course`（`supportsGuidedCourse` / `courseTier` / `reason` / `courseNotes`）；其余元数据由人工维护；索引不保存派生统计（如按类型计数、各方案 learn 原子数等），需要时由脚本按数据现算。新增方案见[适配新方案](DATA.md#适配新方案)。
 
-### 统一 Lexicon
+### 词表 `data/lexicon/lexicon.json`
 
-`data/lexicon/lexicon.json` 是课程与练习场共用的唯一词表：
+课程、入门课与练习场共用这一份词表；**只存文本与词频，不存拼音**：
 
-- `words`：清洗后的 29,660 条 2–5 字词（去专名、字母、低频）；
-- `chars`：每音字频 top10 的小字符库，3,009 字；
-- `syllableExamples`：405 个音节的代表字示例；
+- `entries`：53,009 条词条，按词频降序。50,000 条 2–5 字词 + 3,009 个单字（单字即 `text.length === 1`）；
+- `syllableExamples`：405 个音节的代表字示例（构建期挑选，供教学示例使用）；
 - `dataVersion`：形如 `lexicon-<12 位 hex>` 的内容版本标识。
 
-课程按 lesson 的已学原子 / focus 在 core 选词器中筛选，练习场按当前选择范围筛选；题目全部来自 Lexicon。修改词表直接编辑该文件（Lexicon 是权威数据），并同步更新 `dataVersion`。
+拼音由 [pinyin-pro](https://github.com/zh-lx/pinyin-pro) 解析：构建期生成课程/示例，运行时由 Web 侧统一解析（`toneSandhi: false`，`ü → v`，轻声 0/5 都映射为第 5 声）。解析不出方案音节口径的词条会在校验期直接失败，因此运行时不会出现「跳过字库」的情况。
+
+文章练习**不使用**这份词表：它只做拆字，然后用 pinyin-pro 按上下文实时解析拼音。
+
+### 词表生成规则
+
+词条由 `scripts/build-lexicon.mjs` 从 [jieba](https://github.com/fxsjy/jieba) 词典 `dict.txt`（MIT）生成；源文件不入库，先下载到 gitignored 的 `data/raw/`：
+
+```bash
+mkdir -p data/raw
+curl -L -o data/raw/jieba-dict.txt https://raw.githubusercontent.com/fxsjy/jieba/master/jieba/dict.txt
+pnpm data:lexicon   # 重建 data/lexicon/lexicon.json
+pnpm data:sync      # 同步到 apps/web/public/data/
+pnpm validate
+```
+
+清洗规则（与历史词表口径一致，地名选择性保留）：
+
+- 恰好 2–5 个汉字（字母、数字、符号、空格自动排除）；
+- 排除人名（`nr` / `nrfg` / `nrt`）、机构（`nt`）、其他专名（`nz`）；
+- 地名（`ns`）选择性保留：2 字且词频 ≥100，或 3–5 字且词频 ≥500（保留「中国 / 北京 / 长江」等常见地名，过滤生僻行政区与低词频长地名）；
+- 按词频降序取前 50,000 词；同频按文本排序，保证 `dataVersion` 可复现；
+- 单字表与 `syllableExamples` 沿用既有数据，只服务教学示例与单字练习。
+
+校验器会重新解析全部词条（拼音、韵母、声调、`dataVersion`）并检查词条只含汉字。
 
 ## 课程
 
@@ -83,9 +106,9 @@ data/
 | `index.json` | `data/schemes/index.json` | 方案索引原样内容（不追加任何字段） |
 | `schemes/<id>.json` | `data/schemes/<id>/scheme.json` | 每套方案 19 份 |
 | `curriculum/<id>.json` | `data/schemes/<id>/curriculum.json` | 有课程的方案 19 份 |
-| `lexicon/lexicon.json` | `data/lexicon/lexicon.json` | 统一词表 |
+| `lexicon/lexicon.json` | `data/lexicon/lexicon.json` | 词表（文本 + 词频，约 1.6 MB） |
 
-- 共 40 个文件、约 10.9 MiB（旧版运行时目录约 28 MiB，紧凑序列化后减少约 61%）；
+- 共 40 个文件、约 3.6 MiB（含词表约 1.6 MB；旧版运行时目录约 28 MiB，重构后约为此前 10.9 MiB 的 1/3）；
 - `apps/web/public/data/` 已加入 `.gitignore`，是纯生成物：可以直接删除并重建，不要手工编辑或提交；
 - Web 侧只在 `apps/web/src/lib/data.ts` 中按上述 4 条路径加载，不存在其它运行时数据路径。
 
@@ -117,7 +140,7 @@ data/
 | 模块 | 校验内容 |
 |---|---|
 | `scripts/validate/schemes.mjs` | 19 套方案（单点常量）；目录与索引一一对应；每套方案可构造 engine；`engine-cases.json` 覆盖全部方案且正例 / 反例数量不低于下限（当前 1,725 / 180） |
-| `scripts/validate/lexicon.mjs` | Lexicon 规模下限（29,660 词 / 3,009 字 / 405 音节示例）、`dataVersion` 格式、词与字无重复、词长 2–5、声调与韵母合法 |
+| `scripts/validate/lexicon.mjs` | Lexicon 规模下限（50,000 词 / 3,009 字 / 405 音节示例）、`dataVersion` 与内容一致、词条仅 1–5 个汉字且无重复、全部可解析为本应用音节 |
 | `scripts/validate/curriculum.mjs` | 5 套 full 课程严格校验；14 套 simplified 课程**用生成器重新生成（回填磁盘上的 `generatedAt`）后与磁盘 JSON 深相等**，另加独立不变式（编码音节都可解析、每原子一课、free 不设课、tips 仅编码类、首末课、`dataVersion` 重算、`origin` / `supportLevel` / `courseTier` 与索引一致、兼容码必须出现在 tips） |
 | `scripts/validate/public-data.mjs` | `apps/web/public/data/` 顶层与文件清单必须恰好是 4 类产物；逐文件与 `data/` 源文件 JSON 深相等且为紧凑序列化；版本链（`defaultScheme` / `courseSupported` / Lexicon 版本）一致 |
 | `scripts/validate/docs.mjs` | 文档入口、README 导航覆盖 `docs/**/*.md`、Markdown 本地链接与截图引用可解析、废弃数据目录不存在 |
@@ -130,7 +153,7 @@ data/
 
 | 想改什么 | 做法 |
 |---|---|
-| 词表 | 编辑 `data/lexicon/lexicon.json` → `pnpm data:sync` → `pnpm validate` |
+| 词表 | 改 `scripts/build-lexicon.mjs` 或 `data/raw/jieba-dict.txt` → `pnpm data:lexicon` → `pnpm data:sync` → `pnpm validate`（也可直接编辑 `entries` 后同步） |
 | 5 套 full 课程 | 编辑 `data/schemes/<id>/curriculum.json` → 按内容重算 `dataVersion`（见下）→ `pnpm data:sync` → `pnpm validate` |
 | 方案键位 / 推荐码 / 兼容码 | 编辑 `data/schemes/<id>/scheme.json`（并补齐 `engine-cases.json`）→ 若影响生成课程则 `pnpm data:curriculum` → `pnpm data:sync` → `pnpm validate` |
 | 14 套 simplified 课程 | 不要直接编辑：改 `scripts/lib/curriculum-template.mjs` 或生成器 → `pnpm data:curriculum` → 检查 `data/` diff → `pnpm data:sync` → `pnpm validate` |

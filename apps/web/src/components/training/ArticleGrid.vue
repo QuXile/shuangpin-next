@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * 文章练习行渲染：按 core 解析出的行（每行 ≤5 字）渲染 CharacterCard；
- * 字库外汉字以跳过样式展示、不参与判题。自动把当前字滚到视口中间。
+ * 读音无法解析的汉字以跳过样式展示、不参与判题。自动把当前字滚到视口中间。
  */
 import { computed, nextTick, ref, watch } from 'vue'
 import type { AtomId, PracticeCap, SessionState } from '@shuangpin/core'
@@ -117,7 +117,7 @@ watch(
     <div class="article-lines">
       <div v-for="(line, lineIndex) in lines" :key="lineIndex" class="article-line">
         <template v-for="(cell, cellIndex) in line" :key="`${lineIndex}-${cellIndex}`">
-          <span v-if="cell.wordIndex === null" class="article-skipped" :title="`「${cell.char}」不在练习字库，已跳过`">
+          <span v-if="cell.wordIndex === null" class="article-skipped" :title="`「${cell.char}」读音无法解析，已跳过`">
             {{ cell.char }}
           </span>
           <div

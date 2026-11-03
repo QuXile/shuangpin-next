@@ -7,7 +7,6 @@
  *   连续分隔合并；每行最多 5 个汉字（满 5 自动换行）；保留标点造成的短行。
  */
 import type {
-  ArticlePlan,
   ParsedArticle,
   PracticeWord,
   SchemeDef,
@@ -107,17 +106,6 @@ export function entryToPracticeWord(engine: SchemeEngine, entry: WordEntry): Pra
 }
 
 /** 批量装配，跳过异常条目 */
-export function entriesToPracticeWords(
-  engine: SchemeEngine,
-  entries: readonly WordEntry[],
-): PracticeWord[] {
-  const words: PracticeWord[] = []
-  for (const entry of entries) {
-    const word = entryToPracticeWord(engine, entry)
-    if (word) words.push(word)
-  }
-  return words
-}
 
 /**
  * 从条目取一批练习词（不足时循环补齐，跳过异常条目）。
@@ -144,54 +132,3 @@ export function buildTrainingBatch(
   return words
 }
 
-// ── 文章装配 ──────────────────────────────────────────────────
-
-/** 把解析出的行映射到字库：字库外汉字标记跳过（不练习） */
-export function buildArticlePlan(
-  lines: readonly string[][],
-  entries: readonly WordEntry[],
-): ArticlePlan {
-  const lookup = new Map<string, WordEntry>()
-  for (const entry of entries) {
-    if (!lookup.has(entry.text)) lookup.set(entry.text, entry)
-  }
-  let wordIndex = 0
-  let skipped = 0
-  const chars: string[] = []
-  const cells = lines.map((line) =>
-    line.map((char) => {
-      chars.push(char)
-      if (!lookup.has(char)) {
-        skipped += 1
-        return { char, wordIndex: null }
-      }
-      const cell = { char, wordIndex }
-      wordIndex += 1
-      return cell
-    }),
-  )
-  return { cells, chars, skipped }
-}
-
-/** 文章练习的固定顺序词序列（字库外跳过） */
-export function articlesToPracticeWords(
-  engine: SchemeEngine,
-  plan: ArticlePlan,
-  entries: readonly WordEntry[],
-): PracticeWord[] {
-  const lookup = new Map<string, WordEntry>()
-  for (const entry of entries) {
-    if (!lookup.has(entry.text)) lookup.set(entry.text, entry)
-  }
-  const words: PracticeWord[] = []
-  for (const line of plan.cells) {
-    for (const cell of line) {
-      if (cell.wordIndex === null) continue
-      const entry = lookup.get(cell.char)
-      if (!entry) continue
-      const word = entryToPracticeWord(engine, entry)
-      if (word) words.push(word)
-    }
-  }
-  return words
-}

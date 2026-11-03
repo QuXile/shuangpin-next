@@ -38,7 +38,8 @@ import { isInteractiveTarget, focusElement } from '@/lib/dom'
 import type { MappingTogglePayload } from '@/lib/keyboardView'
 import { loadLexicon, type LexiconFile } from '@/lib/data'
 import { buildSessionSummary } from '@/lib/sessionSummary'
-import { articlesToPracticeWords, buildArticlePlan, buildTrainingBatch } from '@shuangpin/core'
+import { buildTrainingBatch } from '@shuangpin/core'
+import { buildArticlePractice, type ArticlePractice } from '@/lib/article'
 
 type SessionKind = 'drill' | 'article' | null
 
@@ -236,11 +237,10 @@ function startDrill(): void {
 
 function startArticle(): void {
   const schemeEngine = engine.value
-  const plan = articlePlan.value
-  const data = lexicon.value
-  if (!schemeEngine || !plan || !data || !canStartArticle.value) return
+  const practice = articlePractice.value
+  if (!schemeEngine || !practice || !canStartArticle.value) return
   freezeHidden('article')
-  if (!startSession(articlesToPracticeWords(schemeEngine, plan, data.chars))) return
+  if (!startSession(practice.words)) return
   kind.value = 'article'
 }
 
@@ -333,18 +333,43 @@ useBottomDockContent(() => dockContent.value)
 const articleText = ref('')
 const fileInput = ref<HTMLInputElement | null>(null)
 const parsed = computed(() => (articleText.value.trim() ? parseArticleText(articleText.value) : null))
-const articlePlan = computed(() => {
-  const data = lexicon.value
-  const result = parsed.value
-  return data && result ? buildArticlePlan(result.lines, data.chars) : null
-})
+const articlePractice = ref<ArticlePractice | null>(null)
+const articleAnalyzing = ref(false)
+const articlePlan = computed(() => articlePractice.value?.plan ?? null)
 const articleMappedCount = computed(() => {
   const plan = articlePlan.value
   return plan ? plan.chars.length - plan.skipped : 0
 })
 const articleSkippedCount = computed(() => articlePlan.value?.skipped ?? 0)
 const canStartArticle = computed(
-  () => bankStatus.value === 'ready' && Boolean(engine.value) && articleMappedCount.value > 0,
+  () => Boolean(engine.value) && !articleAnalyzing.value && (articlePractice.value?.words.length ?? 0) > 0,
+)
+
+let articleSequence = 0
+let articleAnalyzeTimer: number | undefined
+watch(
+  [articleText, engine],
+  ([text, schemeEngine]) => {
+    const sequence = ++articleSequence
+    if (articleAnalyzeTimer !== undefined) window.clearTimeout(articleAnalyzeTimer)
+    if (!text.trim() || !schemeEngine) {
+      articlePractice.value = null
+      articleAnalyzing.value = false
+      return
+    }
+    articleAnalyzing.value = true
+    articleAnalyzeTimer = window.setTimeout(async () => {
+      try {
+        const practice = await buildArticlePractice(schemeEngine, text)
+        if (sequence === articleSequence) articlePractice.value = practice
+      } catch {
+        if (sequence === articleSequence) articlePractice.value = null
+      } finally {
+        if (sequence === articleSequence) articleAnalyzing.value = false
+      }
+    }, 120)
+  },
+  { immediate: true },
 )
 const articleDone = computed(() => kind.value === 'article' && session.value?.phase === 'finished')
 watch(articleDone, (done) => {
@@ -542,7 +567,8 @@ onMounted(async () => {
                 <span v-if="availableCount === 0" class="side-info-sub is-warning">当前选择下没有匹配的词，请调整声母 / 韵母选择。</span>
               </template>
               <template v-else>
-                <strong v-if="parsed">将练习 {{ articleMappedCount }} 字 · 跳过 {{ articleSkippedCount }} 字</strong>
+                <strong v-if="articleAnalyzing">正在分析拼音…</strong>
+                <strong v-else-if="parsed">将练习 {{ articleMappedCount }} 字 · 跳过 {{ articleSkippedCount }} 字</strong>
                 <strong v-else>等待输入文章…</strong>
               </template>
             </div>

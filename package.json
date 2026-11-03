@@ -19,10 +19,12 @@
     "verify": "pnpm typecheck && pnpm lint:ui && pnpm data:sync && pnpm test && pnpm build && pnpm validate",
     "validate": "node scripts/validate-all.mjs",
     "data:curriculum": "node scripts/generate-universal-curriculum.mjs",
+    "data:lexicon": "node scripts/build-lexicon.mjs",
     "data:sync": "node scripts/sync-data.mjs",
     "lint:ui": "node scripts/check-ui-conventions.mjs"
   },
   "devDependencies": {
+    "pinyin-pro": "3.29.5",
     "typescript": "^5.9.3"
   }
 }

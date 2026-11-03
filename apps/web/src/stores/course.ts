@@ -15,7 +15,7 @@ import {
   type SchemeIndexFile,
   type SchemeSummary,
 } from '@shuangpin/core'
-import { loadCurriculum, loadIndex, loadLexicon, loadScheme } from '@/lib/data'
+import { loadCurriculum, loadIndex, loadLexiconMeta, loadScheme } from '@/lib/data'
 import { canStartLesson, currentLessonId, nextLessonId, passedLessonCount } from '@shuangpin/core'
 import { STORAGE_KEYS, readString, removeKey, writeString } from '@/lib/storage'
 import { useProgressStore } from '@/stores/progress'
@@ -144,13 +144,13 @@ export const useCourseStore = defineStore('course', () => {
     const [def, curriculumFile, lexicon] = await Promise.all([
       loadScheme(id),
       loadCurriculum(id),
-      loadLexicon(),
+      loadLexiconMeta(),
     ])
     if (!isCurrentLoad(epoch)) return
     schemeId.value = id
     scheme.value = def
     curriculum.value = curriculumFile
-    lexiconWordCount.value = lexicon.words.length
+    lexiconWordCount.value = lexicon.wordCount
     previewMode.value = false
     progressStore.load(id)
     saveScheme(id)
@@ -160,12 +160,12 @@ export const useCourseStore = defineStore('course', () => {
   async function previewScheme(id: string): Promise<void> {
     if (!id || (id === schemeId.value && previewMode.value)) return
     await runLoad(async (epoch) => {
-      const [def, lexicon] = await Promise.all([loadScheme(id), loadLexicon()])
+      const [def, lexicon] = await Promise.all([loadScheme(id), loadLexiconMeta()])
       if (!isCurrentLoad(epoch)) return
       schemeId.value = id
       scheme.value = def
       curriculum.value = null
-      lexiconWordCount.value = lexicon.words.length
+      lexiconWordCount.value = lexicon.wordCount
       previewMode.value = true
       progressStore.load('')
     })

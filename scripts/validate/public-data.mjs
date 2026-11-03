@@ -80,10 +80,10 @@ export function validatePublicData(ctx) {
     )
     ctx.ok(publicIndex.defaultScheme === schemeIndex.defaultScheme, 'public/data/index.json 的 defaultScheme 与 data/ 不一致')
   }
-  if (publicLexicon && ctx.lexicon) {
+  if (publicLexicon && ctx.lexiconDataVersion) {
     ctx.ok(
-      publicLexicon.dataVersion === ctx.lexicon.dataVersion,
-      `public/data/lexicon/lexicon.json 版本不一致：${publicLexicon.dataVersion} != ${ctx.lexicon.dataVersion}`,
+      publicLexicon.dataVersion === ctx.lexiconDataVersion,
+      `public/data/lexicon/lexicon.json 版本不一致：${publicLexicon.dataVersion} != ${ctx.lexiconDataVersion}`,
     )
   }
   ctx.note(

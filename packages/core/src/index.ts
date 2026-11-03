@@ -26,6 +26,9 @@ export {
   atomId,
   parseAtomId,
   atomDisplayLabel,
+  parsePinyinToken,
+  syllableFromPinyinToken,
+  entryFromPinyin,
 } from './pinyin.ts'
 
 // 方案引擎
@@ -78,8 +81,6 @@ export {
   filterTrainingEntries,
   parseArticleText,
   buildTrainingBatch,
-  buildArticlePlan,
-  articlesToPracticeWords,
 } from './training.ts'
 
 // 课程进度

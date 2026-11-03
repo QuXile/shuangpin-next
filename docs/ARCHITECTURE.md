@@ -23,8 +23,8 @@ apps/web/src/            App.vue / main.ts / router.ts
                          useKeyInput / useGlobalKeys / useBottomDockContent / usePointerBlur / useResizeObserver
   components/            common / keyboard / layout / map / practice / intro / training
   stores/                course / progress / settings / sound / layout
-  lib/                   data / storage / dom / sessionSummary / keyboardView / lessonView /
-                         trainingSelection / audio / shortcuts
+  lib/                   data / lexicon / article / storage / dom / sessionSummary /
+                         keyboardView / lessonView / trainingSelection / audio / shortcuts
   styles/                tokens.css + base.css（单一设计系统）
 packages/core/src/       types / pinyin / scheme / session / lesson / selector / training / progress / index
 packages/core/tests/     领域单元测试 + data/ 源数据契约测试
@@ -41,20 +41,21 @@ docs/                    文档（5 篇，统一入口见 README）
 | 文件 | 职责 |
 |---|---|
 | `types.ts` | 数据契约（index / scheme / curriculum / lexicon，与真实 JSON 对齐）+ 运行期模型（Practice / Session / Stage）；无死字段 |
-| `pinyin.ts` | 拼音常量、规范化、音节拆分、声调显示、AtomId 与 atom / 词的匹配谓词 |
+| `pinyin.ts` | 拼音常量、规范化、音节拆分、声调显示、外部拼音 token → 规范音节、AtomId 与 atom / 词的匹配谓词 |
 | `scheme.ts` | 方案引擎：判题、主键、键位图、free/learn 划分；编码分析（推荐码 / 兼容码）唯一口径 |
 | `session.ts` | 会话状态机 + 输入跟踪（错误锁定 / 揭示 / keyErrors）+ 练习展示模型（键帽、可接受序列） |
 | `lesson.ts` | 阶段计划与门槛、评分与星级、组卷装配、单课词池派生 |
 | `selector.ts` | 确定性选词算法与随机原语（内部模块，由 `lesson.ts` 组卷调用） |
-| `training.ts` | 练习场范围过滤、文章解析与装配、条目 → 练习词批次、方案键位选项 |
+| `training.ts` | 练习场范围过滤、文章拆字、条目 → 练习词批次、方案键位选项 |
 | `progress.ts` | 课程解锁与进度规则（课状态 / 当前课 / 下一课 / 已通过数） |
 | `index.ts` | 公共入口：52 个值导出 + `types.ts` 类型契约 |
 
 ### 公共 API（52 个值导出，按模块分组）
 
 ```text
-pinyin    (9)  INITIALS FINALS ZERO_INITIALS splitPinyin splitSyllable toToneMarks
+pinyin   (12)  INITIALS FINALS ZERO_INITIALS splitPinyin splitSyllable toToneMarks
                atomId parseAtomId atomDisplayLabel
+               parsePinyinToken syllableFromPinyinToken entryFromPinyin
 scheme    (5)  createSchemeEngine freeAtomsOf analyzeSchemeCodes isFreeAtom freeAtomIdsOf
 session  (11)  createSession applyKey backspace clearInput resumeSession sessionMetrics
                normalizeKeyInput hasInputError cellKeyOf keyErrorEntries buildPracticeWord
@@ -62,8 +63,8 @@ lesson   (15)  PRACTICE_STAGES KIND_STAGE_MIN_WORDS lessonStages lessonStageMinW
                stageGate hintTierFor buildSingleCharWords buildWordStageWords
                buildTutorialWords buildLessonPool evaluateLesson describePassCriteria
                accuracyTiers speedTiers tierOf
-training  (7)  atomOptionsOf freeTrainingAtoms filterTrainingEntries parseArticleText
-               buildTrainingBatch buildArticlePlan articlesToPracticeWords
+training  (5)  atomOptionsOf freeTrainingAtoms filterTrainingEntries parseArticleText
+               buildTrainingBatch
 progress  (5)  lessonState canStartLesson nextLessonId currentLessonId passedLessonCount
 ```
 
@@ -137,7 +138,7 @@ keyErrors    错误键位统计：'实际按下|应为' → 次数
   - 入门课完成即通过并记 ★★★。
 - `accuracyTiers / speedTiers / tierOf / describePassCriteria` 提供 UI 档位与文案，默认速度门槛与判定共用同一份数据，避免文案与规则漂移。
 - 组卷装配：`buildSingleCharWords`（单字轮转）、`buildWordStageWords`（概率均衡抽词 + 稀疏目标补字）、`buildTutorialWords`（教学示例逐音一张卡）。
-- `buildLessonPool(lesson, lexiconLike)`：从统一 Lexicon 派生单课 `words / chars / examples`（initial 展开全部韵母、final 只展开真实声母、zero 取自身；零声母示例只在 zero 知识点下出现，缺失时回退课程 `zeroExamples`）。Web 的课程练习与 core 测试共用这一实现。
+- `buildLessonPool(lesson, lexiconLike)`：从运行时词表派生单课 `words / chars / examples`（initial 展开全部韵母、final 只展开真实声母、zero 取自身；零声母示例只在 zero 知识点下出现，缺失时回退课程 `zeroExamples`）。Web 的课程练习与 core 测试共用这一实现。
 
 ### 确定性选词（selector.ts，内部）
 
@@ -149,13 +150,13 @@ keyErrors    错误键位统计：'实际按下|应为' → 次数
 ### 训练场与进度（training.ts / progress.ts）
 
 - `filterTrainingEntries` / `syllableInTrainingScope`：条目的每个音节都必须命中「声母 × 韵母」范围；零声母是独立选择集（`zeroFinals`），er 等只存在于 zeroInitial 中。
-- `parseArticleText`：只保留汉字，非汉字统一断行，每行最多 5 字；`buildArticlePlan` 把行映射到字库（字库外汉字计入 skipped），`articlesToPracticeWords` 按固定顺序装配练习词。
+- `parseArticleText`：只保留汉字，非汉字统一断行，每行最多 5 字；文章 → 练习词的拼音解析在 Web 侧 `lib/article.ts` 完成（pinyin-pro 上下文解析，不查词表）。
 - `buildTrainingBatch`：从条目取目标词量的批次（不足循环补齐，跳过无法构建的条目）；可传 seed 复现。
 - `progress.ts`：按课程列表顺序解锁——已通过 = passed；第一课 / `unlockedAll` = available；否则前一课通过才 available；`currentLessonId` 是第一门未通过且未锁的课。
 
 ### 数据契约（types.ts）
 
-- **数据文件契约**：`SchemeIndexFile / SchemeSummary`（`data/schemes/index.json` 实际字段：version / generatedBy / reference / semantics / defaultScheme / recommendedOrder / courseSupported / schemes / dataQuality）、`SchemeDef`（`schemes/<id>/scheme.json` 全字段）、`Curriculum / LessonDef`（`curriculum/<id>.json`）、`Lexicon / WordEntry / SyllableExample`（`lexicon/lexicon.json`）。
+- **数据文件契约**：`SchemeIndexFile / SchemeSummary`（`data/schemes/index.json` 实际字段：version / generatedBy / reference / semantics / defaultScheme / recommendedOrder / courseSupported / schemes / dataQuality）、`SchemeDef`（`schemes/<id>/scheme.json` 全字段）、`Curriculum / LessonDef`（`curriculum/<id>.json`）、`Lexicon`（`lexicon/lexicon.json`：`entries` 文本+词频 + `syllableExamples`，不含拼音）、`WordEntry / SyllableExample`（运行时解析后的模型）。
 - **运行期模型**：`PracticeWord / PracticeCap`、`SessionState / SessionFeedback / SessionMetrics`、`StageGate / LessonResult / MetricTier`、`TrainingScope / ArticlePlan`、`LessonProgress / LessonState`。
 - 契约只描述真实字段：不写「当前数据中从不出现」的字段，也不为未实现能力保留类型。
 
@@ -169,11 +170,14 @@ keyErrors    错误键位统计：'实际按下|应为' → 次数
 index.json              方案索引（SchemeIndexFile：默认方案 / 推荐顺序 / courseSupported / 19 套摘要）
 schemes/<id>.json       SchemeDef
 curriculum/<id>.json    Curriculum（仅课程方案）
-lexicon/lexicon.json    统一 Lexicon（课程 + 入门课 + 练习场共用）
+lexicon/lexicon.json    词表（entries 文本+词频 + 音节示例；拼音运行时解析）
 ```
 
 - 同一数据只加载一次（Promise 缓存）；失败不缓存 rejected Promise，允许重试。
-- 数据加载层只把 JSON 交给 core 类型，不做业务判断。
+- `loadLexicon` 加载词表后会调用 `lib/lexicon.ts` 解析拼音；其余 loader 只把 JSON 交给 core 类型。
+- 拼音解析统一走 `lib/lexicon.ts`：动态 `import('pinyin-pro')`（独立 chunk，不进入主包），把 `entries` 解析成带 `syllables` 的 `WordEntry` 列表（词 / 单字分开、词频顺序保留），供课程、入门课、练习场共用。
+- 文章练习走 `lib/article.ts`：`parseArticleText` 拆字后，直接用 pinyin-pro 对整个文章做上下文级拼音解析，不查词表；解析不出方案音节的汉字标记为跳过。
+- core 保持零第三方依赖：`pinyin-pro` 只出现在 Web 运行时与构建脚本中，core 只接收解析后的 `WordEntry`。
 
 ### stores（跨页面共享 + 持久化）
 
@@ -202,7 +206,9 @@ lexicon/lexicon.json    统一 Lexicon（课程 + 入门课 + 练习场共用）
 
 | 文件 | 职责 |
 |---|---|
-| `data.ts` | 4 个数据 loader（缓存 + 重试语义） |
+| `data.ts` | 4 个数据 loader（缓存 + 重试语义）；`loadLexicon` 加载后交给 `lexicon.ts` 解析拼音 |
+| `lexicon.ts` | 词表拼音解析：动态 import pinyin-pro，把 `entries` 转成运行时 `WordEntry` 列表（核心零依赖） |
+| `article.ts` | 文章练习：拆字 + 上下文拼音解析 → 逐字 `PracticeWord`/`ArticlePlan`；不可表示读音计入 skipped |
 | `storage.ts` | 唯一 localStorage / sessionStorage 访问点；`STORAGE_KEYS` 集中键名；读写失败静默返回 null / false；可注入 StorageLike 便于测试 |
 | `dom.ts` | 输入守卫：可编辑元素 / 交互元素 / IME 与 repeat / 合法字母键 / 聚焦 |
 | `sessionSummary.ts` | 会话结束统计（accuracy% / cpm / duration）、aria-live 文案、声音反馈分支；错误键位排行直接消费 core `keyErrorEntries(state)`（不拆字符串） |

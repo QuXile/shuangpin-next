@@ -191,3 +191,8 @@ export function replaceDirAtomically(targetDir, build) {
 export function curriculumVersionOf(chapters, lessons) {
   return `curriculum-${hash12(JSON.stringify({ chapters, lessons }))}`
 }
+
+/** lexicon-<12hex>：只覆盖会进入运行期的词条与音节示例。 */
+export function lexiconVersionOf(lexicon) {
+  return `lexicon-${hash12(JSON.stringify({ entries: lexicon.entries, syllableExamples: lexicon.syllableExamples }))}`
+}

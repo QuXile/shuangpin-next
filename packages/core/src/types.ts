@@ -300,7 +300,6 @@ export interface WordEntry {
   freqRank?: number
   syllables: WordSyllable[]
   chars: string[]
-  polyphone?: boolean
 }
 
 /** 单个音节的代表字示例（lexicon.syllableExamples 的值） */
@@ -313,18 +312,30 @@ export interface SyllableExample {
   tone?: Tone
 }
 
+/** 词库源数据中的词条：只存文本与词频，拼音由运行时解析 */
+export interface LexiconEntry {
+  text: string
+  freq: number
+}
+
+/** data/lexicon/lexicon.json 契约（单份数据：词条 + 音节示例） */
 export interface Lexicon {
   schemaVersion: number
-  description: string
-  source: Record<string, string>
+  description?: string
+  source?: Record<string, string>
   dataVersion: string
+  entries: LexiconEntry[]
+  syllableExamples: Record<string, SyllableExample>
+}
+
+/** 运行时解析后的词表（课程 / 入门课 / 练习场消费） */
+export interface ResolvedLexicon {
   words: WordEntry[]
   chars: WordEntry[]
   syllableExamples: Record<string, SyllableExample>
 }
 
-/** buildLessonPool 只需词表三件套（web LexiconFile 结构兼容） */
-export type LexiconLike = Pick<Lexicon, 'words' | 'chars' | 'syllableExamples'>
+
 
 /** 单课派生词池：words/chars 来自统一 Lexicon，examples 按 lesson.focusAtoms 展开 */
 export interface LessonPool {
@@ -674,7 +685,7 @@ export interface TrainingAtomOptions {
 
 export interface ArticleCell {
   char: string
-  /** 训练序列中的词下标；null = 字库外跳过 */
+  /** 训练序列中的词下标；null = 读音无法解析、已跳过 */
   wordIndex: number | null
 }
 

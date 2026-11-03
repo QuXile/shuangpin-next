@@ -16,6 +16,8 @@ import {
   atomMatchesWord,
   focusHitsOf,
   toToneMarks,
+  parsePinyinToken,
+  syllableFromPinyinToken,
 } from '../src/pinyin.ts'
 
 describe('拼音常量', () => {
@@ -148,6 +150,21 @@ describe('parseAtomId / atomId', () => {
   })
 })
 
+
+describe('外部拼音 token → 规范音节', () => {
+  it('去声调数字、ü → v，0/5 都视为轻声', () => {
+    expect(parsePinyinToken('lü4')).toEqual({ pinyin: 'lv', tone: 4 })
+    expect(parsePinyinToken('yi0')).toEqual({ pinyin: 'yi', tone: 5 })
+    expect(parsePinyinToken('nv3')).toEqual({ pinyin: 'nv', tone: 3 })
+    expect(parsePinyinToken('?')).toBeNull()
+  })
+
+  it('只接受本应用口径的声母/韵母', () => {
+    expect(syllableFromPinyinToken('行', 'hang2')).toMatchObject({ initial: 'h', final: 'ang', tone: 2 })
+    expect(syllableFromPinyinToken('嗯', 'ng4')).toBeNull()
+    expect(syllableFromPinyinToken('儿', 'er2')).toMatchObject({ initial: '', final: 'er', tone: 2 })
+  })
+})
 
 describe('atomMatchesWord · 知识点按类型严格命中', () => {
   const word = (...syllables: Array<readonly [string, string]>) => ({

@@ -9,10 +9,10 @@ vi.mock('@/lib/data', () => ({
   loadIndex: vi.fn(),
   loadScheme: vi.fn(),
   loadCurriculum: vi.fn(),
-  loadLexicon: vi.fn(),
+  loadLexiconMeta: vi.fn(),
 }))
 
-import { loadCurriculum, loadIndex, loadLexicon, loadScheme } from '@/lib/data'
+import { loadCurriculum, loadIndex, loadLexiconMeta, loadScheme } from '@/lib/data'
 import { STORAGE_KEYS, writeString } from '../src/lib/storage.ts'
 import { useCourseStore } from '../src/stores/course.ts'
 import { useTrainingSelection, type TrainingSelection } from '../src/composables/useTrainingSelection.ts'
@@ -72,15 +72,7 @@ describe('useTrainingSelection', () => {
     vi.mocked(loadIndex).mockResolvedValue(indexFixture)
     vi.mocked(loadScheme).mockImplementation(async (id: string) => ({ ...schemeDef, id }))
     vi.mocked(loadCurriculum).mockResolvedValue(curriculum)
-    vi.mocked(loadLexicon).mockResolvedValue({
-      schemaVersion: 1,
-      description: '',
-      source: {},
-      dataVersion: 'test',
-      words: [],
-      chars: [],
-      syllableExamples: {},
-    })
+    vi.mocked(loadLexiconMeta).mockResolvedValue({ wordCount: 0, dataVersion: 'test' })
   })
 
   afterEach(() => {

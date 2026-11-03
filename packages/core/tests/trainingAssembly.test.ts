@@ -1,14 +1,11 @@
 /**
- * 训练场装配测试（core training.ts）：键位选项、条目装配、批次、文章计划。
+ * 训练场装配测试（core training.ts）：键位选项、条目装配、训练批次。
  */
 import { describe, expect, it } from 'vitest'
 import type { Initial, SyllableFinal } from '../src/types.ts'
 import {
-  articlesToPracticeWords,
   atomOptionsOf,
-  buildArticlePlan,
   buildTrainingBatch,
-  entriesToPracticeWords,
   entryToPracticeWord,
 } from '../src/training.ts'
 import { loadEngine, loadLexicon, loadSchemeDef, makeWordEntry } from './helpers.ts'
@@ -34,7 +31,6 @@ describe('atomOptionsOf / 条目装配', () => {
       { text: '呃', pinyin: 'be', initial: 'b' as Initial, final: 'er' as SyllableFinal },
     ]
     expect(entryToPracticeWord(engine, broken)).toBeNull()
-    expect(entriesToPracticeWords(engine, [chars[0]!, broken])).toHaveLength(1)
   })
 })
 
@@ -55,25 +51,5 @@ describe('buildTrainingBatch', () => {
   it('空条目 / 非正数量返回空数组', () => {
     expect(buildTrainingBatch(engine, [], 10)).toEqual([])
     expect(buildTrainingBatch(engine, chars, 0)).toEqual([])
-  })
-})
-
-describe('buildArticlePlan / articlesToPracticeWords', () => {
-  it('字库内汉字分配词下标，字库外跳过并计数', () => {
-    const [a, b, c] = chars.map((entry) => entry.text)
-    const lines = [[a!, b!, 'X'], [c!]]
-    const plan = buildArticlePlan(lines, chars)
-    expect(plan.chars).toEqual([a, b, 'X', c])
-    expect(plan.skipped).toBe(1)
-    expect(plan.cells[0]?.map((cell) => cell.wordIndex)).toEqual([0, 1, null])
-    expect(plan.cells[1]?.[0]?.wordIndex).toBe(2)
-  })
-
-  it('按文章固定顺序装配练习词（跳过字库外汉字）', () => {
-    const [a, b, c] = chars.map((entry) => entry.text)
-    const plan = buildArticlePlan([[a!, 'X', b!], [c!]], chars)
-    const words = articlesToPracticeWords(engine, plan, chars)
-    expect(words.map((word) => word.text)).toEqual([a, b, c])
-    for (const word of words) expect(word.caps.length).toBeGreaterThan(0)
   })
 })

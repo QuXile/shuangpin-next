@@ -20,7 +20,7 @@ import type {
   LessonMetrics,
   LessonResult,
   LessonPool,
-  LexiconLike,
+  ResolvedLexicon,
   MetricTier,
   PassCriteria,
   PassCriteriaLine,
@@ -139,7 +139,7 @@ export function hintTierFor(stage: PracticeStage): 1 | 2 | 3 {
  * - zero focus 只取该音节自身；
  * - 示例优先取 Lexicon.syllableExamples，缺失的零声母回退到课程 zeroExamples。
  */
-export function buildLessonPool(lesson: LessonDef, lexicon: LexiconLike): LessonPool {
+export function buildLessonPool(lesson: LessonDef, lexicon: ResolvedLexicon): LessonPool {
   const examples: LessonPool['examples'] = []
   const seen = new Set<string>()
   const zeroBySyllable = new Map((lesson.zeroExamples ?? []).map((item) => [item.syllable, item]))

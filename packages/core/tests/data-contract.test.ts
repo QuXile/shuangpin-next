@@ -3,7 +3,7 @@
  * public 产物与 data 的同步一致性由 `scripts/validate-all.mjs` 负责，这里不读 gitignored 文件。
  */
 import { describe, expect, it } from 'vitest'
-import type { SchemeSummary, WordEntry } from '../src/types.ts'
+import type { Lexicon, SchemeSummary, WordEntry } from '../src/types.ts'
 import { FINALS, ZERO_INITIALS } from '../src/pinyin.ts'
 import {
   loadCurriculum,
@@ -12,6 +12,7 @@ import {
   loadLexicon,
   loadSchemeDef,
   loadSchemeIndex,
+  readDataJSON,
 } from './helpers.ts'
 
 const schemeIndex = loadSchemeIndex()
@@ -142,9 +143,11 @@ describe('课程（data/schemes/<id>/curriculum.json）', () => {
 
 describe('统一 Lexicon（data/lexicon/lexicon.json）', () => {
   it('词/字/音节示例完整，词条字段合法且无重复', () => {
+    const source = readDataJSON<Lexicon>('lexicon', 'lexicon.json')
+    expect(source.schemaVersion).toBe(2)
+    expect(source.dataVersion).toMatch(/^lexicon-[0-9a-f]{12}$/)
     const lexicon = loadLexicon()
-    expect(lexicon.dataVersion).toMatch(/^lexicon-[0-9a-f]{12}$/)
-    expect(lexicon.words.length).toBeGreaterThanOrEqual(20000)
+    expect(lexicon.words.length).toBeGreaterThanOrEqual(50000)
     expect(lexicon.chars.length).toBeGreaterThanOrEqual(3000)
     expect(Object.keys(lexicon.syllableExamples).length).toBeGreaterThanOrEqual(390)
     const seen = new Set<string>()
