@@ -5,6 +5,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Lexicon, WordEntry } from '../src/types.ts'
 import { FINALS, ZERO_INITIALS } from '../src/pinyin.ts'
+import { freeAtomIdsOf } from '../src/scheme.ts'
 import {
   loadCurriculum,
   loadEngine,
@@ -66,6 +67,22 @@ describe('课程', () => {
         expect(() => readDataJSON('schemes', id, 'curriculum.json')).toThrow()
       }
       expect(file.length).toBeGreaterThan(0)
+    }
+  })
+
+  it('入门课后 prerequisites 包含全部全拼沿用', () => {
+    for (const id of schemeIds) {
+      const curriculum = loadCurriculum(id)
+      const freeIds = freeAtomIdsOf(loadEngine(id))
+      for (const lesson of curriculum.lessons) {
+        if (lesson.kind === 'intro') {
+          expect(lesson.prerequisites, `${id}/${lesson.id}: 入门课前置`).toEqual([])
+          continue
+        }
+        for (const atom of freeIds) {
+          expect(lesson.prerequisites, `${id}/${lesson.id}: 缺少全拼沿用 ${atom}`).toContain(atom)
+        }
+      }
     }
   })
 

@@ -73,6 +73,8 @@ progress  (5)  lessonState canStartLesson nextLessonId currentLessonId passedLes
 - 23 个声母、33 个韵母（ü 记 v，`ue` / `ve` 并存）、12 个零声母音节；
 - `AtomId = initial:<声母> | final:<韵母> | zero:<零声母音节>`；
 - 知识点严格按类型命中：`final:ao` 只命中带声母的 ao，`zero:ao` 只命中零声母 ao；
+- 全拼沿用（free）按原子类型统一派生：声母 / 韵母 / 零声母都可能 free；free 原子始终已学，不单独出课，也不进入隐藏 / 焦点候选；
+- 兼容编码（compatCodes）是音节的额外合法键序列，不是 `AtomId`，不可选择 / 隐藏 / 作为焦点，只参与判题、键位图与编码 tips；
 - `j/q/x/y + ü` 的主键取 `finals[u]`，其它 ü 键作为兼容码由方案数据给出；`n/l` 后的 ü 取方案 ü 键。
 
 ### 方案引擎与编码分析
@@ -115,6 +117,7 @@ compositionSequence(syl) 纯声母×韵母组合（零声母为整段序列）
 - 候选词必须包含当前 focus，并满足已学 / 预习约束；零声母需已学或本课 focus；
 - 同一 seed 下结果可复现；候选不足时跨轮重复，并用单字兜底稀疏目标音；
 - 训练场范围：每个音节都必须命中「声母 × 韵母」；零声母是独立选择集；
+- 训练场焦点：`filterTrainingEntries(entries, scope, focusAtoms?)` 在逐音节范围之上增加逐词焦点约束，词至少一个音节命中焦点；空数组不限；
 - `parseArticleText` 只保留汉字、每行最多 5 字；文章拼音解析在 Web 侧 `lib/article.ts` 完成；
 - `buildTrainingBatch` 从条目取目标词量并在不足时循环补齐；
 - `progress.ts`：按课程顺序解锁，`currentLessonId` 为第一门未通过且未锁的课。
@@ -155,7 +158,7 @@ lexicon/lexicon.json    Lexicon（entries + syllableExamples）
 |---|---|
 | `useSessionRuntime` | 会话运行时：包装 core 状态机与 500ms 时钟，向课程练习与练习场提供统一输入/统计 |
 | `usePractice` | 练习页阶段状态机：阶段切换、会话、门槛、总结卡、记录 |
-| `useTrainingSelection` | 练习场出现 / 隐藏范围、预设与持久化 |
+| `useTrainingSelection` | 练习场出现 / 焦点 / 隐藏范围、预设与持久化 |
 | `useSchemeView` | 方案派生：engine、键位图、free 原子、底栏内容 |
 | `useKeyInput` | 应用级唯一字符输入管线 |
 | `useGlobalKeys` | 页面快捷键注册与清理 |
@@ -189,7 +192,7 @@ lexicon/lexicon.json    Lexicon（entries + syllableExamples）
 - 通用课程不落盘，运行时由 `buildUniversalCurriculum(scheme)` 生成。
 
 
-`LessonDef` 运行期字段：`focusAtoms / blockingAtoms / nonBlockingAtoms / prerequisites / wordPlan / passCriteria? / tips?`。只有 initial / final 阻塞选词；`prerequisites` 是此前 focus 的累计集合；章末复习只覆盖本章原子，期中 / 综合 / 期末使用累计范围。源文件只保存结构与人工文案，其余字段在运行时派生。
+`LessonDef` 运行期字段：`focusAtoms / blockingAtoms / nonBlockingAtoms / prerequisites / wordPlan / passCriteria? / tips?`。只有 initial / final 阻塞选词；`prerequisites` = 入门课后加入的全部全拼沿用原子 + 此前 focus 的累计集合；章末复习只覆盖本章原子，期中 / 综合 / 期末使用累计范围。源文件只保存结构与人工文案，其余字段在运行时派生。
 
 ## 数据体积
 

@@ -10,7 +10,7 @@ withDefaults(
     /** 卡头 pill 文案，如「出现」「隐藏」；自定义 #head 插槽时可省略 */
     pill?: string
     /** 视觉语气：出现（brand）/ 隐藏（danger）/ 输入（中性） */
-    tone?: 'appear' | 'hidden' | 'input'
+    tone?: 'appear' | 'hidden' | 'focus' | 'input'
     subtitle?: string
   }>(),
   { pill: '', tone: 'appear', subtitle: '' },
@@ -54,6 +54,13 @@ const scrollRef = ref<HTMLElement | null>(null)
   padding: 18px 20px;
   overflow: hidden;
 }
+.setup-card.tone-focus {
+  --setup-accent: var(--mapping-focus);
+  --setup-accent-ink: var(--mapping-focus-ink);
+  --setup-accent-soft: var(--mapping-focus-soft);
+  --setup-accent-line: var(--mapping-focus-line);
+  --setup-card-bg: var(--surface);
+}
 .setup-card.tone-hidden {
   --setup-accent: var(--danger);
   --setup-accent-ink: var(--danger);
@@ -89,6 +96,10 @@ const scrollRef = ref<HTMLElement | null>(null)
 .setup-pill.is-appear {
   color: var(--brand-ink);
   background: var(--brand-soft);
+}
+.setup-pill.is-focus {
+  color: var(--mapping-focus-ink);
+  background: var(--mapping-focus-soft);
 }
 .setup-pill.is-hidden {
   color: var(--danger);

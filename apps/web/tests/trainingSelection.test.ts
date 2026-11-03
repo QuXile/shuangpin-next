@@ -9,16 +9,22 @@ import {
   type SchemeDef,
 } from '@shuangpin/core'
 import {
+  focusAtomIdsOf,
+  focusCandidatesOf,
+  focusGroupStateOf,
+  configSnapshotOf,
   groupStateOf,
   hiddenCandidatesOf,
   learnedSelectionOf,
+  learnedSelectionSets,
   parseTrainingConfig,
   parseTrainingPreset,
   passedFocusAtomsOf,
   presetSelectionOf,
   sanitizeTrainingConfig,
   selectableAtomsOf,
-  shrinkHiddenSets,
+  setsOfConfig,
+  shrinkScopedSets,
   type AtomOptions,
   type AtomSet,
   type ScopedSets,
@@ -55,6 +61,9 @@ function emptyConfig(): TrainingConfigSnapshot {
     selectedInitials: [],
     selectedFinals: [],
     selectedZeroFinals: [],
+    focusInitials: [],
+    focusFinals: [],
+    focusZeroFinals: [],
     hiddenInitials: [],
     hiddenFinals: [],
     hiddenZeroFinals: [],
@@ -105,6 +114,54 @@ describe('trainingSelection · 配置解析/裁剪', () => {
     expect(sanitized.hiddenInitials).toEqual(['zh'])
     expect(sanitized.articleHiddenInitials).toEqual(['zh'])
   })
+
+  it('配置快照 round-trip 包含焦点', () => {
+    const sets: ScopedSets = {
+      appear: {
+        initials: new Set(['zh']),
+        finals: new Set(['ai']),
+        zeroFinals: new Set<string>(),
+      },
+      focus: {
+        initials: new Set(['zh']),
+        finals: new Set<string>(),
+        zeroFinals: new Set<string>(),
+      },
+      drill: {
+        initials: new Set<string>(),
+        finals: new Set<string>(),
+        zeroFinals: new Set<string>(),
+      },
+      article: {
+        initials: new Set<string>(),
+        finals: new Set<string>(),
+        zeroFinals: new Set<string>(),
+      },
+    }
+    const snapshot = configSnapshotOf({ tab: 'drill', articleInputMode: 'input', sets })
+    expect(snapshot.focusInitials).toEqual(['zh'])
+    const restored = setsOfConfig(snapshot)
+    expect([...restored.focus.initials]).toEqual(['zh'])
+  })
+
+  it('焦点裁剪到合法原子且必须属于出现集合；旧配置缺字段回退空', () => {
+    const parsed = parseTrainingConfig({ tab: 'drill', selectedInitials: ['zh'] })
+    expect(parsed?.focusInitials).toEqual([])
+    expect(parsed?.focusFinals).toEqual([])
+    expect(parsed?.focusZeroFinals).toEqual([])
+    const config = {
+      ...emptyConfig(),
+      selectedInitials: ['zh'],
+      selectedFinals: ['ai'],
+      focusInitials: ['zh', 'ch', 'nope'],
+      focusFinals: ['ai', 'ei'],
+      focusZeroFinals: ['a'],
+    }
+    const sanitized = sanitizeTrainingConfig(config, options)
+    expect(sanitized.focusInitials).toEqual(['zh'])
+    expect(sanitized.focusFinals).toEqual(['ai'])
+    expect(sanitized.focusZeroFinals).toEqual([])
+  })
 })
 
 describe('trainingSelection · 已学原子', () => {
@@ -150,9 +207,12 @@ describe('trainingSelection · 课程预设', () => {
     expect(preset.hiddenInitials).toEqual([])
     expect(preset.hiddenFinals).toEqual([])
     expect(preset.hiddenZeroFinals).toEqual([])
+    expect(preset.focusInitials).toEqual(['zh'])
+    expect(preset.focusFinals).toEqual([])
+    expect(preset.focusZeroFinals).toEqual([])
   })
 
-  it('word：隐藏本课新学映射，零声母只取课程教过的', () => {
+  it('word：隐藏本课新学映射，零声母包含全拼沿用与已教音节', () => {
     const preset = presetSelectionOf({
       lesson,
       lessons: curriculum.lessons,
@@ -162,8 +222,8 @@ describe('trainingSelection · 课程预设', () => {
     })
     expect(preset.hiddenInitials).toEqual(['zh'])
     expect(preset.hiddenFinals).toEqual([])
-    // 免费的零声母不进出现集合（只取 lesson focus 中学过的）
-    for (const item of common.zeroFinals) expect(preset.selectedZeroFinals).not.toContain(item)
+    // 免费零声母属于全拼沿用，必须与其它全拼沿用一样进入出现集合
+    for (const item of common.zeroFinals) expect(preset.selectedZeroFinals).toContain(item)
     for (const item of preset.hiddenZeroFinals) {
       expect(preset.selectedZeroFinals).toContain(item)
     }
@@ -230,12 +290,39 @@ describe('trainingSelection · 原子集合派生', () => {
     expect(article.initials).toHaveLength(options.initials.length - common.initials.length)
   })
 
-  it('shrinkHiddenSets 把隐藏集合收缩到出现范围/合法原子内', () => {
+  it('焦点候选与分组状态：只取出现范围内的非公共原子', () => {
+    const appear: AtomSet = {
+      initials: new Set([...common.initials, 'zh']),
+      finals: new Set<string>(),
+      zeroFinals: new Set<string>(),
+    }
+    const candidates = focusCandidatesOf(options, common, appear)
+    expect(candidates.initials).toEqual(['zh'])
+    const focus: AtomSet = {
+      initials: new Set(['zh']),
+      finals: new Set<string>(),
+      zeroFinals: new Set<string>(),
+    }
+    expect(focusGroupStateOf({ group: 'initial', focus, candidates })).toEqual({
+      selected: 1,
+      total: 1,
+      all: true,
+      indeterminate: false,
+    })
+    expect(focusAtomIdsOf(focus)).toEqual(['initial:zh'])
+  })
+
+  it('shrinkScopedSets 把隐藏与焦点集合收缩到出现范围/合法原子内', () => {
     const sets: ScopedSets = {
       appear: {
         initials: new Set(['zh']),
         finals: new Set(['ai']),
         zeroFinals: new Set<string>(),
+      },
+      focus: {
+        initials: new Set(['zh', 'ch']),
+        finals: new Set(['ai', 'ei']),
+        zeroFinals: new Set(['a']),
       },
       drill: {
         initials: new Set(['zh', 'ch']),
@@ -248,7 +335,10 @@ describe('trainingSelection · 原子集合派生', () => {
         zeroFinals: new Set<string>(),
       },
     }
-    const shrunk = shrinkHiddenSets(sets, options)
+    const shrunk = shrinkScopedSets(sets, options)
+    expect([...shrunk.focus.initials]).toEqual(['zh'])
+    expect([...shrunk.focus.finals]).toEqual(['ai'])
+    expect([...shrunk.focus.zeroFinals]).toEqual([])
     expect([...shrunk.drill.initials]).toEqual(['zh'])
     expect([...shrunk.drill.finals]).toEqual(['ai'])
     expect([...shrunk.drill.zeroFinals]).toEqual([])
@@ -260,14 +350,46 @@ describe('trainingSelection · 原子集合派生', () => {
     const progress: Record<string, LessonProgress> = {
       [passLesson.id]: { passed: true, stars: 3, bestAccuracy: 1, attempts: 1, updatedAt: 1 },
     }
-    const current: AtomSet = {
-      initials: new Set(common.initials),
-      finals: new Set(common.finals),
-      zeroFinals: new Set<string>(),
-    }
-    const learned = learnedSelectionOf({ lessons: curriculum.lessons, progress, common, options, current })
+    const learned = learnedSelectionOf({ lessons: curriculum.lessons, progress, common, options })
     expect(learned.selectedInitials).toContain('zh')
     expect(learned.selectedInitials).toEqual(expect.arrayContaining([...common.initials]))
+    expect(learned.selectedFinals).toEqual(expect.arrayContaining([...common.finals]))
+    expect(learned.selectedZeroFinals).toEqual(expect.arrayContaining([...common.zeroFinals]))
+  })
+
+  it('已学操作只调整出现范围，不清除焦点', () => {
+    const passLesson = lessonOf('L2.1')
+    const current: ScopedSets = {
+      appear: {
+        initials: new Set([...common.initials, 'zh']),
+        finals: new Set(common.finals),
+        zeroFinals: new Set<string>(),
+      },
+      focus: {
+        initials: new Set(['zh']),
+        finals: new Set<string>(),
+        zeroFinals: new Set<string>(),
+      },
+      drill: {
+        initials: new Set<string>(),
+        finals: new Set<string>(),
+        zeroFinals: new Set<string>(),
+      },
+      article: {
+        initials: new Set<string>(),
+        finals: new Set<string>(),
+        zeroFinals: new Set<string>(),
+      },
+    }
+    const next = learnedSelectionSets({
+      lessons: curriculum.lessons,
+      progress: { [passLesson.id]: { passed: true, stars: 3, bestAccuracy: 1, attempts: 1, updatedAt: 1 } },
+      common,
+      options,
+      current,
+    })
+    expect([...next.focus.initials]).toEqual(['zh'])
+    expect(next.appear.initials).toContain('zh')
   })
 
   it('parseTrainingPreset 校验缺字段/非法阶段', () => {

@@ -2,8 +2,9 @@
  * 课程生成与加载。
  *
  * - buildUniversalCurriculum(scheme)：按方案数据生成通用课程（纯函数，不读写文件）。
- * - hydrateCurriculum(schemeId, source)：把定制课程源数据补齐为运行时 LessonDef
- *   （blockingAtoms / nonBlockingAtoms / prerequisites 由 focusAtoms 与课程顺序派生）。
+ * - hydrateCurriculum(schemeId, source, freeAtoms)：把定制课程源数据补齐为运行时 LessonDef
+ *   （blockingAtoms / nonBlockingAtoms 由 focusAtoms 派生；prerequisites 由全拼沿用 +
+ *   此前 focusAtoms 与课程顺序派生）。
  *
  * 课程源数据只保存章节、课程结构与人工文案；键位、锚点、示例与编码 tips 在运行期派生。
  */
@@ -153,9 +154,13 @@ function chooseMidBoundary(modules: Array<{ atoms: string[] }>) {
 /**
  * 把定制课程源数据补齐为运行时 LessonDef：
  * blockingAtoms / nonBlockingAtoms 由 focusAtoms 派生；
- * prerequisites 是此前所有 focusAtoms 的累计集合。
+ * prerequisites = 入门课后加入的全部全拼沿用原子 + 此前所有 focusAtoms 的累计集合。
  */
-export function hydrateCurriculum(schemeId: string, source: StoredCurriculum): Curriculum {
+export function hydrateCurriculum(
+  schemeId: string,
+  source: StoredCurriculum,
+  freeAtoms: readonly AtomId[] = [],
+): Curriculum {
   const learned = new Set<AtomId>()
   const lessons = source.lessons.map((lesson): LessonDef => {
     const focus = [...lesson.focusAtoms]
@@ -168,6 +173,10 @@ export function hydrateCurriculum(schemeId: string, source: StoredCurriculum): C
       prerequisites: [...learned],
     }
     for (const atom of focus) learned.add(atom)
+    // 入门课之后，全拼沿用就是已会内容；入门课自身不展示前置。
+    if (lesson.kind === 'intro') {
+      for (const atom of freeAtoms) learned.add(atom)
+    }
     return hydrated
   })
   return { schemeId, chapters: source.chapters.map((chapter) => ({ ...chapter })), lessons }
@@ -287,5 +296,5 @@ export function buildUniversalCurriculum(scheme: SchemeDef): Curriculum {
       lessons.push({ ...lesson, id: `L${chapterIndex + 1}.${lessonIndex + 1}`, chapterId: chapter.id })
     })
   })
-  return hydrateCurriculum(scheme.id, { chapters, lessons })
+  return hydrateCurriculum(scheme.id, { chapters, lessons }, freeAtoms)
 }

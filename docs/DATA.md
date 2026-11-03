@@ -66,6 +66,12 @@ Web 启动只加载 `index.json`，选定方案后加载 `scheme.json` 与词表
 
 当前 1,725 条正例、180 条反例；拒绝类型为 `full-pinyin` / `wrong-zero-family` / `override-bypass` / `wrong-key`。`packages/core/tests/engine.test.ts`、`data-contract.test.ts` 与 `scripts/validate/schemes.mjs` 消费这些用例。
 
+### 全拼沿用 / 零声母 / 兼容编码
+
+- **全拼沿用（free）**：键位与全拼拼写一致的声母、韵母、零声母音节，由 `freeAtomsOf` 从方案数据派生；它们始终视为已会，不单独出课，也不进入「隐藏 / 焦点」候选；
+- **零声母**：零声母音节是独立的 `zero:` 原子；与全拼一致的属于全拼沿用，不一致的属于 learn 原子，和声母 / 韵母使用同一套已学、出现、隐藏、焦点规则；
+- **兼容编码（compatCodes）**：同一音节的额外合法键序列，不是原子，不能独立选择、隐藏或作为焦点；只参与判题、键位图与编码 tips 展示。
+
 ## 方案 scheme.json
 
 | 字段 | 说明 |
@@ -100,7 +106,7 @@ primary  = recommended ?? compatCodes[0] ?? composition[0]
 | `chapters` | `id` / `order` / `title` / `subtitle` |
 | `lessons` | `id` / `chapterId` / `kind` / `title` / `desc` / `focusAtoms` / `passCriteria?` / `tips?` |
 
-课程只在文件中保存结构与人工文案。加载时由 core `hydrateCurriculum` 派生 `blockingAtoms` / `nonBlockingAtoms` / `prerequisites`（此前全部 focusAtoms 的累计集合）与 `wordPlan`（入门课 2–3 字，其余 2–5 字）。
+课程只在文件中保存结构与人工文案。加载时由 core `hydrateCurriculum` 派生 `blockingAtoms` / `nonBlockingAtoms` / `prerequisites`（入门课后加入全部全拼沿用原子，再累计此前 focusAtoms）与 `wordPlan`（入门课 2–3 字，其余 2–5 字）。
 
 ### 通用课程（运行时生成）
 

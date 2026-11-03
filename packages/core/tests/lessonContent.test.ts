@@ -73,7 +73,7 @@ describe('buildLessonCodeTips · 课程归位规则', () => {
     const lessons = [intro, lesson('L2.1', [], ['initial:zh'])]
     const tips = buildLessonCodeTips(engine, lessons)
     expect([...tips.keys()]).toEqual(['L2.1'])
-    expect(tips.get('L2.1')?.join('')).toContain('兼容映射：ju')
+    expect(tips.get('L2.1')?.join('')).toContain('兼容编码：ju')
     expect(tips.get('L2.1')?.join('')).toContain('JV')
   })
 
@@ -87,7 +87,7 @@ describe('buildLessonCodeTips · 课程归位规则', () => {
     ]
     const tips = buildLessonCodeTips(customEngine, lessons)
     expect([...tips.keys()]).toEqual(['L2.1'])
-    expect(tips.get('L2.1')?.join('')).toContain('兼容映射：zhang')
+    expect(tips.get('L2.1')?.join('')).toContain('兼容编码：zhang')
     expect(tips.get('L2.1')?.join('')).toContain('ZV')
   })
 

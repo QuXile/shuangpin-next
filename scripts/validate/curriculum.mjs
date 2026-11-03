@@ -6,12 +6,12 @@
  */
 import fs from 'node:fs'
 import path from 'node:path'
-import { buildUniversalCurriculum, hydrateCurriculum } from '../../packages/core/src/index.ts'
+import { buildUniversalCurriculum, freeAtomIdsOf, hydrateCurriculum } from '../../packages/core/src/index.ts'
 import { SCHEME_DIR } from '../lib/data-contract.mjs'
 
 const TITLE_RE = /^(入门|声母|零声母|韵母|同键|复习|期中|综合|通关) · (.+)$/
 const LESSON_FIELDS = new Set(['id', 'chapterId', 'kind', 'title', 'desc', 'focusAtoms', 'passCriteria', 'tips'])
-const CODE_TIP_RE = /^(推荐码：|兼容映射：)/
+const CODE_TIP_RE = /^(推荐码：|兼容编码：)/
 
 function validateChapters(ctx, schemeId, chapters) {
   ctx.ok(Array.isArray(chapters) && chapters.length > 0, `${schemeId}: chapters 为空`)
@@ -109,7 +109,7 @@ export function validateCurriculum(ctx) {
     validateLessons(ctx, schemeId, source.lessons, chapterIds)
     let hydrated
     try {
-      hydrated = hydrateCurriculum(schemeId, source)
+      hydrated = hydrateCurriculum(schemeId, source, freeAtomIdsOf(engineInfo.engine))
     } catch (error) {
       ctx.ok(false, `${schemeId}: 课程源数据无法补齐：${error.message}`)
       continue

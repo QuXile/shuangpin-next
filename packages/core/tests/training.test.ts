@@ -2,7 +2,7 @@
  * 练习板块纯函数测试：范围过滤与文章解析。
  */
 import { describe, expect, it } from 'vitest'
-import type { Initial, SchemeDef, SyllableFinal, WordEntry } from '../src/types.ts'
+import type { AtomId, Initial, SchemeDef, SyllableFinal, WordEntry } from '../src/types.ts'
 import { filterTrainingEntries, freeTrainingAtoms, parseArticleText } from '../src/training.ts'
 
 function entry(text: string, syllables: Array<{ initial: string; final: string }>): WordEntry {
@@ -54,6 +54,57 @@ describe('filterTrainingEntries · 范围过滤', () => {
   it('词：每个音节都必须命中', () => {
     expect(filterTrainingEntries(entries, { initials: ['zh', 'g'], finals: ['ong', 'uo'] }).map((e) => e.text)).toEqual(['中国'])
     expect(filterTrainingEntries(entries, { initials: ['zh'], finals: ['ong'] })).toEqual([])
+  })
+})
+
+describe('filterTrainingEntries · 焦点约束', () => {
+  const entries = [
+    entry('知', [{ initial: 'zh', final: 'i' }]),
+    entry('字', [{ initial: 'z', final: 'i' }]),
+    entry('爱', [{ initial: '', final: 'ai' }]),
+    entry('摘', [{ initial: 'zh', final: 'ai' }]),
+    entry('中国', [{ initial: 'zh', final: 'ong' }, { initial: 'g', final: 'uo' }]),
+  ]
+  const allScope = {
+    initials: ['zh', 'z', 'g', ''],
+    finals: ['i', 'ai', 'ong', 'uo'],
+    zeroFinals: ['ai'],
+  }
+  const focus = (...atoms: string[]) => atoms as AtomId[]
+
+  it('焦点为空保持原有范围过滤', () => {
+    expect(filterTrainingEntries(entries, allScope, focus())).toEqual(entries)
+  })
+
+  it('声母 / 韵母焦点：词至少一个音节命中', () => {
+    expect(filterTrainingEntries(entries, allScope, focus('initial:zh')).map((e) => e.text)).toEqual(['知', '摘', '中国'])
+    expect(filterTrainingEntries(entries, allScope, focus('final:ai')).map((e) => e.text)).toEqual(['摘'])
+    expect(filterTrainingEntries(entries, allScope, focus('initial:z')).map((e) => e.text)).toEqual(['字'])
+  })
+
+  it('零声母焦点只匹配零声母音节', () => {
+    expect(filterTrainingEntries(entries, allScope, focus('zero:ai')).map((e) => e.text)).toEqual(['爱'])
+    expect(filterTrainingEntries(entries, allScope, focus('final:ai')).map((e) => e.text)).not.toContain('爱')
+  })
+
+  it('多个焦点任一命中；范围与焦点同时生效', () => {
+    expect(
+      filterTrainingEntries(entries, allScope, focus('initial:zh', 'initial:z')).map((e) => e.text),
+    ).toEqual(['知', '字', '摘', '中国'])
+    expect(
+      filterTrainingEntries(
+        entries,
+        { initials: ['zh'], finals: ['i', 'ai', 'ong'] },
+        focus('initial:z'),
+      ),
+    ).toEqual([])
+    expect(
+      filterTrainingEntries(
+        entries,
+        { initials: ['zh', 'g'], finals: ['ong', 'uo'] },
+        focus('initial:g'),
+      ).map((e) => e.text),
+    ).toEqual(['中国'])
   })
 })
 

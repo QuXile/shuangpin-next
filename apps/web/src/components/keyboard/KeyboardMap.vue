@@ -30,7 +30,7 @@ const props = withDefaults(
     compatCodes?: Readonly<Record<string, readonly string[]>>
     /** 与全拼一致的 free 原子：键位图不显示它们的映射标签 */
     freeAtomIds?: readonly AtomId[]
-    /** 练习场配置页：映射标签可点击（切换出现范围 / 兼容映射显示） */
+    /** 练习场配置页：映射标签可点击（切换出现范围 / 兼容编码显示） */
     interactiveMappings?: boolean
     /** 练习场：映射点击回调 */
     onMappingToggle?: (payload: MappingTogglePayload) => void

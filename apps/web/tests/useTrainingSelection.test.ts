@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { effectScope, nextTick, type EffectScope } from 'vue'
 import { createPinia, setActivePinia } from 'pinia'
 import type { SchemeDef, SchemeIndexFile, StoredCurriculum } from '@shuangpin/core'
-import { hydrateCurriculum } from '@shuangpin/core'
+import { createSchemeEngine, freeAtomIdsOf, hydrateCurriculum } from '@shuangpin/core'
 
 vi.mock('@/lib/data', () => ({
   loadIndex: vi.fn(),
@@ -44,6 +44,7 @@ const curriculum = hydrateCurriculum(
       'utf8',
     ),
   ) as StoredCurriculum,
+  freeAtomIdsOf(createSchemeEngine(schemeDef)),
 )
 
 const indexFixture: SchemeIndexFile = {

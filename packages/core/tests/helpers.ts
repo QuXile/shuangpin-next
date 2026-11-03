@@ -24,6 +24,7 @@ import { entryFromPinyin, splitPinyin } from '../src/pinyin.ts'
 import { buildPracticeWord } from '../src/session.ts'
 import { buildLessonPool } from '../src/lesson.ts'
 import { buildUniversalCurriculum, hydrateCurriculum } from '../src/curriculum.ts'
+import { freeAtomIdsOf } from '../src/scheme.ts'
 
 // ── 数据读取 ──────────────────────────────────────────────────
 
@@ -66,7 +67,11 @@ export function loadCurriculum(schemeId: string): Curriculum {
   if (cached) return cached
   const index = loadSchemeIndex()
   const curriculum = index.customCourses.includes(schemeId)
-    ? hydrateCurriculum(schemeId, readDataJSON('schemes', schemeId, 'curriculum.json'))
+    ? hydrateCurriculum(
+        schemeId,
+        readDataJSON('schemes', schemeId, 'curriculum.json'),
+        freeAtomIdsOf(createSchemeEngine(loadSchemeDef(schemeId))),
+      )
     : buildUniversalCurriculum(loadSchemeDef(schemeId))
   curriculumCache.set(schemeId, curriculum)
   return curriculum

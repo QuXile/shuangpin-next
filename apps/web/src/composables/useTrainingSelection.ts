@@ -1,5 +1,5 @@
 /**
- * 练习场设置响应式层：出现范围 / 隐藏映射 / 组选 / 全拼沿用胶囊 / 课程预设 / 持久化。
+ * 练习场设置响应式层：出现范围 / 焦点 / 隐藏映射 / 组选 / 全拼沿用胶囊 / 课程预设 / 持久化。
  * 纯逻辑（组态、配置、候选、已学原子、预设、集合更新、存储读写）在 lib/trainingSelection.ts。
  */
 import { computed, getCurrentScope, onScopeDispose, ref, watch } from 'vue'
@@ -17,6 +17,9 @@ import {
   commonEntriesOf,
   configSnapshotOf,
   emptyScopedSets,
+  focusAtomIdsOf,
+  focusCandidatesOf,
+  focusGroupStateOf,
   groupStateOf,
   hiddenCandidatesOf as hiddenCandidatesOfPure,
   hiddenGroupStateOf,
@@ -31,7 +34,7 @@ import {
   selectableAtomsOf,
   setsOfConfig,
   setsOfPreset,
-  shrinkHiddenSets,
+  shrinkScopedSets,
   takeTrainingPreset,
   toggleAtomSet,
   toggleCommonSelection,
@@ -56,6 +59,9 @@ export function useTrainingSelection() {
   const selectedInitials = ref<ReadonlySet<string>>(newSet())
   const selectedFinals = ref<ReadonlySet<string>>(newSet())
   const selectedZeroFinals = ref<ReadonlySet<string>>(newSet())
+  const focusInitials = ref<ReadonlySet<string>>(newSet())
+  const focusFinals = ref<ReadonlySet<string>>(newSet())
+  const focusZeroFinals = ref<ReadonlySet<string>>(newSet())
   const hiddenInitials = ref<ReadonlySet<string>>(newSet())
   const hiddenFinals = ref<ReadonlySet<string>>(newSet())
   const hiddenZeroFinals = ref<ReadonlySet<string>>(newSet())
@@ -76,6 +82,7 @@ export function useTrainingSelection() {
   )
   const scopedSets = computed<ScopedSets>(() => ({
     appear: atomSetOf(selectedInitials.value, selectedFinals.value, selectedZeroFinals.value),
+    focus: atomSetOf(focusInitials.value, focusFinals.value, focusZeroFinals.value),
     drill: atomSetOf(hiddenInitials.value, hiddenFinals.value, hiddenZeroFinals.value),
     article: atomSetOf(
       articleHiddenInitials.value,
@@ -94,6 +101,16 @@ export function useTrainingSelection() {
     selectedInitials.value = next.initials; selectedFinals.value = next.finals; selectedZeroFinals.value = next.zeroFinals
   }
 
+  /** 焦点集合写回；结构不变时不触发 ref 更新。 */
+  function writeFocus(next: AtomSet): void {
+    const refs = [focusInitials, focusFinals, focusZeroFinals]
+    const olds = [scopedSets.value.focus.initials, scopedSets.value.focus.finals, scopedSets.value.focus.zeroFinals]
+    const values = [next.initials, next.finals, next.zeroFinals]
+    for (let index = 0; index < 3; index += 1) {
+      if (!sameSet(olds[index]!, values[index]!)) refs[index]!.value = values[index]!
+    }
+  }
+
   /** 隐藏集合写回（仅目标作用域；结构不变时不触发 ref 更新） */
   function writeHidden(scopeKind: 'drill' | 'article', next: AtomSet): void {
     const refs =
@@ -110,6 +127,7 @@ export function useTrainingSelection() {
 
   function applySets(next: ScopedSets): void {
     writeAppear(next.appear)
+    writeFocus(next.focus)
     writeHidden('drill', next.drill)
     writeHidden('article', next.article)
   }
@@ -184,6 +202,42 @@ export function useTrainingSelection() {
     else selectGroup(group)
   }
 
+  // ── 焦点（专项词级目标） ─────────────────────────────────
+  const focusCandidates = computed<AtomOptions>(() =>
+    focusCandidatesOf(atomOptions.value ?? EMPTY_ATOMS, commonAtoms.value, appearSet.value),
+  )
+  const focusAtomIds = computed(() => focusAtomIdsOf(scopedSets.value.focus))
+  const focusCount = computed(() =>
+    focusInitials.value.size + focusFinals.value.size + focusZeroFinals.value.size,
+  )
+  const focusGroup = (group: SelectionGroup): GroupState =>
+    focusGroupStateOf({ group, focus: scopedSets.value.focus, candidates: focusCandidates.value })
+  const focusInitialGroup = computed(() => focusGroup('initial'))
+  const focusFinalGroup = computed(() => focusGroup('final'))
+  const focusZeroGroup = computed(() => focusGroup('zero'))
+  const toggleFocus = (group: SelectionGroup, value: string): void =>
+    writeFocus(toggleAtomSet(scopedSets.value.focus, group, value))
+  function toggleFocusAll(group: SelectionGroup): void {
+    const state = focusGroup(group)
+    const list =
+      group === 'initial'
+        ? focusCandidates.value.initials
+        : group === 'final'
+          ? focusCandidates.value.finals
+          : focusCandidates.value.zeroFinals
+    writeFocus({
+      ...scopedSets.value.focus,
+      ...(group === 'initial'
+        ? { initials: new Set(state.all ? [] : list) }
+        : group === 'final'
+          ? { finals: new Set(state.all ? [] : list) }
+          : { zeroFinals: new Set(state.all ? [] : list) }),
+    })
+  }
+  function clearFocus(): void {
+    writeFocus({ initials: new Set(), finals: new Set(), zeroFinals: new Set() })
+  }
+
   const hiddenCandidatesOf = (scopeKind: 'drill' | 'article'): AtomOptions =>
     hiddenCandidatesOfPure(
       scopeKind,
@@ -227,7 +281,8 @@ export function useTrainingSelection() {
   watch(
     [selectedInitials, selectedFinals, selectedZeroFinals],
     () => {
-      const next = shrinkHiddenSets(scopedSets.value, atomOptions.value ?? EMPTY_ATOMS)
+      const next = shrinkScopedSets(scopedSets.value, atomOptions.value ?? EMPTY_ATOMS)
+      writeFocus(next.focus)
       writeHidden('drill', next.drill)
       writeHidden('article', next.article)
     },
@@ -315,6 +370,9 @@ export function useTrainingSelection() {
       selectedInitials,
       selectedFinals,
       selectedZeroFinals,
+      focusInitials,
+      focusFinals,
+      focusZeroFinals,
       hiddenInitials,
       hiddenFinals,
       hiddenZeroFinals,
@@ -331,6 +389,10 @@ export function useTrainingSelection() {
   return {
     tab, articleInputMode, atomOptions, commonAtoms, scope, passedLessonCount,
     selectedInitials, selectedFinals, selectedZeroFinals,
+    focusInitials, focusFinals, focusZeroFinals,
+    focusCandidates, focusAtomIds, focusCount,
+    focusInitialGroup, focusFinalGroup, focusZeroGroup,
+    toggleFocus, toggleFocusAll, clearFocus,
     selectableInitials: computed(() => selectable.value.initials),
     selectableFinals: computed(() => selectable.value.finals),
     selectableZeroFinals: computed(() => selectable.value.zeroFinals),

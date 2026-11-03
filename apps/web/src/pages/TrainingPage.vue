@@ -3,7 +3,7 @@
  * 练习场（/training）：专项词语练习（声母×韵母自由组合，无尽练习）
  * 与文章练习（粘贴/.txt 导入，core parseArticleText 断行，逐字练习 + 汇总）。
  *
- * 选择/隐藏/预设/持久化统一在 useTrainingSelection；判题交互在 useSessionRuntime；
+ * 选择/焦点/隐藏/预设/持久化统一在 useTrainingSelection；判题交互在 useSessionRuntime；
  * 方案派生在 useSchemeView。本页只做模板编排、文章输入与快捷键。
  */
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
@@ -25,6 +25,7 @@ import SetupCard from '@/components/training/SetupCard.vue'
 import SetupGroup from '@/components/training/SetupGroup.vue'
 import CommonCapsule from '@/components/training/CommonCapsule.vue'
 import HiddenMappingGroups from '@/components/training/HiddenMappingGroups.vue'
+import FocusMappingGroups from '@/components/training/FocusMappingGroups.vue'
 import { useCourseStore } from '@/stores/course'
 import { useLayoutStore, type DockContent } from '@/stores/layout'
 import { useSoundStore } from '@/stores/sound'
@@ -79,6 +80,7 @@ const {
   selectedInitials,
   selectedFinals,
   selectedZeroFinals,
+  focusAtomIds,
   selectableInitials,
   selectableFinals,
   selectableZeroFinals,
@@ -201,7 +203,9 @@ async function loadBank(): Promise<void> {
 }
 
 const availableEntries = computed(() =>
-  lexicon.value ? filterTrainingEntries(lexicon.value.words, scope.value) : [],
+  lexicon.value
+    ? filterTrainingEntries(lexicon.value.words, scope.value, focusAtomIds.value)
+    : [],
 )
 const availableCount = computed(() => availableEntries.value.length)
 const canStartDrill = computed(
@@ -564,7 +568,7 @@ onMounted(async () => {
               </template>
               <template v-else-if="tab === 'drill'">
                 <strong>可用词 {{ availableCount }} 条</strong>
-                <span v-if="availableCount === 0" class="side-info-sub is-warning">当前选择下没有匹配的词，请调整声母 / 韵母选择。</span>
+                <span v-if="availableCount === 0" class="side-info-sub is-warning">当前出现 / 焦点选择下没有匹配的词，请调整选择。</span>
               </template>
               <template v-else>
                 <strong v-if="articleAnalyzing">正在分析拼音…</strong>
@@ -613,7 +617,7 @@ onMounted(async () => {
 
         <!-- 专项练习 -->
         <section v-else-if="tab === 'drill'" :key="tab" class="training-panel">
-          <div class="setup-grid">
+          <div class="setup-grid setup-grid--focus">
             <SetupCard pill="出现" tone="appear" subtitle="本局练习范围">
               <template #head-extra>
                 <div class="setup-progress">
@@ -622,7 +626,7 @@ onMounted(async () => {
                     type="button"
                     class="meta-btn"
                     :disabled="passedLessonCount === 0"
-                    title="选中已学完课程包含的声母、韵母与零声母"
+                    title="选中全部全拼沿用及已学完课程覆盖的声母、韵母与零声母"
                     @click="selectLearnedAtoms"
                   >
                     已学
@@ -714,6 +718,8 @@ onMounted(async () => {
                 </SetupGroup>
               </template>
             </SetupCard>
+
+            <FocusMappingGroups :selection="selection" />
 
             <HiddenMappingGroups scope="drill" :selection="selection" />
           </div>
@@ -1020,6 +1026,9 @@ onMounted(async () => {
   grid-template-rows: minmax(0, 1fr);
   align-items: stretch;
   gap: 16px;
+}
+.setup-grid--focus {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 .setup-start {
   flex: none;

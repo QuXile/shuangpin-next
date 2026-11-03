@@ -96,7 +96,7 @@
 | 学习地图 | `SchemeHero`、`SchemeSelector`、`CurrentLearningCard`、`LearningProgressCard`、`ChapterSection`、`LessonCard`、`MapKeymapPanel` |
 | 教学 / 入门 | `TutorialStage`、`TutorialExamples`、`IntroLesson`、`IntroPageShell`、`FocusTagList`、`AnchorTips`、`CodeExampleCard` |
 | 练习 | `PracticeStream`、`CharacterCard`、`InputSlots`、`StageSummaryCard` |
-| 练习场 | `SetupCard`、`SetupGroup`、`HiddenMappingGroups`、`CommonCapsule`、`ArticleGrid` |
+| 练习场 | `SetupCard`、`SetupGroup`、`FocusMappingGroups`、`HiddenMappingGroups`、`CommonCapsule`、`ArticleGrid` |
 | 键位图 | `KeyboardMap`、`MappingStrip`、`KeyCap`、`KeymapLegend`、`SchemeKeycaps` |
 
 组件只负责展示与组合，判题 / 选词 / 进度规则来自 core。

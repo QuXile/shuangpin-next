@@ -1,6 +1,6 @@
 /**
  * 练习场选择的纯逻辑（无 Vue / Pinia 依赖，可独立单测）：
- * 配置解析与裁剪、组态（含「全拼沿用」胶囊）、隐藏候选/组态、已学原子、
+ * 配置解析与裁剪、组态（含「全拼沿用」胶囊）、焦点/隐藏候选与组态、已学原子、
  * 课程总结卡预设、作用域快照与映射行。
  *
  * 响应式状态与持久化在 composables/useTrainingSelection.ts。
@@ -45,6 +45,9 @@ export interface TrainingConfigSnapshot {
   selectedInitials: string[]
   selectedFinals: string[]
   selectedZeroFinals: string[]
+  focusInitials: string[]
+  focusFinals: string[]
+  focusZeroFinals: string[]
   hiddenInitials: string[]
   hiddenFinals: string[]
   hiddenZeroFinals: string[]
@@ -80,6 +83,10 @@ interface PresetSelection {
   hiddenInitials: string[]
   hiddenFinals: string[]
   hiddenZeroFinals: string[]
+  /** 课程带入的焦点；没有时沿用当前焦点（如「已学」只改出现范围）。 */
+  focusInitials?: string[]
+  focusFinals?: string[]
+  focusZeroFinals?: string[]
 }
 
 interface TrainingPreset {
@@ -102,9 +109,11 @@ export function atomSetOf(
   return { initials, finals, zeroFinals }
 }
 
-/** 每个作用域的选中集合（出现 / 专项隐藏 / 文章隐藏）。 */
+/** 训练场的选中集合（出现 / 焦点 / 专项隐藏 / 文章隐藏）。 */
 export interface ScopedSets {
   appear: AtomSet
+  /** 专项至少命中一个的焦点原子；空集合表示不限。 */
+  focus: AtomSet
   drill: AtomSet
   article: AtomSet
 }
@@ -146,6 +155,9 @@ export function parseTrainingConfig(raw: unknown): TrainingConfigSnapshot | null
     selectedInitials: stringList(value.selectedInitials),
     selectedFinals: stringList(value.selectedFinals),
     selectedZeroFinals: stringList(value.selectedZeroFinals),
+    focusInitials: stringList(value.focusInitials),
+    focusFinals: stringList(value.focusFinals),
+    focusZeroFinals: stringList(value.focusZeroFinals),
     hiddenInitials: stringList(value.hiddenInitials),
     hiddenFinals: stringList(value.hiddenFinals),
     hiddenZeroFinals: stringList(value.hiddenZeroFinals),
@@ -175,6 +187,15 @@ export function sanitizeTrainingConfig(
     selectedInitials,
     selectedFinals,
     selectedZeroFinals,
+    focusInitials: config.focusInitials.filter(
+      (item) => allowedInitials.has(item) && selectedInitialSet.has(item),
+    ),
+    focusFinals: config.focusFinals.filter(
+      (item) => allowedFinals.has(item) && selectedFinalSet.has(item),
+    ),
+    focusZeroFinals: config.focusZeroFinals.filter(
+      (item) => allowedZeros.has(item) && selectedZeroSet.has(item),
+    ),
     hiddenInitials: config.hiddenInitials.filter(
       (item) => allowedInitials.has(item) && selectedInitialSet.has(item),
     ),
@@ -288,6 +309,20 @@ export function hiddenCandidatesOf(
   }
 }
 
+/** 焦点候选：出现范围内已选中的非全拼原子（与专项隐藏候选同一集合）。 */
+export function focusCandidatesOf(
+  options: AtomOptions,
+  common: TrainingCommonAtoms,
+  appearSelected: AtomSet,
+): AtomOptions {
+  return hiddenCandidatesOf('drill', options, common, appearSelected)
+}
+
+/** 焦点原子 id 列表，供训练过滤使用。 */
+export function focusAtomIdsOf(focus: AtomSet): AtomId[] {
+  return atomIdsOf(focus)
+}
+
 function candidateList(candidates: AtomOptions, group: SelectionGroup): readonly string[] {
   return group === 'initial'
     ? candidates.initials
@@ -317,8 +352,20 @@ export function hiddenGroupStateOf(input: {
   )
 }
 
-/** 隐藏集合随出现集合收缩（专项隐藏只保留仍在出现范围里的项）。 */
-export function shrinkHiddenSets(sets: ScopedSets, options: AtomOptions): ScopedSets {
+/** 焦点的分组选中状态（焦点没有「全拼沿用」胶囊）。 */
+export function focusGroupStateOf(input: {
+  group: SelectionGroup
+  focus: AtomSet
+  candidates: AtomOptions
+}): GroupState {
+  const { group, focus, candidates } = input
+  const list = candidateList(candidates, group)
+  const selected = selectedSetOf(focus, group)
+  return groupStateOf(list.filter((item) => selected.has(item)).length, list.length, false, false)
+}
+
+/** 收缩集合：专项隐藏与焦点只保留仍在出现范围里的项，文章隐藏只保留合法原子。 */
+export function shrinkScopedSets(sets: ScopedSets, options: AtomOptions): ScopedSets {
   const drill = {
     initials: new Set([...sets.drill.initials].filter((item) => sets.appear.initials.has(item))),
     finals: new Set([...sets.drill.finals].filter((item) => sets.appear.finals.has(item))),
@@ -335,7 +382,14 @@ export function shrinkHiddenSets(sets: ScopedSets, options: AtomOptions): Scoped
       [...sets.article.zeroFinals].filter((item) => options.zeroFinals.includes(item)),
     ),
   }
-  return { appear: sets.appear, drill, article }
+  const focus = {
+    initials: new Set([...sets.focus.initials].filter((item) => sets.appear.initials.has(item))),
+    finals: new Set([...sets.focus.finals].filter((item) => sets.appear.finals.has(item))),
+    zeroFinals: new Set(
+      [...sets.focus.zeroFinals].filter((item) => sets.appear.zeroFinals.has(item)),
+    ),
+  }
+  return { appear: sets.appear, focus, drill, article }
 }
 
 // ── 作用域快照 ───────────────────────────────────────────────
@@ -398,24 +452,21 @@ export function passedFocusAtomsOf(
   return { initials, finals, zeroFinals }
 }
 
-/** 「选中已学」：在全拼沿用之上叠加已通过课程的 focus 原子。 */
+/** 「选中已学」：全部全拼沿用 + 已通过课程的 focus 原子。 */
 export function learnedSelectionOf(input: {
   lessons: readonly LessonDef[]
   progress: Readonly<Record<string, LessonProgress>>
   common: TrainingCommonAtoms
   options: AtomOptions
-  current: AtomSet
 }): PresetSelection {
-  const { lessons, progress, common, options, current } = input
+  const { lessons, progress, common, options } = input
   const passed = passedFocusAtomsOf(lessons, progress)
   const initialKeys = new Set(options.initials)
   const finalKeys = new Set(options.finals)
   const zeroKeys = new Set(options.zeroFinals)
-  const initialSet = new Set(
-    [...current.initials].filter((item) => common.initials.includes(item)),
-  )
-  const finalSet = new Set([...current.finals].filter((item) => common.finals.includes(item)))
-  const zeroSet = new Set([...current.zeroFinals].filter((item) => common.zeroFinals.includes(item)))
+  const initialSet = new Set(common.initials.filter((item) => initialKeys.has(item)))
+  const finalSet = new Set(common.finals.filter((item) => finalKeys.has(item)))
+  const zeroSet = new Set(common.zeroFinals.filter((item) => zeroKeys.has(item)))
   for (const item of passed.initials) if (initialKeys.has(item)) initialSet.add(item)
   for (const item of passed.finals) if (finalKeys.has(item)) finalSet.add(item)
   for (const item of passed.zeroFinals) if (zeroKeys.has(item)) zeroSet.add(item)
@@ -431,7 +482,7 @@ export function learnedSelectionOf(input: {
 
 /**
  * 从课程总结卡跳转来的无尽练习预设：
- * - 出现范围 = 全拼沿用 ∪ 到本课为止学过的原子（零声母只取课程真正教过的）；
+ * - 出现范围 = 全拼沿用 ∪ 到本课为止学过的原子（零声母同样包含全拼沿用）；
  * - 隐藏 = exam 隐藏全部出现项，word 隐藏本课新学映射，single 不隐藏。
  */
 export function presetSelectionOf(input: {
@@ -476,7 +527,9 @@ export function presetSelectionOf(input: {
   const selectedFinals = [...new Set([...common.finals, ...learned.finals])].filter((item) =>
     allowed.finals.has(item),
   )
-  const selectedZeroFinals = [...learned.zeros].filter((item) => allowed.zeroFinals.has(item))
+  const selectedZeroFinals = [...new Set([...common.zeroFinals, ...learned.zeros])].filter((item) =>
+    allowed.zeroFinals.has(item),
+  )
   const selectedInitialSet = new Set(selectedInitials)
   const selectedFinalSet = new Set(selectedFinals)
   const selectedZeroSet = new Set(selectedZeroFinals)
@@ -502,6 +555,9 @@ export function presetSelectionOf(input: {
       : hideFocus
         ? [...focus.zeros].filter((item) => selectedZeroSet.has(item))
         : [],
+    focusInitials: [...focus.initials].filter((item) => selectedInitialSet.has(item)),
+    focusFinals: [...focus.finals].filter((item) => selectedFinalSet.has(item)),
+    focusZeroFinals: [...focus.zeros].filter((item) => selectedZeroSet.has(item)),
   }
 }
 
@@ -524,7 +580,12 @@ export function parseTrainingPreset(raw: string | null): TrainingPreset | null {
 // ── 集合更新（纯函数，供响应式层写回 ref） ────────────────────
 
 export function emptyScopedSets(): ScopedSets {
-  return { appear: emptyAtomSet(), drill: emptyAtomSet(), article: emptyAtomSet() }
+  return {
+    appear: emptyAtomSet(),
+    focus: emptyAtomSet(),
+    drill: emptyAtomSet(),
+    article: emptyAtomSet(),
+  }
 }
 
 function atomSetFromOptions(options: AtomOptions): AtomSet {
@@ -653,6 +714,9 @@ export function configSnapshotOf(input: {
     selectedInitials: [...sets.appear.initials],
     selectedFinals: [...sets.appear.finals],
     selectedZeroFinals: [...sets.appear.zeroFinals],
+    focusInitials: [...sets.focus.initials],
+    focusFinals: [...sets.focus.finals],
+    focusZeroFinals: [...sets.focus.zeroFinals],
     hiddenInitials: [...sets.drill.initials],
     hiddenFinals: [...sets.drill.finals],
     hiddenZeroFinals: [...sets.drill.zeroFinals],
@@ -668,6 +732,11 @@ export function setsOfConfig(config: TrainingConfigSnapshot): ScopedSets {
       new Set(config.selectedInitials),
       new Set(config.selectedFinals),
       new Set(config.selectedZeroFinals),
+    ),
+    focus: atomSetOf(
+      new Set(config.focusInitials),
+      new Set(config.focusFinals),
+      new Set(config.focusZeroFinals),
     ),
     drill: atomSetOf(
       new Set(config.hiddenInitials),
@@ -690,6 +759,14 @@ export function setsOfPreset(preset: PresetSelection, current: ScopedSets): Scop
       new Set(preset.selectedFinals),
       new Set(preset.selectedZeroFinals),
     ),
+    focus:
+      preset.focusInitials === undefined
+        ? current.focus
+        : atomSetOf(
+            new Set(preset.focusInitials),
+            new Set(preset.focusFinals ?? []),
+            new Set(preset.focusZeroFinals ?? []),
+          ),
     drill: atomSetOf(
       new Set(preset.hiddenInitials),
       new Set(preset.hiddenFinals),
@@ -735,7 +812,6 @@ export function learnedSelectionSets(input: {
     progress: input.progress,
     common: input.common,
     options: input.options,
-    current: input.current.appear,
   })
   return setsOfPreset(learned, input.current)
 }

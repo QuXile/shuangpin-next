@@ -239,7 +239,7 @@ export interface MappingItemView {
   emphasized: boolean
   /**
    * 练习场：点击该映射时上抛的切换描述。
-   * 只有声母 / 韵母 / 零声母这类可选的原子才有；兼容映射不可独立选择，
+   * 只有声母 / 韵母 / 零声母这类可选的原子才有；兼容编码不可独立选择，
    * 它的强调状态完全由构成该音节的声母、韵母是否在范围内决定。
    */
   toggle?: MappingTogglePayload

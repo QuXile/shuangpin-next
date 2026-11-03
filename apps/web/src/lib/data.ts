@@ -19,7 +19,7 @@ import type {
   SchemeIndexFile,
   StoredCurriculum,
 } from '@shuangpin/core'
-import { buildUniversalCurriculum, hydrateCurriculum } from '@shuangpin/core'
+import { buildUniversalCurriculum, createSchemeEngine, freeAtomIdsOf, hydrateCurriculum } from '@shuangpin/core'
 import { resolveLexicon } from './lexicon'
 
 /** 词表：磁盘只存词条与词频，加载时由 pinyin-pro 解析成运行时词表 */
@@ -67,7 +67,7 @@ export const loadCurriculum = (
   cached(`curriculum:${id}`, async () => {
     if (!custom) return buildUniversalCurriculum(scheme)
     const source = await getJSON<StoredCurriculum>(`curriculum/${id}.json`)
-    return hydrateCurriculum(id, source)
+    return hydrateCurriculum(id, source, freeAtomIdsOf(createSchemeEngine(scheme)))
   })
 
 /** 词库源 JSON（只加载一次；解析拼音由需要词表三件套的页面触发）。 */

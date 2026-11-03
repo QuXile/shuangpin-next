@@ -18,7 +18,7 @@ export interface DockContent {
   zeroInitials?: Readonly<Record<string, readonly string[]>>
   compatCodes?: Readonly<Record<string, readonly string[]>>
   freeAtomIds?: readonly AtomId[]
-  /** 练习场配置页：映射可点击切换出现范围（兼容映射不参与） */
+  /** 练习场配置页：映射可点击切换出现范围（兼容编码不参与） */
   interactiveMappings?: boolean
   onMappingToggle?: (payload: MappingTogglePayload) => void
 }

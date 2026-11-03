@@ -171,7 +171,7 @@ export function buildLessonPool(lesson: LessonDef, lexicon: ResolvedLexicon): Le
 
 /** 生成课程 tips 只允许两类前缀；推荐码 / 兼容码由运行时按课程范围归位。 */
 export const CODE_TIP_RECOMMENDED_PREFIX = '推荐码：'
-export const CODE_TIP_COMPAT_PREFIX = '兼容映射：'
+export const CODE_TIP_COMPAT_PREFIX = '兼容编码：'
 export const CODE_TIP_PREFIXES: readonly string[] = Object.freeze([
   CODE_TIP_RECOMMENDED_PREFIX,
   CODE_TIP_COMPAT_PREFIX,
