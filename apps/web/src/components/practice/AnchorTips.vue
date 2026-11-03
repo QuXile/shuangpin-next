@@ -109,10 +109,4 @@ defineProps<{ rows: readonly AnchorView[] }>()
     width: 100%;
   }
 }
-@media (max-width: 640px) {
-  .anchor-chips,
-  .anchor-chip {
-    display: none;
-  }
-}
 </style>

@@ -3,13 +3,19 @@
  * 数据里不再存拼音；生成课程、校验词库时用这里解析。
  */
 import { pinyin } from 'pinyin-pro'
-import { entryFromPinyin } from '../../packages/core/src/index.ts'
+import { entryFromPinyin, syllableFromPinyinToken } from '../../packages/core/src/index.ts'
 
 const PINYIN_OPTIONS = { toneType: 'num', toneSandhi: false }
 
 /** 文本（汉字）→ 逐字带调拼音 token */
 function pinyinTokensOf(text) {
   return pinyin(text, { ...PINYIN_OPTIONS, type: 'array' })
+}
+
+/** 单个汉字 → 规范音节（不可表示时返回 null） */
+export function syllableOfChar(char) {
+  const token = pinyin(char, { ...PINYIN_OPTIONS, type: 'array' })[0]
+  return token ? syllableFromPinyinToken(char, token) : null
 }
 
 /**

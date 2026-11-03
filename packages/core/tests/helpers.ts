@@ -23,6 +23,7 @@ import { createSchemeEngine } from '../src/scheme.ts'
 import { entryFromPinyin, splitPinyin } from '../src/pinyin.ts'
 import { buildPracticeWord } from '../src/session.ts'
 import { buildLessonPool } from '../src/lesson.ts'
+import { buildUniversalCurriculum, hydrateCurriculum } from '../src/curriculum.ts'
 
 // ── 数据读取 ──────────────────────────────────────────────────
 
@@ -57,8 +58,18 @@ export function loadSchemeIndex(): SchemeIndexFile {
   return readDataJSON<SchemeIndexFile>('schemes', 'index.json')
 }
 
+const curriculumCache = new Map<string, Curriculum>()
+
+/** 定制方案读取并补齐课程源数据；其余方案按方案数据生成通用课程。 */
 export function loadCurriculum(schemeId: string): Curriculum {
-  return readDataJSON<Curriculum>('schemes', schemeId, 'curriculum.json')
+  const cached = curriculumCache.get(schemeId)
+  if (cached) return cached
+  const index = loadSchemeIndex()
+  const curriculum = index.customCourses.includes(schemeId)
+    ? hydrateCurriculum(schemeId, readDataJSON('schemes', schemeId, 'curriculum.json'))
+    : buildUniversalCurriculum(loadSchemeDef(schemeId))
+  curriculumCache.set(schemeId, curriculum)
+  return curriculum
 }
 
 export type LexiconFile = ResolvedLexicon

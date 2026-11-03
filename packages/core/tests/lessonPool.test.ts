@@ -3,6 +3,7 @@
  */
 import { describe, expect, it } from 'vitest'
 import { buildLessonPool } from '../src/lesson.ts'
+import { ZERO_INITIALS } from '../src/pinyin.ts'
 import { findLesson, loadCurriculum, loadLexicon } from './helpers.ts'
 
 const curriculum = loadCurriculum('xiaohe')
@@ -47,16 +48,7 @@ describe('buildLessonPool', () => {
     }
   })
 
-  it('Lexicon 缺音节示例时零声母回退到课程 zeroExamples（含声调显示）', () => {
-    const lesson = findLesson(curriculum, 'L2.4')
-    const emptyLexicon = { words: [], chars: [], syllableExamples: {} }
-    const pool = buildLessonPool(lesson, emptyLexicon)
-    expect(pool.examples).toHaveLength((lesson.zeroExamples ?? []).length)
-    expect(pool.examples.map((example) => example.final)).toEqual(
-      (lesson.zeroExamples ?? []).map((example) => example.syllable),
-    )
-    for (const example of pool.examples) {
-      expect(example.pinyinTone.length).toBeGreaterThanOrEqual(example.pinyin.length)
-    }
+  it('Lexicon 覆盖全部 12 个零声母音节的示例', () => {
+    for (const syllable of ZERO_INITIALS) expect(lexicon.syllableExamples[syllable]).toBeTruthy()
   })
 })

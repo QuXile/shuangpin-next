@@ -79,7 +79,7 @@ const emit = defineEmits<{ start: []; locate: [] }>()
       </div>
     </div>
 
-    <div v-else class="current-empty">{{ emptyMessage }}</div>
+    <div v-else class="current-empty">课程已全部完成，可以选择任意课程继续练习。</div>
   </section>
 </template>
 

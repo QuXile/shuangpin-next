@@ -3,7 +3,8 @@ import { fileURLToPath } from 'node:url'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { effectScope, nextTick, type EffectScope } from 'vue'
 import { createPinia, setActivePinia } from 'pinia'
-import type { Curriculum, SchemeDef, SchemeIndexFile } from '@shuangpin/core'
+import type { SchemeDef, SchemeIndexFile, StoredCurriculum } from '@shuangpin/core'
+import { hydrateCurriculum } from '@shuangpin/core'
 
 vi.mock('@/lib/data', () => ({
   loadIndex: vi.fn(),
@@ -35,19 +36,20 @@ function memoryStorage(): Storage {
 const schemeDef = JSON.parse(
   readFileSync(fileURLToPath(new URL('../../../data/schemes/xiaohe/scheme.json', import.meta.url)), 'utf8'),
 ) as SchemeDef
-const curriculum = JSON.parse(
-  readFileSync(
-    fileURLToPath(new URL('../../../data/schemes/xiaohe/curriculum.json', import.meta.url)),
-    'utf8',
-  ),
-) as Curriculum
+const curriculum = hydrateCurriculum(
+  'xiaohe',
+  JSON.parse(
+    readFileSync(
+      fileURLToPath(new URL('../../../data/schemes/xiaohe/curriculum.json', import.meta.url)),
+      'utf8',
+    ),
+  ) as StoredCurriculum,
+)
 
 const indexFixture: SchemeIndexFile = {
-  version: '1',
   defaultScheme: 'xiaohe',
-  recommendedOrder: ['xiaohe'],
-  courseSupported: ['xiaohe'],
-  schemes: [{ id: 'xiaohe', name: 'xiaohe', type: 'compositional', file: '' }],
+  schemes: [{ id: 'xiaohe', name: 'xiaohe' }],
+  customCourses: ['xiaohe'],
 }
 
 const options = {
@@ -72,7 +74,7 @@ describe('useTrainingSelection', () => {
     vi.mocked(loadIndex).mockResolvedValue(indexFixture)
     vi.mocked(loadScheme).mockImplementation(async (id: string) => ({ ...schemeDef, id }))
     vi.mocked(loadCurriculum).mockResolvedValue(curriculum)
-    vi.mocked(loadLexiconMeta).mockResolvedValue({ wordCount: 0, dataVersion: 'test' })
+    vi.mocked(loadLexiconMeta).mockResolvedValue({ wordCount: 0 })
   })
 
   afterEach(() => {

@@ -173,121 +173,19 @@ export interface SchemeCodeAnalysis {
 
 // ── 方案索引（data/schemes/index.json 的真实结构） ────────────
 
-export interface SchemeAtomStats {
-  total: number
-  free: number
-  learn: number
-}
-
-export interface SchemeKeysStats {
-  initials: number
-  finals: number
-  zeroInitial: number
-  flyingInitials: string[]
-  multiKeyFinals: string[]
-  sameKeyGroups: number
-  recommended: number
-  compatCodes: number
-}
-
-export interface SchemeAmbiguityExample {
-  code: string
-  pinyin: string[]
-}
-
-export interface SchemeAmbiguity {
-  codes: number
-  ambiguousCodes: number
-  examples: SchemeAmbiguityExample[]
-  missingSyllables: string[]
-}
-
-export interface SchemeCourseInfo {
-  supportsGuidedCourse: boolean
-  courseTier: string
-  reason: string
-  courseNotes: string
-}
-
-export interface SchemeRecommendation {
-  rank: number
-  reason: string
-}
-
 /** 单套方案在索引中的摘要（与 data/schemes/index.json.schemes[i] 一致） */
 export interface SchemeSummary {
   id: string
   name: string
-  type: SchemeType
-  file: string
-  keys: SchemeKeysStats
-  atoms: {
-    initials: SchemeAtomStats
-    finals: SchemeAtomStats
-    zeroInitial: SchemeAtomStats
-    total: SchemeAtomStats
-  }
-  zeroInitialFamily: string
-  zeroInitialRule: string
-  ambiguity: SchemeAmbiguity
-  course: SchemeCourseInfo
-  recommendation: SchemeRecommendation
-  dataGaps: unknown[]
 }
 
-export interface SchemeReferenceEntry {
-  repo: string
-  url: string
-  commit: string
-  license: string
-  file?: string
-  version?: string
-  commitShort?: string
-}
-
-export interface SchemeReference {
-  primary: SchemeReferenceEntry
-  custom: SchemeReferenceEntry
-  fallback: SchemeReferenceEntry
-}
-
-/** 方案语义说明（索引内嵌文档） */
-export type SchemeSemantics = Record<string, string>
-
-export interface SchemeCrossCheck {
-  available: boolean
-  comparable: boolean
-  note?: string
-  zeroMismatches: unknown[]
-  finalMismatches: unknown[]
-  judgeOnlyFinals: string[]
-}
-
-export interface SchemeUniversalAmbiguity {
-  code: string
-  pinyin: string[]
-  affectedSchemes: string[]
-  note: string
-}
-
-export interface SchemeDataQuality {
-  universalAmbiguities: SchemeUniversalAmbiguity[]
-  crossCheckKeyboard: Record<string, SchemeCrossCheck>
-  dataGaps: unknown[]
-  riskNotes: string[]
-}
-
-/** data/schemes/index.json（W2 原样拷贝为 public/data/index.json） */
+/** data/schemes/index.json（public 副本由 data:sync 生成） */
 export interface SchemeIndexFile {
-  version: number
-  generatedBy: string
-  reference: SchemeReference
-  semantics: SchemeSemantics
   defaultScheme: string
-  recommendedOrder: string[]
-  courseSupported: string[]
+  /** 按 UI 顺序排列的方案 */
   schemes: SchemeSummary[]
-  dataQuality: SchemeDataQuality
+  /** 有定制课程文件的方案 id；其余方案在运行期按方案数据生成通用课程 */
+  customCourses: string[]
 }
 
 // ── 词库 / Lexicon（data/lexicon/lexicon.json） ──────────────
@@ -321,9 +219,6 @@ export interface LexiconEntry {
 /** data/lexicon/lexicon.json 契约（单份数据：词条 + 音节示例） */
 export interface Lexicon {
   schemaVersion: number
-  description?: string
-  source?: Record<string, string>
-  dataVersion: string
   entries: LexiconEntry[]
   syllableExamples: Record<string, SyllableExample>
 }
@@ -366,22 +261,17 @@ export interface PassCriteria {
   starCpm?: [number, number, number]
 }
 
-export interface AtomMeta {
+/** 运行时派生的原子展示信息（键位 + 记忆锚点）；不写入课程数据文件 */
+export interface AtomMemory {
   atomId: AtomId
   type: AtomType
   pinyin: string
   keys: string[]
   free: boolean
-  /** 键位记忆锚点：与该知识点绑定的高频字/词，1–5 个 */
-  anchors?: string[]
+  /** 键位记忆锚点：与该知识点绑定的高频字，0–5 个 */
+  anchors: string[]
   /** 一句话记忆法 */
   mnemonic?: string
-}
-
-export interface ZeroExample {
-  syllable: string
-  char: string
-  tone?: number
 }
 
 export interface LessonDef {
@@ -399,14 +289,8 @@ export interface LessonDef {
   wordPlan: WordPlan
   /** 入门课无评分门槛（完成即通过） */
   passCriteria?: PassCriteria
-  atomMeta: Record<string, AtomMeta>
-  zeroExamples: ZeroExample[]
-  /** 本课备注与技巧 */
-  tips: string[]
-  /** 各阶段最低完成词数（缺省按课程类型使用 core 默认值） */
-  stageMinWords?: Partial<Record<PracticeStage, number>>
-  /** 复习课的家族标记（数据生成期使用，运行时仅作信息） */
-  reviewFamily?: string
+  /** 人工维护的本课备注与技巧（推荐码 / 兼容码等由运行时派生，不写入数据） */
+  tips?: string[]
 }
 
 export interface ChapterDef {
@@ -418,16 +302,6 @@ export interface ChapterDef {
 
 export interface Curriculum {
   schemeId: string
-  schemeName: string
-  schemeType: string
-  version: string
-  templateVersion: string
-  generatedAt: string
-  supportLevel: 'full' | 'simplified'
-  /** 课程来源：仅生成课程写 generated；定制课程不写该字段 */
-  origin?: 'generated'
-  /** 课程内容 hash：curriculum-<12hex> */
-  dataVersion: string
   chapters: ChapterDef[]
   lessons: LessonDef[]
 }

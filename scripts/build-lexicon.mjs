@@ -3,21 +3,24 @@
  * 从 jieba 词典重建词表 data/lexicon/lexicon.json。
  *
  * 源：data/raw/jieba-dict.txt（MIT，gitignored；下载命令见 docs/DATA.md）
- * 规则（与历史词表口径一致，另按词频选择性保留常见地名）：
- *  - 恰好 2–5 个汉字（字母 / 数字 / 符号 / 空格自然排除）
- *  - 排除专名：人名 nr / nrfg / nrt，机构 nt，其他专名 nz
- *  - 地名 ns 选择性保留：2 字且词频 ≥100，或 3–5 字且词频 ≥500
- *  - 按词频降序取前 50,000 词；单字与 syllableExamples 沿用现有词表
- *  - 全部词条必须能被 pinyin-pro 解析为本应用音节，否则中止
+ * 规则：
+ *  - 词：恰好 2–5 个汉字；排除人名 nr/nrfg/nrt、机构 nt、其他专名 nz；
+ *    地名 ns 选择性保留（2 字词频 ≥100，3–5 字词频 ≥500）；按词频降序取前 50,000。
+ *  - 单字：jieba 单字中取 GB2312 常用字，每个音节按词频取前 10；
+ *    对没有常用字的音节，回退到 syllableExamples 的示例字（保证每个音节至少 1 个单字）。
+ *  - 全部词条必须能被 pinyin-pro 解析为本应用音节，否则中止。
  */
 import fs from 'node:fs'
 import path from 'node:path'
-import { LEXICON_FILE, ROOT, readJSON, writeJSON, lexiconVersionOf } from './lib/data-contract.mjs'
-import { resolveLexicon } from './lib/pinyin-resolve.mjs'
+import { LEXICON_FILE, ROOT, readJSON, writeJSON } from './lib/data-contract.mjs'
+import { resolveLexicon, syllableOfChar } from './lib/pinyin-resolve.mjs'
 
 const RAW_FILE = path.join(ROOT, 'data', 'raw', 'jieba-dict.txt')
 const TARGET_WORDS = 50000
 const HAN_WORD = /^[\u4e00-\u9fff]{2,5}$/
+const HAN_CHAR = /^\p{Script=Han}$/u
+const CHARS_PER_SYLLABLE = 10
+const FALLBACK_CHAR_FREQ = 1
 const DROP_POS = new Set(['nr', 'nrfg', 'nrt', 'nt', 'nz'])
 
 /** 地名：保留常见短地名/高词频地名，过滤生僻行政区与低词频长地名。 */
@@ -53,25 +56,72 @@ function selectWords(rows) {
     .map(({ word, freq }) => ({ text: word, freq }))
 }
 
+/** GB2312 一二级汉字（6763 个常用简化字），用作单字表的常用字过滤。 */
+function commonChars() {
+  const decoder = new TextDecoder('gb2312')
+  const set = new Set()
+  for (let hi = 0xa1; hi <= 0xf7; hi += 1) {
+    for (let lo = 0xa1; lo <= 0xfe; lo += 1) {
+      const char = decoder.decode(Uint8Array.of(hi, lo))
+      if (HAN_CHAR.test(char)) set.add(char)
+    }
+  }
+  return set
+}
+
+function syllableKey(syllable) {
+  return syllable.initial === '' ? `zero:${syllable.final}` : `${syllable.initial}:${syllable.final}`
+}
+
+function selectChars(rows, examples) {
+  const common = commonChars()
+  const groups = new Map()
+  const freqByChar = new Map()
+  for (const { word, freq } of rows) {
+    if (!HAN_CHAR.test(word) || !common.has(word)) continue
+    const syllable = syllableOfChar(word)
+    if (!syllable) continue
+    const key = syllableKey(syllable)
+    freqByChar.set(word, freq)
+    if (!groups.has(key)) groups.set(key, [])
+    groups.get(key).push({ text: word, freq })
+  }
+
+  const chars = []
+  const covered = new Set()
+  for (const [key, list] of groups) {
+    list.sort((a, b) => b.freq - a.freq || (a.text < b.text ? -1 : a.text > b.text ? 1 : 0))
+    for (const entry of list.slice(0, CHARS_PER_SYLLABLE)) chars.push(entry)
+    covered.add(key)
+  }
+
+  // 某些音节没有 GB2312 常用字（如 eng、kei、chua、den）：回退到教学示例字，保证单字练习可用。
+  const fallbacks = []
+  for (const example of Object.values(examples)) {
+    const key =
+      example.initial === '' ? `zero:${example.final}` : `${example.initial}:${example.final}`
+    if (covered.has(key)) continue
+    const freq = freqByChar.get(example.char) ?? FALLBACK_CHAR_FREQ
+    chars.push({ text: example.char, freq })
+    fallbacks.push(`${key}=${example.char}`)
+    covered.add(key)
+  }
+  return { chars, fallbacks }
+}
+
 function main() {
   const previous = readJSON(LEXICON_FILE)
-  const chars = (previous.entries ?? []).filter((entry) => entry.text.length === 1)
-  const words = selectWords(readRows())
+  const rows = readRows()
+  const words = selectWords(rows)
+  const { chars, fallbacks } = selectChars(rows, previous.syllableExamples)
   const entries = [...words, ...chars].sort(
     (a, b) => b.freq - a.freq || (a.text < b.text ? -1 : a.text > b.text ? 1 : 0),
   )
   const lexicon = {
     schemaVersion: 2,
-    description: '课程与练习场共享词表：只存词条文本与词频，拼音由运行时 pinyin-pro 解析。',
-    source: {
-      words: 'jieba dict.txt（MIT，按词性/词频清洗）',
-      chars: '单字表沿用既有词表，只服务示例与单字练习',
-    },
-    dataVersion: '',
     entries,
     syllableExamples: previous.syllableExamples,
   }
-  lexicon.dataVersion = lexiconVersionOf(lexicon)
 
   const resolved = resolveLexicon(lexicon)
   if (resolved.invalid.length > 0) {
@@ -82,8 +132,8 @@ function main() {
   console.log(
     `[lexicon] ${resolved.words.length} 词 + ${resolved.chars.length} 字 / ${Object.keys(lexicon.syllableExamples).length} 音节示例`,
   )
+  console.log(`[lexicon] 单字回退（无 GB2312 常用字）：${fallbacks.join(' ') || '无'}`)
   console.log(`[lexicon] 第 ${TARGET_WORDS} 词词频 ${tail.freq}，尾部示例：${words.slice(-5).map((word) => word.text).join(' ')}`)
-  console.log(`[lexicon] dataVersion=${lexicon.dataVersion}`)
 }
 
 try {

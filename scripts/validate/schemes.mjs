@@ -5,77 +5,72 @@ import fs from 'node:fs'
 import { createSchemeEngine } from '../../packages/core/src/index.ts'
 import { SCHEME_DIR } from '../lib/data-contract.mjs'
 
-/** 产品约束：方案套数（单点定义；其余数量全部从索引推导）。 */
 const EXPECTED_SCHEME_COUNT = 19
-/** 判题用例（engine-cases.json）的最低规模。 */
 const ENGINE_CASES_MIN_POSITIVE = 1500
 const ENGINE_CASES_MIN_NEGATIVE = 150
 
 export function validateSchemes(ctx) {
-  const schemeIndex = ctx.readDataJSON('data/schemes/index.json')
-  if (!schemeIndex) return
-  const schemes = schemeIndex.schemes ?? []
-  const schemeIds = schemes.map((summary) => summary.id)
-  const courseSupported = schemeIndex.courseSupported ?? []
+  const index = ctx.readDataJSON('data/schemes/index.json')
+  if (!index) return
+  const ids = (index.schemes ?? []).map((item) => item.id)
+  const names = new Set((index.schemes ?? []).map((item) => item.name))
+  const custom = index.customCourses ?? []
 
-  ctx.ok(schemeIds.length === EXPECTED_SCHEME_COUNT, `方案数 = ${schemeIds.length}，期望 ${EXPECTED_SCHEME_COUNT}`)
-  ctx.ok(new Set(schemeIds).size === schemeIds.length, '方案索引有重复方案')
-  ctx.ok(
-    courseSupported.length === schemeIds.length,
-    `courseSupported 数量 = ${courseSupported.length}，期望 ${schemeIds.length}`,
-  )
-  ctx.ok(new Set(courseSupported).size === courseSupported.length, 'courseSupported 有重复方案')
-  for (const id of courseSupported) ctx.ok(schemeIds.includes(id), `courseSupported 含未知方案：${id}`)
-  for (const summary of schemes) {
-    ctx.ok(Boolean(summary.course?.supportsGuidedCourse), `${summary.id}: 课程方案缺 course.supportsGuidedCourse`)
-  }
-  // 方案目录与索引一一对应（多出的目录 = 陈旧数据）。
+  ctx.ok(ids.length === EXPECTED_SCHEME_COUNT, `方案数 = ${ids.length}，期望 ${EXPECTED_SCHEME_COUNT}`)
+  ctx.ok(new Set(ids).size === ids.length, '方案索引有重复方案')
+  ctx.ok(names.size === ids.length, '方案显示名有重复')
+  ctx.ok(ids.includes(index.defaultScheme), `defaultScheme ${index.defaultScheme} 不在方案列表`)
+  ctx.ok(new Set(custom).size === custom.length, 'customCourses 有重复方案')
+  ctx.ok(custom.every((id) => ids.includes(id)), 'customCourses 含未知方案')
+
   const dirs = fs
     .readdirSync(SCHEME_DIR, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
     .sort()
   ctx.ok(
-    JSON.stringify(dirs) === JSON.stringify([...schemeIds].sort()),
-    `方案目录与索引不一致：目录 ${dirs.length} 个 / 索引 ${schemeIds.length} 个`,
+    JSON.stringify(dirs) === JSON.stringify([...ids].sort()),
+    `方案目录与索引不一致：目录 ${dirs.length} 个 / 索引 ${ids.length} 个`,
   )
 
   const engines = new Map()
-  for (const summary of schemes) {
-    const scheme = ctx.readDataJSON(`data/schemes/${summary.id}/scheme.json`)
+  for (const id of ids) {
+    const scheme = ctx.readDataJSON(`data/schemes/${id}/scheme.json`)
     if (!scheme) continue
-    ctx.ok(scheme.id === summary.id, `${summary.id}: scheme.json 的 id 与索引不一致`)
+    ctx.ok(scheme.id === id, `${id}: scheme.json 的 id 与索引不一致`)
+    const summaryName = index.schemes.find((item) => item.id === id)?.name
+    ctx.ok(!summaryName || scheme.name === summaryName, `${id}: scheme.json 的 name 与索引不一致`)
     try {
       const engine = createSchemeEngine(scheme)
       const diff = engine.diff()
-      engines.set(scheme.id, { engine, diff, scheme })
+      engines.set(id, { engine, diff, scheme })
       ctx.ok(
         Array.isArray(diff.learnInitials) && Array.isArray(diff.learnFinals),
-        `${scheme.id}: diff() 缺 learn 列表`,
+        `${id}: diff() 缺 learn 列表`,
       )
     } catch (error) {
-      ctx.ok(false, `${scheme.id}: createSchemeEngine 失败：${error.message}`)
+      ctx.ok(false, `${id}: createSchemeEngine 失败：${error.message}`)
     }
   }
   ctx.ok(engines.size === EXPECTED_SCHEME_COUNT, `可加载方案 = ${engines.size}，期望 ${EXPECTED_SCHEME_COUNT}`)
 
-  const engineCases = ctx.readDataJSON('data/schemes/engine-cases.json')
-  if (engineCases) {
-    const cases = Object.values(engineCases.schemes ?? {})
-    const caseIds = Object.keys(engineCases.schemes ?? {}).sort()
-    const positive = cases.reduce((sum, item) => sum + (item.positive?.length ?? 0), 0)
-    const negative = cases.reduce((sum, item) => sum + (item.negative?.length ?? 0), 0)
+  const cases = ctx.readDataJSON('data/schemes/engine-cases.json')
+  if (cases) {
+    const caseIds = Object.keys(cases.schemes ?? {}).sort()
+    const all = Object.values(cases.schemes ?? {})
+    const positive = all.reduce((sum, item) => sum + (item.positive?.length ?? 0), 0)
+    const negative = all.reduce((sum, item) => sum + (item.negative?.length ?? 0), 0)
     ctx.ok(
-      JSON.stringify(caseIds) === JSON.stringify([...schemeIds].sort()),
-      `判题用例覆盖方案与索引不一致：用例 ${caseIds.length} 套 / 索引 ${schemeIds.length} 套`,
+      JSON.stringify(caseIds) === JSON.stringify([...ids].sort()),
+      `判题用例覆盖方案与索引不一致：用例 ${caseIds.length} 套 / 索引 ${ids.length} 套`,
     )
     ctx.ok(
       positive >= ENGINE_CASES_MIN_POSITIVE && negative >= ENGINE_CASES_MIN_NEGATIVE,
       `判题用例不足：正例 ${positive} / 反例 ${negative}`,
     )
-    ctx.note(`方案：${schemeIds.length} 套；判题用例正例 ${positive} / 反例 ${negative}`)
+    ctx.note(`方案：${ids.length} 套（定制课程 ${custom.length} 套）；判题用例正例 ${positive} / 反例 ${negative}`)
   }
 
-  ctx.schemeIndex = schemeIndex
+  ctx.schemeIndex = index
   ctx.engines = engines
 }

@@ -3,9 +3,9 @@
  *
  * 阶段口径（docs/ARCHITECTURE.md）：
  * - drill：single → word → exam；review：exam；exam：exam；
- * - 各阶段最低词数由课程数据 `stageMinWords` 覆盖 KIND_STAGE_MIN_WORDS；
+ * - 各阶段最低词数由 `KIND_STAGE_MIN_WORDS` 按课型给出；
  * - 无提示考核阶段（exam）在最低词数外还要达到本课评分标准（stageGate）；
- * - 教学页示例：课程数据 examples（每个合法音节一张卡）按原顺序展示。
+ * - 教学页示例：由 Lexicon.syllableExamples 派生的每音节代表字。
  *
  * 评分口径（唯一权威）：
  * - 普通课（accuracy）：完成即通过；星级按正确率（★★≥90%、★★★≥95% 且未揭示）；
@@ -15,6 +15,7 @@
  */
 import type {
   AtomId,
+  AtomMemory,
   LessonDef,
   LessonKind,
   LessonMetrics,
@@ -27,16 +28,18 @@ import type {
   PassMode,
   PracticeStage,
   PracticeWord,
+  SchemeCodeEntry,
+  SchemeEngine,
   StageGate,
   StageGateMetrics,
   StageInput,
   Syllable,
-  SyllableFinal,
   TutorialInput,
   WordEntry,
   WordStageInput,
 } from './types.ts'
-import { FINALS, INITIALS, atomId, focusHitsOf, toToneMarks } from './pinyin.ts'
+import { FINALS, INITIALS, atomId, focusHitsOf, parseAtomId } from './pinyin.ts'
+import { analyzeSchemeCodes, isFreeAtom } from './scheme.ts'
 import { mulberry32, selectWords, shuffle } from './selector.ts'
 import { buildPracticeWord, buildPracticeWordFromSyllable } from './session.ts'
 
@@ -49,7 +52,6 @@ export const PRACTICE_STAGES: readonly PracticeStage[] = ['single', 'word', 'exa
  * 各课程类型的阶段最低词数：
  * - drill：字 15 → 词语部分提示 15 → 无提示考核 25；
  * - review：无提示 50；exam：无提示 100。
- * 数据里的 stageMinWords 覆盖优先。
  */
 export const KIND_STAGE_MIN_WORDS: Record<LessonKind, Partial<Record<PracticeStage, number>>> = {
   intro: {},
@@ -70,9 +72,9 @@ export function lessonStages(lesson: LessonDef): PracticeStage[] {
   return [...STAGE_ORDER[lesson.kind]]
 }
 
-/** 本课各阶段最低完成词数（课程数据覆盖 kind 默认值） */
+/** 本课各阶段最低完成词数 */
 export function lessonStageMinWords(lesson: LessonDef): Partial<Record<PracticeStage, number>> {
-  return { ...KIND_STAGE_MIN_WORDS[lesson.kind], ...(lesson.stageMinWords ?? {}) }
+  return { ...KIND_STAGE_MIN_WORDS[lesson.kind] }
 }
 
 /**
@@ -137,47 +139,188 @@ export function hintTierFor(stage: PracticeStage): 1 | 2 | 3 {
  * - initial focus 展开该声母 × 全部韵母（含 er）；
  * - final focus 展开全部声母 × 该韵母（不含零声母音节：零声母是独立知识点）；
  * - zero focus 只取该音节自身；
- * - 示例优先取 Lexicon.syllableExamples，缺失的零声母回退到课程 zeroExamples。
+ * - 示例全部来自 Lexicon.syllableExamples（405 个音节示例，由词表校验保证覆盖）。
  */
 export function buildLessonPool(lesson: LessonDef, lexicon: ResolvedLexicon): LessonPool {
   const examples: LessonPool['examples'] = []
   const seen = new Set<string>()
-  const zeroBySyllable = new Map((lesson.zeroExamples ?? []).map((item) => [item.syllable, item]))
-  const add = (syllable: string, zero: boolean) => {
+  const add = (syllable: string) => {
     if (seen.has(syllable)) return
     const example = lexicon.syllableExamples[syllable]
-    const zeroExample = zero ? zeroBySyllable.get(syllable) : undefined
-    if (example) {
-      examples.push(example)
-    } else if (zeroExample) {
-      const tone = zeroExample.tone
-      examples.push({
-        char: zeroExample.char,
-        pinyin: syllable,
-        pinyinTone: tone === undefined ? syllable : toToneMarks(syllable, tone as Syllable['tone']),
-        initial: '',
-        final: syllable as SyllableFinal,
-        ...(tone !== undefined ? { tone: tone as Syllable['tone'] } : {}),
-      })
-    } else {
-      return
-    }
+    if (!example) return
+    examples.push(example)
     seen.add(syllable)
   }
   for (const atom of lesson.focusAtoms) {
     if (atom.startsWith('initial:')) {
       const initial = atom.slice('initial:'.length)
-      for (const final of [...FINALS, 'er']) add(`${initial}${final}`, false)
+      for (const final of [...FINALS, 'er']) add(`${initial}${final}`)
     } else if (atom.startsWith('final:')) {
       const final = atom.slice('final:'.length)
       // 只展开真实声母：零声母音节（如 ao 单独成音）是 zero: 知识点，
       // 与 final: 同名字但不应出现在韵母课的示例里。
-      for (const initial of INITIALS) add(`${initial}${final}`, false)
+      for (const initial of INITIALS) add(`${initial}${final}`)
     } else if (atom.startsWith('zero:')) {
-      add(atom.slice('zero:'.length), true)
+      add(atom.slice('zero:'.length))
     }
   }
   return { lessonId: lesson.id, words: lexicon.words, chars: lexicon.chars, examples }
+}
+
+// ── 原子展示 / 编码 tips（运行时派生，不写入课程数据） ──────────
+
+/** 生成课程 tips 只允许两类前缀；推荐码 / 兼容码由运行时按课程范围归位。 */
+export const CODE_TIP_RECOMMENDED_PREFIX = '推荐码：'
+export const CODE_TIP_COMPAT_PREFIX = '兼容映射：'
+export const CODE_TIP_PREFIXES: readonly string[] = Object.freeze([
+  CODE_TIP_RECOMMENDED_PREFIX,
+  CODE_TIP_COMPAT_PREFIX,
+])
+/** 一条 tips 里最多压缩几个编码条目（C 双拼这类例外多的方案会分多条 tip）。 */
+const CODE_TIPS_CHUNK = 5
+
+function upperKeys(keys: readonly string[]): string {
+  return keys.map((key) => key.toUpperCase()).join(' / ')
+}
+
+function tableKeysOf(table: Record<string, string[]> | undefined, key: string): string[] {
+  return (table?.[key] ?? []).map((value) => String(value).toLowerCase())
+}
+
+/** 与主键同键的另一侧原子：声母找同键韵母，韵母找同键声母。 */
+function sameKeyPartners(engine: SchemeEngine, type: 'initial' | 'final', primaryKey: string): string[] {
+  const table = type === 'initial' ? engine.def.finals : engine.def.initials
+  const candidates = type === 'initial' ? FINALS : INITIALS
+  return candidates.filter((candidate) => tableKeysOf(table, candidate).includes(primaryKey))
+}
+
+function partnerMnemonic(
+  type: 'initial' | 'final',
+  key: string,
+  partner: string,
+  primaryKey: string,
+): string {
+  const left = type === 'initial' ? key : partner
+  const right = type === 'initial' ? partner : key
+  return `${left.toUpperCase()} + ${right.toUpperCase()} = ${(left + right).toUpperCase()}（同在 ${primaryKey.toUpperCase()} 键）`
+}
+
+/**
+ * 从方案键位 + 当前单字表派生某原子的展示与记忆锚点（tutorial 实时调用）。
+ * 只在「同键另一侧原子」能组成真实音节且词表有对应单字时生成 mnemonic / anchors；
+ * 没有可用同键组合时只返回键位，不给示例字。
+ */
+export function buildAtomMemory(
+  engine: SchemeEngine,
+  atom: AtomId,
+  chars: readonly WordEntry[] = [],
+): AtomMemory | null {
+  const ref = parseAtomId(atom)
+  if (!ref) return null
+  const { type, key } = ref
+  const keys = engine.keysForAtom(atom)
+  const memory: AtomMemory = {
+    atomId: atom,
+    type,
+    pinyin: key,
+    keys: [...keys],
+    free: isFreeAtom(engine, atom),
+    anchors: [],
+  }
+  const primaryKey = keys[0]?.toLowerCase()
+  if (!primaryKey) return memory
+  if (type === 'zero') {
+    memory.mnemonic = `零声母 ${key} = ${upperKeys(keys)}，整段输入`
+    return memory
+  }
+
+  const anchorsOf = (predicate: (syllable: Syllable) => boolean): string[] => {
+    const anchors: string[] = []
+    for (const entry of chars) {
+      if (anchors.length >= 5) break
+      const syllable = entry.syllables[0]
+      if (syllable && predicate(syllable)) anchors.push(entry.text)
+    }
+    return anchors
+  }
+
+  const partners = sameKeyPartners(engine, type, primaryKey)
+  for (const partner of partners) {
+    const anchors = anchorsOf((syllable) =>
+      type === 'initial'
+        ? syllable.initial === key && syllable.final === partner
+        : syllable.initial === partner && syllable.final === key,
+    )
+    if (anchors.length > 0) {
+      memory.anchors = anchors
+      memory.mnemonic = partnerMnemonic(type, key, partner, primaryKey)
+      return memory
+    }
+  }
+
+  return memory
+}
+
+function formatCodeEntry(entry: SchemeCodeEntry): string {
+  const upper = (value: string) => value.toUpperCase()
+  const parts: string[] = []
+  if (entry.recommendedOverride && entry.recommended) {
+    parts.push(
+      `${CODE_TIP_RECOMMENDED_PREFIX}${entry.syllable} 所推荐的键位组合为特别的 ${upper(entry.recommended)}`,
+    )
+  }
+  if (entry.compat.length > 0) {
+    parts.push(
+      `${CODE_TIP_COMPAT_PREFIX}${entry.syllable} 兼容的特别键位组合还包括 ${entry.compat.map(upper).join(' / ')}`,
+    )
+  }
+  return parts.join('；')
+}
+
+/**
+ * 推荐码例外 / 兼容编码 tips 的唯一归位规则：
+ * 放到「范围首次包含该完整音节」的课程（即该音节非 free 原子中最晚被学到的原子所在课）；
+ * 完整音节没有对应课程（含全部由 free 原子组成）时，统一放到第一节正式练习课
+ * （入门课没有练习/tips 展示位）。
+ */
+export function buildLessonCodeTips(engine: SchemeEngine, lessons: readonly LessonDef[]): Map<string, string[]> {
+  const result = new Map<string, string[]>()
+  if (lessons.length === 0) return result
+  const fallbackIndex = Math.max(0, lessons.findIndex((lesson) => lesson.kind !== 'intro'))
+
+  const lessonIndexOfAtom = new Map<AtomId, number>()
+  lessons.forEach((lesson, index) => {
+    for (const atom of [...lesson.prerequisites, ...lesson.focusAtoms]) {
+      if (!lessonIndexOfAtom.has(atom)) lessonIndexOfAtom.set(atom, index)
+    }
+  })
+
+  const groups = new Map<number, SchemeCodeEntry[]>()
+  for (const entry of analyzeSchemeCodes(engine.def).entries) {
+    if (!entry.recommendedOverride && entry.compat.length === 0) continue
+    const nonFreeAtoms = entry.atoms.filter((atom) => !isFreeAtom(engine, atom))
+    let targetIndex = fallbackIndex
+    if (nonFreeAtoms.length > 0) {
+      const indexes = nonFreeAtoms.map((atom) => lessonIndexOfAtom.get(atom))
+      const complete = indexes.every((index): index is number => index !== undefined)
+      targetIndex = complete ? Math.max(...(indexes as number[])) : fallbackIndex
+    }
+    const list = groups.get(targetIndex) ?? []
+    list.push(entry)
+    groups.set(targetIndex, list)
+  }
+
+  for (const [index, entries] of groups) {
+    const lesson = lessons[index]
+    if (!lesson) continue
+    entries.sort((a, b) => a.syllable.localeCompare(b.syllable))
+    const tips: string[] = []
+    for (let start = 0; start < entries.length; start += CODE_TIPS_CHUNK) {
+      tips.push(entries.slice(start, start + CODE_TIPS_CHUNK).map(formatCodeEntry).join('；'))
+    }
+    if (tips.length > 0) result.set(lesson.id, tips)
+  }
+  return result
 }
 
 // ── 阶段内容装配 ──────────────────────────────────────────────

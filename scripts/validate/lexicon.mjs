@@ -3,10 +3,9 @@
  */
 import { ZERO_INITIALS, FINALS } from '../../packages/core/src/index.ts'
 import { resolveLexicon } from '../lib/pinyin-resolve.mjs'
-import { lexiconVersionOf } from '../lib/data-contract.mjs'
 
 const MIN_WORDS = 50000
-const MIN_CHARS = 3000
+const MIN_CHARS = 3200
 const MIN_SYLLABLE_EXAMPLES = 390
 const VALID_FINALS = new Set([...FINALS, ...ZERO_INITIALS])
 
@@ -14,14 +13,6 @@ export function validateLexicon(ctx) {
   const lexicon = ctx.readDataJSON('data/lexicon/lexicon.json')
   if (!lexicon) return
   ctx.ok(lexicon.schemaVersion === 2, `lexicon.schemaVersion 应为 2，实际 ${lexicon.schemaVersion}`)
-  ctx.ok(
-    /^lexicon-[0-9a-f]{12}$/.test(String(lexicon.dataVersion)),
-    `lexicon.dataVersion 非法：${lexicon.dataVersion}`,
-  )
-  ctx.ok(
-    lexicon.dataVersion === lexiconVersionOf(lexicon),
-    `lexicon.dataVersion 与内容不匹配：${lexicon.dataVersion}`,
-  )
   const entries = Array.isArray(lexicon.entries) ? lexicon.entries : []
   const examples = lexicon.syllableExamples ?? {}
   const wordCount = entries.filter((entry) => entry.text.length >= 2).length
@@ -60,6 +51,14 @@ export function validateLexicon(ctx) {
     }
   }
 
+  const charSyllables = new Set()
+  for (const char of resolved.chars) {
+    const syllable = char.syllables[0]
+    if (!syllable) continue
+    charSyllables.add(
+      syllable.initial === '' ? `zero:${syllable.final}` : `${syllable.initial}:${syllable.final}`,
+    )
+  }
   for (const [syllable, example] of Object.entries(examples)) {
     ctx.ok(
       typeof example.char === 'string' && example.char.trim().length > 0,
@@ -69,11 +68,12 @@ export function validateLexicon(ctx) {
       typeof example.pinyin === 'string' && typeof example.pinyinTone === 'string',
       `lexicon 音节 ${syllable} 缺拼音`,
     )
+    const key = example.initial === '' ? `zero:${example.final}` : `${example.initial}:${example.final}`
+    ctx.ok(charSyllables.has(key), `词表缺少音节 ${syllable} 的单字，单字练习会退化`)
   }
 
   ctx.lexicon = resolved
-  ctx.lexiconDataVersion = lexicon.dataVersion
   ctx.note(
-    `词表：${resolved.words.length} 词 / ${resolved.chars.length} 字 / ${Object.keys(examples).length} 音节示例 / ${lexicon.dataVersion}`,
+    `词表：${resolved.words.length} 词 / ${resolved.chars.length} 字 / ${Object.keys(examples).length} 音节示例`,
   )
 }

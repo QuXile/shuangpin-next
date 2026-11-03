@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedBy": "scripts/schemes/extract.mjs",
+  "generatedBy": "data/schemes/engine-cases.json（人工维护，scripts/validate/schemes.mjs 校验）",
   "semantics": {
     "judge": "输入小写键序列；若音节命中 zeroInitial → 使用其整段键序列；否则若命中 overrides → 使用 override 的整段键序列（override 替代组合展开）；否则 accepted = initials[声母] × finals[韵母] 的笛卡尔积，且当 韵母=u 且 声母∈{j,q,x,y} 时额外并入 initials[声母] × finals[v]。任一 accepted 序列完全相等即正确。",
     "arrays": "所有键位值为 string[]；数组语义 = 任一命中即正确（键道飞键、大牛多键、微软 ue 双键等）。",

@@ -7,10 +7,8 @@ const props = withDefaults(
     caps: PracticeCap[]
     input: string[]
     state?: 'idle' | 'wrong' | 'correct'
-    /** 未输入格子的占位符（隐藏目标键时用 ?） */
-    placeholder?: string
   }>(),
-  { state: 'idle', placeholder: '' },
+  { state: 'idle' },
 )
 
 const slots = computed(() =>
@@ -76,7 +74,7 @@ onBeforeUnmount(() => {
       class="input-slot"
       :class="{ 'is-filled': slot.filled, 'is-popping': index === popIndex }"
     >
-      {{ slot.filled ? slot.typed.toUpperCase() : placeholder }}
+      {{ slot.filled ? slot.typed.toUpperCase() : '' }}
     </span>
   </div>
 </template>

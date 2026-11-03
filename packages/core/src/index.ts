@@ -55,6 +55,10 @@ export {
   buildPracticeWord,
 } from './session.ts'
 
+// 课程生成与加载
+export { buildUniversalCurriculum, hydrateCurriculum } from './curriculum.ts'
+export type { StoredCurriculum } from './curriculum.ts'
+
 // 阶段 / 评分 / 组卷 / 课池
 export {
   PRACTICE_STAGES,
@@ -67,6 +71,11 @@ export {
   buildWordStageWords,
   buildTutorialWords,
   buildLessonPool,
+  buildAtomMemory,
+  buildLessonCodeTips,
+  CODE_TIP_RECOMMENDED_PREFIX,
+  CODE_TIP_COMPAT_PREFIX,
+  CODE_TIP_PREFIXES,
   evaluateLesson,
   describePassCriteria,
   accuracyTiers,

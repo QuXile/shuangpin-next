@@ -259,7 +259,7 @@ export function useTrainingSelection() {
 
   /** 课程总结卡「无尽练习」一次性预设：读取后立即清除，刷新不会覆盖后续修改。 */
   function applyCoursePreset(): void {
-    if (coursePresetApplied || course.previewMode) return
+    if (coursePresetApplied) return
     const taken = takeTrainingPreset(presetStorage)
     if (!taken) return
     if (taken.preset.scheme && taken.preset.scheme !== course.schemeId) {

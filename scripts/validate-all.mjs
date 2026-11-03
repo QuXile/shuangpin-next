@@ -5,8 +5,8 @@
  * 域模块（每个域一个文件，入口只做编排与汇总）：
  *  - validate/schemes.mjs      方案索引一致性 / 引擎可构造 / 判题用例规模
  *  - validate/lexicon.mjs      统一 Lexicon 数据契约
- *  - validate/curriculum.mjs   19 套课程：5 套定制严格校验 + 14 套「重新生成 + JSON 深相等」+ 独立结构不变式
- *  - validate/public-data.mjs  public/data 文件清单 + 与 data/ JSON 深相等 + 版本链
+ *  - validate/curriculum.mjs   5 套定制课程结构校验 + 14 套通用课程运行时生成校验
+ *  - validate/public-data.mjs  public/data 文件清单 + 与 data/ JSON 深相等
  *  - validate/docs.mjs         文档入口 / README 导航 / 截图与链接引用
  *
  * 用法：node scripts/validate-all.mjs   （退出码 0/1）

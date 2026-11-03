@@ -2,7 +2,7 @@
 /**
  * 统一键帽：静态 mini 键帽（推荐码 / 兼容码 / 示例）与练习字卡键帽共用一套结构。
  * 三个维度：
- * - variant：neutral / primary / compat / initial / final / hidden（颜色语义）
+ * - variant：neutral / primary / compat / initial / final（颜色语义；hidden 由 hidden 属性统一置为占位样式）
  * - size：mini（静态小键帽）/ practice（练习字卡，随容器 cqw 缩放）
  * - state：focus / completed（仅 practice 有视觉状态）
  */
@@ -15,7 +15,7 @@ const props = withDefaults(
     text?: string
     /** 练习域键帽数据；提供时 variant 缺省由 cap.role 推导 */
     cap?: PracticeCap
-    variant?: 'neutral' | 'primary' | 'compat' | 'initial' | 'final' | 'hidden'
+    variant?: 'neutral' | 'primary' | 'compat' | 'initial' | 'final'
     size?: 'mini' | 'practice'
     hidden?: boolean
     focus?: boolean
@@ -60,7 +60,7 @@ const ariaLabel = computed(() => {
   <span
     class="cap"
     :class="[
-      `cap--${resolvedVariant}`,
+      resolvedHidden ? 'cap--hidden' : `cap--${resolvedVariant}`,
       size === 'practice' ? 'keycap--practice' : 'cap--mini',
       {
         'is-hidden': resolvedHidden,

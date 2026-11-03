@@ -22,7 +22,7 @@ export async function pinyinTokensOf(text: string): Promise<string[]> {
 }
 
 /** 词库源数据 → 运行时词表（词条按文本长度拆成词 / 单字，词频顺序保留）。 */
-export async function resolveLexicon(source: Lexicon): Promise<ResolvedLexicon & { dataVersion: string }> {
+export async function resolveLexicon(source: Lexicon): Promise<ResolvedLexicon> {
   const tokensByText = new Map<string, string[]>()
   const texts = source.entries.map((entry) => entry.text)
   const { pinyin } = await loadPinyin()
@@ -43,5 +43,5 @@ export async function resolveLexicon(source: Lexicon): Promise<ResolvedLexicon &
       words.push(resolved)
     }
   }
-  return { words, chars, syllableExamples: source.syllableExamples, dataVersion: source.dataVersion }
+  return { words, chars, syllableExamples: source.syllableExamples }
 }

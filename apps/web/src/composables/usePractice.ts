@@ -26,6 +26,7 @@ import {
   evaluateLesson,
   hasInputError as coreHasInputError,
   hintTierFor,
+  buildLessonCodeTips,
   buildLessonPool,
   lessonStageMinWords,
   lessonStages,
@@ -36,6 +37,7 @@ import {
   tierOf,
   type LessonDef,
   type LessonPool,
+  type ResolvedLexicon,
   type PassCriteriaLine,
   type PracticeStage,
   type PracticeWord,
@@ -136,6 +138,7 @@ export function usePractice() {
   const errorMessage = ref('')
   const engine = computed<SchemeEngine | null>(() => course.engine)
   const pool = shallowRef<LessonPool | null>(null)
+  const lexicon = shallowRef<ResolvedLexicon | null>(null)
   const tutorialWords = ref<PracticeWord[]>([])
   const scheme = computed(() => course.scheme)
   const introWords = computed(() => pool.value?.words ?? [])
@@ -283,10 +286,22 @@ export function usePractice() {
   const liveMessage = computed(() => liveMessageOf(session.value?.lastFeedback))
 
   const focusItems = computed<FocusAtomView[]>(() =>
-    lesson.value && engine.value ? lessonFocusItems(lesson.value, engine.value) : [],
+    lesson.value && engine.value
+      ? lessonFocusItems(lesson.value, engine.value, lexicon.value ?? undefined)
+      : [],
   )
   const focusAtomIds = computed(() => focusItems.value.map((item) => item.atomId))
-  const notes = computed<LessonNote[]>(() => (lesson.value ? buildLessonNotes(lesson.value) : []))
+  const generatedTips = computed<Map<string, string[]>>(() => {
+    const currentLessons = course.lessons
+    return engine.value && currentLessons.length > 0
+      ? buildLessonCodeTips(engine.value, currentLessons)
+      : new Map<string, string[]>()
+  })
+  const notes = computed<LessonNote[]>(() =>
+    lesson.value
+      ? buildLessonNotes(lesson.value, generatedTips.value.get(lesson.value.id) ?? [])
+      : [],
+  )
 
   const conceal = computed(() => stage.value === 'word' || stage.value === 'exam')
   const highlightAtomIds = computed(() => focusAtomIds.value)
@@ -633,8 +648,9 @@ export function usePractice() {
       return
     }
     try {
-      const lexicon = await loadLexicon()
-      pool.value = buildLessonPool(currentLesson, lexicon)
+      const loadedLexicon = await loadLexicon()
+      lexicon.value = loadedLexicon
+      pool.value = buildLessonPool(currentLesson, loadedLexicon)
     } catch (cause) {
       status.value = 'error'
       errorMessage.value = cause instanceof Error ? cause.message : String(cause)

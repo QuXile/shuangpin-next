@@ -70,6 +70,40 @@ function saveScroll(): void {
   writeString(scrollKey(), String(lastScrollY), scrollStorage)
 }
 
+// ── 章节展开 / 收起：按方案持久化；章节头即开关 ────────────────
+const collapseStorage = getStorage('local')
+const collapseKey = (): string => STORAGE_KEYS.mapCollapsed(course.schemeId || 'default')
+const collapsedChapterIds = ref<string[]>([])
+
+function readCollapsedChapters(): string[] {
+  const raw = readString(collapseKey(), collapseStorage)
+  return raw ? raw.split(',').filter(Boolean) : []
+}
+
+function saveCollapsedChapters(): void {
+  writeString(collapseKey(), collapsedChapterIds.value.join(','), collapseStorage)
+}
+
+function toggleChapter(chapterId: string): void {
+  const next = new Set(collapsedChapterIds.value)
+  if (next.has(chapterId)) next.delete(chapterId)
+  else next.add(chapterId)
+  collapsedChapterIds.value = [...next]
+  saveCollapsedChapters()
+}
+
+function isChapterCollapsed(chapterId: string): boolean {
+  return collapsedChapterIds.value.includes(chapterId)
+}
+
+watch(
+  () => course.schemeId,
+  () => {
+    collapsedChapterIds.value = readCollapsedChapters()
+  },
+  { immediate: true },
+)
+
 function onScroll(): void {
   if (leaving || suppressScrollSave) return
   lastScrollY = Math.max(0, Math.round(window.scrollY))
@@ -221,9 +255,14 @@ function startCurrent(): void {
 }
 
 /** 在学习路线中定位当前课：滚动到对应课程卡并闪烁高亮一次。 */
-function locateCurrentLesson(): void {
+async function locateCurrentLesson(): Promise<void> {
   const id = currentId.value
   if (!id) return
+  const chapter = currentChapterView.value
+  if (chapter && isChapterCollapsed(chapter.id)) {
+    toggleChapter(chapter.id)
+    await nextTick()
+  }
   const card = document.querySelector<HTMLElement>(`.lesson-card[data-lesson-id="${id}"]`)
   if (!card) return
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -266,7 +305,9 @@ function focusOtherScheme(): void {
 }
 
 function focusLesson(step: 1 | -1): void {
-  const buttons = Array.from(document.querySelectorAll<HTMLButtonElement>('.lesson-card:not(:disabled)'))
+  const buttons = Array.from(
+    document.querySelectorAll<HTMLButtonElement>('.lesson-card:not(:disabled)'),
+  ).filter((button) => button.getClientRects().length > 0)
   if (buttons.length === 0) return
   const current = document.activeElement instanceof HTMLButtonElement
     ? buttons.indexOf(document.activeElement)
@@ -363,7 +404,6 @@ useGlobalKeys(bindings)
           :current-title="currentTitle"
           :passed-count="course.passedCount"
           :lesson-total="course.lessons.length"
-          :empty-message="course.previewMode ? '当前方案仅支持练习，暂无课程路线。' : undefined"
           :style="heroHeight ? { height: `${heroHeight}px` } : undefined"
           @start="startCurrent"
           @locate="locateCurrentLesson"
@@ -385,10 +425,9 @@ useGlobalKeys(bindings)
           :lesson-total="course.lessons.length"
           :chapter-count="course.curriculum?.chapters.length ?? 0"
           :completed-chapter-count="completedChapterCount"
-          :word-count="course.previewMode ? 0 : course.wordCount"
-          :can-clear="!course.previewMode && course.passedCount > 0"
+          :word-count="course.wordCount"
+          :can-clear="course.passedCount > 0"
           :unlocked-all="course.unlockedAll"
-          :preview="course.previewMode"
           @clear-progress="clearProgress"
           @toggle-unlock="course.toggleUnlockedAll()"
         />
@@ -397,35 +436,21 @@ useGlobalKeys(bindings)
       <section class="course-section panel">
         <header class="course-header">
           <h2 class="panel-title">学习路线</h2>
-          <span v-if="course.curriculum?.origin === 'generated'" class="count-badge route-origin">自动生成</span>
+          <span v-if="!course.isCustomCourse" class="count-badge route-origin">自动生成</span>
           <span class="route-hint">
             <kbd>↑</kbd><kbd>↓</kbd> 选课
             <span aria-hidden="true">·</span>
             <kbd>Enter</kbd> 开始
           </span>
         </header>
-        <div v-if="course.previewMode" class="route-placeholder">
-          <div class="route-placeholder-mark" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-              <circle cx="12" cy="12" r="8" />
-              <path d="m6.6 6.6 10.8 10.8" />
-            </svg>
-          </div>
-          <div>
-            <strong>{{ course.scheme?.name ?? '当前方案' }} 暂无学习路线</strong>
-            <p>这是一个仅支持练习的方案：没有课程、章节和学习进度。键位图仍按该方案完整显示，可前往练习场练习。</p>
-          </div>
-          <button class="btn btn--primary route-placeholder-action" type="button" @click="router.push('/training')">
-            去练习场
-            <kbd>Alt+P</kbd>
-          </button>
-        </div>
-        <div v-else class="chapters">
+        <div class="chapters">
           <ChapterSection
             v-for="chapter in chapters"
             :key="chapter.id"
             :chapter="chapter"
             :current-id="currentId"
+            :collapsed="isChapterCollapsed(chapter.id)"
+            @toggle="toggleChapter"
             @start="start"
           />
         </div>
@@ -487,53 +512,6 @@ useGlobalKeys(bindings)
 }
 .chapters {
   display: block;
-}
-.route-placeholder {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 28px 22px;
-  color: var(--ink-3);
-}
-.route-placeholder-mark {
-  flex: none;
-  width: 46px;
-  height: 46px;
-  display: grid;
-  place-items: center;
-  border-radius: var(--r-control);
-  background: var(--brand-soft);
-  color: var(--brand);
-  font-size: var(--text-xl);
-  font-weight: 800;
-}
-.route-placeholder-mark svg {
-  width: 22px;
-  height: 22px;
-}
-.route-placeholder strong {
-  display: block;
-  margin-bottom: 4px;
-  color: var(--ink);
-  font-size: var(--text-md);
-}
-.route-placeholder p {
-  max-width: var(--content-reading);
-  line-height: 1.65;
-  font-size: var(--text-sm);
-}
-.route-placeholder-action {
-  flex: none;
-  margin-left: auto;
-}
-@media (max-width: 640px) {
-  .route-placeholder {
-    flex-wrap: wrap;
-    padding: 20px 16px;
-  }
-  .route-placeholder-action {
-    margin-left: 0;
-  }
 }
 .hint {
   margin-bottom: 8px;

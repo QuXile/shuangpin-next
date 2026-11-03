@@ -1,27 +1,48 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { ChapterView } from '@/lib/lessonView'
 import LessonCard from './LessonCard.vue'
 
-withDefaults(defineProps<{ chapter: ChapterView; currentId?: string }>(), { currentId: '' })
-const emit = defineEmits<{ start: [lessonId: string] }>()
+const props = withDefaults(
+  defineProps<{ chapter: ChapterView; currentId?: string; collapsed?: boolean }>(),
+  { currentId: '', collapsed: false },
+)
+const emit = defineEmits<{ start: [lessonId: string]; toggle: [chapterId: string] }>()
+
+const passedCount = computed(
+  () => props.chapter.lessons.filter((lesson) => lesson.state === 'passed').length,
+)
+const percent = computed(
+  () => (passedCount.value / Math.max(props.chapter.lessons.length, 1)) * 100,
+)
+const lessonsId = computed(() => `chapter-lessons-${props.chapter.id}`)
 </script>
 
 <template>
-  <section class="chapter-group">
-    <header class="chapter-head">
-      <div class="chapter-title-wrap">
+  <section class="chapter-group" :class="{ 'is-collapsed': collapsed }">
+    <button
+      class="chapter-head"
+      type="button"
+      :aria-expanded="!collapsed"
+      :aria-controls="lessonsId"
+      @click="emit('toggle', chapter.id)"
+    >
+      <span class="chapter-title-wrap">
         <span class="chapter-num">{{ String(chapter.order).padStart(2, '0') }}</span>
         <span class="chapter-name">{{ chapter.title }}</span>
-      </div>
-      <div class="chapter-progress">
-        <span>{{ chapter.lessons.filter((lesson) => lesson.state === 'passed').length }}/{{ chapter.lessons.length }}</span>
-        <div class="progress-bar-mini">
-          <i :style="{ width: (chapter.lessons.filter((lesson) => lesson.state === 'passed').length / Math.max(chapter.lessons.length, 1)) * 100 + '%' }" />
-        </div>
-      </div>
-    </header>
+      </span>
+      <span class="chapter-progress">
+        <span class="chapter-count">{{ passedCount }}/{{ chapter.lessons.length }}</span>
+        <span class="progress-bar-mini" aria-hidden="true">
+          <i :style="{ width: percent + '%' }" />
+        </span>
+        <svg class="chapter-chevron" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="m4 6 4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </span>
+    </button>
 
-    <div class="lesson-grid">
+    <div v-show="!collapsed" :id="lessonsId" class="lesson-grid">
       <LessonCard
         v-for="lesson in chapter.lessons"
         :key="lesson.id"
@@ -38,13 +59,23 @@ const emit = defineEmits<{ start: [lessonId: string] }>()
   margin: 0;
 }
 .chapter-head {
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   padding: 14px 22px 10px;
-  background: var(--surface-2);
+  border: 0;
   border-bottom: 1px solid var(--line);
+  background: var(--surface-2);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease);
+}
+.chapter-head:hover {
+  background: var(--surface-3);
 }
 .chapter-title-wrap {
   display: flex;
@@ -85,6 +116,10 @@ const emit = defineEmits<{ start: [lessonId: string] }>()
   font-weight: 750;
   font-variant-numeric: tabular-nums;
 }
+.chapter-count {
+  min-width: 34px;
+  text-align: right;
+}
 .progress-bar-mini {
   width: 100px;
   height: 6px;
@@ -98,6 +133,16 @@ const emit = defineEmits<{ start: [lessonId: string] }>()
   border-radius: inherit;
   background: var(--brand);
   transition: width var(--dur-slow) var(--ease);
+}
+.chapter-chevron {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  color: var(--ink-4);
+  transition: transform var(--dur-fast) var(--ease);
+}
+.is-collapsed .chapter-chevron {
+  transform: rotate(-90deg);
 }
 .lesson-grid {
   display: grid;

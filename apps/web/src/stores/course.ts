@@ -43,16 +43,9 @@ function saveScheme(id: string): void {
   writeString(STORAGE_KEYS.scheme, id)
 }
 
-/** 按 recommendedOrder（缺失时用 schemes 顺序）展开方案摘要。 */
+/** 方案索引已按 UI 顺序排列。 */
 function orderedSchemes(index: SchemeIndexFile): SchemeSummary[] {
-  const order =
-    index.recommendedOrder.length > 0
-      ? index.recommendedOrder
-      : index.schemes.map((item) => item.id)
-  const byId = new Map(index.schemes.map((item) => [item.id, item]))
-  return order
-    .map((id) => byId.get(id))
-    .filter((item): item is SchemeSummary => item !== undefined)
+  return [...index.schemes]
 }
 
 function toOptions(schemes: readonly SchemeSummary[]): SchemeOption[] {
@@ -67,8 +60,6 @@ export const useCourseStore = defineStore('course', () => {
   const unlockedAll = ref(readUnlockedAll())
   const schemeIndex = shallowRef<SchemeIndexFile | null>(null)
   const schemeId = ref('')
-  /** 当前是「仅支持练习」预览：有 scheme 与键位图，但无课程/进度。 */
-  const previewMode = ref(false)
   const scheme = shallowRef<SchemeDef | null>(null)
   const curriculum = shallowRef<Curriculum | null>(null)
   const lexiconWordCount = ref(0)
@@ -124,64 +115,37 @@ export const useCourseStore = defineStore('course', () => {
     return index ? toOptions(orderedSchemes(index)) : []
   })
 
-  const schemeOptions = computed<SchemeOption[]>(() => {
-    const index = schemeIndex.value
-    if (!index) return []
-    const supported = new Set(index.courseSupported)
-    const primary = new Set(
-      orderedSchemes(index)
-        .slice(0, PRIMARY_SCHEME_COUNT)
-        .map((item) => item.id),
-    )
-    return allSchemeOptions.value.filter(
-      (option) => supported.has(option.id) && primary.has(option.id),
-    )
-  })
+  const schemeOptions = computed<SchemeOption[]>(() =>
+    allSchemeOptions.value.slice(0, PRIMARY_SCHEME_COUNT),
+  )
 
   const primarySchemeIds = computed<string[]>(() => schemeOptions.value.map((option) => option.id))
 
+  const isCustomCourse = computed<boolean>(() => {
+    const index = schemeIndex.value
+    return Boolean(index && index.customCourses.includes(schemeId.value))
+  })
+
   async function applyScheme(id: string, epoch: number): Promise<void> {
-    const [def, curriculumFile, lexicon] = await Promise.all([
-      loadScheme(id),
-      loadCurriculum(id),
-      loadLexiconMeta(),
-    ])
+    const custom = schemeIndex.value?.customCourses.includes(id) ?? false
+    const [def, lexicon] = await Promise.all([loadScheme(id), loadLexiconMeta()])
+    if (!isCurrentLoad(epoch)) return
+    const curriculumFile = await loadCurriculum(id, def, custom)
     if (!isCurrentLoad(epoch)) return
     schemeId.value = id
     scheme.value = def
     curriculum.value = curriculumFile
     lexiconWordCount.value = lexicon.wordCount
-    previewMode.value = false
     progressStore.load(id)
     saveScheme(id)
   }
 
-  /** 预览 practice-only 方案：只加载键位映射，课程与进度留空。 */
-  async function previewScheme(id: string): Promise<void> {
-    if (!id || (id === schemeId.value && previewMode.value)) return
-    await runLoad(async (epoch) => {
-      const [def, lexicon] = await Promise.all([loadScheme(id), loadLexiconMeta()])
-      if (!isCurrentLoad(epoch)) return
-      schemeId.value = id
-      scheme.value = def
-      curriculum.value = null
-      lexiconWordCount.value = lexicon.wordCount
-      previewMode.value = true
-      progressStore.load('')
-    })
-  }
-
-  /** 所有页面共用的方案切换：课程方案走课程加载，practice-only 走键位预览。 */
+  /** 所有页面共用的方案切换：定制课程读取数据，其余方案运行时生成课程。 */
   async function selectScheme(id: string): Promise<void> {
     if (!id || id === schemeId.value) return
-    const supported = new Set(schemeIndex.value?.courseSupported ?? [])
-    if (supported.has(id)) {
-      await runLoad(async (epoch) => {
-        await applyScheme(id, epoch)
-      })
-    } else {
-      await previewScheme(id)
-    }
+    await runLoad(async (epoch) => {
+      await applyScheme(id, epoch)
+    })
   }
 
   async function runInit(): Promise<void> {
@@ -189,11 +153,11 @@ export const useCourseStore = defineStore('course', () => {
       const index = await loadIndex()
       if (!isCurrentLoad(epoch)) return
       schemeIndex.value = index
-      const supported = new Set(index.courseSupported)
+      const supported = new Set(index.schemes.map((item) => item.id))
       const candidates = [
         readSavedScheme(),
         index.defaultScheme,
-        index.courseSupported[0],
+        index.schemes[0]?.id,
         index.schemes[0]?.id,
       ]
       const initial = candidates.find((id): id is string => Boolean(id) && supported.has(id))
@@ -256,7 +220,7 @@ export const useCourseStore = defineStore('course', () => {
     error,
     unlockedAll,
     schemeId,
-    previewMode,
+    isCustomCourse,
     scheme,
     engine,
     curriculum,

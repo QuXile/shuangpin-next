@@ -36,21 +36,18 @@ const schemeDef = JSON.parse(
 const schemeIds = ['xiaohe', 'slow', 'fast', 'bad', 'preview'] as const
 
 const indexFixture: SchemeIndexFile = {
-  version: '1',
   defaultScheme: 'xiaohe',
-  recommendedOrder: [...schemeIds],
-  courseSupported: ['xiaohe', 'slow', 'fast', 'bad'],
-  schemes: schemeIds.map((id) => ({ id, name: id, type: 'compositional', file: '' })),
+  schemes: schemeIds.map((id) => ({ id, name: id })),
+  customCourses: ['xiaohe', 'slow'],
 }
 
 const curriculumFixture = {
   schemeId: 'xiaohe',
-  schemeName: 'xiaohe',
   lessons: [],
   chapters: [],
 } as unknown as Curriculum
 
-const lexiconFixture = { wordCount: 0, dataVersion: 'test' }
+const lexiconFixture = { wordCount: 0 }
 
 function mockScheme(id: string): SchemeDef {
   return { ...schemeDef, id, name: id }
@@ -86,12 +83,12 @@ describe('course store', () => {
     expect(store.scheme?.id).toBe('xiaohe')
     expect(store.engine).not.toBeNull()
     expect(store.curriculum).not.toBeNull()
-    expect(store.previewMode).toBe(false)
-    expect(store.primarySchemeIds).toEqual(['xiaohe', 'slow', 'fast', 'bad'])
+    expect(store.isCustomCourse).toBe(true)
+    expect(store.primarySchemeIds).toEqual(['xiaohe', 'slow', 'fast', 'bad', 'preview'])
     expect(storage.getItem(STORAGE_KEYS.scheme)).toBe('xiaohe')
     expect(loadIndex).toHaveBeenCalledTimes(1)
     expect(loadScheme).toHaveBeenCalledWith('xiaohe')
-    expect(loadCurriculum).toHaveBeenCalledWith('xiaohe')
+    expect(loadCurriculum).toHaveBeenCalledWith('xiaohe', expect.objectContaining({ id: 'xiaohe' }), true)
   })
 
   it('并发 init single-flight，只加载一次', async () => {
@@ -137,15 +134,15 @@ describe('course store', () => {
     expect(store.schemeId).toBe('xiaohe')
   })
 
-  it('practice-only 方案走 previewMode：无课程、清空进度', async () => {
+  it('未登记定制课程的方案在运行期生成通用课程', async () => {
     const store = useCourseStore()
     await store.init()
 
-    await store.selectScheme('preview')
-    expect(store.previewMode).toBe(true)
-    expect(store.schemeId).toBe('preview')
-    expect(store.curriculum).toBeNull()
-    expect(store.lessons).toEqual([])
+    await store.selectScheme('fast')
+    expect(store.schemeId).toBe('fast')
+    expect(store.isCustomCourse).toBe(false)
+    expect(store.curriculum).not.toBeNull()
+    expect(loadCurriculum).toHaveBeenCalledWith('fast', expect.objectContaining({ id: 'fast' }), false)
     expect(store.status).toBe('ready')
   })
 

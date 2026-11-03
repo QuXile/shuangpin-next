@@ -15,11 +15,11 @@ export const PUBLIC_DATA_DIR = path.join(ROOT, 'apps', 'web', 'public', 'data')
 export const LEXICON_FILE = path.join(ROOT, 'data', 'lexicon', 'lexicon.json')
 export const SCHEME_INDEX_FILE = path.join(SCHEME_DIR, 'index.json')
 
-/** public/data 顶层目录/文件：运行时只读 4 类产物。 */
+/** public/data 顶层目录/文件：索引、方案、定制课程、词表。 */
 export const PUBLIC_TOP_LEVEL = Object.freeze(['curriculum', 'index.json', 'lexicon', 'schemes'])
 
 /**
- * public/data 的 4 类运行时产物清单：relOut（public 相对路径）→ srcFile（data/ 源文件）。
+ * public/data 产物清单：relOut（public 相对路径）→ srcFile（data/ 源文件）；课程仅定制方案。
  * sync 按此写盘、validate 按此对账，路径映射只维护一份。
  */
 export function publicDataPlan(schemeIndex) {
@@ -30,7 +30,7 @@ export function publicDataPlan(schemeIndex) {
       srcFile: path.join(SCHEME_DIR, summary.id, 'scheme.json'),
     })
   }
-  for (const schemeId of schemeIndex.courseSupported ?? []) {
+  for (const schemeId of schemeIndex.customCourses ?? []) {
     plan.push({
       relOut: `curriculum/${schemeId}.json`,
       srcFile: path.join(SCHEME_DIR, schemeId, 'curriculum.json'),
@@ -187,12 +187,3 @@ export function replaceDirAtomically(targetDir, build) {
   fs.rmSync(tmp, { recursive: true, force: true })
 }
 
-/** curriculum-<12hex>：只覆盖会进入运行期的课程内容字段（chapters + lessons）。 */
-export function curriculumVersionOf(chapters, lessons) {
-  return `curriculum-${hash12(JSON.stringify({ chapters, lessons }))}`
-}
-
-/** lexicon-<12hex>：只覆盖会进入运行期的词条与音节示例。 */
-export function lexiconVersionOf(lexicon) {
-  return `lexicon-${hash12(JSON.stringify({ entries: lexicon.entries, syllableExamples: lexicon.syllableExamples }))}`
-}

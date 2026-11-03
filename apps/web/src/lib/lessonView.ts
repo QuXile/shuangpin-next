@@ -5,7 +5,6 @@
  */
 import type {
   AtomId,
-  AtomMeta,
   AtomType,
   ChapterDef,
   Curriculum,
@@ -14,9 +13,10 @@ import type {
   LessonProgress,
   LessonState,
   PracticeStage,
+  ResolvedLexicon,
   SchemeEngine,
 } from '@shuangpin/core'
-import { atomDisplayLabel, isFreeAtom, lessonState, parseAtomId } from '@shuangpin/core'
+import { atomDisplayLabel, buildAtomMemory, isFreeAtom, lessonState, parseAtomId } from '@shuangpin/core'
 
 type FocusBadge = '新' | '含' | '沿'
 
@@ -26,9 +26,9 @@ export interface FocusAtomView {
   keys: string[]
   badge: FocusBadge
   type: AtomType
-  /** 高频字/词记忆锚点（来自 atomMeta.anchors） */
+  /** 高频字记忆锚点（运行时由方案键位 + 当前词表派生） */
   anchors: string[]
-  /** 一句话记忆法（来自 atomMeta.mnemonic） */
+  /** 一句话记忆法（运行时派生） */
   mnemonic?: string
 }
 
@@ -70,32 +70,35 @@ function atomType(atomId: AtomId): AtomType {
   return parseAtomId(atomId)?.type ?? 'initial'
 }
 
-function keyOfMeta(meta: AtomMeta | undefined): string[] {
-  return meta?.keys ? [...meta.keys] : []
-}
-
 function buildFocusItem(
   atomId: AtomId,
   lesson: LessonDef,
   engine: SchemeEngine,
   badge: FocusBadge,
+  lexicon?: ResolvedLexicon,
 ): FocusAtomView {
   const type = atomType(atomId)
-  const meta = lesson.atomMeta[atomId]
-  const keys = keyOfMeta(meta).length > 0 ? keyOfMeta(meta) : engine.keysForAtom(atomId)
+  const memory = buildAtomMemory(engine, atomId, lexicon?.chars ?? [])
   return {
     atomId,
-    label: atomDisplayLabel(atomId, meta?.pinyin ?? atomKey(atomId)),
-    keys,
+    label: atomDisplayLabel(atomId, memory?.pinyin ?? atomKey(atomId)),
+    keys: memory?.keys.length ? [...memory.keys] : engine.keysForAtom(atomId),
     badge,
     type,
-    anchors: meta?.anchors ? [...meta.anchors] : [],
-    mnemonic: meta?.mnemonic,
+    anchors: memory?.anchors ? [...memory.anchors] : [],
+    mnemonic: memory?.mnemonic,
   }
 }
 
-/** 本课 focus 范围：直接来自 lesson.focusAtoms，保持数据的学习顺序（只去重） */
-export function lessonFocusItems(lesson: LessonDef, engine: SchemeEngine): FocusAtomView[] {
+/**
+ * 本课 focus 范围：直接来自 lesson.focusAtoms，保持数据的学习顺序（只去重）。
+ * 传入 lexicon 时同时派生记忆锚点与 mnemonic（tutorial 使用）；课程地图只要键位。
+ */
+export function lessonFocusItems(
+  lesson: LessonDef,
+  engine: SchemeEngine,
+  lexicon?: ResolvedLexicon,
+): FocusAtomView[] {
   const badge: FocusBadge = lesson.kind === 'review' || lesson.kind === 'exam' ? '含' : '新'
   const seen = new Set<AtomId>()
   const items: FocusAtomView[] = []
@@ -103,16 +106,16 @@ export function lessonFocusItems(lesson: LessonDef, engine: SchemeEngine): Focus
     if (seen.has(atomId)) continue
     if (!parseAtomId(atomId) || isFreeAtom(engine, atomId)) continue
     seen.add(atomId)
-    items.push(buildFocusItem(atomId, lesson, engine, badge))
+    items.push(buildFocusItem(atomId, lesson, engine, badge, lexicon))
   }
   return items
 }
 
-/** 教学页备注：只展示 lesson.tips（一条「本课技巧」bullet 列表）；无 tips 返回空数组 */
-export function buildLessonNotes(lesson: LessonDef): LessonNote[] {
-  const tips = lesson.tips ?? []
+/** 教学页备注：人工技巧 + 运行时派生的推荐码 / 兼容码 tips；无内容返回空数组。 */
+export function buildLessonNotes(lesson: LessonDef, generatedTips: readonly string[] = []): LessonNote[] {
+  const tips = [...(lesson.tips ?? []), ...generatedTips]
   if (tips.length === 0) return []
-  return [{ title: '本课技巧', bullets: [...tips] }]
+  return [{ title: '本课技巧', bullets: tips }]
 }
 
 /**

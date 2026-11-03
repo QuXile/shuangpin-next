@@ -2,7 +2,12 @@
 import { computed, ref } from 'vue'
 import type { AtomId, LessonDef, PracticeWord } from '@shuangpin/core'
 import type { PassCriteriaLine } from '@shuangpin/core'
-import { describePassCriteria } from '@shuangpin/core'
+import {
+  CODE_TIP_COMPAT_PREFIX,
+  CODE_TIP_PREFIXES,
+  CODE_TIP_RECOMMENDED_PREFIX,
+  describePassCriteria,
+} from '@shuangpin/core'
 import FocusTagList from '@/components/FocusTagList.vue'
 import KeyCap from '@/components/common/KeyCap.vue'
 import ScrollTail from '@/components/common/ScrollTail.vue'
@@ -55,7 +60,9 @@ const codeTips = computed<CodeTipLine[]>(() => {
   for (const tip of allTips.value) {
     for (const part of tip.split('；')) {
       const line = part.trim()
-      const recommended = /^推荐码：(.+?) 所推荐的键位组合为特别的 (.+)$/.exec(line)
+      const recommended = new RegExp(
+        `^${CODE_TIP_RECOMMENDED_PREFIX}(.+?) 所推荐的键位组合为特别的 (.+)$`,
+      ).exec(line)
       if (recommended) {
         lines.push({
           kind: 'recommended',
@@ -64,7 +71,9 @@ const codeTips = computed<CodeTipLine[]>(() => {
         })
         continue
       }
-      const compat = /^兼容映射：(.+?) 兼容的特别键位组合还包括 (.+)$/.exec(line)
+      const compat = new RegExp(
+        `^${CODE_TIP_COMPAT_PREFIX}(.+?) 兼容的特别键位组合还包括 (.+)$`,
+      ).exec(line)
       if (compat) {
         lines.push({
           kind: 'compat',
@@ -76,7 +85,11 @@ const codeTips = computed<CodeTipLine[]>(() => {
   }
   return lines
 })
-const otherTips = computed(() => allTips.value.filter((tip) => !/^(推荐码：|兼容映射：)/.test(tip.trim())))
+const otherTips = computed(() =>
+  allTips.value.filter(
+    (tip) => !CODE_TIP_PREFIXES.some((prefix) => tip.trim().startsWith(prefix)),
+  ),
+)
 const hasTips = computed(
   () => codeTips.value.length > 0 || otherTips.value.length > 0 || anchorRows.value.length > 0,
 )
@@ -146,7 +159,7 @@ const hasTips = computed(
                   :class="tip.kind === 'recommended' ? 'is-recommended' : 'is-compat'"
                 >
                   <template v-if="tip.kind === 'recommended'">
-                    推荐码：<b>{{ tip.syllable }}</b> 所推荐的键位组合为特别的
+                    {{ CODE_TIP_RECOMMENDED_PREFIX }}<b>{{ tip.syllable }}</b> 所推荐的键位组合为特别的
                     <span class="code-keys">
                       <template v-for="(code, codeIndex) in tip.codes" :key="code">
                         <span v-if="codeIndex > 0" class="code-sep">/</span>
@@ -155,7 +168,7 @@ const hasTips = computed(
                     </span>
                   </template>
                   <template v-else>
-                    兼容映射：<b>{{ tip.syllable }}</b> 兼容的特别键位组合还包括
+                    {{ CODE_TIP_COMPAT_PREFIX }}<b>{{ tip.syllable }}</b> 兼容的特别键位组合还包括
                     <span class="code-keys">
                       <template v-for="(code, codeIndex) in tip.codes" :key="code">
                         <span v-if="codeIndex > 0" class="code-sep">/</span>

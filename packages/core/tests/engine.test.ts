@@ -191,20 +191,22 @@ describe('方案引擎 · keyMap / diff', () => {
     expect(ingKey?.letter).toBe(';')
   })
 
-  it('diff：free/learn 数量与 data/schemes/index.json 原子统计一致', () => {
-    for (const summary of schemeIndex.schemes) {
-      const engine = createSchemeEngine(loadSchemeDef(summary.id))
+  it('diff：free / learn 划分由方案数据推导且互斥完整', () => {
+    for (const { id } of schemeIndex.schemes) {
+      const engine = createSchemeEngine(loadSchemeDef(id))
       const diff = engine.diff()
-      const stats = summary.atoms
-      expect(diff.freeInitials.length, summary.id).toBe(stats?.initials?.free)
-      expect(diff.freeFinals.length, summary.id).toBe(stats?.finals?.free)
-      expect(diff.freeZero.length, summary.id).toBe(stats?.zeroInitial?.free)
-      expect(diff.learnInitials.length + diff.freeInitials.length, summary.id).toBe(stats?.initials?.total)
+      const free = engine.freeSets()
+      expect([...free.initials], id).toEqual(diff.freeInitials)
+      expect([...free.finals], id).toEqual(diff.freeFinals)
+      expect([...free.zero], id).toEqual(diff.freeZero)
+      expect(new Set([...diff.learnInitials, ...diff.freeInitials]).size).toBe(
+        diff.learnInitials.length + diff.freeInitials.length,
+      )
     }
   })
 
   it('freeAtomIdsOf / isFreeAtom：与 engine.freeSets() 同源同序', () => {
-    for (const id of schemeIndex.courseSupported) {
+    for (const id of schemeIndex.schemes.map((item) => item.id)) {
       const engine = loadEngine(id)
       const free = engine.freeSets()
       const expected: AtomId[] = [

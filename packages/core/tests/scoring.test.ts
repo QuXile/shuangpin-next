@@ -24,9 +24,6 @@ function lessonWith(passCriteria: PassCriteria, kind: LessonDef['kind'] = 'drill
     prerequisites: [],
     wordPlan: { maxUnfamiliar: 0, lengthRange: [2, 3] },
     passCriteria,
-    zeroExamples: [],
-    tips: [],
-    atomMeta: {},
   }
 }
 
