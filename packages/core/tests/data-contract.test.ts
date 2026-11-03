@@ -150,26 +150,31 @@ describe('统一 Lexicon（data/lexicon/lexicon.json）', () => {
     expect(lexicon.words.length).toBeGreaterThanOrEqual(50000)
     expect(lexicon.chars.length).toBeGreaterThanOrEqual(3000)
     expect(Object.keys(lexicon.syllableExamples).length).toBeGreaterThanOrEqual(390)
+
+    const validTones = new Set([1, 2, 3, 4, 5])
     const seen = new Set<string>()
+    const issues: string[] = []
     for (const word of lexicon.words as WordEntry[]) {
-      expect(seen.has(word.text), `重复词：${word.text}`).toBe(false)
+      if (seen.has(word.text)) issues.push(`重复词：${word.text}`)
       seen.add(word.text)
-      expect(word.length).toBe(word.chars.length)
-      expect(word.length).toBeGreaterThanOrEqual(2)
-      expect(word.length).toBeLessThanOrEqual(5)
+      if (word.length !== word.chars.length) issues.push(`词长与字数不一致：${word.text}`)
+      if (word.length < 2 || word.length > 5) issues.push(`词长越界：${word.text}`)
       for (const syllable of word.syllables) {
-        expect(validFinals.has(syllable.final), `词 ${word.text} 韵母 ${syllable.final}`).toBe(true)
-        if (syllable.tone !== undefined) expect([1, 2, 3, 4, 5]).toContain(syllable.tone)
+        if (!validFinals.has(syllable.final)) issues.push(`词 ${word.text} 韵母非法：${syllable.final}`)
+        if (syllable.tone !== undefined && !validTones.has(syllable.tone)) {
+          issues.push(`词 ${word.text} 声调非法：${syllable.tone}`)
+        }
       }
     }
     for (const char of lexicon.chars as WordEntry[]) {
-      expect(char.length).toBe(1)
-      expect(validFinals.has(char.syllables[0]?.final ?? '')).toBe(true)
+      if (char.length !== 1) issues.push(`单字长度非法：${char.text}`)
+      if (!validFinals.has(char.syllables[0]?.final ?? '')) issues.push(`单字 ${char.text} 韵母非法`)
     }
     for (const [syllable, example] of Object.entries(lexicon.syllableExamples)) {
-      expect(example.char.length).toBeGreaterThan(0)
-      expect(example.pinyin).toBe(syllable)
-      expect(validFinals.has(example.final)).toBe(true)
+      if (example.char.length === 0) issues.push(`音节 ${syllable} 缺示例字`)
+      if (example.pinyin !== syllable) issues.push(`音节 ${syllable} 拼音不一致：${example.pinyin}`)
+      if (!validFinals.has(example.final)) issues.push(`音节 ${syllable} 韵母非法：${example.final}`)
     }
-  })
+    expect(issues.slice(0, 10)).toEqual([])
+  }, 20000)
 })
