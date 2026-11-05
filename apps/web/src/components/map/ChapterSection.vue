@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import type { ChapterView } from '@/lib/lessonView'
 import LessonCard from './LessonCard.vue'
 
@@ -16,6 +16,31 @@ const percent = computed(
   () => (passedCount.value / Math.max(props.chapter.lessons.length, 1)) * 100,
 )
 const lessonsId = computed(() => `chapter-lessons-${props.chapter.id}`)
+
+/** 略大于 --dur-mid（220ms），覆盖 grid-template-rows 过渡 */
+const BODY_ANIMATION_MS = 260
+
+/**
+ * 折叠动画期间必须裁掉内容；展开后必须放开 overflow，
+ * 否则课程卡里的映射浮层会被章节体裁掉。
+ */
+const bodyAnimating = ref(false)
+let animationTimer: number | undefined
+
+watch(
+  () => props.collapsed,
+  () => {
+    bodyAnimating.value = true
+    if (animationTimer !== undefined) window.clearTimeout(animationTimer)
+    animationTimer = window.setTimeout(() => {
+      bodyAnimating.value = false
+    }, BODY_ANIMATION_MS)
+  },
+)
+
+onBeforeUnmount(() => {
+  if (animationTimer !== undefined) window.clearTimeout(animationTimer)
+})
 </script>
 
 <template>
@@ -45,7 +70,7 @@ const lessonsId = computed(() => `chapter-lessons-${props.chapter.id}`)
     <div
       :id="lessonsId"
       class="chapter-body"
-      :class="{ 'is-collapsed': collapsed }"
+      :class="{ 'is-collapsed': collapsed, 'is-animating': bodyAnimating }"
       :aria-hidden="collapsed ? 'true' : undefined"
       :inert="collapsed || undefined"
     >
@@ -164,6 +189,10 @@ const lessonsId = computed(() => `chapter-lessons-${props.chapter.id}`)
 }
 .chapter-body-inner {
   min-height: 0;
+  overflow: visible;
+}
+.chapter-body.is-collapsed .chapter-body-inner,
+.chapter-body.is-animating .chapter-body-inner {
   overflow: hidden;
 }
 .lesson-grid {

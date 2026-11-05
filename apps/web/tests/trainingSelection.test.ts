@@ -386,7 +386,7 @@ describe('trainingSelection · 原子集合派生', () => {
     ).toBe(false)
   })
 
-  it('已学操作只调整出现范围，不清除焦点', () => {
+  it('已学保留仍在出现范围内的焦点与隐藏', () => {
     const passLesson = lessonOf('L2.1')
     const current: ScopedSets = {
       appear: {
@@ -419,6 +419,48 @@ describe('trainingSelection · 原子集合派生', () => {
     })
     expect([...next.focus.initials]).toEqual(['zh'])
     expect(next.appear.initials).toContain('zh')
+  })
+
+  it('已学对齐出现范围，新增原子同步焦点/隐藏并移除未学原子', () => {
+    const passLesson = lessonOf('L2.1')
+    const unlearnedInitial = selectableAtomsOf(options, common).initials.find(
+      (item) => item !== 'zh',
+    )
+    expect(unlearnedInitial).toBeTruthy()
+    const current: ScopedSets = {
+      appear: {
+        initials: new Set([...common.initials, unlearnedInitial as string]),
+        finals: new Set(common.finals),
+        zeroFinals: new Set(common.zeroFinals),
+      },
+      focus: {
+        initials: new Set([unlearnedInitial as string]),
+        finals: new Set<string>(),
+        zeroFinals: new Set<string>(),
+      },
+      drill: {
+        initials: new Set([unlearnedInitial as string]),
+        finals: new Set<string>(),
+        zeroFinals: new Set<string>(),
+      },
+      article: {
+        initials: new Set<string>(),
+        finals: new Set<string>(),
+        zeroFinals: new Set<string>(),
+      },
+    }
+    const next = learnedSelectionSets({
+      lessons: curriculum.lessons,
+      progress: { [passLesson.id]: { passed: true, stars: 3, bestAccuracy: 1, attempts: 1, updatedAt: 1 } },
+      common,
+      options,
+      current,
+    })
+    expect(next.appear.initials.has('zh')).toBe(true)
+    expect(next.appear.initials.has(unlearnedInitial as string)).toBe(false)
+    expect([...next.focus.initials]).toEqual(['zh'])
+    expect([...next.drill.initials]).toEqual(['zh'])
+    expect(next.article).toEqual(current.article)
   })
 
   it('parseTrainingPreset 校验缺字段/非法阶段', () => {

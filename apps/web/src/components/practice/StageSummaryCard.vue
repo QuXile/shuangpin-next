@@ -58,9 +58,49 @@ const props = withDefaults(
   },
 )
 
-const errorRows = computed(() =>
-  props.keyErrors.map((error) => ({ ...error, atom: atomCapsule(error) })),
-)
+interface ErrorVariant {
+  typed: string
+  count: number
+}
+
+interface ErrorGroup {
+  key: string
+  expected: string
+  atom: { label: string; kind: 'initial' | 'final' | 'zero' } | null
+  typed: ErrorVariant[]
+  total: number
+}
+
+/** 同一个应按音合并为一行，按错的不同键作为行内变体。 */
+const errorGroups = computed<ErrorGroup[]>(() => {
+  const groups = new Map<string, ErrorGroup>()
+  for (const error of props.keyErrors) {
+    const key = `${error.expected.toUpperCase()}|${error.atomId ?? ''}`
+    const group = groups.get(key) ?? {
+      key,
+      expected: error.expected.toUpperCase(),
+      atom: atomCapsule(error),
+      typed: [],
+      total: 0,
+    }
+    group.typed.push({ typed: error.typed.toUpperCase(), count: error.count })
+    group.total += error.count
+    groups.set(key, group)
+  }
+  return [...groups.values()]
+    .map((group) => ({
+      ...group,
+      typed: group.typed.sort(
+        (a, b) => b.count - a.count || a.typed.localeCompare(b.typed),
+      ),
+    }))
+    .sort(
+      (a, b) =>
+        b.total - a.total ||
+        a.expected.localeCompare(b.expected) ||
+        (a.atom?.label ?? '').localeCompare(b.atom?.label ?? ''),
+    )
+})
 </script>
 
 <template>
@@ -109,24 +149,37 @@ const errorRows = computed(() =>
       </div>
     </div>
 
-    <section v-if="keyErrors.length" class="summary-errors thin-scroll" aria-label="错误键位">
+    <section
+      v-if="keyErrors.length"
+      class="summary-errors thin-scroll"
+      aria-label="错误键位"
+      tabindex="0"
+    >
       <header>错误键位</header>
       <ul class="summary-key-errors">
-        <li v-for="error in errorRows" :key="`${error.expected}-${error.typed}-${error.atomId ?? ''}`">
+        <li v-for="group in errorGroups" :key="group.key">
           <span class="summary-key-error-pair">
             <span class="summary-key-error-label">应按</span>
-            <KeyCap :text="error.expected.toUpperCase()" variant="primary" />
+            <KeyCap :text="group.expected" variant="primary" />
             <span
-              v-if="error.atom"
+              v-if="group.atom"
               class="summary-atom-capsule"
-              :class="`is-${error.atom.kind}`"
+              :class="`is-${group.atom.kind}`"
             >
-              {{ error.atom.label }}
+              {{ group.atom.label }}
             </span>
             <span class="summary-key-error-label">按成</span>
-            <KeyCap :text="error.typed.toUpperCase()" variant="danger" />
+            <span class="summary-key-error-typed">
+              <span
+                v-for="variant in group.typed"
+                :key="variant.typed"
+                class="summary-key-error-typed-item"
+              >
+                <KeyCap :text="variant.typed" variant="danger" />
+                <small>×{{ variant.count }}</small>
+              </span>
+            </span>
           </span>
-          <strong>×{{ error.count }}</strong>
         </li>
       </ul>
     </section>
@@ -286,8 +339,9 @@ const errorRows = computed(() =>
   border: 1px solid color-mix(in srgb, var(--tone-line, var(--line)) 55%, transparent);
   border-radius: var(--r-card);
   background: var(--tone-surface, color-mix(in srgb, var(--surface) 86%, transparent));
+  max-height: min(300px, 42dvh);
+  overflow-x: hidden;
   overflow-y: auto;
-  overscroll-behavior: contain;
   scrollbar-gutter: stable;
 }
 .summary-errors > header {
@@ -300,15 +354,15 @@ const errorRows = computed(() =>
   margin: 0;
   padding: 0;
   list-style: none;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
   gap: 5px 8px;
+  min-width: 0;
 }
 .summary-key-errors li {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
+  flex: 0 1 auto;
+  max-width: 100%;
   min-width: 0;
   padding: 4px 7px;
   border-radius: var(--r-control);
@@ -322,6 +376,24 @@ const errorRows = computed(() =>
   gap: 5px;
   min-width: 0;
   flex-wrap: wrap;
+}
+.summary-key-error-typed {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  min-width: 0;
+}
+.summary-key-error-typed-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.summary-key-error-typed-item small {
+  color: var(--danger);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 .summary-key-error-label {
   color: var(--ink-3);
@@ -355,12 +427,6 @@ const errorRows = computed(() =>
   background: var(--mapping-focus-soft);
   color: var(--mapping-focus-ink);
 }
-.summary-key-errors strong {
-  flex: none;
-  color: var(--danger);
-  font-size: var(--text-xs);
-  font-variant-numeric: tabular-nums;
-}
 .summary-rule-note {
   grid-column: 1 / -1;
   margin: 0;
@@ -393,9 +459,6 @@ const errorRows = computed(() =>
     flex-direction: column;
   }
   .summary-rules {
-    grid-template-columns: 1fr;
-  }
-  .summary-key-errors {
     grid-template-columns: 1fr;
   }
   .summary-actions :slotted(.btn) {

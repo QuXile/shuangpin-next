@@ -831,7 +831,12 @@ export function clearGroupSets(current: ScopedSets, group: SelectionGroup): Scop
   return { ...current, appear: clearGroupSet(current.appear, group) }
 }
 
-/** 「选中已学」：返回新的作用域集合（只改出现范围）。 */
+/**
+ * 「选中已学」：把出现范围与已学集合对齐。
+ * - 移除已选但未学的原子；
+ * - 加入已学但未选的原子，并把新增的普通原子同步选中到焦点 / 专项隐藏；
+ * - 仍在出现范围内的焦点 / 隐藏保留，范围外的由 shrink 自动收缩。
+ */
 export function learnedSelectionSets(input: {
   lessons: readonly LessonDef[]
   progress: Readonly<Record<string, LessonProgress>>
@@ -845,7 +850,47 @@ export function learnedSelectionSets(input: {
     common: input.common,
     options: input.options,
   })
-  return setsOfPreset(learned, input.current)
+  const nextAppear: AtomSet = {
+    initials: new Set(learned.selectedInitials),
+    finals: new Set(learned.selectedFinals),
+    zeroFinals: new Set(learned.selectedZeroFinals),
+  }
+  const selectable = selectableAtomsOf(input.options, input.common)
+  const selectableInitials = new Set(selectable.initials)
+  const selectableFinals = new Set(selectable.finals)
+  const selectableZeros = new Set(selectable.zeroFinals)
+  // 与单个勾选联动一致：只镜像普通原子；全拼沿用属于胶囊，不参与焦点 / 隐藏。
+  const added: AtomSet = {
+    initials: new Set(
+      [...nextAppear.initials].filter(
+        (item) => !input.current.appear.initials.has(item) && selectableInitials.has(item),
+      ),
+    ),
+    finals: new Set(
+      [...nextAppear.finals].filter(
+        (item) => !input.current.appear.finals.has(item) && selectableFinals.has(item),
+      ),
+    ),
+    zeroFinals: new Set(
+      [...nextAppear.zeroFinals].filter(
+        (item) => !input.current.appear.zeroFinals.has(item) && selectableZeros.has(item),
+      ),
+    ),
+  }
+  const focus = {
+    initials: new Set([...input.current.focus.initials, ...added.initials]),
+    finals: new Set([...input.current.focus.finals, ...added.finals]),
+    zeroFinals: new Set([...input.current.focus.zeroFinals, ...added.zeroFinals]),
+  }
+  const drill = {
+    initials: new Set([...input.current.drill.initials, ...added.initials]),
+    finals: new Set([...input.current.drill.finals, ...added.finals]),
+    zeroFinals: new Set([...input.current.drill.zeroFinals, ...added.zeroFinals]),
+  }
+  return shrinkScopedSets(
+    { appear: nextAppear, focus, drill, article: input.current.article },
+    input.options,
+  )
 }
 
 /** 读取并裁剪持久化训练配置；缺失/损坏返回 null。 */
