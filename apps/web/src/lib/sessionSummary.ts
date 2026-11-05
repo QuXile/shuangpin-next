@@ -3,13 +3,21 @@
  * 课程练习结束卡（usePractice）与练习场文章总结（TrainingPage）都从这里取数，
  * 不再各自计算 accuracy% / durationSec / keyErrors 排序。
  */
-import { keyErrorEntries, sessionMetrics, type SessionFeedback, type SessionState } from '@shuangpin/core'
+import {
+  keyErrorEntriesWithAtoms,
+  sessionMetrics,
+  type AtomId,
+  type SessionFeedback,
+  type SessionState,
+} from '@shuangpin/core'
 
 /** 错误键位排行的一行：应敲的键 vs 实际按下的键。 */
 interface KeyErrorRow {
   expected: string
   typed: string
   count: number
+  /** 该键位对应的知识点（声母 / 韵母 / 零声母） */
+  atomId?: AtomId
 }
 
 interface SessionSummary {
@@ -37,10 +45,11 @@ export function buildSessionSummary(session: SessionState, now: number): Session
     cpm: metrics.cpm,
     errors: session.stats.errors,
     durationSec: Math.max(1, Math.round((finishedAt - session.stats.startedAt) / 1000)),
-    keyErrorRows: keyErrorEntries(session).map((entry) => ({
+    keyErrorRows: keyErrorEntriesWithAtoms(session).map((entry) => ({
       expected: entry.expected.toUpperCase(),
       typed: entry.typed.toUpperCase(),
       count: entry.count,
+      ...(entry.atomId ? { atomId: entry.atomId } : {}),
     })),
   }
 }

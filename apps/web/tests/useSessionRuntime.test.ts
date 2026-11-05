@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { effectScope } from 'vue'
 import {
   buildPracticeWord,
@@ -113,6 +113,48 @@ describe('useSessionRuntime', () => {
       expect(runtime.session.value).toBeNull()
       expect(runtime.cpm.value).toBe(0)
     })
+  })
+
+  it('暂停时冻结输入，继续后恢复', () => {
+    withRuntime((runtime) => {
+      runtime.start([word])
+      const stateBefore = runtime.session.value
+      runtime.togglePause()
+      expect(runtime.paused.value).toBe(true)
+      expect(runtime.apply('a')).toBeNull()
+      expect(runtime.session.value).toBe(stateBefore)
+      runtime.togglePause()
+      expect(runtime.paused.value).toBe(false)
+      const firstCap = word.caps[0]
+      expect(firstCap).toBeTruthy()
+      expect(runtime.apply(firstCap!.key)).not.toBeNull()
+    })
+  })
+
+  it('暂停时长不计入最终完成时长', () => {
+    let now = 1000
+    const nowSpy = vi.spyOn(performance, 'now').mockImplementation(() => now)
+    try {
+      withRuntime((runtime) => {
+        runtime.start([word])
+        const caps = word.caps
+        expect(caps.length).toBeGreaterThan(1)
+        now += 100
+        runtime.apply(caps[0]!.key)
+        runtime.togglePause()
+        now += 5_000
+        runtime.togglePause()
+        for (const cap of caps.slice(1)) {
+          now += 100
+          runtime.apply(cap.key)
+        }
+        const state = runtime.session.value
+        expect(state?.phase).toBe('finished')
+        expect((state?.stats.finishedAt ?? 0) - (state?.stats.startedAt ?? 0)).toBe(caps.length * 100)
+      })
+    } finally {
+      nowSpy.mockRestore()
+    }
   })
 
   it('无 extend 时批次结束即 finished，完成后 apply 返回 null', () => {

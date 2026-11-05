@@ -94,11 +94,11 @@ compositionSequence(syl) 纯声母×韵母组合（零声母为整段序列）
 
 ### 会话状态机
 
-`SessionState` 是唯一会话真相：`words / index / phase / lastFeedback / stats / revealed / wrongInputs / cellErrors / keyErrors`。
+`SessionState` 是唯一会话真相：`words / index / phase / lastFeedback / stats / revealed / wrongInputs / cellErrors / keyErrors / keyErrorDetails`。
 
 - `applyKey`：逐字推进、整字判题、多解容错；输入满且未通过时锁定该字，退格或 `clearInput` 解除；同一字第 3 次错误自动揭示答案；
 - `normalizeKeyInput`：合法键为小写字母与 `;`，过滤 IME、组合键与多字符；
-- `cellKeyOf` 返回当前字稳定 key；`keyErrorEntries` 把 `keyErrors` 解析为按次数降序的展示数据；
+- `cellKeyOf` 返回当前字稳定 key；`keyErrorEntries` 把 `keyErrors` 解析为按次数降序的展示数据，`keyErrorEntriesWithAtoms` 额外带回按键对应的知识点（用于总结卡展示声母 / 韵母 / 零声母胶囊）；
 - `resumeSession` 平移计时起点；`sessionMetrics` 计算正确率与速度；
 - `buildPracticeWord` 把词库条目转为可渲染、可判题的练习词，键帽显示主键序列，判题接受全部可接受序列。
 

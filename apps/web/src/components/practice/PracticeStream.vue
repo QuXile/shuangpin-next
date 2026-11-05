@@ -3,7 +3,7 @@
  * 练习流（纯展示）：根据 core SessionState 渲染所有词/字卡片，自动滚动到当前词。
  * 不做判题、不做统计；错误输入/揭示状态由 usePractice 记录后传入。
  */
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { AtomId, SessionState } from '@shuangpin/core'
 import CharacterCard from './CharacterCard.vue'
 import StageSummaryCard from './StageSummaryCard.vue'
@@ -56,6 +56,9 @@ interface CellView {
 const viewport = ref<HTMLElement | null>(null)
 const rowEls = ref<HTMLElement[]>([])
 const promptEl = ref<HTMLElement | null>(null)
+/** 当前练习视口可容纳的总结卡高度；由 ResizeObserver 随容器更新 */
+const promptMaxHeight = ref('')
+let promptResizeObserver: ResizeObserver | undefined
 
 const currentWordIndex = computed(() => props.session.index)
 
@@ -115,6 +118,14 @@ function centerRow(index: number): void {
   root.scrollTo({ top: Math.min(max, Math.max(0, target)), behavior: 'smooth' })
 }
 
+function updatePromptMaxHeight(): void {
+  const root = viewport.value
+  promptMaxHeight.value =
+    root && props.prompt
+      ? `${Math.max(200, Math.min(720, root.clientHeight - 52))}px`
+      : ''
+}
+
 /** 完成提示行滚到可见（底部对齐） */
 function revealPrompt(): void {
   const root = viewport.value
@@ -142,12 +153,23 @@ watch(
 watch(
   () => props.prompt,
   async (prompt) => {
-    if (!prompt) return
+    if (!prompt) {
+      promptMaxHeight.value = ''
+      return
+    }
     await nextTick()
+    updatePromptMaxHeight()
     revealPrompt()
   },
   { immediate: true },
 )
+
+onMounted(() => {
+  if (typeof ResizeObserver === 'undefined' || !viewport.value) return
+  promptResizeObserver = new ResizeObserver(updatePromptMaxHeight)
+  promptResizeObserver.observe(viewport.value)
+})
+onBeforeUnmount(() => promptResizeObserver?.disconnect())
 </script>
 
 <template>
@@ -196,6 +218,7 @@ watch(
           :key-errors="prompt.keyErrors"
           :rules="prompt.rules"
           :rating="prompt.rating"
+          :max-height="promptMaxHeight"
         >
           <template #actions>
             <button
@@ -212,7 +235,7 @@ watch(
               <kbd>Alt+R</kbd>
             </button>
             <button class="btn" type="button" @click="emit('endless')">
-              进入无尽练习
+              进入练习
               <kbd>Alt+Enter</kbd>
             </button>
           </template>

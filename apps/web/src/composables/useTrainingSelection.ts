@@ -133,12 +133,48 @@ export function useTrainingSelection() {
     writeHidden('article', next.article)
   }
 
-  const toggleInitial = (value: string): void =>
+  function groupSetOf(set: AtomSet, group: SelectionGroup): ReadonlySet<string> {
+    return group === 'initial' ? set.initials : group === 'final' ? set.finals : set.zeroFinals
+  }
+
+  function isSelectableGroupValue(group: SelectionGroup, value: string): boolean {
+    const list =
+      group === 'initial'
+        ? selectable.value.initials
+        : group === 'final'
+          ? selectable.value.finals
+          : selectable.value.zeroFinals
+    return list.includes(value)
+  }
+
+  /** 出现中新增一个可选原子时，同步选中到焦点与专项隐藏。 */
+  function mirrorAppearanceAdd(group: SelectionGroup, value: string): void {
+    if (!isSelectableGroupValue(group, value)) return
+    const focus = scopedSets.value.focus
+    if (!groupSetOf(focus, group).has(value)) {
+      writeFocus(toggleAtomSet(focus, group, value))
+    }
+    const hidden = scopedSets.value.drill
+    if (!groupSetOf(hidden, group).has(value)) {
+      writeHidden('drill', toggleAtomSet(hidden, group, value))
+    }
+  }
+
+  function toggleInitial(value: string): void {
+    const adding = !selectedInitials.value.has(value)
     writeAppear(toggleAtomSet(appearSet.value, 'initial', value))
-  const toggleFinal = (value: string): void =>
+    if (adding) mirrorAppearanceAdd('initial', value)
+  }
+  function toggleFinal(value: string): void {
+    const adding = !selectedFinals.value.has(value)
     writeAppear(toggleAtomSet(appearSet.value, 'final', value))
-  const toggleZeroFinal = (value: string): void =>
+    if (adding) mirrorAppearanceAdd('final', value)
+  }
+  function toggleZeroFinal(value: string): void {
+    const adding = !selectedZeroFinals.value.has(value)
     writeAppear(toggleAtomSet(appearSet.value, 'zero', value))
+    if (adding) mirrorAppearanceAdd('zero', value)
+  }
 
   function selectAll(): void {
     if (atomOptions.value) applySets(selectAllSets(scopedSets.value, atomOptions.value))
@@ -334,7 +370,7 @@ export function useTrainingSelection() {
     applySets(emptyScopedSets())
   }
 
-  /** 课程总结卡「无尽练习」一次性预设：读取后立即清除，刷新不会覆盖后续修改。 */
+  /** 课程总结卡 / 顶栏「进入练习」一次性预设：读取后立即清除，刷新不会覆盖后续修改。 */
   function applyCoursePreset(): void {
     if (coursePresetApplied) return
     const taken = takeTrainingPreset(presetStorage)

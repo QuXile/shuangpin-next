@@ -20,6 +20,7 @@
  */
 import type {
   AtomId,
+  KeyErrorDetail,
   KeyErrorEntry,
   KeyResult,
   PracticeCap,
@@ -153,6 +154,24 @@ export function keyErrorEntries(state: SessionState): KeyErrorEntry[] {
   )
 }
 
+/**
+ * 带知识点上下文的错误键位排行。新会话优先使用 `keyErrorDetails`；
+ * 旧数据没有详细表时回退到 keyErrors（无 atomId）。
+ */
+export function keyErrorEntriesWithAtoms(state: SessionState): KeyErrorDetail[] {
+  const details = [...state.keyErrorDetails.values()]
+  if (details.length === 0) {
+    return keyErrorEntries(state).map((entry) => ({ ...entry }))
+  }
+  return details.sort(
+    (a, b) =>
+      b.count - a.count ||
+      a.expected.localeCompare(b.expected) ||
+      a.typed.localeCompare(b.typed) ||
+      (a.atomId ?? '').localeCompare(b.atomId ?? ''),
+  )
+}
+
 function clearCellError(state: SessionState, cellKey: string): ReadonlyMap<string, string[]> {
   if (!state.wrongInputs.has(cellKey)) return state.wrongInputs
   const next = new Map(state.wrongInputs)
@@ -165,6 +184,7 @@ interface TrackerPatch {
   wrongInputs: ReadonlyMap<string, string[]>
   cellErrors: ReadonlyMap<string, number>
   keyErrors: ReadonlyMap<string, number>
+  keyErrorDetails: ReadonlyMap<string, KeyErrorDetail>
 }
 
 /** 记录一次整字错误：wrongInputs / cellErrors / keyErrors / 第 3 次揭示 */
@@ -177,14 +197,31 @@ function recordWrong(state: SessionState, cellKey: string, feedback: SessionFeed
   cellErrors.set(cellKey, count)
 
   let keyErrors: ReadonlyMap<string, number> = state.keyErrors
+  let keyErrorDetails: ReadonlyMap<string, KeyErrorDetail> = state.keyErrorDetails
   const expected = feedback.expected ?? EMPTY_STRINGS
   const typed = feedback.input ?? EMPTY_STRINGS
   const mismatch = expected.findIndex((key, index) => typed[index] !== key)
   if (mismatch >= 0) {
     const next = new Map(keyErrors)
-    const pair = `${typed[mismatch] ?? '?'}|${expected[mismatch] ?? '?'}`
+    const typedKey = typed[mismatch] ?? '?'
+    const expectedKey = expected[mismatch] ?? '?'
+    const pair = `${typedKey}|${expectedKey}`
     next.set(pair, (next.get(pair) ?? 0) + 1)
     keyErrors = next
+
+    const wordState = state.words[state.index]
+    const syllable = wordState?.word.syllables[wordState.charIndex]
+    const atomId = syllable?.caps[mismatch]?.atomId
+    const detailKey = `${typedKey}|${expectedKey}|${atomId ?? ''}`
+    const detailMap = new Map(keyErrorDetails)
+    const previous = detailMap.get(detailKey)
+    detailMap.set(detailKey, {
+      typed: typedKey,
+      expected: expectedKey,
+      ...(atomId ? { atomId } : {}),
+      count: (previous?.count ?? 0) + 1,
+    })
+    keyErrorDetails = detailMap
   }
 
   let revealed: ReadonlySet<string> = state.revealed
@@ -194,7 +231,7 @@ function recordWrong(state: SessionState, cellKey: string, feedback: SessionFeed
     revealed = next
   }
 
-  return { revealed, wrongInputs, cellErrors, keyErrors }
+  return { revealed, wrongInputs, cellErrors, keyErrors, keyErrorDetails }
 }
 
 // ── 会话状态机 ────────────────────────────────────────────────
@@ -275,6 +312,7 @@ export function createSession(options: SessionOptions): SessionState {
     wrongInputs: new Map(),
     cellErrors: new Map(),
     keyErrors: new Map(),
+    keyErrorDetails: new Map(),
   }
 }
 

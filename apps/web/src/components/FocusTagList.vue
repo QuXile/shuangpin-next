@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { FocusAtomView } from '@/lib/lessonView'
+import KeyCap from '@/components/common/KeyCap.vue'
 
 defineProps<{ items: readonly FocusAtomView[] }>()
 </script>
@@ -18,7 +19,12 @@ defineProps<{ items: readonly FocusAtomView[] }>()
       <template v-if="item.keys.length">
         <span class="focus-arrow" aria-hidden="true">→</span>
         <span class="focus-keys">
-          <kbd v-for="(key, index) in item.keys" :key="key" :class="{ 'is-primary': index === 0 }">{{ key.toUpperCase() }}</kbd>
+          <KeyCap
+            v-for="(key, index) in item.keys"
+            :key="key"
+            :text="key.toUpperCase()"
+            :variant="index === 0 ? 'primary' : 'neutral'"
+          />
         </span>
       </template>
     </span>
@@ -77,26 +83,5 @@ defineProps<{ items: readonly FocusAtomView[] }>()
   display: inline-flex;
   gap: 2px;
   white-space: nowrap;
-}
-.focus-keys kbd {
-  min-width: 17px;
-  height: 17px;
-  display: inline-grid;
-  place-items: center;
-  padding: 0 4px;
-  border: 1px solid var(--line);
-  border-bottom-width: 2px;
-  border-radius: var(--r-xs);
-  background: var(--surface-2);
-  color: var(--ink-2);
-  font-family: var(--font-mono);
-  font-size: var(--text-2xs);
-  font-weight: 700;
-  line-height: 1;
-}
-.focus-keys kbd.is-primary {
-  border-color: var(--mapping-focus-line);
-  background: var(--mapping-focus-soft);
-  color: var(--mapping-focus-ink);
 }
 </style>

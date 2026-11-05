@@ -16,6 +16,7 @@ import {
   cellKeyOf,
   hasInputError,
   keyErrorEntries,
+  keyErrorEntriesWithAtoms,
   resumeSession,
 } from '../src/session.ts'
 import { makePracticeWord } from './helpers.ts'
@@ -229,6 +230,17 @@ describe('cellKeyOf / keyErrorEntries · 公共查询 API', () => {
     expect(keyErrorEntries(state)).toEqual([
       { typed: 'x', expected: 'n', count: 2 },
       { typed: 'x', expected: 'v', count: 1 },
+    ])
+  })
+
+  it('keyErrorEntriesWithAtoms：按错键位带上对应知识点', () => {
+    const flower = makePracticeWord('花', ['hua'])
+    let state = createSession({ words: [flower], now: 0 })
+    state = press(state, ['h', 'c'], 100)
+    expect(state.keyErrors.get('c|x')).toBe(1)
+    expect(keyErrorEntries(state)).toEqual([{ typed: 'c', expected: 'x', count: 1 }])
+    expect(keyErrorEntriesWithAtoms(state)).toEqual([
+      { typed: 'c', expected: 'x', atomId: 'final:ua', count: 1 },
     ])
   })
 

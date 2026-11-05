@@ -118,6 +118,8 @@
 
   /* ── 圆角（5 档） ─────────────────────────── */
   --r-xs: 4px;
+  --r-keycap: calc(var(--keycap-size-mini) * 0.24);
+  --r-keycap-xs: calc(16px * 0.24);
   --r-control: 9px;
   --r-card: 14px;
   --r-panel: 20px;
@@ -125,6 +127,8 @@
 
   /* ── 控件高度（4 档） ─────────────────────── */
   --h-control-xs: 26px;
+  /* 通用 mini 键帽尺寸；与 --r-keycap 等比 */
+  --keycap-size-mini: 22px;
   --h-control-sm: 30px;
   --h-control: 34px;
   --h-control-lg: 42px;

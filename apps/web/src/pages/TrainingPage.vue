@@ -62,8 +62,10 @@ const {
   hasStarted,
   inError,
   cpm,
+  paused,
   start: startSession,
   reset: resetSession,
+  togglePause,
   apply,
   backspace: sessionBackspace,
   clearInput,
@@ -300,8 +302,8 @@ function onClearInput(): void {
 }
 useKeyInput((input) => {
   // 配置页只让键位图/键帽响应；开始练习后才把输入送入判题。
-  if (!playing.value) {
-    sound.playKey()
+  if (!playing.value || paused.value) {
+    if (!paused.value) sound.playKey()
     return
   }
   if (input.type === 'backspace') onBackspace()
@@ -478,6 +480,7 @@ const bindings = computed<KeyBinding[]>(() => {
     ]
   }
   return [
+    { key: ' ', shift: true, when: () => playing.value, run: togglePause },
     { key: ' ', when: () => inError.value, run: () => onClearInput() },
     {
       key: 'Enter',
@@ -837,7 +840,7 @@ onMounted(async () => {
     <!-- 练习会话 -->
     <template v-else>
       <div class="training-session">
-        <SessionBar>
+        <SessionBar pausable :paused="paused" @toggle-pause="togglePause">
           <template #left>
             <button class="session-btn" type="button" aria-keyshortcuts="Escape" @click="exitSession">
               <svg class="icon session-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -846,13 +849,9 @@ onMounted(async () => {
               退出
               <kbd>Esc</kbd>
             </button>
-            <button class="session-btn" type="button" @click="restartSession">
-              重新开始
-              <kbd>Alt+R</kbd>
-            </button>
           </template>
 
-          <span class="session-item">已练 {{ completedWords }} {{ countUnit }}</span>
+          <span class="session-item">{{ completedWords }}</span>
           <span class="session-sep" aria-hidden="true">·</span>
           <span v-if="hasStarted" class="session-item">正确率 {{ accuracyPercent }}%</span>
           <span v-else class="session-item">正确率 --%</span>
@@ -865,6 +864,13 @@ onMounted(async () => {
           <span class="session-sep" aria-hidden="true">·</span>
           <span v-if="hasStarted" class="session-item session-speed">速度 {{ liveSpeed }} WPM</span>
           <span v-else class="session-item">速度 -- WPM</span>
+
+          <template #right>
+            <button class="session-btn" type="button" aria-keyshortcuts="Alt+R" @click="restartSession">
+              重新开始
+              <kbd>Alt+R</kbd>
+            </button>
+          </template>
         </SessionBar>
 
         <template v-if="kind === 'drill' && session">
@@ -1231,6 +1237,9 @@ onMounted(async () => {
 }
 .article-summary-wrap > * {
   max-width: var(--content-session);
+}
+.article-summary-wrap :deep(.summary-card) {
+  max-height: 100%;
 }
 
 

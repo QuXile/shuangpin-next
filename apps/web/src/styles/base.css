@@ -367,18 +367,20 @@ kbd {
   color: var(--ink-2);
 }
 .cap--mini {
-  min-width: 22px;
-  height: var(--h-control-xs);
-  padding: 0 6px;
+  min-width: var(--keycap-size-mini);
+  height: var(--keycap-size-mini);
+  padding: 0 4px;
+  border-radius: var(--r-keycap);
   font-size: var(--text-xs);
   letter-spacing: 0.03em;
   border-bottom-width: 2px;
   white-space: nowrap;
 }
 .cap--xs {
-  min-width: 14px;
+  min-width: 16px;
   height: 16px;
   padding: 0 3px;
+  border-radius: var(--r-keycap-xs);
   font-size: var(--text-2xs);
   border-bottom-width: 2px;
   white-space: nowrap;
@@ -411,6 +413,11 @@ kbd {
     color-mix(in srgb, var(--fin) 11%, var(--surface))
   );
   color: var(--keycap-final-ink);
+}
+.cap--danger {
+  border-color: var(--danger-line);
+  background: var(--danger-soft);
+  color: var(--danger-ink);
 }
 .cap--hidden {
   border-style: dashed;

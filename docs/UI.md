@@ -6,7 +6,7 @@
 
 ## 设计令牌
 
-令牌定义在 `tokens.css`，深色主题通过 `html[data-theme='dark']` 覆盖同名变量；组件不写主题特判。当前共 93 个令牌：
+令牌定义在 `tokens.css`，深色主题通过 `html[data-theme='dark']` 覆盖同名变量；组件不写主题特判。当前共 96 个令牌：
 
 | 类别 | 令牌示例 | 用途 |
 |---|---|---|
@@ -16,10 +16,10 @@
 | 品牌 | `--brand` `--brand-ink` `--brand-fill` `--brand-fill-hover` `--brand-soft` `--brand-soft-2` `--brand-line` `--brand-glow` `--on-accent` | 品牌蓝与主按钮 |
 | 拼音分色 | `--ini` `--fin` `--fin-strong` `--ini-soft` `--fin-soft` `--mapping-fill-initial` `--mapping-fill-final` | 声母蓝、韵母橙与映射胶囊 |
 | 范围强调 | `--mapping-focus` `--mapping-focus-soft` `--mapping-focus-ink` `--mapping-focus-line` | 本课 focus、零声母、兼容编码统一紫色 |
-| 键帽 | `--keycap-face` `--keycap-border` `--keycap-edge` `--keycap-shadow` `--keycap-final-ink` `--keycap-hidden-*` | 通用键帽与隐藏态 |
+| 键帽 | `--keycap-size-mini` `--keycap-face` `--keycap-border` `--keycap-edge` `--keycap-shadow` `--keycap-final-ink` `--keycap-hidden-*` | 通用键帽尺寸、面与隐藏态 |
 | 通过 / 错误 | `--success*` `--danger*` | 通过绿、错误红；整卡 tone 变量在 `base.css` 的 `.tone-success` / `.tone-danger` |
 | 星级 / 阴影 / 焦点 | `--star` `--shadow-sm` `--shadow-md` `--shadow-pop` `--badge-shadow` `--ring-brand` | 星级、阴影、焦点环 |
-| 圆角 | `--r-xs` `--r-control` `--r-card` `--r-panel` `--r-pill` | 4 / 9 / 14 / 20 / 999px |
+| 圆角 | `--r-xs` `--r-control` `--r-card` `--r-panel` `--r-pill` `--r-keycap` `--r-keycap-xs` | 4 / 9 / 14 / 20 / 999px；键帽按尺寸等比圆角 |
 | 字号 | `--text-2xs` … `--text-xl` + `--text-display*` | 10–24px 固定档 + 流体展示字号 |
 | 动效 / 控件高度 | `--dur-press` `--dur-fast` `--dur-mid` `--dur-slow` `--ease`；`--h-control-xs` … `--h-control-lg` | 90 / 120 / 220 / 380ms；26–42px 控件 |
 | 层级 | 字面量约定 | 内容 0/1、sticky 20、浮层 40、modal 100 |
@@ -33,7 +33,7 @@
 | `.btn` / `.btn--primary` / `.btn--quiet` / `.btn--sm` / `.btn--xs` | 主 / 次 / 小按钮 |
 | `.segmented` / `.segmented-btn` / `.segmented--sm` | 分段控件与页签（`role="group"` + `aria-pressed`） |
 | `.chip` `.is-selected` `.is-special` `.is-zero-chip` | 练习范围 chip |
-| `.cap` + `.cap--mini` / `.cap--primary` / `.cap--compat` / `.cap--initial` / `.cap--final` / `.cap--hidden` | 静态键帽结构；字卡键帽由 `common/KeyCap.vue` 的 `practice` 尺寸提供 |
+| `.cap` + `.cap--mini` / `.cap--primary` / `.cap--compat` / `.cap--initial` / `.cap--final` / `.cap--danger` / `.cap--hidden` | 静态键帽结构；字卡键帽由 `common/KeyCap.vue` 的 `practice` 尺寸提供 |
 | `.meta-btn` / `.badge` / `.count-badge` | 卡头小操作、计数与状态徽标 |
 | `.tone-success` / `.tone-danger` / `.criteria-line` | 通过 / 错误上下文与评分标准行 |
 | `.stars` / `StarRating.vue` | 星级（统一 `--star`） |
@@ -74,7 +74,7 @@
 **键帽层级**
 
 1. `KeyboardMap` 的 `.kbd-key`：键位图平面按键；
-2. `common/KeyCap.vue`：统一键帽，`size="mini"` 用于推荐码 / 兼容码 / 示例，`size="practice"` 用于练习字卡；`hidden` 显示灰色「?」，`focus` / `completed` 表达状态；
+2. `common/KeyCap.vue`：统一键帽，`size="mini"` 用于推荐码 / 兼容码 / 示例 / 错误键位 / `FocusTagList`，`size="practice"` 用于练习字卡；mini 与 practice 都采用等比方形圆角，`hidden` 显示灰色「?」，`focus` / `completed` 表达状态；
 3. `SchemeKeycaps`：Hero 装饰键帽，`keycapsOf` → `splitKeycapLines` → `scatterLayout`，订阅输入管线驱动动画。
 
 ## 可访问性

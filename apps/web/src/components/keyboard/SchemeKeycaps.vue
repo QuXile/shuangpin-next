@@ -261,7 +261,7 @@ defineExpose({ refreshKeycaps })
   width: 100%;
   min-width: calc(var(--cap) * 3 + 24px);
   /* 最多两行（10 个键帽）；单行时由 .is-single-row 收紧。 */
-  min-height: calc(var(--cap) * 2.16 + var(--cap-gap));
+  min-height: calc(var(--cap) * 2 + var(--cap-gap));
   padding: 10px;
 }
 .cap-row {
@@ -271,7 +271,7 @@ defineExpose({ refreshKeycaps })
   gap: 12px;
 }
 .scheme-keycaps.is-single-row {
-  min-height: calc(var(--cap) * 1.08);
+  min-height: var(--cap);
 }
 .keycap {
   position: relative;
@@ -283,9 +283,9 @@ defineExpose({ refreshKeycaps })
     border-color var(--dur-mid) ease,
     box-shadow var(--dur-mid) ease;
   width: var(--cap);
-  height: calc(var(--cap) * 1.08);
+  height: var(--cap);
   border: 1px solid var(--keycap-border);
-  border-radius: calc(var(--cap) * 0.2);
+  border-radius: calc(var(--cap) * 0.24);
   background: var(--keycap-face);
   box-shadow: var(--keycap-shadow);
   display: flex;

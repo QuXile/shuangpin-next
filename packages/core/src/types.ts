@@ -373,6 +373,14 @@ export interface KeyErrorEntry {
   count: number
 }
 
+/** 错误键位的详细上下文：除键位对外，记录该键位对应的知识点，便于展示音（声母/韵母/零声母）。 */
+export interface KeyErrorDetail {
+  typed: string
+  expected: string
+  atomId?: AtomId
+  count: number
+}
+
 export interface SessionFeedback {
   kind: FeedbackKind
   message?: string
@@ -417,6 +425,8 @@ export interface SessionState {
   cellErrors: ReadonlyMap<string, number>
   /** 错误键位统计：key 为「实际按下的键|应该按的键」，value 为次数 */
   keyErrors: ReadonlyMap<string, number>
+  /** 错误键位详细统计：key 为「实际按键|应按键|知识点」，value 含次数与知识点上下文 */
+  keyErrorDetails: ReadonlyMap<string, KeyErrorDetail>
 }
 
 export interface SessionOptions {

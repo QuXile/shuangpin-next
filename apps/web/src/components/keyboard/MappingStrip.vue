@@ -188,12 +188,12 @@ onBeforeUnmount(() => {
 .mapping-key {
   display: inline-grid;
   place-items: center;
-  min-width: 14px;
+  min-width: 16px;
   height: 16px;
   padding: 0 3px;
   border: 1px solid var(--line);
   border-bottom-width: 2px;
-  border-radius: var(--r-xs);
+  border-radius: var(--r-keycap-xs);
   background: var(--surface-3);
   color: var(--ink-2);
   font-family: var(--font-mono);

@@ -90,6 +90,7 @@ describe('sessionSummary · 结束统计', () => {
     expect(summary.keyErrorRows[0]).toMatchObject({
       expected: firstCaps[0]?.key.toUpperCase(),
       typed: wrongKeys[0]?.toUpperCase(),
+      atomId: firstCaps[0]?.atomId,
       count: 1,
     })
   })

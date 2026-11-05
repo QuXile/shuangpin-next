@@ -9,7 +9,7 @@
  * - 每阶段独立 SessionState（Map 保存），离开/回来用 resumeSession 恢复计时；
  * - 阶段门槛由 stageGate 决定：普通阶段看最低字数，无提示严格阶段还要正确率/速度；
  * - 主按钮文案只由阶段位置决定：非最后「下一阶段」、最后「完成本课」；仅 enabled 变化；
- * - 达标即自动记录本课通过；课程本身不提供无尽练习，需要时跳转练习场。
+ * - 达标即自动记录本课通过；课程本身不提供自由练习，需要时跳转练习场。
  */
 import { computed, onMounted, onScopeDispose, ref, shallowRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -35,6 +35,7 @@ import {
   speedTiers,
   stageGate,
   tierOf,
+  type AtomId,
   type LessonDef,
   type LessonPool,
   type ResolvedLexicon,
@@ -85,6 +86,7 @@ interface EndPromptKeyError {
   expected: string
   typed: string
   count: number
+  atomId?: AtomId
 }
 
 interface EndPromptRating {
@@ -169,10 +171,39 @@ export function usePractice() {
 
   /** 显示与门槛判定共用的时钟（performance.now，与会话创建同源） */
   const nowMs = ref(performance.now())
+  const paused = ref(false)
+  /** 暂停累计时长：虚拟时钟 = performance.now() - pausedTotal */
+  let pausedAt = 0
+  let pausedTotal = 0
   let clockTimer: number | undefined
 
+  function clockNow(): number {
+    return performance.now() - pausedTotal
+  }
+
   function refreshClock(): void {
+    nowMs.value = clockNow()
+  }
+
+  function resetPauseClock(): void {
+    paused.value = false
+    pausedAt = 0
+    pausedTotal = 0
     nowMs.value = performance.now()
+  }
+
+  function togglePause(): void {
+    const current = currentRuntime.value
+    if (stage.value === 'tutorial' || !current || current.session.phase === 'finished') return
+    if (paused.value) {
+      pausedTotal += performance.now() - pausedAt
+      paused.value = false
+      nowMs.value = clockNow()
+      return
+    }
+    pausedAt = performance.now()
+    paused.value = true
+    nowMs.value = clockNow()
   }
 
   const metrics = computed(() => {
@@ -211,8 +242,7 @@ export function usePractice() {
   const progressLabel = computed(() => {
     const target = gate.value?.minWords ?? 0
     const completed = metrics.value ? Math.min(metrics.value.completedWords, target) : 0
-    if (target <= 0) return `已练 ${completed} 词`
-    return `已练 ${completed}/${target} 词`
+    return target > 0 ? `${completed}/${target}` : String(completed)
   })
   const accuracyPercent = computed(() => Math.round((metrics.value?.accuracy ?? 0) * 100))
   const accuracyTier = computed(() => {
@@ -359,6 +389,7 @@ export function usePractice() {
 
   /** 首次进入创建会话；再次进入用 resumeSession 恢复计时，不重做也不丢进度 */
   function activateStage(target: PracticeStage): void {
+    resetPauseClock()
     const existing = runtimes.value.get(target)
     if (existing) {
       setRuntime(target, {
@@ -429,6 +460,7 @@ export function usePractice() {
   // ── 输入 ───────────────────────────────────────────────────
 
   function handleKey(raw: string): void {
+    if (paused.value) return
     const currentStage = stage.value
     if (currentStage === 'tutorial') {
       // 教学页没有判题，但键位图仍会响应按键；保持与练习阶段一致的敲击声。
@@ -447,7 +479,7 @@ export function usePractice() {
       sound.playKey()
       return
     }
-    const now = performance.now()
+    const now = clockNow()
     const result = applyKey(runtime.session, raw, now)
     playFeedback(sound, result.feedback)
     nowMs.value = now
@@ -463,6 +495,7 @@ export function usePractice() {
   }
 
   function handleBackspace(): void {
+    if (paused.value) return
     sound.playKey()
     const runtime = currentRuntime.value
     if (!runtime || runtime.session.phase === 'finished') return
@@ -474,6 +507,7 @@ export function usePractice() {
 
   /** 空格 / Enter：清空当前字输入并取消红色错误状态（Enter 优先于主按钮） */
   function clearCurrentInput(): void {
+    if (paused.value) return
     const currentStage = stage.value
     if (currentStage === 'tutorial') return
     sound.playKey()
@@ -513,7 +547,7 @@ export function usePractice() {
     goNext()
   }
 
-  /** 结束卡「进入无尽练习」：只带入本课范围与当前阶段隐藏设置，不自动开始。 */
+  /** 「进入练习」：只带入本课范围与当前阶段隐藏设置，不自动开始。 */
   function goEndlessPractice(): void {
     const current = lesson.value
     if (!current || stage.value === 'tutorial') return
@@ -590,6 +624,7 @@ export function usePractice() {
     ]
     if (isIntro.value || status.value !== 'ready') return list
     list.push(
+      { key: ' ', shift: true, run: () => togglePause() },
       { key: ' ', when: () => hasInputError.value, run: () => clearCurrentInput() },
       {
         key: 'Enter',
@@ -610,7 +645,7 @@ export function usePractice() {
       {
         key: 'Enter',
         alt: true,
-        when: () => Boolean(endPrompt.value),
+        when: () => stage.value !== 'tutorial',
         run: () => goEndlessPractice(),
       },
       {
@@ -629,7 +664,7 @@ export function usePractice() {
 
   onMounted(async () => {
     clockTimer = window.setInterval(() => {
-      if (session.value && session.value.phase !== 'finished') refreshClock()
+      if (!paused.value && session.value && session.value.phase !== 'finished') refreshClock()
     }, CLOCK_TICK_MS)
     await course.init()
     if (course.status === 'error') {
@@ -705,7 +740,9 @@ export function usePractice() {
     cpm,
     highlightAtomIds,
     primary,
+    paused,
     // 动作
+    togglePause,
     startFirstStage,
     advanceStage,
     retryStage,

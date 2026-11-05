@@ -8,9 +8,13 @@
 withDefaults(
   defineProps<{
     success?: boolean
+    pausable?: boolean
+    paused?: boolean
   }>(),
-  { success: false },
+  { success: false, pausable: false, paused: false },
 )
+
+const emit = defineEmits<{ togglePause: [] }>()
 </script>
 
 <template>
@@ -18,7 +22,21 @@ withDefaults(
     <div class="session-side session-side--left">
       <slot name="left" />
     </div>
-    <div class="session-center">
+    <button
+      v-if="pausable"
+      class="session-center session-capsule"
+      :class="{ 'is-paused': paused }"
+      type="button"
+      :aria-label="paused ? '继续练习' : '暂停练习'"
+      :aria-pressed="paused"
+      :title="paused ? '继续练习 Shift+Space' : '暂停练习 Shift+Space'"
+      @click="emit('togglePause')"
+    >
+      <span class="session-pause-icon" aria-hidden="true">{{ paused ? '▶' : '⏸' }}</span>
+      <slot />
+      <kbd class="session-capsule-kbd">Shift+Space</kbd>
+    </button>
+    <div v-else class="session-center">
       <slot />
     </div>
     <div class="session-side session-side--right">
@@ -72,6 +90,51 @@ withDefaults(
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+}
+.session-capsule {
+  padding: 3px 10px 3px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  font: inherit;
+  cursor: pointer;
+  transition: background var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast),
+    transform var(--dur-fast);
+}
+.session-capsule:hover {
+  background: var(--surface-3);
+}
+.session-capsule:active:not(:disabled) {
+  transform: scale(0.96);
+}
+.session-capsule.is-paused {
+  border-color: var(--mapping-focus-line);
+  background: var(--mapping-focus-soft);
+  color: var(--mapping-focus-ink);
+}
+.session-pause-icon {
+  flex: none;
+  color: var(--ink-3);
+  font-size: var(--text-sm);
+  line-height: 1;
+}
+.session-capsule.is-paused .session-pause-icon {
+  color: var(--mapping-focus-ink);
+}
+.session-capsule-kbd {
+  flex: none;
+  padding: 0 5px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-xs);
+  background: var(--surface);
+  color: var(--ink-4);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  line-height: 1.6;
+}
+.session-capsule.is-paused .session-capsule-kbd {
+  border-color: var(--mapping-focus-line);
+  color: var(--mapping-focus-ink);
 }
 
 /* 成功态：绿色渐变操作条 + 绿色主按钮（入门课试打完成 / 阶段达标） */

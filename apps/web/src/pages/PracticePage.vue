@@ -52,8 +52,10 @@ const {
   speedTier,
   highlightAtomIds,
   primary,
+  paused,
   retryStage,
   previousStage,
+  togglePause,
   goEndlessPractice,
   handleBackspace,
   onIntroFinished,
@@ -167,7 +169,12 @@ useBottomDockContent(() => dockContent.value)
       </div>
 
       <div v-else class="practice-stage">
-        <SessionBar :success="primary?.enabled ?? false">
+        <SessionBar
+          :success="primary?.enabled ?? false"
+          pausable
+          :paused="paused"
+          @toggle-pause="togglePause"
+        >
           <template #left>
             <button class="session-btn" type="button" aria-keyshortcuts="Alt+ArrowLeft" @click="previousStage">
               <svg class="icon session-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -175,6 +182,10 @@ useBottomDockContent(() => dockContent.value)
               </svg>
               上一阶段
               <kbd>Alt+←</kbd>
+            </button>
+            <button class="session-btn" type="button" aria-keyshortcuts="Alt+Enter" @click="goEndlessPractice">
+              进入练习
+              <kbd>Alt+Enter</kbd>
             </button>
           </template>
 

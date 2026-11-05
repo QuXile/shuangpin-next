@@ -4,8 +4,10 @@
  * 纯展示：统计、错误键位、评分标准、可选星级评分与操作按钮。
  * tone 由 base.css 的 .tone-success / .tone-danger 提供 --tone-* 变量。
  */
-import type { PassCriteriaLine } from '@shuangpin/core'
+import { computed } from 'vue'
+import { parseAtomId, type AtomId, type PassCriteriaLine } from '@shuangpin/core'
 import StarRating from '@/components/common/StarRating.vue'
+import KeyCap from '@/components/common/KeyCap.vue'
 
 export interface SummaryStat {
   value: string | number
@@ -17,6 +19,8 @@ export interface SummaryKeyError {
   expected: string
   typed: string
   count: number
+  /** 应按键位对应的知识点（用于显示声母 / 韵母 / 零声母胶囊） */
+  atomId?: AtomId
 }
 
 export interface SummaryRating {
@@ -24,7 +28,17 @@ export interface SummaryRating {
   stars: 0 | 1 | 2 | 3
 }
 
-withDefaults(
+function atomCapsule(error: SummaryKeyError): { label: string; kind: 'initial' | 'final' | 'zero' } | null {
+  if (!error.atomId) return null
+  const ref = parseAtomId(error.atomId)
+  if (!ref) return null
+  return {
+    label: ref.type === 'zero' ? `零 ${ref.key}` : ref.key,
+    kind: ref.type,
+  }
+}
+
+const props = withDefaults(
   defineProps<{
     kicker: string
     title: string
@@ -33,6 +47,8 @@ withDefaults(
     keyErrors?: SummaryKeyError[]
     rules?: PassCriteriaLine[]
     rating?: SummaryRating | null
+    /** 父容器可传入基于可用高度的 max-height；缺省使用视口兜底 */
+    maxHeight?: string
   }>(),
   {
     tone: 'neutral',
@@ -41,18 +57,26 @@ withDefaults(
     rating: null,
   },
 )
+
+const errorRows = computed(() =>
+  props.keyErrors.map((error) => ({ ...error, atom: atomCapsule(error) })),
+)
 </script>
 
 <template>
   <article
     class="summary-card panel"
     :class="tone === 'success' ? 'tone-success' : tone === 'danger' ? 'tone-danger' : undefined"
+    :style="maxHeight ? { maxHeight } : undefined"
   >
     <div class="summary-head">
       <div class="summary-copy">
         <span class="summary-kicker">{{ kicker }}</span>
         <p class="summary-text"><strong>{{ title }}</strong></p>
       </div>
+    </div>
+
+    <div v-if="rating || rules.length" class="summary-evaluation">
       <div
         v-if="rating"
         class="summary-rating"
@@ -66,32 +90,8 @@ withDefaults(
         </strong>
         <span v-if="rating.passed" class="summary-rating-note">{{ rating.stars }} 星</span>
       </div>
-    </div>
 
-    <div class="summary-stats">
-      <div v-for="stat in stats" :key="stat.label" class="summary-stat">
-        <b>{{ stat.value }}<small v-if="stat.unit">{{ stat.unit }}</small></b>
-        <span>{{ stat.label }}</span>
-      </div>
-    </div>
-
-    <div
-      v-if="keyErrors.length || rules.length"
-      class="summary-details"
-      :class="{ 'is-single': !keyErrors.length || !rules.length }"
-    >
-      <section v-if="keyErrors.length" class="summary-block">
-        <header>错误键位</header>
-        <ul class="summary-key-errors">
-          <li v-for="error in keyErrors" :key="`${error.expected}-${error.typed}`">
-            <span>应敲 <b>{{ error.expected }}</b>，按成 <em>{{ error.typed }}</em></span>
-            <strong>×{{ error.count }}</strong>
-          </li>
-        </ul>
-      </section>
-
-      <section v-if="rules.length" class="summary-block">
-        <header>本课评分标准</header>
+      <section v-if="rules.length" class="summary-rules">
         <p v-for="line in rules" :key="line.label" class="criteria-line">
           <b>{{ line.label }}</b>
           <span>{{ line.text }}</span>
@@ -102,6 +102,35 @@ withDefaults(
       </section>
     </div>
 
+    <div class="summary-stats">
+      <div v-for="stat in stats" :key="stat.label" class="summary-stat">
+        <b>{{ stat.value }}<small v-if="stat.unit">{{ stat.unit }}</small></b>
+        <span>{{ stat.label }}</span>
+      </div>
+    </div>
+
+    <section v-if="keyErrors.length" class="summary-errors thin-scroll" aria-label="错误键位">
+      <header>错误键位</header>
+      <ul class="summary-key-errors">
+        <li v-for="error in errorRows" :key="`${error.expected}-${error.typed}-${error.atomId ?? ''}`">
+          <span class="summary-key-error-pair">
+            <span class="summary-key-error-label">应按</span>
+            <KeyCap :text="error.expected.toUpperCase()" variant="primary" />
+            <span
+              v-if="error.atom"
+              class="summary-atom-capsule"
+              :class="`is-${error.atom.kind}`"
+            >
+              {{ error.atom.label }}
+            </span>
+            <span class="summary-key-error-label">按成</span>
+            <KeyCap :text="error.typed.toUpperCase()" variant="danger" />
+          </span>
+          <strong>×{{ error.count }}</strong>
+        </li>
+      </ul>
+    </section>
+
     <div v-if="$slots.actions" class="summary-actions">
       <slot name="actions" />
     </div>
@@ -111,11 +140,20 @@ withDefaults(
 <style scoped>
 .summary-card {
   width: 100%;
-  padding: 18px 20px;
+  padding: 14px 18px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
+  /* 高度上限：视口内留出顶栏、会话栏与页面边距；超出时只让错误键位区滚动 */
+  max-height: min(720px, calc(100vh - 180px));
+  max-height: min(720px, calc(100dvh - 180px));
+  overflow: hidden;
   animation: ui-fade-up var(--dur-slow) var(--ease);
+}
+.summary-head,
+.summary-stats,
+.summary-actions {
+  flex: none;
 }
 .summary-card.tone-success,
 .summary-card.tone-danger {
@@ -183,10 +221,6 @@ withDefaults(
   font-weight: 800;
   line-height: 1.25;
 }
-.summary-rating.is-passed .summary-rating-stars {
-  color: var(--star);
-}
-
 .summary-stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
@@ -194,13 +228,14 @@ withDefaults(
 }
 .summary-stat {
   min-width: 0;
-  padding: 10px 12px;
+  padding: 8px 10px;
   border: 1px solid color-mix(in srgb, var(--tone-line, var(--line)) 55%, transparent);
   border-radius: var(--r-card);
   background: var(--tone-surface, var(--surface-2));
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
 }
 .summary-stat b {
   color: var(--ink);
@@ -219,25 +254,44 @@ withDefaults(
   color: var(--ink-3);
   font-size: var(--text-2xs);
   font-weight: 600;
+  white-space: nowrap;
 }
 
-.summary-details {
-  display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-  gap: 10px;
+.summary-evaluation {
+  flex: none;
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
 }
-.summary-details.is-single {
-  grid-template-columns: 1fr;
-}
-.summary-block {
+.summary-rules {
+  flex: 1;
   min-width: 0;
-  padding: 12px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px 10px;
+  padding: 8px 10px;
   border: 1px solid color-mix(in srgb, var(--tone-line, var(--line)) 55%, transparent);
   border-radius: var(--r-card);
   background: var(--tone-surface, color-mix(in srgb, var(--surface) 86%, transparent));
 }
-.summary-block > header {
-  margin-bottom: 7px;
+.summary-rules .criteria-line {
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 5px;
+  font-size: var(--text-xs);
+}
+.summary-errors {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, var(--tone-line, var(--line)) 55%, transparent);
+  border-radius: var(--r-card);
+  background: var(--tone-surface, color-mix(in srgb, var(--surface) 86%, transparent));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+.summary-errors > header {
+  margin-bottom: 5px;
   color: var(--ink-2);
   font-size: var(--text-xs);
   font-weight: 700;
@@ -246,43 +300,70 @@ withDefaults(
   margin: 0;
   padding: 0;
   list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px 8px;
 }
 .summary-key-errors li {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  padding: 5px 8px;
+  gap: 6px;
+  min-width: 0;
+  padding: 4px 7px;
   border-radius: var(--r-control);
   background: var(--surface-2);
   color: var(--ink-3);
   font-size: var(--text-xs);
 }
-.summary-key-errors b,
-.summary-key-errors em {
+.summary-key-error-pair {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+.summary-key-error-label {
+  color: var(--ink-3);
+  font-size: var(--text-2xs);
+  white-space: nowrap;
+}
+.summary-atom-capsule {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border: 1px solid transparent;
+  border-radius: var(--r-pill);
   font-family: var(--font-mono);
-  font-size: var(--text-sm);
-  font-style: normal;
-}
-.summary-key-errors b {
-  color: var(--ink);
+  font-size: var(--text-2xs);
   font-weight: 700;
+  line-height: 1.5;
+  white-space: nowrap;
 }
-.summary-key-errors em,
-.summary-key-errors strong {
-  color: var(--danger);
-  font-weight: 700;
+.summary-atom-capsule.is-initial {
+  border-color: color-mix(in srgb, var(--ini) 24%, transparent);
+  background: color-mix(in srgb, var(--ini) 12%, transparent);
+  color: var(--ini);
+}
+.summary-atom-capsule.is-final {
+  border-color: color-mix(in srgb, var(--fin) 30%, transparent);
+  background: var(--fin-soft);
+  color: var(--fin-strong);
+}
+.summary-atom-capsule.is-zero {
+  border-color: var(--mapping-focus-line);
+  background: var(--mapping-focus-soft);
+  color: var(--mapping-focus-ink);
 }
 .summary-key-errors strong {
   flex: none;
+  color: var(--danger);
   font-size: var(--text-xs);
   font-variant-numeric: tabular-nums;
 }
 .summary-rule-note {
-  margin: 6px 0 0;
+  grid-column: 1 / -1;
+  margin: 0;
   color: var(--ink-4);
   font-size: var(--text-2xs);
 }
@@ -301,10 +382,6 @@ withDefaults(
   .summary-card {
     padding: 12px;
   }
-  .summary-head {
-    flex-direction: column;
-    gap: 10px;
-  }
   .summary-rating {
     align-items: flex-start;
     width: 100%;
@@ -312,7 +389,13 @@ withDefaults(
   .summary-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .summary-details {
+  .summary-evaluation {
+    flex-direction: column;
+  }
+  .summary-rules {
+    grid-template-columns: 1fr;
+  }
+  .summary-key-errors {
     grid-template-columns: 1fr;
   }
   .summary-actions :slotted(.btn) {

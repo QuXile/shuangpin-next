@@ -52,6 +52,7 @@ export {
   hasInputError,
   cellKeyOf,
   keyErrorEntries,
+  keyErrorEntriesWithAtoms,
   buildPracticeWord,
 } from './session.ts'
 
