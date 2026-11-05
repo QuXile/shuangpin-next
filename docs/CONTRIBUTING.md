@@ -116,7 +116,7 @@ git diff --stat data/
 
 ### 版本与产物
 
-- 版本以根 `package.json` 的 `version` 为准（当前 `1.6.2`），许可证 GPL-3.0-only；
+- 版本以根 `package.json` 的 `version` 为准（当前 `1.6.3`），许可证 GPL-3.0-only；
 - 发布产物为静态包 `shuangpin-next-<版本>-static.zip` 与 `SHA256SUMS`；
 - 手动触发工作流时版本记为 `dev-<commit 前 7 位>`，只上传 Actions 产物，不创建 Release。
 
@@ -186,12 +186,12 @@ sha256sum shuangpin-next-<版本>-static.zip > SHA256SUMS
 ## 发布流程
 
 1. `pnpm verify` 全绿；
-2. 确认版本号与 tag 一致（如 `1.6.2` ↔ `v1.6.2`）；
+2. 确认版本号与 tag 一致（如 `1.6.3` ↔ `v1.6.3`）；
 3. 打 tag 并推送：
 
    ```bash
-   git tag v1.6.2
-   git push origin v1.6.2
+   git tag v1.6.3
+   git push origin v1.6.3
    ```
 
 4. 观察 `release-static` 与 `deploy-pages`；下载 ZIP 自测数据加载、`#/training` 与 `#/practice/<lessonId>` 路由、断网可用、`LICENSE` / `使用说明.txt` / `SHA256SUMS` 齐全。
