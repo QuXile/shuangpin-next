@@ -100,6 +100,7 @@ compositionSequence(syl) 纯声母×韵母组合（零声母为整段序列）
 - `normalizeKeyInput`：合法键为小写字母与 `;`，过滤 IME、组合键与多字符；
 - `cellKeyOf` 返回当前字稳定 key；`keyErrorEntries` 把 `keyErrors` 解析为按次数降序的展示数据，`keyErrorEntriesWithAtoms` 额外带回按键对应的知识点（用于总结卡展示声母 / 韵母 / 零声母胶囊）；
 - `resumeSession` 平移计时起点；`sessionMetrics` 计算正确率与速度；
+- 阶段总结 / 暂停 / 主动结束卡片统一由 `SessionSummaryCard` 渲染；暂停用 `SessionPauseOverlay` 覆盖题目区，结束卡追加在题目内容末尾，题目区不因暂停卸载；
 - `buildPracticeWord` 把词库条目转为可渲染、可判题的练习词，键帽显示主键序列，判题接受全部可接受序列。
 
 ### 阶段、评分与组卷
@@ -136,7 +137,7 @@ lexicon/lexicon.json    Lexicon（entries + syllableExamples）
 ```
 
 - 同一数据只加载一次，失败不缓存 rejected Promise；
-- `loadLexicon` 加载后由 `lib/lexicon.ts` 动态 `import('pinyin-pro')`（独立 chunk）解析成运行时 `WordEntry`；`loadLexiconMeta` 只取词数，供学习地图展示；
+- `loadLexicon` 加载后由 `lib/lexicon.ts` 动态 `import('pinyin-pro')`（独立 chunk）解析成运行时 `WordEntry`；
 - 文章练习由 `lib/article.ts` 拆字后按上下文解析拼音，不查词表；无法表示读音的汉字跳过。
 
 课程加载：`App.vue` 启动 `course.init()` → `index.json` → 选择已保存方案 / 默认方案 → 加载 `scheme.json` 与词表元信息 → 课程：

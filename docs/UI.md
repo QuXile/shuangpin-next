@@ -39,7 +39,7 @@
 | `.stars` / `StarRating.vue` | 星级（统一 `--star`） |
 | `.scroll-y` / `.thin-scroll` / `ScrollTail.vue` | 滚动容器与底部「… 还有内容」提示 |
 | `.popover` / `.state-card` / `.spinner` / `.empty-note` | 浮层、加载 / 空态 |
-| `.session-btn` / `.session-primary` / `.session-icon` / `.session-item` / `.session-sep` / `.session-danger` / `.session-speed` | 会话顶栏插槽 |
+| `.session-btn` / `.session-primary` / `.session-icon` / `.session-item` / `.session-sep` / `.session-danger` / `.session-speed` / `.session-stage` | 会话顶栏插槽与题目区 + 暂停遮罩定位容器 |
 | `.page` / `.sr-only` / `.mono` / `kbd` / `.kbd--xs` | 页面容器、屏读文本、等宽数字、快捷键提示 |
 
 ## 布局
@@ -95,7 +95,7 @@
 | 全局框架 | `App.vue`、`Topbar`、`TopbarActions`、`BrandPopover`、`BottomDockHost`、`ShortcutHelp`、`SessionBar` |
 | 学习地图 | `SchemeHero`、`SchemeSelector`、`CurrentLearningCard`、`LearningProgressCard`、`ChapterSection`、`LessonCard`、`MapKeymapPanel` |
 | 教学 / 入门 | `TutorialStage`、`TutorialExamples`、`IntroLesson`、`IntroPageShell`、`FocusTagList`、`AnchorTips`、`CodeExampleCard` |
-| 练习 | `PracticeStream`、`CharacterCard`、`InputSlots`、`StageSummaryCard` |
+| 练习 | `PracticeStream`、`CharacterCard`、`InputSlots`、`StageSummaryCard`、`SessionSummaryCard`、`SessionPauseOverlay` |
 | 练习场 | `SetupCard`、`SetupGroup`、`SelectionSummary`、`FocusMappingGroups`、`HiddenMappingGroups`、`CommonCapsule`、`ArticleGrid` |
 | 键位图 | `KeyboardMap`、`MappingStrip`、`KeyCap`、`KeymapLegend`、`SchemeKeycaps` |
 

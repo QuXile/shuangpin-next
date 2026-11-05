@@ -8,6 +8,8 @@ import type { MetricTier } from '@shuangpin/core'
 import IntroLesson from '@/components/intro/IntroLesson.vue'
 import StateCard from '@/components/common/StateCard.vue'
 import PracticeStream from '@/components/practice/PracticeStream.vue'
+import SessionSummaryCard from '@/components/practice/SessionSummaryCard.vue'
+import SessionPauseOverlay from '@/components/practice/SessionPauseOverlay.vue'
 import SessionBar from '@/components/layout/SessionBar.vue'
 import TutorialStage from '@/components/practice/TutorialStage.vue'
 import { usePractice } from '@/composables/usePractice'
@@ -16,6 +18,7 @@ import { useKeyInput } from '@/composables/useKeyInput'
 import { useBottomDockContent } from '@/composables/useBottomDockContent'
 import { useLayoutStore, type DockContent } from '@/stores/layout'
 import { useSoundStore } from '@/stores/sound'
+import { buildSessionSummary, type SessionSummary } from '@/lib/sessionSummary'
 const router = useRouter()
 const practice = usePractice()
 const schemeView = useSchemeView()
@@ -43,6 +46,7 @@ const {
   conceal,
   stageTitleText,
   endPrompt,
+  criteriaLines,
   liveMessage,
   progressLabel,
   cpm,
@@ -74,16 +78,21 @@ onBeforeUnmount(() => {
 const accuracyBelowTarget = computed(() => hasStarted.value && accuracyTier.value?.min === null)
 const speedBelowTarget = computed(() => hasStarted.value && speedTier.value?.min === null)
 
+/** 暂停时的实时快照，与阶段总结卡共用统计格式。 */
+const pausedSummary = computed<SessionSummary | null>(() => {
+  if (!paused.value || !session.value) return null
+  return buildSessionSummary(session.value, performance.now())
+})
+
 /** 答案卡徽标：复习/考核显示「含」，新学显示「新」。 */
 const focusBadge = computed(() =>
   lesson.value?.kind === 'review' || lesson.value?.kind === 'exam' ? '含' : '新',
 )
 
-/** 档位 + 对应星级；只作通过底线的档位没有星级。 */
-function tierText(tier: MetricTier | null): string {
-  if (!tier) return ''
-  if (tier.stars === null) return tier.label
-  return `${tier.label} · ${tier.stars === 0 ? '0★' : '★'.repeat(tier.stars)}`
+/** 信息栏只显示档位对应星级，不展示档位区间；只作通过底线的档位没有星级。 */
+function tierStars(tier: MetricTier | null): string {
+  if (!tier || tier.stars === null) return ''
+  return tier.stars === 0 ? '0★' : '★'.repeat(tier.stars)
 }
 
 const introRef = ref<InstanceType<typeof IntroLesson> | null>(null)
@@ -196,7 +205,10 @@ useBottomDockContent(() => dockContent.value)
             class="session-item"
             :class="{ 'session-danger': accuracyBelowTarget }"
           >
-            正确率 {{ accuracyPercent }}%<template v-if="accuracyTier"> · {{ tierText(accuracyTier) }}</template>
+            正确率 {{ accuracyPercent }}%<span
+              v-if="tierStars(accuracyTier)"
+              class="session-stars"
+            >{{ tierStars(accuracyTier) }}</span>
           </span>
           <span v-else class="session-item">正确率 --%</span>
           <span class="session-sep" aria-hidden="true">·</span>
@@ -205,7 +217,10 @@ useBottomDockContent(() => dockContent.value)
               class="session-item"
               :class="{ 'session-danger': speedBelowTarget, 'session-speed': !speedBelowTarget }"
             >
-              速度 {{ cpm }}<template v-if="speedTier"> · {{ tierText(speedTier) }}</template><template v-else> WPM</template>
+              速度 {{ cpm }} WPM<span
+                v-if="tierStars(speedTier)"
+                class="session-stars"
+              >{{ tierStars(speedTier) }}</span>
             </span>
           </template>
           <span v-else class="session-item">速度 -- WPM</span>
@@ -227,22 +242,40 @@ useBottomDockContent(() => dockContent.value)
           </template>
         </SessionBar>
 
-        <PracticeStream
-          v-if="session"
-          :key="stage"
-          :session="session"
-          :live-message="liveMessage"
-          :mode="stage === 'single' ? 'grid' : 'list'"
-          :tier="tier"
-          :focus-atoms="focusAtomIds"
-          :focus-badge="focusBadge"
-          :wrong-inputs="wrongInputs"
-          :revealed="revealed"
-          :prompt="endPrompt"
-          @primary="primary?.run()"
-          @endless="goEndlessPractice"
-          @restart="retryStage"
-        />
+        <div class="session-stage">
+          <PracticeStream
+            v-if="session"
+            :key="stage"
+            :session="session"
+            :live-message="liveMessage"
+            :mode="stage === 'single' ? 'grid' : 'list'"
+            :tier="tier"
+            :focus-atoms="focusAtomIds"
+            :focus-badge="focusBadge"
+            :wrong-inputs="wrongInputs"
+            :revealed="revealed"
+            :prompt="endPrompt"
+            @primary="primary?.run()"
+            @endless="goEndlessPractice"
+            @restart="retryStage"
+          />
+
+          <SessionPauseOverlay :show="Boolean(session && paused && pausedSummary)">
+            <SessionSummaryCard
+              v-if="paused && pausedSummary"
+              mode="pause"
+              :summary="pausedSummary"
+              :rules="criteriaLines"
+            >
+              <template #actions>
+                <button class="btn btn--primary" type="button" aria-keyshortcuts="Shift+Space" @click="togglePause">
+                  继续练习
+                  <kbd>Shift+Space</kbd>
+                </button>
+              </template>
+            </SessionSummaryCard>
+          </SessionPauseOverlay>
+        </div>
       </div>
     </template>
 
@@ -250,6 +283,12 @@ useBottomDockContent(() => dockContent.value)
 </template>
 
 <style scoped>
+.session-stars {
+  margin-left: 4px;
+  color: var(--star);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
 .practice-page {
   height: 100%;
   min-height: 0;

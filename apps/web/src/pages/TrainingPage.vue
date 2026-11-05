@@ -16,7 +16,6 @@ import {
 } from '@shuangpin/core'
 import PracticeStream from '@/components/practice/PracticeStream.vue'
 import SessionBar from '@/components/layout/SessionBar.vue'
-import StageSummaryCard from '@/components/practice/StageSummaryCard.vue'
 import SchemeHero from '@/components/common/SchemeHero.vue'
 import StateCard from '@/components/common/StateCard.vue'
 import CardHeader from '@/components/common/CardHeader.vue'
@@ -35,11 +34,13 @@ import { useKeyInput } from '@/composables/useKeyInput'
 import { useBottomDockContent } from '@/composables/useBottomDockContent'
 import { useSchemeView } from '@/composables/useSchemeView'
 import { useSessionRuntime } from '@/composables/useSessionRuntime'
+import SessionSummaryCard from '@/components/practice/SessionSummaryCard.vue'
+import SessionPauseOverlay from '@/components/practice/SessionPauseOverlay.vue'
 import { useTrainingSelection } from '@/composables/useTrainingSelection'
 import { isInteractiveTarget, focusElement } from '@/lib/dom'
 import type { MappingTogglePayload } from '@/lib/keyboardView'
 import { loadLexicon, type LexiconFile } from '@/lib/data'
-import { buildSessionSummary } from '@/lib/sessionSummary'
+import { buildSessionSummary, type SessionSummary } from '@/lib/sessionSummary'
 import { buildTrainingBatch } from '@shuangpin/core'
 import { buildArticlePractice, type ArticlePractice } from '@/lib/article'
 
@@ -233,6 +234,20 @@ function makeDrillBatch() {
 
 const kind = ref<SessionKind>(null)
 const playing = computed(() => kind.value !== null && session.value !== null)
+const endedSummary = ref<SessionSummary | null>(null)
+const ended = computed(() => endedSummary.value !== null)
+const pausedSummary = computed<SessionSummary | null>(() => {
+  if (!paused.value || ended.value || !session.value) return null
+  return buildSessionSummary(session.value, performance.now())
+})
+
+function endPractice(): void {
+  const state = session.value
+  if (!playing.value || !state || state.phase === 'finished') return
+  endedSummary.value = buildSessionSummary(state, performance.now())
+  if (!paused.value) togglePause()
+}
+
 const sessionHiddenAtomIds = shallowRef<readonly AtomId[]>([])
 const sessionHiddenCount = computed(() => sessionHiddenAtomIds.value.length)
 const sessionHiddenTitle = ref('')
@@ -274,11 +289,13 @@ const accuracyPercent = computed(() => Math.round(accuracy.value * 100))
 const liveSpeed = computed(() => Math.round(cpm.value))
 
 function exitSession(): void {
+  endedSummary.value = null
   resetSession()
   kind.value = null
 }
 
 function restartSession(): void {
+  endedSummary.value = null
   if (kind.value === 'drill') startDrill()
   else if (kind.value === 'article') startArticle()
 }
@@ -394,15 +411,7 @@ watch(articleDone, (done) => {
 const articleSummary = computed(() => {
   const state = session.value
   if (kind.value !== 'article' || !state) return null
-  const summary = buildSessionSummary(state, performance.now())
-  return {
-    words: summary.completedWords,
-    accuracy: summary.accuracy,
-    cpm: summary.cpm,
-    errors: summary.errors,
-    durationSec: summary.durationSec,
-    keyErrors: summary.keyErrorRows,
-  }
+  return buildSessionSummary(state, performance.now())
 })
 
 function replayArticle(): void {
@@ -491,6 +500,7 @@ const bindings = computed<KeyBinding[]>(() => {
       run: () => onClearInput(),
     },
     { key: 'Escape', run: () => exitSession() },
+    { key: 'e', alt: true, when: () => !ended.value, run: () => endPractice() },
     { key: 'r', alt: true, run: () => restartSession() },
   ]
 })
@@ -840,7 +850,7 @@ onMounted(async () => {
     <!-- 练习会话 -->
     <template v-else>
       <div class="training-session">
-        <SessionBar pausable :paused="paused" @toggle-pause="togglePause">
+        <SessionBar :pausable="!ended" :paused="paused" @toggle-pause="togglePause">
           <template #left>
             <button class="session-btn" type="button" aria-keyshortcuts="Escape" @click="exitSession">
               <svg class="icon session-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -870,51 +880,117 @@ onMounted(async () => {
               重新开始
               <kbd>Alt+R</kbd>
             </button>
+            <button
+              class="session-btn"
+              type="button"
+              aria-keyshortcuts="Alt+E"
+              :disabled="ended || !session || session.phase === 'finished'"
+              @click="endPractice"
+            >
+              结束练习
+              <kbd>Alt+E</kbd>
+            </button>
           </template>
         </SessionBar>
 
-        <template v-if="kind === 'drill' && session">
-          <PracticeStream
-            :session="session"
-            :live-message="liveMessage"
-            mode="list"
-            :tier="1"
-            :wrong-inputs="wrongInputs"
-            :revealed="revealed"
-            :hidden-atoms="sessionHiddenAtomIds"
-          />
-        </template>
+        <div class="session-stage">
+          <template v-if="kind === 'drill' && session">
+            <PracticeStream
+              :session="session"
+              :live-message="liveMessage"
+              mode="list"
+              :tier="1"
+              :wrong-inputs="wrongInputs"
+              :revealed="revealed"
+              :hidden-atoms="sessionHiddenAtomIds"
+              :end="ended"
+            >
+              <template v-if="ended && endedSummary" #end>
+                <SessionSummaryCard mode="end" :summary="endedSummary">
+                  <template #actions>
+                    <button class="btn btn--primary" type="button" aria-keyshortcuts="Alt+R" @click="restartSession">
+                      再来一次
+                      <kbd>Alt+R</kbd>
+                    </button>
+                    <button class="btn" type="button" aria-keyshortcuts="Escape" @click="exitSession">
+                      返回练习场
+                      <kbd>Esc</kbd>
+                    </button>
+                  </template>
+                </SessionSummaryCard>
+              </template>
+            </PracticeStream>
+          </template>
 
-        <template v-else-if="kind === 'article' && session">
-          <div v-if="articleDone && articleSummary" class="article-summary-wrap">
-            <StageSummaryCard
-              kicker="文章练习"
-              :title="`完成 ${articleSummary.words} 字`"
-              tone="success"
-              :stats="[
-                { value: articleSummary.words, unit: '字', label: '字数' },
-                { value: articleSummary.accuracy, unit: '%', label: '正确率' },
-                { value: Math.round(articleSummary.cpm), unit: 'WPM', label: '速度' },
-                { value: articleSummary.errors, label: '错误次数' },
-                { value: articleSummary.durationSec, unit: '秒', label: '用时' },
-              ]"
-              :key-errors="articleSummary.keyErrors"
+          <template v-else-if="kind === 'article' && session && articlePlan">
+            <ArticleGrid
+              :plan="articlePlan"
+              :session="session"
+              :revealed="revealed"
+              :wrong-inputs="wrongInputs"
+              :hidden-atoms="sessionHiddenAtomIds"
+              :end="Boolean(articleDone || ended)"
+            >
+              <template #end>
+                <SessionSummaryCard
+                  v-if="ended && endedSummary"
+                  mode="end"
+                  :summary="endedSummary"
+                >
+                  <template #actions>
+                    <button class="btn btn--primary" type="button" aria-keyshortcuts="Alt+R" @click="restartSession">
+                      再来一次
+                      <kbd>Alt+R</kbd>
+                    </button>
+                    <button class="btn" type="button" aria-keyshortcuts="Escape" @click="exitSession">
+                      返回练习场
+                      <kbd>Esc</kbd>
+                    </button>
+                  </template>
+                </SessionSummaryCard>
+                <SessionSummaryCard
+                  v-else-if="articleDone && articleSummary"
+                  mode="end"
+                  :summary="articleSummary"
+                  :title="`完成 ${articleSummary.completedWords} 字`"
+                >
+                  <template #actions>
+                    <button class="btn btn--primary" type="button" aria-keyshortcuts="Alt+R" @click="replayArticle">
+                      再来一遍
+                      <kbd>Alt+R</kbd>
+                    </button>
+                    <button class="btn" type="button" aria-keyshortcuts="Escape" @click="changeArticle">
+                      换文章
+                      <kbd>Esc</kbd>
+                    </button>
+                  </template>
+                </SessionSummaryCard>
+              </template>
+            </ArticleGrid>
+          </template>
+
+          <SessionPauseOverlay
+            :show="Boolean(session && paused && !ended && !articleDone && pausedSummary)"
+            label="练习暂停"
+          >
+            <SessionSummaryCard
+              v-if="paused && pausedSummary"
+              mode="pause"
+              :summary="pausedSummary"
             >
               <template #actions>
-                <button class="btn btn--primary" type="button" @click="replayArticle">再来一遍</button>
-                <button class="btn" type="button" @click="changeArticle">换文章</button>
+                <button class="btn btn--primary" type="button" aria-keyshortcuts="Shift+Space" @click="togglePause">
+                  继续练习
+                  <kbd>Shift+Space</kbd>
+                </button>
+                <button class="btn" type="button" aria-keyshortcuts="Alt+E" @click="endPractice">
+                  结束练习
+                  <kbd>Alt+E</kbd>
+                </button>
               </template>
-            </StageSummaryCard>
-          </div>
-          <ArticleGrid
-            v-else-if="articlePlan"
-            :plan="articlePlan"
-            :session="session"
-            :revealed="revealed"
-            :wrong-inputs="wrongInputs"
-            :hidden-atoms="sessionHiddenAtomIds"
-          />
-        </template>
+            </SessionSummaryCard>
+          </SessionPauseOverlay>
+        </div>
       </div>
 
     </template>
@@ -1222,27 +1298,6 @@ onMounted(async () => {
   flex-direction: column;
   animation: ui-fade-up var(--dur-mid) var(--ease);
 }
-.article-summary-wrap {
-  flex: 1;
-  min-height: 0;
-  width: 100%;
-  max-width: 1024px;
-  margin: 0 auto;
-  padding: 20px;
-  overflow-y: auto;
-  scrollbar-gutter: stable;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-}
-.article-summary-wrap > * {
-  max-width: var(--content-session);
-}
-.article-summary-wrap :deep(.summary-card) {
-  max-height: 100%;
-}
-
-
 @media (max-width: 1024px) {
   .training-config {
     display: flex;
@@ -1316,9 +1371,6 @@ onMounted(async () => {
   }
   .training-session {
     padding: 10px 10px 0;
-  }
-  .article-summary-wrap {
-    padding: 12px 2px calc(18px + env(safe-area-inset-bottom));
   }
 }
 </style>

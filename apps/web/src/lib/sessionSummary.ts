@@ -12,7 +12,7 @@ import {
 } from '@shuangpin/core'
 
 /** 错误键位排行的一行：应敲的键 vs 实际按下的键。 */
-interface KeyErrorRow {
+export interface KeyErrorRow {
   expected: string
   typed: string
   count: number
@@ -20,7 +20,13 @@ interface KeyErrorRow {
   atomId?: AtomId
 }
 
-interface SessionSummary {
+/** 阶段考核本次评分；练习模式不产生评分。 */
+export interface SessionRating {
+  passed: boolean
+  stars: 0 | 1 | 2 | 3
+}
+
+export interface SessionSummary {
   completedWords: number
   /** 0–100 的整数百分比 */
   accuracy: number

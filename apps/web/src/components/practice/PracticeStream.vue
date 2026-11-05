@@ -6,7 +6,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { AtomId, SessionState } from '@shuangpin/core'
 import CharacterCard from './CharacterCard.vue'
-import StageSummaryCard from './StageSummaryCard.vue'
+import SessionSummaryCard from './SessionSummaryCard.vue'
 import type { EndPromptView } from '@/composables/usePractice'
 
 const props = withDefaults(
@@ -24,6 +24,8 @@ const props = withDefaults(
     /** 练习页「练习时隐藏」映射 */
     hiddenAtoms?: readonly AtomId[]
     hideZero?: boolean
+    /** 题目末尾追加结束卡片 */
+    end?: boolean
   }>(),
   {
     mode: 'list',
@@ -36,6 +38,7 @@ const props = withDefaults(
     prompt: null,
     hiddenAtoms: () => [],
     hideZero: false,
+    end: false,
   },
 )
 
@@ -56,21 +59,23 @@ interface CellView {
 const viewport = ref<HTMLElement | null>(null)
 const rowEls = ref<HTMLElement[]>([])
 const promptEl = ref<HTMLElement | null>(null)
+const endEl = ref<HTMLElement | null>(null)
 /** 当前练习视口可容纳的总结卡高度；由 ResizeObserver 随容器更新 */
 const promptMaxHeight = ref('')
 let promptResizeObserver: ResizeObserver | undefined
 
 const currentWordIndex = computed(() => props.session.index)
 
-const summaryStats = computed(() => {
+const stageSummary = computed(() => {
   const prompt = props.prompt
-  if (!prompt) return []
-  return [
-    { value: prompt.stats.accuracy, unit: '%', label: '正确率' },
-    { value: prompt.stats.cpm, unit: 'WPM', label: '速度' },
-    { value: prompt.stats.errors, label: '错误次数' },
-    { value: prompt.stats.durationSec, unit: '秒', label: '用时' },
-  ]
+  if (!prompt) return null
+  return {
+    accuracy: prompt.stats.accuracy,
+    cpm: prompt.stats.cpm,
+    errors: prompt.stats.errors,
+    durationSec: prompt.stats.durationSec,
+    keyErrorRows: prompt.keyErrors,
+  }
 })
 
 function setRowEl(el: Element | null, index: number): void {
@@ -126,14 +131,22 @@ function updatePromptMaxHeight(): void {
       : ''
 }
 
-/** 完成提示行滚到可见（底部对齐） */
-function revealPrompt(): void {
+/** 将指定末尾卡片滚到可见（底部对齐） */
+function revealElement(el: HTMLElement | null): void {
   const root = viewport.value
-  const el = promptEl.value
   if (!root || !el) return
   const max = Math.max(0, root.scrollHeight - root.clientHeight)
   const target = el.offsetTop + el.offsetHeight - root.clientHeight + 16
   root.scrollTo({ top: Math.min(max, Math.max(0, target)), behavior: 'smooth' })
+}
+
+function revealEnd(): void {
+  revealElement(endEl.value)
+}
+
+/** 完成提示行滚到可见（底部对齐） */
+function revealPrompt(): void {
+  revealElement(promptEl.value)
 }
 
 /** 仅在当前行变化（或追加批次）时滚动，避免逐字抖动 */
@@ -169,6 +182,16 @@ onMounted(() => {
   promptResizeObserver = new ResizeObserver(updatePromptMaxHeight)
   promptResizeObserver.observe(viewport.value)
 })
+watch(
+  () => props.end,
+  async (end) => {
+    if (!end) return
+    await nextTick()
+    revealEnd()
+  },
+  { immediate: true },
+)
+
 onBeforeUnmount(() => promptResizeObserver?.disconnect())
 </script>
 
@@ -209,38 +232,45 @@ onBeforeUnmount(() => promptResizeObserver?.disconnect())
           </div>
         </div>
       </div>
-      <div v-if="prompt" ref="promptEl" class="end-summary-wrap" role="status">
-        <StageSummaryCard
-          :kicker="prompt.passedAttempt ? '阶段完成' : '暂未达标'"
-          :title="prompt.title"
-          :tone="prompt.passedAttempt ? 'success' : 'danger'"
-          :stats="summaryStats"
-          :key-errors="prompt.keyErrors"
-          :rules="prompt.rules"
-          :rating="prompt.rating"
-          :max-height="promptMaxHeight"
-        >
-          <template #actions>
-            <button
-              v-if="prompt.enterLabel"
-              class="btn btn--primary"
-              type="button"
-              @click="emit('primary')"
-            >
-              {{ prompt.enterLabel }}
-              <kbd>Enter</kbd>
-            </button>
-            <button class="btn" type="button" @click="emit('restart')">
-              重新开始
-              <kbd>Alt+R</kbd>
-            </button>
-            <button class="btn" type="button" @click="emit('endless')">
-              进入练习
-              <kbd>Alt+Enter</kbd>
-            </button>
-          </template>
-        </StageSummaryCard>
-      </div>
+      <Transition name="session-card" appear>
+        <div v-if="end && $slots.end" ref="endEl" class="end-summary-wrap">
+          <slot name="end" />
+        </div>
+      </Transition>
+      <Transition name="session-card" appear>
+        <div v-if="prompt" ref="promptEl" class="end-summary-wrap" role="status">
+          <SessionSummaryCard
+            v-if="stageSummary"
+            mode="stage"
+            :summary="stageSummary"
+            :title="prompt.title"
+            :rules="prompt.rules"
+            :rating="prompt.rating"
+            :passed-attempt="prompt.passedAttempt"
+            :max-height="promptMaxHeight"
+          >
+            <template #actions>
+              <button
+                v-if="prompt.enterLabel"
+                class="btn btn--primary"
+                type="button"
+                @click="emit('primary')"
+              >
+                {{ prompt.enterLabel }}
+                <kbd>Enter</kbd>
+              </button>
+              <button class="btn" type="button" @click="emit('restart')">
+                重新开始
+                <kbd>Alt+R</kbd>
+              </button>
+              <button class="btn" type="button" @click="emit('endless')">
+                进入练习
+                <kbd>Alt+Enter</kbd>
+              </button>
+            </template>
+          </SessionSummaryCard>
+        </div>
+      </Transition>
     </div>
     <div class="fade fade--top" aria-hidden="true" />
     <div class="fade fade--bottom" aria-hidden="true" />

@@ -15,7 +15,7 @@ import {
   type SchemeIndexFile,
   type SchemeSummary,
 } from '@shuangpin/core'
-import { loadCurriculum, loadIndex, loadLexiconMeta, loadScheme } from '@/lib/data'
+import { loadCurriculum, loadIndex, loadScheme } from '@/lib/data'
 import { canStartLesson, currentLessonId, nextLessonId, passedLessonCount } from '@shuangpin/core'
 import { STORAGE_KEYS, readString, removeKey, writeString } from '@/lib/storage'
 import { useProgressStore } from '@/stores/progress'
@@ -62,7 +62,6 @@ export const useCourseStore = defineStore('course', () => {
   const schemeId = ref('')
   const scheme = shallowRef<SchemeDef | null>(null)
   const curriculum = shallowRef<Curriculum | null>(null)
-  const lexiconWordCount = ref(0)
   /** 当前方案引擎：所有页面共用这一份派生，不再各自 createSchemeEngine。 */
   const engine = computed<SchemeEngine | null>(() =>
     scheme.value ? createSchemeEngine(scheme.value) : null,
@@ -101,7 +100,6 @@ export const useCourseStore = defineStore('course', () => {
   }
 
   const lessons = computed<LessonDef[]>(() => curriculum.value?.lessons ?? [])
-  const wordCount = computed<number>(() => lexiconWordCount.value)
   const ready = computed<boolean>(() => status.value === 'ready')
   const progress = computed(() => progressStore.records)
   const passedCount = computed(() => passedLessonCount(lessons.value, progress.value))
@@ -128,14 +126,13 @@ export const useCourseStore = defineStore('course', () => {
 
   async function applyScheme(id: string, epoch: number): Promise<void> {
     const custom = schemeIndex.value?.customCourses.includes(id) ?? false
-    const [def, lexicon] = await Promise.all([loadScheme(id), loadLexiconMeta()])
+    const def = await loadScheme(id)
     if (!isCurrentLoad(epoch)) return
     const curriculumFile = await loadCurriculum(id, def, custom)
     if (!isCurrentLoad(epoch)) return
     schemeId.value = id
     scheme.value = def
     curriculum.value = curriculumFile
-    lexiconWordCount.value = lexicon.wordCount
     progressStore.load(id)
     saveScheme(id)
   }
@@ -225,7 +222,6 @@ export const useCourseStore = defineStore('course', () => {
     engine,
     curriculum,
     lessons,
-    wordCount,
     ready,
     progress,
     passedCount,

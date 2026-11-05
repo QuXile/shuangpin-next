@@ -706,6 +706,17 @@ kbd {
   }
 }
 
+/* 会话总结 / 暂停 / 结束卡片共用同一套出入场动效。 */
+.session-card-enter-active,
+.session-card-leave-active {
+  transition: opacity var(--dur-mid) var(--ease), transform var(--dur-mid) var(--ease);
+}
+.session-card-enter-from,
+.session-card-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
 @keyframes ui-shake {
   0%,
   100% {
@@ -809,6 +820,13 @@ kbd {
 .session-icon {
   width: 14px;
   height: 14px;
+}
+.session-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 .session-primary {
   flex: none;

@@ -9,7 +9,7 @@ const props = withDefaults(
     lessonTotal: number
     chapterCount: number
     completedChapterCount: number
-    wordCount: number
+    averageStars: number | null
     canClear: boolean
     unlockedAll?: boolean
   }>(),
@@ -23,6 +23,9 @@ const emit = defineEmits<{
 
 const started = computed(() => props.passedCount > 0)
 const percentText = computed(() => (started.value ? String(props.progressPercent) : '--'))
+const averageStarsText = computed(() =>
+  props.averageStars === null ? '--' : props.averageStars.toFixed(1),
+)
 
 const percentWrap = ref<HTMLElement | null>(null)
 const percentSize = ref(64)
@@ -98,7 +101,10 @@ onBeforeUnmount(() => observer?.disconnect())
     <div class="learning-stats">
       <div><strong>{{ passedCount }}<small> / {{ lessonTotal }}</small></strong><span>通过课程</span></div>
       <div><strong>{{ completedChapterCount }}<small> / {{ chapterCount }}</small></strong><span>课程章节</span></div>
-      <div><strong>{{ wordCount.toLocaleString('zh-CN') }}</strong><span>课程词汇</span></div>
+      <div>
+        <strong>{{ averageStarsText }}<small v-if="averageStars !== null" class="star-unit">★</small></strong>
+        <span>平均星级</span>
+      </div>
     </div>
   </aside>
 </template>
@@ -174,6 +180,7 @@ onBeforeUnmount(() => observer?.disconnect())
   padding: 12px 10px;
   border-radius: var(--r-card);
   background: var(--surface-2);
+  text-align: center;
 }
 .learning-stats strong {
   display: block;
@@ -187,6 +194,10 @@ onBeforeUnmount(() => observer?.disconnect())
   color: var(--ink-3);
   font-size: var(--text-sm);
   font-weight: 650;
+}
+.learning-stats .star-unit {
+  margin-left: 2px;
+  color: var(--star);
 }
 .learning-stats span {
   display: block;

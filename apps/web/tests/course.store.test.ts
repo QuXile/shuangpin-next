@@ -8,10 +8,9 @@ vi.mock('@/lib/data', () => ({
   loadIndex: vi.fn(),
   loadScheme: vi.fn(),
   loadCurriculum: vi.fn(),
-  loadLexiconMeta: vi.fn(),
 }))
 
-import { loadCurriculum, loadIndex, loadLexiconMeta, loadScheme } from '@/lib/data'
+import { loadCurriculum, loadIndex, loadScheme } from '@/lib/data'
 import { STORAGE_KEYS } from '../src/lib/storage.ts'
 import { useCourseStore } from '../src/stores/course.ts'
 
@@ -47,8 +46,6 @@ const curriculumFixture = {
   chapters: [],
 } as unknown as Curriculum
 
-const lexiconFixture = { wordCount: 0 }
-
 function mockScheme(id: string): SchemeDef {
   return { ...schemeDef, id, name: id }
 }
@@ -66,7 +63,6 @@ describe('course store', () => {
     vi.mocked(loadIndex).mockResolvedValue(indexFixture)
     vi.mocked(loadScheme).mockImplementation(async (id: string) => mockScheme(id))
     vi.mocked(loadCurriculum).mockResolvedValue(curriculumFixture)
-    vi.mocked(loadLexiconMeta).mockResolvedValue(lexiconFixture)
   })
 
   afterEach(() => {

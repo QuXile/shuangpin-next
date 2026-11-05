@@ -282,6 +282,14 @@ const currentChapterView = computed(() =>
 )
 const schemeName = computed(() => course.scheme?.name ?? '双拼方案')
 const completedChapterCount = computed(() => completedChapterIds(chapters.value).length)
+/** 已通过课程的平均星级；没有已通过课程时返回 null，由卡片显示占位。 */
+const averageStars = computed<number | null>(() => {
+  const passed = course.lessons
+    .map((lesson) => progress.records[lesson.id])
+    .filter((item) => item?.passed)
+  if (passed.length === 0) return null
+  return passed.reduce((sum, item) => sum + (item?.stars ?? 0), 0) / passed.length
+})
 const currentTitle = computed(() => {
   const lesson = currentLesson.value
   if (!lesson) return '开始学习'
@@ -472,7 +480,7 @@ useGlobalKeys(bindings)
           :lesson-total="course.lessons.length"
           :chapter-count="course.curriculum?.chapters.length ?? 0"
           :completed-chapter-count="completedChapterCount"
-          :word-count="course.wordCount"
+          :average-stars="averageStars"
           :can-clear="course.passedCount > 0"
           :unlocked-all="course.unlockedAll"
           @clear-progress="clearProgress"

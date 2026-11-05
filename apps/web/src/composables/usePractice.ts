@@ -258,6 +258,12 @@ export function usePractice() {
     return tiers ? tierOf(tiers, cpm.value) : null
   })
 
+  /** 当前课程的评分标准展示行；暂停 / 主动结束卡片也复用。 */
+  const criteriaLines = computed<PassCriteriaLine[]>(() => {
+    const criteria = lesson.value?.passCriteria
+    return criteria ? describePassCriteria(criteria) : []
+  })
+
   /** 有限目标完成后的总结卡：统计、错误分布、评分标准；最后一场考核额外显示本次星级 */
   const endPrompt = computed<EndPromptView | null>(() => {
     const runtime = currentRuntime.value
@@ -268,14 +274,14 @@ export function usePractice() {
     const summary = buildSessionSummary(runtime.session, nowMs.value)
     const met = gateReady.value
     const passedAttempt = Boolean(gate.value?.met)
-    const rules = currentLesson.passCriteria ? describePassCriteria(currentLesson.passCriteria) : []
+    const rules = criteriaLines.value
 
-    // 最后一场无提示考核：显示本次评分（未达标则记未通过）
+    // 最后一场无提示考核：显示本次评分（未达标则记未通过）。
+    // met 含「此前已通过」的历史状态，不能用来判断本次评分。
     const isFinalExam = isLastStage.value && stage.value === 'exam'
     let rating: EndPromptRating | null = null
     if (isFinalExam) {
-      // 通过与否统一以 core evaluateLesson 为准；met 只负责判断「已通过课程重练」的外层状态。
-      if (met) {
+      if (passedAttempt) {
         const result = evaluateLesson(currentLesson, {
           accuracy: summary.accuracy / 100,
           cpm: summary.cpm,
@@ -731,6 +737,7 @@ export function usePractice() {
     conceal,
     stageTitleText,
     endPrompt,
+    criteriaLines,
     liveMessage,
     progressLabel,
     hasStarted,

@@ -70,8 +70,9 @@ export const SHORTCUT_GROUPS: ShortcutGroup[] = [
       { keys: ['←', '→'], label: '在方案按钮 / 更多方案之间移动' },
       { keys: ['Enter'], label: '开始练习' },
       { keys: ['Shift', 'Space'], label: '暂停 / 继续练习' },
+      { keys: ['Alt', 'E'], label: '结束练习' },
       { keys: ['Alt', 'R'], label: '重新开始当前会话' },
-      { keys: ['Esc'], label: '结束练习会话' },
+      { keys: ['Esc'], label: '返回练习场 / 换文章' },
     ],
   },
   {

@@ -5,30 +5,18 @@
  * tone 由 base.css 的 .tone-success / .tone-danger 提供 --tone-* 变量。
  */
 import { computed } from 'vue'
-import { parseAtomId, type AtomId, type PassCriteriaLine } from '@shuangpin/core'
+import { parseAtomId, type PassCriteriaLine } from '@shuangpin/core'
 import StarRating from '@/components/common/StarRating.vue'
 import KeyCap from '@/components/common/KeyCap.vue'
+import type { KeyErrorRow, SessionRating } from '@/lib/sessionSummary'
 
-export interface SummaryStat {
+interface SummaryStat {
   value: string | number
   unit?: string
   label: string
 }
 
-export interface SummaryKeyError {
-  expected: string
-  typed: string
-  count: number
-  /** 应按键位对应的知识点（用于显示声母 / 韵母 / 零声母胶囊） */
-  atomId?: AtomId
-}
-
-export interface SummaryRating {
-  passed: boolean
-  stars: 0 | 1 | 2 | 3
-}
-
-function atomCapsule(error: SummaryKeyError): { label: string; kind: 'initial' | 'final' | 'zero' } | null {
+function atomCapsule(error: KeyErrorRow): { label: string; kind: 'initial' | 'final' | 'zero' } | null {
   if (!error.atomId) return null
   const ref = parseAtomId(error.atomId)
   if (!ref) return null
@@ -44,9 +32,9 @@ const props = withDefaults(
     title: string
     tone?: 'success' | 'neutral' | 'danger'
     stats: SummaryStat[]
-    keyErrors?: SummaryKeyError[]
+    keyErrors?: KeyErrorRow[]
     rules?: PassCriteriaLine[]
-    rating?: SummaryRating | null
+    rating?: SessionRating | null
     /** 父容器可传入基于可用高度的 max-height；缺省使用视口兜底 */
     maxHeight?: string
   }>(),
@@ -128,7 +116,6 @@ const errorGroups = computed<ErrorGroup[]>(() => {
           <StarRating v-if="rating.passed" :stars="rating.stars" size="lg" />
           <template v-else>未通过</template>
         </strong>
-        <span v-if="rating.passed" class="summary-rating-note">{{ rating.stars }} 星</span>
       </div>
 
       <section v-if="rules.length" class="summary-rules">
@@ -201,7 +188,6 @@ const errorGroups = computed<ErrorGroup[]>(() => {
   max-height: min(720px, calc(100vh - 180px));
   max-height: min(720px, calc(100dvh - 180px));
   overflow: hidden;
-  animation: ui-fade-up var(--dur-slow) var(--ease);
 }
 .summary-head,
 .summary-stats,
@@ -261,8 +247,7 @@ const errorGroups = computed<ErrorGroup[]>(() => {
   background: var(--tone-surface, var(--surface));
   box-shadow: var(--shadow-sm);
 }
-.summary-rating-label,
-.summary-rating-note {
+.summary-rating-label {
   color: var(--ink-4);
   font-size: var(--text-2xs);
   font-weight: 650;

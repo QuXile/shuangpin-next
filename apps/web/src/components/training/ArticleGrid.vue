@@ -15,6 +15,8 @@ const props = defineProps<{
   wrongInputs: ReadonlyMap<string, string[]>
   hiddenAtoms?: readonly AtomId[]
   hideZero?: boolean
+  /** 文章末尾追加结束卡片 */
+  end?: boolean
 }>()
 
 interface CellView {
@@ -32,6 +34,7 @@ interface CellView {
 }
 
 const cellEls = ref<(HTMLElement | null)[]>([])
+const scrollRef = ref<HTMLElement | null>(null)
 
 function setCellEl(el: Element | null, wordIndex: number | null): void {
   if (wordIndex === null) return
@@ -102,6 +105,17 @@ const lines = computed<CellView[][]>(() => {
 })
 
 watch(
+  () => props.end,
+  async (end) => {
+    if (!end) return
+    await nextTick()
+    const el = scrollRef.value
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
+  },
+  { immediate: true },
+)
+
+watch(
   () => props.session.index,
   async (index) => {
     await nextTick()
@@ -113,7 +127,7 @@ watch(
 </script>
 
 <template>
-  <div class="article-scroll thin-scroll">
+  <div ref="scrollRef" class="article-scroll thin-scroll">
     <div class="article-lines">
       <div v-for="(line, lineIndex) in lines" :key="lineIndex" class="article-line">
         <template v-for="(cell, cellIndex) in line" :key="`${lineIndex}-${cellIndex}`">
@@ -143,6 +157,11 @@ watch(
         </template>
       </div>
     </div>
+    <Transition name="session-card" appear>
+      <div v-if="end && $slots.end" class="article-end">
+        <slot name="end" />
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -167,6 +186,11 @@ watch(
   display: flex;
   align-items: flex-start;
   gap: 6px;
+}
+.article-end {
+  width: min(100%, var(--content-session));
+  margin: 18px auto 0;
+  padding: 0 2px;
 }
 .article-cell {
   flex: 0 0 auto;

@@ -74,17 +74,6 @@ export const loadCurriculum = (
 const loadLexiconSource = (): Promise<Lexicon> =>
   cached('lexicon-source', () => getJSON<Lexicon>('lexicon/lexicon.json'))
 
-/** 词库元信息：只需展示规模时用，避免提前加载 pinyin-pro 与解析全量词条。 */
-export interface LexiconMeta {
-  wordCount: number
-}
-
-export const loadLexiconMeta = (): Promise<LexiconMeta> =>
-  cached('lexicon-meta', async () => {
-    const source = await loadLexiconSource()
-    return { wordCount: source.entries.filter((entry) => entry.text.length >= 2).length }
-  })
-
 /** 词表：课程、入门课与练习场共用；拼音在加载时解析。 */
 export const loadLexicon = (): Promise<LexiconFile> =>
   cached('lexicon', async () => resolveLexicon(await loadLexiconSource()))
