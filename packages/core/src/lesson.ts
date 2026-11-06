@@ -529,7 +529,7 @@ export function accuracyTiers(criteria: PassCriteria): MetricTier[] {
 /**
  * 速度档位：
  * - speed / accuracy-speed：最低速度 + 两档星级速度，四档；
- * - accuracy + minCpm：只有速度底线，两档；
+ * - accuracy + minCpm：速度只作通过底线，低于底线 0 星，达到底线即满足全部星级行，显示 3 星；
  * - 未配置速度要求：null，只显示原始速度。
  */
 export function speedTiers(criteria: PassCriteria): MetricTier[] | null {
@@ -537,7 +537,12 @@ export function speedTiers(criteria: PassCriteria): MetricTier[] | null {
   if (criteria.mode === 'speed' || criteria.mode === 'accuracy-speed') {
     return buildTiers([minCpm, ...defaultStarCpm(criteria, criteria.mode)].filter((value) => value > 0), ' WPM', true)
   }
-  return minCpm > 0 ? buildTiers([minCpm], ' WPM', true) : null
+  if (minCpm <= 0) return null
+  const tiers = buildTiers([minCpm], ' WPM', false)
+  return tiers.map((tier, index) => ({
+    ...tier,
+    stars: index === tiers.length - 1 ? 3 : 0,
+  }))
 }
 
 /** 当前值落入的档位；tiers 必须来自 accuracyTiers / speedTiers。 */

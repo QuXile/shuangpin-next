@@ -165,7 +165,7 @@ describe('指标档位', () => {
     expect(tierOf(accuracy, 90)?.label).toBe('90–95%')
     expect(tierOf(accuracy, 95)?.label).toBe('≥95%')
     expect(speedTiers(criteria)?.map((tier) => tier.label)).toEqual(['<45 WPM', '≥45 WPM'])
-    expect(speedTiers(criteria)?.map((tier) => tier.stars)).toEqual([0, 1])
+    expect(speedTiers(criteria)?.map((tier) => tier.stars)).toEqual([0, 3])
   })
 
   it('速度课：正确率只保留通过底线，速度四档', () => {
