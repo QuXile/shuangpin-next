@@ -16,7 +16,6 @@ import {
   clearInput,
   createSchemeEngine,
   createSession,
-  cellKeyOf as coreCellKeyOf,
   hasInputError as coreHasInputError,
   type PracticeWord,
   type SchemeDef,
@@ -211,9 +210,6 @@ const EMPTY_SET: ReadonlySet<string> = new Set()
 /** 判题交互状态全部来自 core SessionState（唯一真相），组件不再维护本地副本。 */
 const wrongInputs = computed(() => session.value?.wrongInputs ?? EMPTY_MAP)
 const revealed = computed(() => session.value?.revealed ?? EMPTY_SET)
-const currentCellKey = computed(() =>
-  session.value ? coreCellKeyOf(session.value) : null,
-)
 const hasInputError = computed(() =>
   session.value ? coreHasInputError(session.value) : false,
 )

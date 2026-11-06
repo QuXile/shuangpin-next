@@ -14,7 +14,6 @@ import {
   commonAllChecked as commonAllCheckedPure,
   commonCapsuleCountOf,
   commonEntriesFor as commonEntriesForPure,
-  commonEntriesOf,
   configSnapshotOf,
   emptyScopedSets,
   focusAtomIdsOf,
@@ -50,6 +49,31 @@ const EMPTY_ATOMS: AtomOptions = { initials: [], finals: [], zeroFinals: [] }
 const newSet = (): Set<string> => new Set<string>()
 const sameSet = (left: ReadonlySet<string>, right: ReadonlySet<string>): boolean =>
   left.size === right.size && [...left].every((item) => right.has(item))
+
+interface MemoEntry<T> {
+  deps: readonly unknown[]
+  value: T
+}
+
+/**
+ * 纯函数结果缓存：模板里同一个 scope/group 每帧会被多处查询（v-if / 计数 / 全选态），
+ * 输入引用不变时直接复用上次结果，避免重复分配候选数组与集合。
+ */
+function memoized<T>(
+  cache: Map<string, MemoEntry<T>>,
+  key: string,
+  deps: readonly unknown[],
+  compute: () => T,
+): T {
+  const hit = cache.get(key)
+  if (hit && hit.deps.length === deps.length && hit.deps.every((dep, index) => dep === deps[index])) {
+    return hit.value
+  }
+  const value = compute()
+  cache.set(key, { deps, value })
+  return value
+}
+
 export function useTrainingSelection() {
   const course = useCourseStore()
   const local = getStorage('local')
@@ -81,9 +105,19 @@ export function useTrainingSelection() {
       ? selectableAtomsOf(atomOptions.value, commonAtoms.value)
       : EMPTY_ATOMS,
   )
+  /**
+   * 出现 / 焦点集合只依赖各自的三个 ref：其它选择（隐藏映射、文章隐藏等）变化时
+   * 保持引用稳定，避免练习场 availableEntries 等下游派生被无关状态变化带着重算。
+   */
+  const appearSet = computed(() =>
+    atomSetOf(selectedInitials.value, selectedFinals.value, selectedZeroFinals.value),
+  )
+  const focusSet = computed(() =>
+    atomSetOf(focusInitials.value, focusFinals.value, focusZeroFinals.value),
+  )
   const scopedSets = computed<ScopedSets>(() => ({
-    appear: atomSetOf(selectedInitials.value, selectedFinals.value, selectedZeroFinals.value),
-    focus: atomSetOf(focusInitials.value, focusFinals.value, focusZeroFinals.value),
+    appear: appearSet.value,
+    focus: focusSet.value,
     drill: atomSetOf(hiddenInitials.value, hiddenFinals.value, hiddenZeroFinals.value),
     article: atomSetOf(
       articleHiddenInitials.value,
@@ -91,8 +125,6 @@ export function useTrainingSelection() {
       articleHiddenZeroFinals.value,
     ),
   }))
-  const appearSet = computed(() => scopedSets.value.appear)
-  const commonEntries = computed(() => commonEntriesOf(commonAtoms.value))
   const scope = computed(() => trainingScopeOf(appearSet.value))
   const passedLessonCount = computed(
     () => course.lessons.filter((lesson) => course.progress[lesson.id]?.passed).length,
@@ -221,12 +253,27 @@ export function useTrainingSelection() {
     })
   })
 
+  const commonEntriesCache = new Map<string, MemoEntry<ReturnType<typeof commonEntriesForPure>>>()
+  const commonCheckedCache = new Map<string, MemoEntry<boolean>>()
+  const hiddenCandidatesCache = new Map<string, MemoEntry<AtomOptions>>()
+  const hiddenGroupCache = new Map<string, MemoEntry<GroupState>>()
+
   const commonEntriesFor = (scopeKind: SelectionScope, group: SelectionGroup) =>
-    commonEntriesForPure(commonAtoms.value, scopeKind, group, appearSet.value)
+    memoized(
+      commonEntriesCache,
+      `${scopeKind}:${group}`,
+      [commonAtoms.value, appearSet.value],
+      () => commonEntriesForPure(commonAtoms.value, scopeKind, group, appearSet.value),
+    )
   const commonCapsuleCount = (scopeKind: SelectionScope, group: SelectionGroup): number =>
     commonCapsuleCountOf(commonEntriesFor(scopeKind, group))
   const commonAllChecked = (scopeKind: SelectionScope, group: SelectionGroup): boolean =>
-    commonAllCheckedPure(commonAtoms.value, scopeKind, group, scopedSets.value)
+    memoized(
+      commonCheckedCache,
+      `${scopeKind}:${group}`,
+      [commonAtoms.value, scopedSets.value],
+      () => commonAllCheckedPure(commonAtoms.value, scopeKind, group, scopedSets.value),
+    )
   const toggleCommonAll = (scopeKind: SelectionScope, group: SelectionGroup): void =>
     applySets(
       toggleCommonSelection({
@@ -260,7 +307,7 @@ export function useTrainingSelection() {
   const focusCandidates = computed<AtomOptions>(() =>
     focusCandidatesOf(atomOptions.value ?? EMPTY_ATOMS, commonAtoms.value, appearSet.value),
   )
-  const focusAtomIds = computed(() => focusAtomIdsOf(scopedSets.value.focus))
+  const focusAtomIds = computed(() => focusAtomIdsOf(focusSet.value))
   const focusCount = computed(() =>
     focusInitials.value.size + focusFinals.value.size + focusZeroFinals.value.size,
   )
@@ -293,15 +340,33 @@ export function useTrainingSelection() {
   }
 
   const hiddenCandidatesOf = (scopeKind: 'drill' | 'article'): AtomOptions =>
-    hiddenCandidatesOfPure(
+    memoized(
+      hiddenCandidatesCache,
       scopeKind,
-      atomOptions.value ?? EMPTY_ATOMS,
-      commonAtoms.value,
-      appearSet.value,
+      [atomOptions.value, commonAtoms.value, appearSet.value],
+      () =>
+        hiddenCandidatesOfPure(
+          scopeKind,
+          atomOptions.value ?? EMPTY_ATOMS,
+          commonAtoms.value,
+          appearSet.value,
+        ),
     )
 
   const hiddenGroupState = (scopeKind: 'drill' | 'article', group: SelectionGroup): GroupState =>
-    hiddenGroupStateOf({ scope: scopeKind, group, options: atomOptions.value ?? EMPTY_ATOMS, common: commonAtoms.value, sets: scopedSets.value })
+    memoized(
+      hiddenGroupCache,
+      `${scopeKind}:${group}`,
+      [atomOptions.value, commonAtoms.value, scopedSets.value],
+      () =>
+        hiddenGroupStateOf({
+          scope: scopeKind,
+          group,
+          options: atomOptions.value ?? EMPTY_ATOMS,
+          common: commonAtoms.value,
+          sets: scopedSets.value,
+        }),
+    )
   const hiddenGroupTotal = (scopeKind: 'drill' | 'article', group: SelectionGroup): number =>
     hiddenGroupState(scopeKind, group).total
   const hiddenGroupSelected = (scopeKind: 'drill' | 'article', group: SelectionGroup): number =>
@@ -455,7 +520,7 @@ export function useTrainingSelection() {
     selectableFinals: computed(() => selectable.value.finals),
     selectableZeroFinals: computed(() => selectable.value.zeroFinals),
     appearInitialGroup, appearFinalGroup, appearZeroGroup,
-    commonEntries, commonEntriesFor, commonCapsuleCount, commonAllChecked, toggleCommonAll,
+    commonEntriesFor, commonCapsuleCount, commonAllChecked, toggleCommonAll,
     toggleInitial, toggleFinal, toggleZeroFinal, selectAll, selectGroup, clearGroup, clearAppear,
     toggleAppearAll, selectLearnedAtoms, learnedApplied,
     hiddenInitials, hiddenFinals, hiddenZeroFinals,

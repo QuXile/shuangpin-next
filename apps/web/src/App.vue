@@ -22,8 +22,30 @@ const layout = useLayoutStore()
 usePointerBlur()
 useKeyInput()
 
+/**
+ * 首屏空闲时预取练习页 chunk（最常用导航）。
+ * - 与路由懒加载共用同一个 chunk，点击课程时无需再等网络；
+ * - 只在课程数据就绪后调度，尊重省流模式与后台标签页；
+ * - 失败静默，不影响正常导航（真正进入时仍会重新请求）。
+ */
+function prefetchPracticeRoute(): void {
+  if (typeof window === 'undefined') return
+  const connection = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection
+  if (connection?.saveData) return
+  const run = (): void => {
+    void import('./pages/PracticePage.vue').catch(() => {
+      /* 预取失败由实际导航兜底 */
+    })
+  }
+  if (typeof window.requestIdleCallback === 'function') {
+    window.requestIdleCallback(run, { timeout: 4000 })
+  }
+}
+
 onMounted(() => {
-  void course.init()
+  void course.init().then(() => {
+    if (route.path === '/') prefetchPracticeRoute()
+  })
   const unlockAudio = (): void => sound.unlock()
   // 浏览器会在长时间无操作后自动 suspend AudioContext；每次手势都先恢复，
   // 避免下一次按键的声音等到 resume 完成才播放。

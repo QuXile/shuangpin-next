@@ -7,17 +7,21 @@ import { computed, nextTick, ref, watch } from 'vue'
 import type { AtomId, PracticeCap, SessionState } from '@shuangpin/core'
 import CharacterCard from '@/components/practice/CharacterCard.vue'
 import type { ArticlePlan } from '@shuangpin/core'
+import { reuseIfEqual, reuseRowIfEqual, sameStringList } from '@/lib/viewCache'
 
-const props = defineProps<{
-  plan: ArticlePlan
-  session: SessionState
-  revealed: ReadonlySet<string>
-  wrongInputs: ReadonlyMap<string, string[]>
-  hiddenAtoms?: readonly AtomId[]
-  hideZero?: boolean
-  /** 文章末尾追加结束卡片 */
-  end?: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    plan: ArticlePlan
+    session: SessionState
+    revealed: ReadonlySet<string>
+    wrongInputs: ReadonlyMap<string, string[]>
+    hiddenAtoms?: readonly AtomId[]
+    hideZero?: boolean
+    /** 文章末尾追加结束卡片 */
+    end?: boolean
+  }>(),
+  { hiddenAtoms: () => [], hideZero: false, end: false },
+)
 
 interface CellView {
   wordIndex: number | null
@@ -33,21 +37,40 @@ interface CellView {
   caps: PracticeCap[]
 }
 
-const cellEls = ref<(HTMLElement | null)[]>([])
 const scrollRef = ref<HTMLElement | null>(null)
+/** 共享空输入数组：大量未开始的字共用同一引用，避免每次重算都分配空数组。 */
+const EMPTY_INPUT_KEYS: string[] = []
 
-function setCellEl(el: Element | null, wordIndex: number | null): void {
-  if (wordIndex === null) return
-  cellEls.value[wordIndex] = el instanceof HTMLElement ? el : null
+function sameCellView(left: CellView, right: CellView): boolean {
+  return (
+    left.wordIndex === right.wordIndex &&
+    left.char === right.char &&
+    left.charIndex === right.charIndex &&
+    left.pinyin === right.pinyin &&
+    left.initialText === right.initialText &&
+    left.active === right.active &&
+    left.completed === right.completed &&
+    left.inputState === right.inputState &&
+    left.revealed === right.revealed &&
+    left.caps === right.caps &&
+    sameStringList(left.input, right.input)
+  )
 }
+
+/** 上一帧的单元/行视图缓存：内容未变的字与行复用旧引用，按键时只重渲染当前行。 */
+let previousCells = new Map<string, CellView>()
+let previousLines: CellView[][] = []
 
 const lines = computed<CellView[][]>(() => {
   const session = props.session
   const finished = session.phase === 'finished'
-  return props.plan.cells.map((line) =>
-    line.map((cell) => {
+  const nextCells = new Map<string, CellView>()
+  const nextLines = props.plan.cells.map((line, lineIndex) => {
+    const cells = line.map((cell, cellIndex) => {
+      const cellKey = `${lineIndex}:${cellIndex}`
+      let candidate: CellView
       if (cell.wordIndex === null) {
-        return {
+        candidate = {
           wordIndex: null,
           char: cell.char,
           charIndex: 0,
@@ -60,48 +83,56 @@ const lines = computed<CellView[][]>(() => {
           initialText: '',
           caps: [],
         }
-      }
-      const wordIndex = cell.wordIndex
-      const wordState = session.words[wordIndex]
-      const syllable = wordState?.word.syllables[0]
-      if (!wordState || !syllable) {
-        return {
-          wordIndex: null,
-          char: cell.char,
-          charIndex: 0,
-          active: false,
-          completed: false,
-          input: [],
-          inputState: 'idle',
-          revealed: false,
-          pinyin: '',
-          initialText: '',
-          caps: [],
+      } else {
+        const wordIndex = cell.wordIndex
+        const wordState = session.words[wordIndex]
+        const syllable = wordState?.word.syllables[0]
+        if (!wordState || !syllable) {
+          candidate = {
+            wordIndex: null,
+            char: cell.char,
+            charIndex: 0,
+            active: false,
+            completed: false,
+            input: [],
+            inputState: 'idle',
+            revealed: false,
+            pinyin: '',
+            initialText: '',
+            caps: [],
+          }
+        } else {
+          const charIndex = wordState.charIndex
+          const key = `${wordIndex}:${charIndex}`
+          const completed = finished || wordIndex < session.index
+          const active = !finished && wordIndex === session.index
+          const wrong = active ? props.wrongInputs.get(key) : undefined
+          const historyInput = wordState.charInputs?.[0]
+          const input = wrong ?? (active ? wordState.input : completed ? (historyInput ?? syllable.caps.map((cap) => cap.key)) : [])
+          candidate = {
+            wordIndex,
+            char: cell.char,
+            charIndex,
+            active,
+            completed,
+            input: input.length > 0 ? [...input] : EMPTY_INPUT_KEYS,
+            inputState: wrong ? 'wrong' : completed ? 'correct' : 'idle',
+            revealed: props.revealed.has(key),
+            pinyin: syllable.pinyinTone,
+            initialText: syllable.initial,
+            caps: syllable.caps,
+          }
         }
       }
-      const charIndex = wordState.charIndex
-      const key = `${wordIndex}:${charIndex}`
-      const completed = finished || wordIndex < session.index
-      const active = !finished && wordIndex === session.index
-      const wrong = active ? props.wrongInputs.get(key) : undefined
-      const historyInput = wordState.charInputs?.[0]
-      const input = wrong ?? (active ? wordState.input : completed ? (historyInput ?? syllable.caps.map((cap) => cap.key)) : [])
-      const inputState: CellView['inputState'] = wrong ? 'wrong' : completed ? 'correct' : 'idle'
-      return {
-        wordIndex,
-        char: cell.char,
-        charIndex,
-        active,
-        completed,
-        input,
-        inputState,
-        revealed: props.revealed.has(key),
-        pinyin: syllable.pinyinTone,
-        initialText: syllable.initial,
-        caps: syllable.caps,
-      }
-    }),
-  )
+      const view = reuseIfEqual(previousCells.get(cellKey), candidate, sameCellView)
+      nextCells.set(cellKey, view)
+      return view
+    })
+    return reuseRowIfEqual(previousLines[lineIndex], cells)
+  })
+  previousCells = nextCells
+  previousLines = nextLines
+  return nextLines
 })
 
 watch(
@@ -119,7 +150,8 @@ watch(
   () => props.session.index,
   async (index) => {
     await nextTick()
-    const el = cellEls.value[index]
+    // 渲染单元格与可练习字的顺序一致：按下标取当前字的卡片，避免 v-for 内联 ref 每次渲染重建。
+    const el = scrollRef.value?.querySelectorAll<HTMLElement>('.article-cell')[index]
     el?.scrollIntoView({ block: 'center', behavior: 'smooth' })
   },
   { immediate: true },
@@ -129,16 +161,17 @@ watch(
 <template>
   <div ref="scrollRef" class="article-scroll thin-scroll">
     <div class="article-lines">
-      <div v-for="(line, lineIndex) in lines" :key="lineIndex" class="article-line">
+      <div
+        v-for="(line, lineIndex) in lines"
+        :key="lineIndex"
+        v-memo="[line, hiddenAtoms, hideZero]"
+        class="article-line"
+      >
         <template v-for="(cell, cellIndex) in line" :key="`${lineIndex}-${cellIndex}`">
           <span v-if="cell.wordIndex === null" class="article-skipped" :title="`「${cell.char}」读音无法解析，已跳过`">
             {{ cell.char }}
           </span>
-          <div
-            v-else
-            :ref="(el) => setCellEl(el as Element | null, cell.wordIndex)"
-            class="article-cell"
-          >
+          <div v-else class="article-cell">
             <CharacterCard
               :char="cell.char"
               :pinyin="cell.pinyin"
@@ -150,8 +183,8 @@ watch(
               :completed="cell.completed"
               :revealed="cell.revealed"
               :input-state="cell.inputState"
-              :hidden-atoms="hiddenAtoms ?? []"
-              :hide-zero="hideZero ?? false"
+              :hidden-atoms="hiddenAtoms"
+              :hide-zero="hideZero"
             />
           </div>
         </template>

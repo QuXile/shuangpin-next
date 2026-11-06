@@ -15,7 +15,7 @@ import {
   type SchemeIndexFile,
   type SchemeSummary,
 } from '@shuangpin/core'
-import { loadCurriculum, loadIndex, loadScheme } from '@/lib/data'
+import { loadCurriculum, loadIndex, loadLexicon, loadScheme } from '@/lib/data'
 import { canStartLesson, currentLessonId, nextLessonId, passedLessonCount } from '@shuangpin/core'
 import { STORAGE_KEYS, readString, removeKey, writeString } from '@/lib/storage'
 import { useProgressStore } from '@/stores/progress'
@@ -163,15 +163,40 @@ export const useCourseStore = defineStore('course', () => {
     })
   }
 
+  /**
+   * 词表预热：练习页需要整份词表，课程就绪后在空闲时段提前加载（loadLexicon 内部单例缓存，
+   * 正式进入练习时直接命中）。省流量模式跳过；失败静默，由练习页自己的错误处理兜底。
+   */
+  function warmLexicon(): void {
+    if (typeof window === 'undefined') return
+    const connection = (globalThis.navigator as Navigator & { connection?: { saveData?: boolean } })
+      ?.connection
+    if (connection?.saveData) return
+    const run = (): void => {
+      void loadLexicon().catch(() => {})
+    }
+    // 空闲时加载，10 秒超时兜底（后台标签页/长任务）；不支持 requestIdleCallback 时延后执行。
+    if (typeof globalThis.requestIdleCallback === 'function') {
+      globalThis.requestIdleCallback(run, { timeout: 10_000 })
+    } else {
+      globalThis.setTimeout(run, 3_000)
+    }
+  }
+
   /** single-flight 数据引导：并发调用共享同一个 Promise，失败后允许重试。 */
   function init(): Promise<void> {
     if (status.value === 'ready') return Promise.resolve()
     // 正在切换方案/预览时不要重入 init，否则会用默认方案覆盖用户刚选的方案。
     if (status.value === 'loading' && !bootPromise) return Promise.resolve()
     if (!bootPromise) {
-      bootPromise = runInit().finally(() => {
-        bootPromise = null
-      })
+      bootPromise = runInit()
+        .then(() => {
+          // 课程就绪后再预热词表，不占用首屏关键路径。
+          if (status.value === 'ready') warmLexicon()
+        })
+        .finally(() => {
+          bootPromise = null
+        })
     }
     return bootPromise
   }

@@ -31,7 +31,8 @@ pnpm dev        # http://127.0.0.1:5199
 | `pnpm typecheck` | core `tsc --noEmit` + web `vue-tsc --noEmit` |
 | `pnpm lint:ui` | UI 约定检查（token / 共享原语 / 输入守卫） |
 | `pnpm data:lexicon` | 从 `data/raw/jieba-dict.txt` 重建词表 |
-| `pnpm data:sync` | 单向原子同步 `data/` → `apps/web/public/data/` |
+| `pnpm data:sync` | 单向原子同步 `data/` → `apps/web/public/data/`（含词表预编译） |
+| `pnpm bench` | core 热路径性能基准（`scripts/bench-core.mjs`，不进入 `verify`） |
 | `pnpm validate` | 五域数据与文档校验 |
 | `pnpm verify` | typecheck + lint:ui + data:sync + test + build + validate |
 
@@ -39,7 +40,7 @@ pnpm dev        # http://127.0.0.1:5199
 
 ```text
 apps/web/          Vue 3 + Vite + TS 前端
-packages/core/     纯 TS 领域层（types / pinyin / scheme / selector / session / lesson / training / progress / index）
+packages/core/     纯 TS 领域层（types / pinyin / scheme / selector / session / lesson / training / curriculum / progress / index）
 data/              权威源数据（schemes/ + lexicon/，2 空格缩进）
 scripts/           数据生成 / 同步 / 校验 / 静态包启动器 / UI 约定检查
 docs/              文档，README 为导航入口
@@ -54,7 +55,9 @@ scripts/
   validate-all.mjs                    校验入口
   validate/                           schemes / lexicon / curriculum / public-data / docs
   lib/data-contract.mjs               路径、JSON 原子读写、深比较、内容 hash
-  lib/pinyin-resolve.mjs              构建期拼音解析
+  lib/pinyin-resolve.mjs              构建期拼音解析（源数据 → 规范音节）
+  lib/runtime-lexicon.mjs             词表运行时格式编码 / 缓存判定 / 自检
+  bench-core.mjs                      core 热路径基准（pnpm bench）
   check-ui-conventions.mjs            UI 约定检查（pnpm lint:ui）
   static-package-server.py            静态包启动器
 ```
@@ -138,17 +141,19 @@ VITE_BASE=/shuangpin-next/ pnpm build
 
 构建链路：`data/` → `apps/web/public/data/`（`data:sync`，紧凑 JSON）→ `apps/web/dist/data/`（Vite 拷贝 `public/`）。
 
-`dist/data/` 只包含 4 类文件，共 26 个、约 1.7 MiB：
+`dist/data/` 只包含 4 类文件，共 26 个、约 1.05 MiB：
 
 ```text
 dist/data/
   index.json              方案索引
   schemes/<id>.json       19 套方案
   curriculum/<id>.json    5 套定制课程
-  lexicon/lexicon.json    词表（文本 + 词频）
+  lexicon/lexicon.json    词表（构建期预编译：音节表 + 源顺序词条）
 ```
 
-pinyin-pro 是 Web 运行时依赖（动态 import，独立 chunk）；构建期脚本与测试也用它解析拼音。
+词表在 `data:sync` 阶段用 pinyin-pro 预解析并编码为紧凑运行时格式，浏览器只做解码，
+练习页不再加载 pinyin-pro（仅文章练习按需动态 import）；`data:sync` 按
+「源数据 hash + 解析口径版本 + pinyin-pro 版本」复用上次产物，源数据变化时自动重建。
 
 ### 静态包
 

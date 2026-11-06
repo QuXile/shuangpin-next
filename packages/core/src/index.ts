@@ -1,15 +1,16 @@
 /**
  * @shuangpin/core 公共入口。
  *
- * 纯 TS 领域层（8 个源文件）：
- *   types.ts    数据契约 + 运行期模型
- *   pinyin.ts   拼音 / 音节 / 知识点（atom）与匹配谓词
- *   scheme.ts   方案引擎 + free 集合 + 推荐码/兼容码分析
- *   selector.ts 确定性选词 + 随机原语
- *   session.ts  会话状态机 + 输入跟踪 + 练习展示模型
- *   lesson.ts   阶段计划/门槛/评分 + 组卷装配 + 课池派生
- *   training.ts 训练场范围过滤/文章解析/批次与文章装配
- *   progress.ts 课程解锁与进度规则
+ * 纯 TS 领域层（10 个源文件）：
+ *   types.ts     数据契约 + 运行期模型
+ *   pinyin.ts    拼音 / 音节 / 知识点（atom）与匹配谓词
+ *   scheme.ts    方案引擎 + free 集合 + 推荐码/兼容码分析
+ *   selector.ts  确定性选词 + 随机原语
+ *   session.ts   会话状态机 + 输入跟踪 + 练习展示模型
+ *   lesson.ts    阶段计划/门槛/评分 + 组卷装配 + 课池派生
+ *   training.ts  训练场范围过滤/文章解析/批次与文章装配
+ *   curriculum.ts 通用课程生成 / 定制课程 hydrate
+ *   progress.ts  课程解锁与进度规则
  *
  * 只导出 core 外有消费者的符号（web / scripts / 测试）。
  */

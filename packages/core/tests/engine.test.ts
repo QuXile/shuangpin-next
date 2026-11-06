@@ -8,7 +8,7 @@
 import { describe, expect, it } from 'vitest'
 import type { AtomId, Final, Initial, SyllableFinal, SyllableSpec } from '../src/types.ts'
 import { splitPinyin } from '../src/pinyin.ts'
-import { createSchemeEngine, freeAtomIdsOf, isFreeAtom } from '../src/scheme.ts'
+import { analyzeSchemeCodes, createSchemeEngine, freeAtomIdsOf, isFreeAtom } from '../src/scheme.ts'
 import {
   loadEngine,
   loadEngineCases,
@@ -234,5 +234,62 @@ describe('方案引擎 · keyMap / diff', () => {
     expect(engine.judge('VS', spec)).toBe(true)
     expect(engine.judge(['v', 's'], spec)).toBe(true)
     expect(engine.judge(['v', 's', 'x'], spec)).toBe(false)
+  })
+})
+
+describe('方案引擎 · 缓存一致性', () => {
+  const specs: SyllableSpec[] = [
+    { initial: 'zh', final: 'ong' },
+    { initial: 'q', final: 'u' },
+    { initial: 'n', final: 'v' },
+    { initial: '', final: 'a', zeroInitial: true },
+    { initial: '', final: 'er', zeroInitial: true },
+  ]
+
+  it('acceptedSequences / primarySequence / compositionSequence 重复调用结果稳定且与新建引擎一致', () => {
+    const def = loadSchemeDef('xiaohe')
+    const cached = createSchemeEngine(def)
+    const fresh = createSchemeEngine(def)
+    for (const spec of specs) {
+      const accepted = cached.acceptedSequences(spec)
+      // 第二次必然命中按音节缓存，结果必须与首次、冷引擎逐项相同。
+      expect(cached.acceptedSequences(spec)).toEqual(accepted)
+      expect(accepted).toEqual(fresh.acceptedSequences(spec))
+      expect(cached.primarySequence(spec)).toEqual(fresh.primarySequence(spec))
+      expect(cached.compositionSequence(spec)).toEqual(fresh.compositionSequence(spec))
+      expect(cached.judge(accepted[0]?.join('') ?? '', spec)).toBe(true)
+    }
+  })
+
+  it('keyMap / diff / keysForAtom 重复调用结果稳定且与新建引擎一致', () => {
+    const def = loadSchemeDef('weiruan')
+    const cached = createSchemeEngine(def)
+    const fresh = createSchemeEngine(def)
+    expect(cached.keyMap()).toEqual(fresh.keyMap())
+    expect(cached.keyMap()).toEqual(cached.keyMap())
+    expect(cached.diff()).toEqual(fresh.diff())
+    expect(cached.diff()).toEqual(cached.diff())
+    for (const atom of ['initial:zh', 'final:ai', 'zero:er', 'unknown:xx'] as AtomId[]) {
+      expect(cached.keysForAtom(atom)).toEqual(fresh.keysForAtom(atom))
+      expect(cached.keysForAtom(atom)).toEqual(cached.keysForAtom(atom))
+    }
+  })
+
+  it('analyzeSchemeCodes：同一 def 命中缓存，克隆 def 重新分析结果等价', () => {
+    const def = loadSchemeDef('xiaohe')
+    const first = analyzeSchemeCodes(def)
+    expect(analyzeSchemeCodes(def)).toBe(first)
+    const cloned = JSON.parse(JSON.stringify(def)) as typeof def
+    expect(analyzeSchemeCodes(cloned)).toEqual(first)
+    // 缓存前后判题口径必须与该分析结果自洽：每条 accepted 都能被 judge 接受。
+    const engine = createSchemeEngine(cloned)
+    for (const entry of first.entries) {
+      const spec: SyllableSpec = {
+        initial: entry.initial,
+        final: entry.final,
+        zeroInitial: entry.zeroInitial,
+      }
+      for (const accepted of entry.accepted) expect(engine.judge(accepted, spec), accepted).toBe(true)
+    }
   })
 })

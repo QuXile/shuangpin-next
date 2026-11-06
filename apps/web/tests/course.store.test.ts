@@ -8,9 +8,10 @@ vi.mock('@/lib/data', () => ({
   loadIndex: vi.fn(),
   loadScheme: vi.fn(),
   loadCurriculum: vi.fn(),
+  loadLexicon: vi.fn(),
 }))
 
-import { loadCurriculum, loadIndex, loadScheme } from '@/lib/data'
+import { loadCurriculum, loadIndex, loadLexicon, loadScheme } from '@/lib/data'
 import { STORAGE_KEYS } from '../src/lib/storage.ts'
 import { useCourseStore } from '../src/stores/course.ts'
 
@@ -58,11 +59,14 @@ describe('course store', () => {
     storage = memoryStorage()
     vi.stubGlobal('window', { localStorage: storage, sessionStorage: memoryStorage() })
     vi.stubGlobal('localStorage', storage)
+    // 默认不执行空闲回调：避免测试结束时残留词表预热定时器/异步任务。
+    vi.stubGlobal('requestIdleCallback', vi.fn())
     setActivePinia(createPinia())
 
     vi.mocked(loadIndex).mockResolvedValue(indexFixture)
     vi.mocked(loadScheme).mockImplementation(async (id: string) => mockScheme(id))
     vi.mocked(loadCurriculum).mockResolvedValue(curriculumFixture)
+    vi.mocked(loadLexicon).mockResolvedValue({ words: [], chars: [], syllableExamples: {} })
   })
 
   afterEach(() => {
@@ -148,5 +152,48 @@ describe('course store', () => {
     const before = vi.mocked(loadIndex).mock.calls.length
     await store.init()
     expect(vi.mocked(loadIndex).mock.calls.length).toBe(before)
+  })
+
+  it('init 就绪后在空闲时段预热词表（10 秒超时兜底）', async () => {
+    const idle = vi.fn((callback: () => void) => {
+      callback()
+      return 1
+    })
+    vi.stubGlobal('requestIdleCallback', idle)
+    const store = useCourseStore()
+    await store.init()
+
+    expect(idle).toHaveBeenCalledTimes(1)
+    expect((idle.mock.calls[0] as unknown[])[1]).toEqual({ timeout: 10_000 })
+    expect(loadLexicon).toHaveBeenCalledTimes(1)
+  })
+
+  it('省流量模式（saveData）不预热词表', async () => {
+    vi.stubGlobal('navigator', { connection: { saveData: true } })
+    const idle = vi.fn()
+    vi.stubGlobal('requestIdleCallback', idle)
+    const store = useCourseStore()
+    await store.init()
+
+    expect(idle).not.toHaveBeenCalled()
+    expect(loadLexicon).not.toHaveBeenCalled()
+  })
+
+  it('词表预热失败静默，不影响 init 就绪', async () => {
+    vi.stubGlobal(
+      'requestIdleCallback',
+      vi.fn((callback: () => void) => {
+        callback()
+        return 1
+      }),
+    )
+    vi.mocked(loadLexicon).mockRejectedValueOnce(new Error('lexicon boom'))
+    const store = useCourseStore()
+    await store.init()
+    // 让 catch 分支的微任务跑完，确认没有未处理的 rejection。
+    await Promise.resolve()
+
+    expect(store.status).toBe('ready')
+    expect(store.error).toBe('')
   })
 })

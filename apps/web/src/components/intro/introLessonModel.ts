@@ -7,7 +7,7 @@
  * - 推荐码 / 兼容编码 section 仅当方案数据非空时生成；
  * - 不出现「对偶」等某个方案专有术语，不假设任何方案的编码形态。
  */
-import { analyzeSchemeCodes, atomDisplayLabel, splitPinyin, toToneMarks } from '@shuangpin/core'
+import { analyzeSchemeCodes, atomDisplayLabel, toToneMarks } from '@shuangpin/core'
 import type {
   AtomId,
   SchemeDef,
@@ -216,12 +216,6 @@ function atomCounts(atoms: readonly KeyAtom[]): { learnCount: number; freeCount:
     freeCount: atoms.filter((atom) => atom.free).length,
     multiCount: atoms.filter(isMulti).length,
   }
-}
-
-function specOf(syllable: string): SyllableSpec | null {
-  const split = splitPinyin(syllable)
-  if (!split) return null
-  return { initial: split.initial, final: split.final, zeroInitial: split.zeroInitial }
 }
 
 // ── 组合示例 ─────────────────────────────────────────────────

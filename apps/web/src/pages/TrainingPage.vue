@@ -98,64 +98,24 @@ const {
   toggleInitial,
   toggleFinal,
   toggleZeroFinal,
-  selectAll,
-  selectGroup,
-  clearGroup,
   toggleAppearAll,
   selectLearnedAtoms,
   learnedApplied,
   clearAppear,
-  hiddenInitials,
-  hiddenFinals,
-  hiddenZeroFinals,
-  articleHiddenInitials,
-  articleHiddenFinals,
-  articleHiddenZeroFinals,
-  hiddenCandidatesOf,
-  hiddenGroupAllChecked,
-  hiddenGroupPartial,
-  hiddenGroupSelected,
-  hiddenGroupTotal,
-  hiddenGroupDisabled,
-  toggleHidden,
-  toggleHiddenZeroFinal,
-  toggleHiddenAll,
   hiddenSnapshotOf,
 } = selection
 
-const appearInitialAll = computed(() => appearInitialGroup.value.all)
-const appearInitialPartial = computed(() => appearInitialGroup.value.indeterminate)
-const appearInitialSelectedCount = computed(() => appearInitialGroup.value.selected)
-const appearInitialTotalCount = computed(() => appearInitialGroup.value.total)
-const appearFinalAll = computed(() => appearFinalGroup.value.all)
-const appearFinalPartial = computed(() => appearFinalGroup.value.indeterminate)
-const appearFinalSelectedCount = computed(() => appearFinalGroup.value.selected)
-const appearFinalTotalCount = computed(() => appearFinalGroup.value.total)
-const appearZeroAll = computed(() => appearZeroGroup.value.all)
-const appearZeroPartial = computed(() => appearZeroGroup.value.indeterminate)
-const appearZeroSelectedCount = computed(() => appearZeroGroup.value.selected)
-const appearZeroTotalCount = computed(() => appearZeroGroup.value.total)
+/** 出现范围三组的已选总数：直接由分组状态求和，不再为每个字段各包一层 computed。 */
 const appearSelectedCount = computed(
   () =>
-    appearInitialSelectedCount.value +
-    appearFinalSelectedCount.value +
-    appearZeroSelectedCount.value,
+    appearInitialGroup.value.selected +
+    appearFinalGroup.value.selected +
+    appearZeroGroup.value.selected,
 )
-
-const drillHiddenCandidates = computed(() => hiddenCandidatesOf('drill'))
-const articleHiddenCandidates = computed(() => hiddenCandidatesOf('article'))
-const drillHiddenInitialCandidates = computed(() => drillHiddenCandidates.value.initials)
-const drillHiddenFinalCandidates = computed(() => drillHiddenCandidates.value.finals)
-const drillHiddenZeroCandidates = computed(() => drillHiddenCandidates.value.zeroFinals)
-const articleHiddenInitialCandidates = computed(() => articleHiddenCandidates.value.initials)
-const articleHiddenFinalCandidates = computed(() => articleHiddenCandidates.value.finals)
-const articleHiddenZeroCandidates = computed(() => articleHiddenCandidates.value.zeroFinals)
 
 // ── 方案切换 ─────────────────────────────────────────────────
 
-const schemeOptions = computed(() => course.allSchemeOptions)
-const primarySchemeIds = computed(() => course.primarySchemeIds)
-const primarySchemeOptions = computed(() => course.schemeOptions)
+const heroTitleLines = ['练习场'] as const
 const schemeBusy = ref(false)
 const schemeError = ref('')
 const schemeRetryId = ref('')
@@ -214,6 +174,10 @@ async function loadBank(): Promise<void> {
   }
 }
 
+/**
+ * 可用词条只依赖「词表 / 出现范围 / 焦点」三处（均为选择状态或数据加载），
+ * 与 playing / paused / 会话输入无关，按键不会触发过滤重算。
+ */
 const availableEntries = computed(() =>
   lexicon.value
     ? filterTrainingEntries(lexicon.value.words, scope.value, focusAtomIds.value)
@@ -284,7 +248,6 @@ onBeforeUnmount(() => {
   layout.clearStageLabel()
 })
 
-const countUnit = computed(() => (kind.value === 'article' ? '字' : '词'))
 const accuracyPercent = computed(() => Math.round(accuracy.value * 100))
 const liveSpeed = computed(() => Math.round(cpm.value))
 
@@ -480,7 +443,7 @@ const bindings = computed<KeyBinding[]>(() => {
       },
       { key: 'd', alt: true, run: () => switchTab('drill') },
       { key: 'a', alt: true, run: () => switchTab('article') },
-      ...primarySchemeOptions.value.map((option, index) => ({
+      ...course.schemeOptions.map((option, index) => ({
         key: String(index + 1),
         alt: true,
         run: () => void chooseScheme(option.id),
@@ -519,15 +482,15 @@ onMounted(async () => {
         <SchemeHero
           class="training-brand"
           eyebrow="PRACTICE GROUND"
-          :title-lines="['练习场']"
+          :title-lines="heroTitleLines"
           keycap-text="练习场"
-          :scheme-options="schemeOptions"
-          :primary-scheme-ids="primarySchemeIds"
+          :scheme-options="course.allSchemeOptions"
+          :primary-scheme-ids="course.primarySchemeIds"
           :scheme-id="course.schemeId"
           :scheme="course.scheme"
           :busy="schemeBusy"
           single-row
-          :show-selector="schemeOptions.length > 1"
+          :show-selector="course.allSchemeOptions.length > 1"
           @change-scheme="chooseScheme"
         />
 
@@ -670,12 +633,12 @@ onMounted(async () => {
               <template v-else-if="atomOptions">
                 <SetupGroup
                   title="声母"
-                  :all-checked="appearInitialAll"
-                  :indeterminate="appearInitialPartial"
+                  :all-checked="appearInitialGroup.all"
+                  :indeterminate="appearInitialGroup.indeterminate"
                   @toggle-all="toggleAppearAll('initial')"
                 >
                   <template #count>
-                    已选 {{ appearInitialSelectedCount }}/{{ appearInitialTotalCount }}
+                    已选 {{ appearInitialGroup.selected }}/{{ appearInitialGroup.total }}
                   </template>
                   <CommonCapsule
                     v-if="commonEntriesFor('appear', 'initial').length > 0"
@@ -697,12 +660,12 @@ onMounted(async () => {
 
                 <SetupGroup
                   title="韵母"
-                  :all-checked="appearFinalAll"
-                  :indeterminate="appearFinalPartial"
+                  :all-checked="appearFinalGroup.all"
+                  :indeterminate="appearFinalGroup.indeterminate"
                   @toggle-all="toggleAppearAll('final')"
                 >
                   <template #count>
-                    已选 {{ appearFinalSelectedCount }}/{{ appearFinalTotalCount }}
+                    已选 {{ appearFinalGroup.selected }}/{{ appearFinalGroup.total }}
                   </template>
                   <CommonCapsule
                     v-if="commonEntriesFor('appear', 'final').length > 0"
@@ -723,14 +686,14 @@ onMounted(async () => {
                 </SetupGroup>
 
                 <SetupGroup
-                  v-if="appearZeroTotalCount > 0 || commonCapsuleCount('appear', 'zero') > 0"
+                  v-if="appearZeroGroup.total > 0 || commonCapsuleCount('appear', 'zero') > 0"
                   title="零声母"
-                  :all-checked="appearZeroAll"
-                  :indeterminate="appearZeroPartial"
+                  :all-checked="appearZeroGroup.all"
+                  :indeterminate="appearZeroGroup.indeterminate"
                   @toggle-all="toggleAppearAll('zero')"
                 >
                   <template #count>
-                    已选 {{ appearZeroSelectedCount }}/{{ appearZeroTotalCount }}
+                    已选 {{ appearZeroGroup.selected }}/{{ appearZeroGroup.total }}
                   </template>
                   <CommonCapsule
                     v-if="commonEntriesFor('appear', 'zero').length > 0"

@@ -5,7 +5,7 @@
  *   index.json             方案索引（SchemeIndexFile）
  *   schemes/<id>.json      SchemeDef
  *   curriculum/<id>.json   仅 5 套定制课程的源数据
- *   lexicon/lexicon.json   词表（entries + 音节示例，拼音运行时解析）
+ *   lexicon/lexicon.json   词表（构建期预解析的紧凑格式，运行时只解码）
  *
  * 其余方案的课程由 buildUniversalCurriculum(scheme) 在内存中生成。
  *
@@ -13,16 +13,15 @@
  */
 import type {
   Curriculum,
-  Lexicon,
   ResolvedLexicon,
   SchemeDef,
   SchemeIndexFile,
   StoredCurriculum,
 } from '@shuangpin/core'
 import { buildUniversalCurriculum, createSchemeEngine, freeAtomIdsOf, hydrateCurriculum } from '@shuangpin/core'
-import { resolveLexicon } from './lexicon'
+import { decodeRuntimeLexicon, type RuntimeLexiconFile } from './lexicon'
 
-/** 词表：磁盘只存词条与词频，加载时由 pinyin-pro 解析成运行时词表 */
+/** 词表：构建期已解析拼音，运行时只把紧凑格式解码成运行时词表 */
 export type LexiconFile = ResolvedLexicon
 
 const cache = new Map<string, Promise<unknown>>()
@@ -70,10 +69,8 @@ export const loadCurriculum = (
     return hydrateCurriculum(id, source, freeAtomIdsOf(createSchemeEngine(scheme)))
   })
 
-/** 词库源 JSON（只加载一次；解析拼音由需要词表三件套的页面触发）。 */
-const loadLexiconSource = (): Promise<Lexicon> =>
-  cached('lexicon-source', () => getJSON<Lexicon>('lexicon/lexicon.json'))
-
-/** 词表：课程、入门课与练习场共用；拼音在加载时解析。 */
+/** 词表：课程、入门课与练习场共用；浏览器只做紧凑格式解码（不再调用 pinyin-pro）。 */
 export const loadLexicon = (): Promise<LexiconFile> =>
-  cached('lexicon', async () => resolveLexicon(await loadLexiconSource()))
+  cached('lexicon', async () =>
+    decodeRuntimeLexicon(await getJSON<RuntimeLexiconFile>('lexicon/lexicon.json')),
+  )

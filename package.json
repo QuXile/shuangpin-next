@@ -17,6 +17,7 @@
     "test:watch": "pnpm --filter @shuangpin/core test:watch",
     "typecheck": "pnpm --filter @shuangpin/core typecheck && pnpm --filter @shuangpin/web typecheck",
     "verify": "pnpm typecheck && pnpm lint:ui && pnpm data:sync && pnpm test && pnpm build && pnpm validate",
+    "bench": "node scripts/bench-core.mjs",
     "validate": "node scripts/validate-all.mjs",
     "data:lexicon": "node scripts/build-lexicon.mjs",
     "data:sync": "node scripts/sync-data.mjs",

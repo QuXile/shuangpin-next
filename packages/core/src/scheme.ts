@@ -10,6 +10,9 @@
  *
  * 只做正向判题（音节 → 键序列），不做键序列 → 音节反查（大量同码方案）。
  * 推荐码 / 兼容码的数据分析（analyzeSchemeCodes）也在这里，作为 scripts 与 web 共用的唯一口径。
+ *
+ * 缓存约定：引擎实例内部的音节/原子派生结果按 key 缓存，返回的是缓存数组本身
+ * （与 freeSets() 共享实例同一口径）；调用方只读，不得原地修改返回值或其中的子数组。
  */
 import type {
   AtomId,
@@ -23,7 +26,7 @@ import type {
   SchemeEngine,
   SyllableSpec,
 } from './types.ts'
-import { atomId, parseAtomId, splitPinyin } from './pinyin.ts'
+import { atomId, isZeroSyllable, parseAtomId, splitPinyin } from './pinyin.ts'
 
 const KEYBOARD_ROWS = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm']
 
@@ -49,10 +52,6 @@ function sequencesOf(values: readonly string[] | undefined): string[][] {
     out.push(sequence)
   }
   return out
-}
-
-function isZeroSyllable(syl: SyllableSpec): boolean {
-  return syl.zeroInitial === true || syl.initial === ''
 }
 
 /** 输入归一化：字符串按字符拆分，数组逐键展开，统一小写 */
@@ -130,67 +129,130 @@ function canResolve(def: SchemeDef, syl: SyllableSpec): boolean {
   )
 }
 
+/**
+ * 音节缓存 key：零声母用 `z:` 前缀，普通音节用 `n:` 前缀，避免同名字符串冲突；
+ * 同一 key 的 SyllableSpec 在引擎里等价（zeroInitial 只影响是否走零声母分支）。
+ */
+function syllableCacheKey(syl: SyllableSpec): string {
+  return isZeroSyllable(syl) ? `z:${syl.final}` : `n:${syl.initial}:${syl.final}`
+}
+
 export function createSchemeEngine(def: SchemeDef): SchemeEngine {
   const { initials, finals, zeroInitial } = def
   const freeSets = freeAtomsOf(def)
 
-  function syllableKey(syl: SyllableSpec): string {
-    return isZeroSyllable(syl) ? syl.final : `${syl.initial}${syl.final}`
-  }
+  const recommendedCache = new Map<string, string[][]>()
+  const compatCache = new Map<string, string[][]>()
+  const compositionCache = new Map<string, string[][]>()
+  const acceptedCache = new Map<string, string[][]>()
+  /** accepted 的 join 结果：judge 热路径只做字符串比较，不再二次 join */
+  const acceptedJoinedCache = new Map<string, string[]>()
+  const primaryCache = new Map<string, string[]>()
+  const atomKeysCache = new Map<AtomId, string[]>()
+  let keyMapCache: LetterKey[][] | null = null
+  let diffCache: SchemeDiff | null = null
 
   function recommendedOf(syl: SyllableSpec): string[][] {
-    const recommended = def.recommended?.[syllableKey(syl)]
-    return recommended ? sequencesOf([recommended]) : []
+    const key = syllableCacheKey(syl)
+    const cached = recommendedCache.get(key)
+    if (cached) return cached
+    const recommended = def.recommended?.[isZeroSyllable(syl) ? syl.final : `${syl.initial}${syl.final}`]
+    const result = recommended ? sequencesOf([recommended]) : []
+    recommendedCache.set(key, result)
+    return result
   }
 
   function compatOf(syl: SyllableSpec): string[][] {
-    return sequencesOf(def.compatCodes?.[syllableKey(syl)])
+    const key = syllableCacheKey(syl)
+    const cached = compatCache.get(key)
+    if (cached) return cached
+    const values = def.compatCodes?.[isZeroSyllable(syl) ? syl.final : `${syl.initial}${syl.final}`]
+    const result = sequencesOf(values)
+    compatCache.set(key, result)
+    return result
   }
 
   function compositionSequence(syl: SyllableSpec): string[][] {
-    return compositionOf(def, syl)
+    const key = syllableCacheKey(syl)
+    const cached = compositionCache.get(key)
+    if (cached) return cached
+    const result = compositionOf(def, syl)
+    compositionCache.set(key, result)
+    return result
   }
 
   function acceptedSequences(syl: SyllableSpec): string[][] {
+    const key = syllableCacheKey(syl)
+    const cached = acceptedCache.get(key)
+    if (cached) return cached
     // 顺序：推荐码 → 额外特殊码 → 基础组合；去重保序。
-    const merged = [...recommendedOf(syl), ...compatOf(syl), ...compositionSequence(syl)]
-    return sequencesOf(merged.map((sequence) => sequence.join('')))
+    const merged = [
+      ...recommendedOf(syl).map((sequence) => sequence.join('')),
+      ...compatOf(syl).map((sequence) => sequence.join('')),
+      ...compositionSequence(syl).map((sequence) => sequence.join('')),
+    ]
+    const result = sequencesOf(merged)
+    acceptedCache.set(key, result)
+    return result
+  }
+
+  /** accepted 序列的 join 缓存（judge 内部使用；与 acceptedSequences 同序同值） */
+  function acceptedJoined(syl: SyllableSpec): string[] {
+    const key = syllableCacheKey(syl)
+    const cached = acceptedJoinedCache.get(key)
+    if (cached) return cached
+    const result = acceptedSequences(syl).map((sequence) => sequence.join(''))
+    acceptedJoinedCache.set(key, result)
+    return result
   }
 
   function primarySequence(syl: SyllableSpec): string[] {
+    const key = syllableCacheKey(syl)
+    const cached = primaryCache.get(key)
+    if (cached) return cached
     const recommended = recommendedOf(syl)
-    if (recommended[0]) return recommended[0]
+    if (recommended[0]) {
+      primaryCache.set(key, recommended[0])
+      return recommended[0]
+    }
     const compat = compatOf(syl)
-    if (compat[0]) return compat[0]
-    return compositionSequence(syl)[0] ?? []
+    const result = compat[0] ?? compositionSequence(syl)[0] ?? []
+    primaryCache.set(key, result)
+    return result
   }
 
   function judge(input: string[] | string, syl: SyllableSpec): boolean {
     const typed = normalizeInput(input).join('')
-    return acceptedSequences(syl).some((sequence) => sequence.join('') === typed)
+    return acceptedJoined(syl).includes(typed)
   }
 
   function keysForAtom(atom: AtomId): string[] {
+    const cached = atomKeysCache.get(atom)
+    if (cached) return cached
+    let result: string[]
     const ref = parseAtomId(atom)
-    if (!ref) return []
-    if (ref.type === 'initial' || ref.type === 'final') {
+    if (!ref) result = []
+    else if (ref.type === 'initial' || ref.type === 'final') {
       const table: Record<string, string[]> = ref.type === 'initial' ? initials : finals
-      return lowerKeys(table[ref.key])
-    }
-    if (ref.type === 'zero') {
+      result = lowerKeys(table[ref.key])
+    } else if (ref.type === 'zero') {
       // 与课程数据 atomMeta 口径一致：零声母主键为「整段序列」单元素
       const sequence = primarySequence({
         initial: '',
         final: ref.key as Final,
         zeroInitial: true,
       })
-      return sequence.length > 0 ? [sequence.join('')] : []
+      result = sequence.length > 0 ? [sequence.join('')] : []
+    } else {
+      result = [] // 未知知识点
     }
-    return [] // 未知知识点
+    atomKeysCache.set(atom, result)
+    return result
   }
 
   function diff(): SchemeDiff {
-    return {
+    if (diffCache) return diffCache
+    diffCache = {
       freeInitials: [...freeSets.initials],
       learnInitials: Object.keys(initials).filter((name) => !freeSets.initials.has(name)),
       freeFinals: [...freeSets.finals],
@@ -198,9 +260,11 @@ export function createSchemeEngine(def: SchemeDef): SchemeEngine {
       learnZero: Object.keys(zeroInitial).filter((name) => !freeSets.zero.has(name)),
       freeZero: [...freeSets.zero],
     }
+    return diffCache
   }
 
   function keyMap(): LetterKey[][] {
+    if (keyMapCache) return keyMapCache
     const atomIdsByKey = new Map<string, AtomId[]>()
     const add = (key: string, atom: AtomId) => {
       if (!/^[a-z;]$/.test(key)) return
@@ -217,9 +281,10 @@ export function createSchemeEngine(def: SchemeDef): SchemeEngine {
     const rows = KEYBOARD_ROWS.map((row) => row.split(''))
     // 部分方案把韵母放在分号键（如微软/搜狗 ing=';'），仅在使用时补进主行
     if (atomIdsByKey.has(';')) rows[1]?.push(';')
-    return rows.map((row) =>
+    keyMapCache = rows.map((row) =>
       row.map((letter) => ({ letter, atomIds: atomIdsByKey.get(letter) ?? [] })),
     )
+    return keyMapCache
   }
 
   return {
@@ -252,6 +317,13 @@ function resolveSyllable(
 }
 
 /**
+ * analyzeSchemeCodes 的按方案缓存：同一份 SchemeDef 对象只分析一次
+ * （scripts 校验、课程 tips、web 入门课会重复调用）。
+ * 返回缓存对象本身，调用方只读；要修改请先自行拷贝。
+ */
+const ANALYSIS_CACHE = new WeakMap<SchemeDef, SchemeCodeAnalysis>()
+
+/**
  * 推荐码 / 兼容码分析（generate 与 web 入门课共用唯一口径）：
  * - composition：首个声母键 + 首个韵母键（零声母为第一条整段序列）；
  * - recommended：仅当数据存在时给出；recommendedOverride 表示它与组合不同；
@@ -259,6 +331,8 @@ function resolveSyllable(
  * 声母/韵母/free 的分组策略不在这里做（属于课程模板/展示策略）。
  */
 export function analyzeSchemeCodes(def: SchemeDef): SchemeCodeAnalysis {
+  const cached = ANALYSIS_CACHE.get(def)
+  if (cached) return cached
   const engine = createSchemeEngine(def)
   const syllables = [
     ...new Set([...Object.keys(def.recommended ?? {}), ...Object.keys(def.compatCodes ?? {})]),
@@ -307,5 +381,11 @@ export function analyzeSchemeCodes(def: SchemeDef): SchemeCodeAnalysis {
     })
   }
 
-  return { entries, unresolved, stats: { recommendedOverrides, compat: compatCount } }
+  const result: SchemeCodeAnalysis = {
+    entries,
+    unresolved,
+    stats: { recommendedOverrides, compat: compatCount },
+  }
+  ANALYSIS_CACHE.set(def, result)
+  return result
 }

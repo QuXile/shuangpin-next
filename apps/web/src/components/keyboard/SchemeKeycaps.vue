@@ -5,7 +5,7 @@
  */
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { createSchemeEngine, type SchemeDef } from '@shuangpin/core'
-import { isFallbackCaps, keycapsOf, scatterLayout, splitKeycapLines } from '@/lib/keyboardView'
+import { keycapsOf, scatterLayout, splitKeycapLines } from '@/lib/keyboardView'
 import { useSoundStore } from '@/stores/sound'
 import { useKeyInput } from '@/composables/useKeyInput'
 
@@ -26,7 +26,6 @@ const engine = computed(() => createSchemeEngine(props.scheme))
 const specs = computed(() => keycapsOf(props.text, engine.value))
 const caps = computed(() => specs.value.map((spec) => spec.key))
 const rows = computed(() => splitKeycapLines(specs.value, { singleRow: props.singleRow }))
-const isErrorCaps = computed(() => isFallbackCaps(specs.value))
 
 const rootRef = ref<HTMLElement | null>(null)
 /** 指针相对键帽区中心的归一化位置（-1..1），null 表示指针已离开 */

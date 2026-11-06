@@ -481,7 +481,7 @@ export function learnedSelectionOf(input: {
 }
 
 /** 两个 AtomSet 的三组集合是否完全相等。 */
-export function atomSetsEqual(left: AtomSet, right: AtomSet): boolean {
+function atomSetsEqual(left: AtomSet, right: AtomSet): boolean {
   const same = (a: ReadonlySet<string>, b: ReadonlySet<string>): boolean =>
     a.size === b.size && [...a].every((item) => b.has(item))
   return (

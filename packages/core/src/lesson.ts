@@ -389,28 +389,108 @@ export function buildSingleCharWords(input: StageInput): PracticeWord[] {
   return result.map((word) => buildPracticeWord(engine, word))
 }
 
-/** 目标音的逐音节出现次数（同一音在一个词中出现多次会计多次） */
-function targetCountsOf(word: WordEntry, focusAtoms: readonly AtomId[]): Map<AtomId, number> {
-  if (focusAtoms.length === 0) return new Map()
-  const focus = new Set(focusAtoms)
-  const counts = new Map<AtomId, number>()
+/** 单字是否包含指定 focus 原子（与选词口径一致：零声母音节只看 zero 原子）。 */
+function wordContainsAtom(
+  word: WordEntry,
+  type: 'initial' | 'final' | 'zero',
+  key: string,
+): boolean {
   for (const syllable of word.syllables) {
     if (syllable.initial === '') {
-      const atom = atomId('zero', syllable.final)
-      if (focus.has(atom)) counts.set(atom, (counts.get(atom) ?? 0) + 1)
+      if (type === 'zero' && syllable.final === key) return true
       continue
     }
-    const initialAtom = atomId('initial', syllable.initial)
-    if (focus.has(initialAtom)) counts.set(initialAtom, (counts.get(initialAtom) ?? 0) + 1)
-    const finalAtom = atomId('final', syllable.final)
-    if (focus.has(finalAtom)) counts.set(finalAtom, (counts.get(finalAtom) ?? 0) + 1)
+    if (type === 'initial' && syllable.initial === key) return true
+    if (type === 'final' && syllable.final === key) return true
   }
-  return counts
+  return false
+}
+
+function sameAtoms(left: readonly AtomId[], right: readonly AtomId[]): boolean {
+  if (left === right) return true
+  if (left.length !== right.length) return false
+  for (let index = 0; index < left.length; index += 1) {
+    if (left[index] !== right[index]) return false
+  }
+  return true
+}
+
+/** 稀疏 focus 的统计缓存：同一课/同一词表只扫描一次 5 万词，按目标词数缓存兜底字表。 */
+interface SparseFocusCache {
+  readonly words: readonly WordEntry[]
+  readonly chars: readonly WordEntry[]
+  readonly focusSnapshot: readonly AtomId[]
+  readonly support: Map<AtomId, number>
+  readonly extrasByExpected: Map<number, WordEntry[]>
+}
+
+const SPARSE_FOCUS_CACHE = new WeakMap<LessonDef, SparseFocusCache>()
+
+/** 词池单遍统计：每个 focus 原子的支撑词数（同一词内重复出现只记一次，与旧口径一致）。 */
+function countFocusSupport(focus: readonly AtomId[], words: readonly WordEntry[]): Map<AtomId, number> {
+  const zeroByKey = new Map<string, AtomId>()
+  const initialByKey = new Map<string, AtomId>()
+  const finalByKey = new Map<string, AtomId>()
+  const support = new Map<AtomId, number>()
+  for (const atom of focus) {
+    if (support.has(atom)) continue
+    support.set(atom, 0)
+    const ref = parseAtomId(atom)
+    if (!ref) continue
+    if (ref.type === 'initial') initialByKey.set(ref.key, atom)
+    else if (ref.type === 'final') finalByKey.set(ref.key, atom)
+    else zeroByKey.set(ref.key, atom)
+  }
+  const wordHits: AtomId[] = []
+  for (const word of words) {
+    wordHits.length = 0
+    for (const syllable of word.syllables) {
+      if (syllable.initial === '') {
+        const atom = zeroByKey.get(syllable.final)
+        if (atom && !wordHits.includes(atom)) wordHits.push(atom)
+        continue
+      }
+      const initialAtom = initialByKey.get(syllable.initial)
+      if (initialAtom && !wordHits.includes(initialAtom)) wordHits.push(initialAtom)
+      const finalAtom = finalByKey.get(syllable.final)
+      if (finalAtom && !wordHits.includes(finalAtom)) wordHits.push(finalAtom)
+    }
+    for (const atom of wordHits) support.set(atom, (support.get(atom) ?? 0) + 1)
+  }
+  return support
+}
+
+function sparseFocusCacheOf(
+  lesson: LessonDef,
+  pool: LessonPool,
+  focus: readonly AtomId[],
+): SparseFocusCache {
+  const cached = SPARSE_FOCUS_CACHE.get(lesson)
+  if (
+    cached &&
+    cached.words === pool.words &&
+    cached.chars === pool.chars &&
+    sameAtoms(cached.focusSnapshot, focus)
+  ) {
+    return cached
+  }
+  const entry: SparseFocusCache = {
+    words: pool.words,
+    chars: pool.chars,
+    focusSnapshot: [...focus],
+    support: countFocusSupport(focus, pool.words),
+    extrasByExpected: new Map(),
+  }
+  SPARSE_FOCUS_CACHE.set(lesson, entry)
+  return entry
 }
 
 /**
  * 「以字代词」候选：某个 focus 在词池里的合法词太少，连按目标词数均分后的
  * 期望候选都不够时，把该音的单字加入候选。不做替换、不设特殊标记。
+ *
+ * 实现：词池单遍统计每个 focus 的支撑词数（按词去重），再对稀疏 focus 扫描单字表；
+ * 统计结果与兜底字表按课程缓存（同一课换 seed/批次重新组卷时直接复用）。
  */
 function fallbackCharsForSparseFocus(
   lesson: LessonDef,
@@ -420,23 +500,24 @@ function fallbackCharsForSparseFocus(
   const focus = lesson.focusAtoms
   if (focus.length === 0) return []
   const expected = Math.ceil(target / focus.length)
-  const support = new Map<AtomId, number>(focus.map((atom) => [atom, 0]))
-  for (const word of pool.words) {
-    for (const atom of targetCountsOf(word, focus).keys()) {
-      support.set(atom, (support.get(atom) ?? 0) + 1)
-    }
-  }
+  const cache = sparseFocusCacheOf(lesson, pool, focus)
+  const cached = cache.extrasByExpected.get(expected)
+  if (cached) return cached
+
   const extra: WordEntry[] = []
   const seen = new Set<string>()
   for (const atom of focus) {
-    if ((support.get(atom) ?? 0) >= expected) continue
-    for (const word of pool.chars) {
+    if ((cache.support.get(atom) ?? 0) >= expected) continue
+    const ref = parseAtomId(atom)
+    if (!ref) continue
+    for (const word of cache.chars) {
       if (seen.has(word.text)) continue
-      if (!targetCountsOf(word, [atom]).has(atom)) continue
+      if (!wordContainsAtom(word, ref.type, ref.key)) continue
       seen.add(word.text)
       extra.push(word)
     }
   }
+  cache.extrasByExpected.set(expected, extra)
   return extra
 }
 

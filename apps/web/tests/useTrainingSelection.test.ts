@@ -10,9 +10,10 @@ vi.mock('@/lib/data', () => ({
   loadIndex: vi.fn(),
   loadScheme: vi.fn(),
   loadCurriculum: vi.fn(),
+  loadLexicon: vi.fn(),
 }))
 
-import { loadCurriculum, loadIndex, loadScheme } from '@/lib/data'
+import { loadCurriculum, loadIndex, loadLexicon, loadScheme } from '@/lib/data'
 import { STORAGE_KEYS, writeString } from '../src/lib/storage.ts'
 import { useCourseStore } from '../src/stores/course.ts'
 import { useTrainingSelection, type TrainingSelection } from '../src/composables/useTrainingSelection.ts'
@@ -69,11 +70,14 @@ describe('useTrainingSelection', () => {
     session = memoryStorage()
     vi.stubGlobal('window', { localStorage: local, sessionStorage: session })
     vi.stubGlobal('localStorage', local)
+    // 词表预热使用 requestIdleCallback：测试里不执行，避免残留异步任务。
+    vi.stubGlobal('requestIdleCallback', vi.fn())
     setActivePinia(createPinia())
 
     vi.mocked(loadIndex).mockResolvedValue(indexFixture)
     vi.mocked(loadScheme).mockImplementation(async (id: string) => ({ ...schemeDef, id }))
     vi.mocked(loadCurriculum).mockResolvedValue(curriculum)
+    vi.mocked(loadLexicon).mockResolvedValue({ words: [], chars: [], syllableExamples: {} })
   })
 
   afterEach(() => {
@@ -124,6 +128,20 @@ describe('useTrainingSelection', () => {
 
     selection.toggleInitial(learnInitial as string)
     expect(selection.hiddenInitials.value.has(learnInitial as string)).toBe(false)
+  })
+
+  it('隐藏映射变化不改变出现/焦点派生引用（练习场可用词不会无关重算）', async () => {
+    const selection = await setup()
+    const scopeBefore = selection.scope.value
+    const focusBefore = selection.focusAtomIds.value
+    const learnInitial = selection.selectableInitials.value[0] as string
+
+    selection.toggleHidden('drill', 'initial', learnInitial)
+    await nextTick()
+
+    expect(selection.hiddenInitials.value.has(learnInitial)).toBe(true)
+    expect(selection.scope.value).toBe(scopeBefore)
+    expect(selection.focusAtomIds.value).toBe(focusBefore)
   })
 
   it('配置变化自动持久化到集中键名', async () => {

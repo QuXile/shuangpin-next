@@ -40,7 +40,8 @@ export function publicDataPlan(schemeIndex) {
   return plan
 }
 
-function sha256Text(text) {
+/** 文本内容的 sha256（十六进制）；用于 public 产物的内容哈希与缓存失效判断。 */
+export function sha256Text(text) {
   return crypto.createHash('sha256').update(Buffer.from(text, 'utf8')).digest('hex')
 }
 

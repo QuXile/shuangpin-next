@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /** 映射标签区：继续学习与学习路线共用的溢出 / 截断 / 浮层逻辑。 */
-import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { nextTick, onMounted, ref, watch } from 'vue'
 import { useResizeObserver } from '@/composables/useResizeObserver'
 import type { FocusAtomView } from '@/lib/lessonView'
 import FocusTagList from '@/components/FocusTagList.vue'

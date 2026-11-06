@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { ChapterView, LessonView } from '@/lib/lessonView'
 import { lessonKindLabel } from '@/lib/lessonView'
 import MappingTagArea from './MappingTagArea.vue'
@@ -18,6 +19,11 @@ const props = withDefaults(
 )
 
 const emit = defineEmits<{ start: []; locate: [] }>()
+
+/** 本章已通过小节数：模板里不再对 lessons 做 filter 分配。 */
+const chapterPassedCount = computed(() =>
+  props.chapter ? props.chapter.lessons.filter((item) => item.state === 'passed').length : 0,
+)
 
 </script>
 
@@ -53,7 +59,7 @@ const emit = defineEmits<{ start: []; locate: [] }>()
       <div class="current-foot">
         <span class="current-progress">
           已完成 {{ passedCount }} / {{ lessonTotal }} 课
-          <template v-if="chapter"> · 本章 {{ chapter.lessons.filter((item) => item.state === 'passed').length }} / {{ chapter.lessons.length }} 小节</template>
+          <template v-if="chapter"> · 本章 {{ chapterPassedCount }} / {{ chapter.lessons.length }} 小节</template>
         </span>
         <span class="current-actions">
           <button

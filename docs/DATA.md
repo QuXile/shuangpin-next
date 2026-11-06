@@ -4,7 +4,7 @@
 
 数据源、运行时产物与校验流程，以及新增 / 适配双拼方案所需的规则。
 
-`data/` 是权威源数据；`apps/web/public/data/` 是 `pnpm data:sync` 生成的运行时副本。
+`data/` 是权威源数据；`apps/web/public/data/` 是 `pnpm data:sync` 生成的运行时副本（词表在同步时预解析为紧凑格式）。
 
 ## 目录
 
@@ -17,7 +17,7 @@ data/
       scheme.json           键位、推荐码、兼容编码
       curriculum.json       仅 5 套定制课程的课程数据
   lexicon/
-    lexicon.json            词表：entries（文本 + 词频）+ syllableExamples
+    lexicon.json            词表源数据：entries（文本 + 词频）+ syllableExamples
 ```
 
 通用课程没有课程文件：浏览器加载方案后由 core 按模板生成。运行时加载的文件为 `index.json`、`schemes/<id>.json`、5 套定制方案的 `curriculum/<id>.json`、`lexicon/lexicon.json`。
@@ -26,14 +26,14 @@ data/
 
 ```text
 data/（权威源数据）
-  → pnpm data:sync
-  → apps/web/public/data/（紧凑 JSON）
-  → lib/data.ts loader
-  → core（判题 / 课程生成 / 词表解析）
+  → pnpm data:sync（词表在此完成 pinyin-pro 预解析 + 紧凑编码）
+  → apps/web/public/data/（紧凑 JSON；词表 schemaVersion 3）
+  → lib/data.ts loader（词表 decodeRuntimeLexicon 解码）
+  → core（判题 / 课程生成 / 词表消费）
   → stores / composables / 页面
 ```
 
-Web 启动只加载 `index.json`，选定方案后加载 `scheme.json` 与词表元信息：定制方案再读取课程文件，其余方案直接用 `scheme.json` 生成通用课程。完整词表在进入教学 / 练习时加载并由 pinyin-pro 解析。
+Web 启动只加载 `index.json`，选定方案后加载 `scheme.json` 与词表元信息：定制方案再读取课程文件，其余方案直接用 `scheme.json` 生成通用课程。完整词表在进入教学 / 练习时加载：运行时只做 `JSON.parse` + `decodeRuntimeLexicon`（Node 实测约 24–28ms），不再调用 pinyin-pro；只有文章练习按需动态加载 pinyin-pro，按上下文解析任意文本。
 
 ## 方案索引 data/schemes/index.json
 
@@ -129,12 +129,27 @@ primary  = recommended ?? compatCodes[0] ?? composition[0]
 
 ## 词表 lexicon.json
 
-课程、入门课与练习场共用；只存文本与词频，不存拼音：
+课程、入门课与练习场共用。`data/` 源文件只存文本与词频，拼音由构建期解析后写入运行时产物：
 
 - `entries`：53,272 条，按词频降序；50,000 条 2–5 字词 + 3,272 个单字；
 - `syllableExamples`：405 个音节的代表字示例。
 
-拼音由 [pinyin-pro](https://github.com/zh-lx/pinyin-pro) 解析（`toneSandhi: false`，`ü → v`，轻声 0/5 映射为第 5 声）；运行时 Web 侧解析词表。文章练习不查词表，直接拆字后按上下文解析拼音。
+拼音由 [pinyin-pro](https://github.com/zh-lx/pinyin-pro) 解析（`toneSandhi: false`，`ü → v`，轻声 0/5 映射为第 5 声）。解析在 `pnpm data:sync` 时由 `scripts/lib/runtime-lexicon.mjs` 完成，浏览器不再逐词调用 pinyin-pro；文章练习不查词表，直接拆字后按上下文解析拼音。
+
+### 运行时词表格式（public/data/lexicon/lexicon.json，schemaVersion 3）
+
+构建期把源词表编码成紧凑格式，浏览器只解码：
+
+| 字段 | 内容 |
+|---|---|
+| `meta` | `sourceHash`（源数据归一化哈希）/ `resolverVersion`（解析口径版本）/ `pinyinVersion`（pinyin-pro 版本）/ `wordCount` / `charCount` / `syllableCount` |
+| `syllableTable` | 唯一 `["字","无声调拼音",声调]` 三元组（5,568 条）；解码时同一音节对象在所有词条间共享 |
+| `entries` | 保持源 `entries` 顺序的 `[freq, syllableId...]`（53,272 条；首项词频，其余为音节表下标，项数 − 1 = 词长）；解码按音节数分到 `words` / `chars` 并重新赋 `freqRank` |
+| `syllableExamples` | 原样透传 |
+
+解码结果与构建期 `resolveLexicon(source)`（`scripts/lib/pinyin-resolve.mjs`）逐字段一致：`words` / `chars` 的顺序与 `text` / `length` / `freq` / `freqRank` / `syllables`（`text` / `pinyin` / `initial` / `final` / `tone`）/ `chars`、以及 `syllableExamples` 全部相同。
+
+实测（Node 24）：旧运行时 `resolveLexicon` 解析约 300–390ms → 新 `JSON.parse + decodeRuntimeLexicon` 约 24–28ms；词表产物 937,807 字节（约 0.94 MB，gzip 约 321 KB），旧运行时副本 1,611,971 字节（约 1.61 MB）。`pnpm data:sync` 会把源数据哈希、解析口径版本与 pinyin-pro 版本写进 `meta`：三者未变化时直接复用上次产物（约 0.14s）；源数据变化 / 产物损坏 / 版本不一致时自动回退重新解析（约 0.5–0.6s），正确性优先。
 
 ### 生成词表
 
@@ -163,15 +178,15 @@ pnpm validate
 | `index.json` | `data/schemes/index.json` |
 | `schemes/<id>.json` | `data/schemes/<id>/scheme.json` |
 | `curriculum/<id>.json` | 5 套定制课程 |
-| `lexicon/lexicon.json` | `data/lexicon/lexicon.json` |
+| `lexicon/lexicon.json` | `data/lexicon/lexicon.json`（构建期预解析为 schemaVersion 3 紧凑格式） |
 
-共 26 个文件、约 1.7 MiB（词表约 1.6 MB）。`apps/web/public/data/` 由 `pnpm data:sync` 重建；Web 只通过 `apps/web/src/lib/data.ts` 读取。
+共 26 个文件、约 1.05 MB（词表约 0.94 MB）。`apps/web/public/data/` 由 `pnpm data:sync` 重建；Web 只通过 `apps/web/src/lib/data.ts` 读取。
 
-`scripts/sync-data.mjs` 单向、原子同步：校验索引一致性 → 紧凑 JSON 写入临时目录 → 整体替换目标目录 → 打印文件数与体积。`pnpm dev` / `pnpm build` 启动前自动同步。
+`scripts/sync-data.mjs` 单向、原子同步：校验索引一致性 → 紧凑 JSON 写入临时目录 → 整体替换目标目录 → 打印文件数与体积。词表额外带内容哈希缓存：`sourceHash` + `resolverVersion` 命中时复用上次产物，未命中 / 损坏 / 版本变化时重新解析并对产物做编码自检。`pnpm dev` / `pnpm build` 启动前自动同步。
 
 ## 版本
 
-数据文件不写版本字段；结构由校验器与 core 测试保证，public 副本由 `data:sync` 重建。
+`data/` 源文件中只有词表写 `schemaVersion`（2：仅文本 + 词频）；public 运行时词表为 schemaVersion 3（预解析紧凑格式，`meta` 记录源哈希与解析口径版本）。其余数据文件不写版本字段，结构由校验器与 core 测试保证，public 副本由 `data:sync` 重建。
 
 ## 校验 pnpm validate
 
@@ -182,7 +197,7 @@ pnpm validate
 | `schemes.mjs` | 索引一致；方案目录一致；每套方案可构造 engine；`engine-cases.json` 覆盖全部方案 |
 | `lexicon.mjs` | 词表规模下限；词条仅汉字且无重复；全部可解析；每个音节至少 1 个单字 |
 | `curriculum.mjs` | 5 套定制课程结构校验；14 套通用课程重新生成并校验结构 |
-| `public-data.mjs` | public 文件清单与 `data/` 一致；逐文件深相等且为紧凑 JSON |
+| `public-data.mjs` | public 文件清单与 `data/` 一致；词表用 encoder 按源重建 + web decoder 解码往返双重校验，其余文件深相等且为紧凑 JSON |
 | `docs.mjs` | 文档入口、README 导航、本地链接与废弃目录检查 |
 
 完整顺序：`pnpm data:sync` → `pnpm validate`（`pnpm verify` 已内置）。
@@ -367,4 +382,4 @@ pnpm verify       # 完整验证
 - 词表：50,000 条词语 + 3,272 个单字 + 405 个音节示例；
 - 判题用例：1,725 条正例 + 180 条反例；
 - 18 套有 `recommended` / `compatCodes`，`yunbiaokuaipin` 无多码；C 双拼兼容码 32 组、大牛双拼 12 组，其余 16 套各 4 组；
-- 运行时数据共 26 个文件、约 1.7 MiB。
+- 运行时数据共 26 个文件、约 1.05 MB（词表 0.94 MB，构建期预解析为 schemaVersion 3）。

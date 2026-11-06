@@ -21,7 +21,7 @@ apps/web/src/            App.vue / main.ts / router.ts
   components/            common / keyboard / layout / map / practice / intro / training
   stores/                course / progress / settings / sound / layout
   lib/                   data / lexicon / article / storage / dom / sessionSummary /
-                         keyboardView / lessonView / trainingSelection / audio / shortcuts
+                         keyboardView / lessonView / trainingSelection / viewCache / audio / shortcuts
   styles/                tokens.css + base.css
 packages/core/src/       types / pinyin / scheme / session / lesson / selector / training / progress / curriculum / index
 packages/core/tests/     领域单元测试 + data/ 契约测试
@@ -37,12 +37,12 @@ docs/                    文档入口见 README
 |---|---|
 | `types.ts` | 数据契约与运行期模型（Practice / Session / Stage / Progress） |
 | `pinyin.ts` | 拼音常量、规范化、音节拆分、声调显示、外部拼音 token → 音节、AtomId 与匹配谓词 |
-| `scheme.ts` | 方案引擎：判题、主键、键位图、free / learn 划分、推荐码与兼容码分析 |
+| `scheme.ts` | 方案引擎：判题、主键、键位图、free / learn 划分、推荐码与兼容码分析；音节/原子派生按 key 缓存，`analyzeSchemeCodes` 按 `SchemeDef` 缓存 |
 | `session.ts` | 会话状态机、输入跟踪（错误锁定 / 揭示 / keyErrors）、练习展示模型 |
 | `lesson.ts` | 阶段计划与门槛、评分与星级、组卷装配、单课词池、运行时原子展示与编码 tips |
 | `curriculum.ts` | 课程结构：定制课程补齐运行期字段、通用课程按方案生成 |
-| `selector.ts` | 确定性选词算法与随机原语，由 `lesson.ts` 调用 |
-| `training.ts` | 练习场范围过滤、文章拆字、条目 → 练习词批次、方案键位选项 |
+| `selector.ts` | 确定性选词算法与随机原语，由 `lesson.ts` 调用；focus 预解析 + 候选倒排表 + 候选池缓存（同 `engine` / 词表 / 课只过滤一次 5 万词） |
+| `training.ts` | 练习场范围过滤（Set 化 + 焦点预解析）、文章拆字、条目 → 练习词批次、方案键位选项 |
 | `progress.ts` | 课程解锁与进度规则 |
 | `index.ts` | 公共入口；只导出有真实消费者的符号 |
 
@@ -133,12 +133,15 @@ compositionSequence(syl) 纯声母×韵母组合（零声母为整段序列）
 index.json              SchemeIndexFile
 schemes/<id>.json       SchemeDef
 curriculum/<id>.json    5 套定制课程源数据
-lexicon/lexicon.json    Lexicon（entries + syllableExamples）
+lexicon/lexicon.json    运行时预编译词表（schemaVersion 3：meta + syllableTable + entries + syllableExamples）
 ```
 
 - 同一数据只加载一次，失败不缓存 rejected Promise；
-- `loadLexicon` 加载后由 `lib/lexicon.ts` 动态 `import('pinyin-pro')`（独立 chunk）解析成运行时 `WordEntry`；
-- 文章练习由 `lib/article.ts` 拆字后按上下文解析拼音，不查词表；无法表示读音的汉字跳过。
+- `lexicon/lexicon.json` 是构建期预编译的紧凑格式（`schemaVersion 3`）：同步时由 pinyin-pro 完成
+  5 万词条解析并编码为「唯一音节表 + 源顺序词条」，`loadLexicon` 在浏览器只做 `JSON.parse` +
+  `lib/lexicon.ts` 的 `decodeRuntimeLexicon`（音节对象全表共享，Node 实测约 25ms）；练习页不再加载 pinyin-pro；
+- 文章练习由 `lib/article.ts` 拆字后按上下文解析拼音（动态 `import('pinyin-pro')` 独立 chunk），不查词表；无法表示读音的汉字跳过；
+- 课程就绪后 `course` store 在 `requestIdleCallback` 里预热词表（尊重省流模式、失败静默），进入练习页直接命中缓存。
 
 课程加载：`App.vue` 启动 `course.init()` → `index.json` → 选择已保存方案 / 默认方案 → 加载 `scheme.json` 与词表元信息 → 课程：
 
@@ -151,7 +154,7 @@ lexicon/lexicon.json    Lexicon（entries + syllableExamples）
 
 | store | 职责 |
 |---|---|
-| `course` | 数据引导、方案切换与竞态防护、当前 scheme / curriculum / engine、课程选项与进度统计 |
+| `course` | 数据引导、方案切换与竞态防护、当前 scheme / curriculum / engine、课程选项与进度统计、词表空闲预热 |
 | `progress` | 按方案持久化课程进度、记录结果、清空 |
 | `settings` / `sound` / `layout` | 主题、音效、顶栏与底栏状态 |
 
@@ -168,7 +171,7 @@ lexicon/lexicon.json    Lexicon（entries + syllableExamples）
 
 ### lib 与页面
 
-`lib/` 无渲染纯函数：`data` / `lexicon` / `article` / `storage` / `dom` / `sessionSummary` / `keyboardView` / `lessonView` / `trainingSelection` / `audio` / `shortcuts`。
+`lib/` 无渲染纯函数：`data` / `lexicon`（运行时词表解码 + 文章拼音 token）/ `article` / `storage` / `dom` / `sessionSummary` / `keyboardView` / `lessonView` / `trainingSelection` / `viewCache`（按内容复用渲染视图）/ `audio` / `shortcuts`。
 
 - `lessonView`：focus 视图、记忆锚点、本课技巧、章节课程视图；记忆锚点由 `core.buildAtomMemory` 实时派生，编码 tips 由 `core.buildLessonCodeTips` 实时合并；
 - 页面：`LearnMapPage`（Hero、继续学习、进度、键位图、章节路线）、`PracticePage`（教学 / 练习阶段编排）、`TrainingPage`（专项与文章练习）；
@@ -189,18 +192,31 @@ lexicon/lexicon.json    Lexicon（entries + syllableExamples）
 ## 数据契约与版本
 
 - 源数据：`data/schemes/index.json`、`data/schemes/<id>/scheme.json`、`customCourses` 内的 `curriculum.json`、`data/lexicon/lexicon.json`；
-- 运行时副本：`apps/web/public/data/` 的 `index.json`、19 套方案、5 套定制课程与词表，由 `pnpm data:sync` 原子重建；
+- 运行时副本：`apps/web/public/data/` 的 `index.json`、19 套方案、5 套定制课程与词表（`schemaVersion 3` 运行时预编译格式），由 `pnpm data:sync` 原子重建；
 - 通用课程不落盘，运行时由 `buildUniversalCurriculum(scheme)` 生成。
 
 
 `LessonDef` 运行期字段：`focusAtoms / blockingAtoms / nonBlockingAtoms / prerequisites / wordPlan / passCriteria? / tips?`。只有 initial / final 阻塞选词；`prerequisites` = 入门课后加入的全部全拼沿用原子 + 此前 focus 的累计集合；章末复习只覆盖本章原子，期中 / 综合 / 期末使用累计范围。源文件只保存结构与人工文案，其余字段在运行时派生。
 
+## 性能设计
+
+- **词表预编译**：5 万词条的拼音解析从浏览器移到 `pnpm data:sync`，运行期只解码紧凑格式；
+  练习页准备耗时由「解析 ~300ms + 加载 pinyin-pro chunk」降为「解码 ~25ms」，pinyin-pro 只在文章练习按需加载；
+- **方案引擎缓存**：`acceptedSequences / primarySequence / compositionSequence / keysForAtom / keyMap / diff`
+  按音节或原子缓存并在引擎实例内复用；`analyzeSchemeCodes` 按方案身份缓存；
+- **选词热路径**：focus 原子在入口预解析，候选按 focus 建立倒排表，权重增量维护；
+  同一 `engine` / 词表 / 课程的候选池跨调用缓存（换 seed 只重置选择状态），通关考核组卷由约 390ms 降到约 4–5ms，且同 seed 结果与旧实现逐词一致；
+- **渲染复用**：练习流与文章网格按内容复用单元/行视图（`lib/viewCache`）配合 `v-memo`，
+  长列表按键时只更新当前字的卡片；键位图/差异等派生进入 computed，避免模板内联重算；
+- **体积**：`apps/web/public/data/` 由约 1.7 MiB 降到约 1.05 MiB（词表 1.61 MB → 0.94 MB）；
+- **基准**：`pnpm bench`（`scripts/bench-core.mjs`）用 Node 原生执行 core，输出各热路径耗时；不进入 `verify`。
+
 ## 数据体积
 
-- `data/` 源数据约 764 KB（19 套方案 + 5 套定制课程 + 词表 + 判题用例）；
-- `apps/web/public/data/` 约 1.7 MiB / 26 个文件，其中词表约 1.6 MB；
+- `data/` 源数据约 3.5 MiB（19 套方案 + 5 套定制课程 + 词表 + 判题用例，2 空格缩进）；
+- `apps/web/public/data/` 约 1.05 MiB / 26 个文件，其中词表约 0.94 MiB（gzip 约 321 KB）；
 - 通用课程不占运行时数据，只增加 core 中约 20 KB 的生成代码；
-- 词表在进入教学 / 练习时加载，pinyin-pro 作为独立 chunk 按需加载。
+- 词表在进入教学 / 练习时加载并解码（约 25ms）；pinyin-pro 独立 chunk 仅在文章练习按需加载。
 
 ## 构建与发布
 
@@ -211,7 +227,8 @@ pnpm test             # core + web 单元测试
 pnpm typecheck        # core tsc + web vue-tsc
 pnpm lint:ui          # UI 约定检查
 pnpm data:lexicon     # 重建词表
-pnpm data:sync        # data/ → apps/web/public/data/
+pnpm data:sync        # data/ → apps/web/public/data/（含词表预编译与缓存）
+pnpm bench            # core 热路径基准（不进入 verify）
 pnpm validate         # 五域数据与文档校验
 pnpm verify           # typecheck + lint:ui + data:sync + test + build + validate
 ```

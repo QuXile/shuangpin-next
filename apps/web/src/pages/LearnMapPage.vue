@@ -24,7 +24,8 @@ const router = useRouter()
 const course = useCourseStore()
 const progress = useProgressStore()
 const sound = useSoundStore()
-const { engine, freeAtomIds } = useSchemeView()
+// 键位图/改造声母直接复用 useSchemeView 的 computed，模板不再每次渲染都调用 engine
+const { engine, keyMapRows, specialInitials, freeAtomIds } = useSchemeView()
 const status = computed(() => course.status)
 const error = computed(() => course.error)
 function retry(): void {
@@ -230,6 +231,10 @@ const currentId = computed(() => course.currentLesson())
 const heroPanelRef = ref<InstanceType<typeof SchemeHero> | null>(null)
 /** 继续学习卡固定跟随 Hero 高度，避免映射多时反向撑高 Hero。 */
 const heroHeight = ref<number | null>(null)
+/** 高度样式对象按 heroHeight 缓存，地图重渲染时不再重复分配。 */
+const heroCardStyle = computed(() =>
+  heroHeight.value ? { height: `${heroHeight.value}px` } : undefined,
+)
 let heroResizeObserver: ResizeObserver | undefined
 
 function updateHeroHeight(): void {
@@ -274,12 +279,20 @@ onBeforeUnmount(() => {
 const currentLesson = computed(() =>
   currentId.value ? course.getLesson(currentId.value) : undefined,
 )
-const currentLessonView = computed(() =>
-  chapters.value.flatMap((chapter) => chapter.lessons).find((lesson) => lesson.id === currentId.value) ?? null,
-)
-const currentChapterView = computed(() =>
-  chapters.value.find((chapter) => chapter.lessons.some((lesson) => lesson.id === currentId.value)) ?? null,
-)
+/** 当前课程视图与所在章节一次遍历得到，避免模板外的两次全量查找。 */
+const currentViews = computed(() => {
+  const id = currentId.value
+  for (const chapter of chapters.value) {
+    for (const lesson of chapter.lessons) {
+      if (lesson.id === id) return { lesson, chapter }
+    }
+  }
+  return { lesson: null, chapter: null }
+})
+const currentLessonView = computed(() => currentViews.value.lesson)
+const currentChapterView = computed(() => currentViews.value.chapter)
+/** Hero 标语是固定常量：提到 setup 里，避免模板每次渲染新建数组导致 Hero 子组件重渲染。 */
+const heroTitleLines = ['学习双拼', '让输入成为直觉'] as const
 const schemeName = computed(() => course.scheme?.name ?? '双拼方案')
 const completedChapterCount = computed(() => completedChapterIds(chapters.value).length)
 /** 已通过课程的平均星级；没有已通过课程时返回 null，由卡片显示占位。 */
@@ -331,9 +344,6 @@ function clearProgress(): void {
   progress.clear()
   resetChapterCollapse()
 }
-
-const schemeOptions = computed(() => course.allSchemeOptions)
-const primarySchemeIds = computed(() => course.schemeOptions.map((option) => option.id))
 
 async function changeScheme(id: string): Promise<void> {
   if (!id || id === course.schemeId) return
@@ -444,10 +454,10 @@ useGlobalKeys(bindings)
         <SchemeHero
           ref="heroPanelRef"
           eyebrow="SHUANGPIN · DAILY PRACTICE"
-          :title-lines="['学习双拼', '让输入成为直觉']"
+          :title-lines="heroTitleLines"
           :keycap-text="schemeName"
-          :scheme-options="schemeOptions"
-          :primary-scheme-ids="primarySchemeIds"
+          :scheme-options="course.allSchemeOptions"
+          :primary-scheme-ids="course.primarySchemeIds"
           :scheme-id="course.schemeId"
           :scheme="course.scheme"
           :busy="busy"
@@ -459,7 +469,7 @@ useGlobalKeys(bindings)
           :current-title="currentTitle"
           :passed-count="course.passedCount"
           :lesson-total="course.lessons.length"
-          :style="heroHeight ? { height: `${heroHeight}px` } : undefined"
+          :style="heroCardStyle"
           @start="startCurrent"
           @locate="locateCurrentLesson"
         />
@@ -467,8 +477,8 @@ useGlobalKeys(bindings)
 
       <div class="workspace">
         <MapKeymapPanel
-          :rows="engine?.keyMap() ?? []"
-          :special-initials="engine?.diff().learnInitials ?? []"
+          :rows="keyMapRows"
+          :special-initials="specialInitials"
           :zero-initials="course.scheme?.zeroInitial"
           :compat-codes="course.scheme?.compatCodes"
           :free-atom-ids="freeAtomIds"

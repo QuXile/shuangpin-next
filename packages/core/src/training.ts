@@ -18,7 +18,7 @@ import type {
   TrainingScope,
   WordEntry,
 } from './types.ts'
-import { atomId } from './pinyin.ts'
+import { parseAtomId } from './pinyin.ts'
 import { freeAtomsOf } from './scheme.ts'
 import { buildPracticeWord } from './session.ts'
 import { shuffleSeeded } from './selector.ts'
@@ -61,15 +61,38 @@ export function syllableInTrainingScope(
   return scope.finals.includes(syllable.final) && scope.initials.includes(syllable.initial)
 }
 
-/** 词是否命中至少一个焦点原子（焦点为空时不限制）。 */
-function entryMatchesFocus(entry: WordEntry, focusAtoms: ReadonlySet<AtomId>): boolean {
-  if (focusAtoms.size === 0) return true
-  return entry.syllables.some((syllable) =>
-    syllable.initial === ''
-      ? focusAtoms.has(atomId('zero', syllable.final))
-      : focusAtoms.has(atomId('initial', syllable.initial)) ||
-        focusAtoms.has(atomId('final', syllable.final)),
-  )
+/** 焦点原子按类型拆成 key 集合：过滤热路径按音节直接查，避免每词构造 AtomId。 */
+function focusKeySets(focusAtoms: readonly AtomId[]): FocusKeySets | null {
+  if (focusAtoms.length === 0) return null
+  const result: FocusKeySets = {
+    initials: new Set<string>(),
+    finals: new Set<string>(),
+    zero: new Set<string>(),
+  }
+  for (const atom of focusAtoms) {
+    const ref = parseAtomId(atom)
+    if (!ref) continue
+    if (ref.type === 'initial') result.initials.add(ref.key)
+    else if (ref.type === 'final') result.finals.add(ref.key)
+    else result.zero.add(ref.key)
+  }
+  return result
+}
+
+interface FocusKeySets {
+  initials: Set<string>
+  finals: Set<string>
+  zero: Set<string>
+}
+
+/** 音节是否命中焦点原子（焦点为空时不应调用本函数）。 */
+function syllableMatchesFocus(
+  syllable: { initial: string; final: string },
+  focus: FocusKeySets | null,
+): boolean {
+  if (!focus) return false
+  if (syllable.initial === '') return focus.zero.has(syllable.final)
+  return focus.initials.has(syllable.initial) || focus.finals.has(syllable.final)
 }
 
 /** 过滤训练条目：空音节或任一音节不命中即排除；focusAtoms 非空时还要求词命中焦点。 */
@@ -78,13 +101,38 @@ export function filterTrainingEntries<T extends WordEntry>(
   scope: TrainingScope,
   focusAtoms: readonly AtomId[] = [],
 ): T[] {
-  const focus = new Set(focusAtoms)
-  return entries.filter(
-    (entry) =>
-      entry.syllables.length > 0 &&
-      entry.syllables.every((syllable) => syllableInTrainingScope(syllable, scope)) &&
-      entryMatchesFocus(entry, focus),
-  )
+  const scopeInitials = new Set(scope.initials)
+  const scopeFinals = new Set(scope.finals)
+  // zeroFinals 缺省 = 旧口径「空声母在 initials 里」；显式给出（含空数组）则按零声母集合判定。
+  const scopeZero = scope.zeroFinals ? new Set(scope.zeroFinals) : null
+  const focus = focusKeySets(focusAtoms)
+
+  const result: T[] = []
+  for (const entry of entries) {
+    if (entry.syllables.length === 0) continue
+    let matched = true
+    let focusHit = focus === null
+    for (const syllable of entry.syllables) {
+      if (syllable.initial === '') {
+        const inScope = scopeZero
+          ? scopeZero.has(syllable.final)
+          : scopeInitials.has('') && scopeFinals.has(syllable.final)
+        if (!inScope) {
+          matched = false
+          break
+        }
+        if (!focusHit && syllableMatchesFocus(syllable, focus)) focusHit = true
+      } else {
+        if (!scopeFinals.has(syllable.final) || !scopeInitials.has(syllable.initial)) {
+          matched = false
+          break
+        }
+        if (!focusHit && syllableMatchesFocus(syllable, focus)) focusHit = true
+      }
+    }
+    if (matched && focusHit) result.push(entry)
+  }
+  return result
 }
 
 /** 解析文章：只留汉字，非汉字断行且不显示，每行最多 5 字 */

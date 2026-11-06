@@ -36,7 +36,6 @@ const {
   revealed,
   wrongInputs,
   tutorialWords,
-  engine,
   scheme,
   introWords,
   focusItems,
@@ -94,6 +93,9 @@ function tierStars(tier: MetricTier | null): string {
   if (!tier || tier.stars === null) return ''
   return tier.stars === 0 ? '0★' : '★'.repeat(tier.stars)
 }
+// 模板对同一档位要查询两次（显隐 + 文本）：只算一次，避免每次按键重复拼星星字符串。
+const accuracyStars = computed(() => tierStars(accuracyTier.value))
+const speedStars = computed(() => tierStars(speedTier.value))
 
 const introRef = ref<InstanceType<typeof IntroLesson> | null>(null)
 function onKeymapKey(letter: string): void {
@@ -206,9 +208,9 @@ useBottomDockContent(() => dockContent.value)
             :class="{ 'session-danger': accuracyBelowTarget }"
           >
             正确率 {{ accuracyPercent }}%<span
-              v-if="tierStars(accuracyTier)"
+              v-if="accuracyStars"
               class="session-stars"
-            >{{ tierStars(accuracyTier) }}</span>
+            >{{ accuracyStars }}</span>
           </span>
           <span v-else class="session-item">正确率 --%</span>
           <span class="session-sep" aria-hidden="true">·</span>
@@ -218,9 +220,9 @@ useBottomDockContent(() => dockContent.value)
               :class="{ 'session-danger': speedBelowTarget, 'session-speed': !speedBelowTarget }"
             >
               速度 {{ cpm }} WPM<span
-                v-if="tierStars(speedTier)"
+                v-if="speedStars"
                 class="session-stars"
-              >{{ tierStars(speedTier) }}</span>
+              >{{ speedStars }}</span>
             </span>
           </template>
           <span v-else class="session-item">速度 -- WPM</span>

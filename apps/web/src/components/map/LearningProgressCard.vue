@@ -26,6 +26,10 @@ const percentText = computed(() => (started.value ? String(props.progressPercent
 const averageStarsText = computed(() =>
   props.averageStars === null ? '--' : props.averageStars.toFixed(1),
 )
+/** 进度条宽度：模板里不再每次渲染重复 Math.min/Math.max，也不重复创建 style 对象。 */
+const trackStyle = computed(() => ({ width: `${Math.min(100, Math.max(0, props.progressPercent))}%` }))
+/** 百分比字号变量：只在 percentSize 变化时重建样式对象。 */
+const percentStyle = computed(() => ({ '--percent-size': `${percentSize.value}px` }))
 
 const percentWrap = ref<HTMLElement | null>(null)
 const percentSize = ref(64)
@@ -87,7 +91,7 @@ onBeforeUnmount(() => observer?.disconnect())
       </div>
     </CardHeader>
 
-    <div ref="percentWrap" class="learning-percent-wrap" :style="{ '--percent-size': `${percentSize}px` }">
+    <div ref="percentWrap" class="learning-percent-wrap" :style="percentStyle">
       <div class="learning-percent" :class="{ 'is-empty': !started }">
         <b>{{ percentText }}<span v-if="started">%</span></b>
         <span class="pct-label">已完成</span>
@@ -95,7 +99,7 @@ onBeforeUnmount(() => observer?.disconnect())
     </div>
 
     <div class="learning-track" role="progressbar" :aria-valuenow="progressPercent" aria-valuemin="0" aria-valuemax="100">
-      <i :style="{ width: `${Math.min(100, Math.max(0, progressPercent))}%` }" />
+      <i :style="trackStyle" />
     </div>
 
     <div class="learning-stats">

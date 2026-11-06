@@ -8,6 +8,7 @@ import type { AtomId, SessionState } from '@shuangpin/core'
 import CharacterCard from './CharacterCard.vue'
 import SessionSummaryCard from './SessionSummaryCard.vue'
 import type { EndPromptView } from '@/composables/usePractice'
+import { reuseIfEqual, reuseRowIfEqual, sameStringList } from '@/lib/viewCache'
 
 const props = withDefaults(
   defineProps<{
@@ -48,6 +49,9 @@ const emit = defineEmits<{
   endless: []
 }>()
 
+/** 共享空输入数组：大量未开始的字共用同一引用，避免每次重算都分配空数组。 */
+const EMPTY_INPUT_KEYS: string[] = []
+
 interface CellView {
   active: boolean
   completed: boolean
@@ -57,7 +61,7 @@ interface CellView {
 }
 
 const viewport = ref<HTMLElement | null>(null)
-const rowEls = ref<HTMLElement[]>([])
+const streamInner = ref<HTMLElement | null>(null)
 const promptEl = ref<HTMLElement | null>(null)
 const endEl = ref<HTMLElement | null>(null)
 /** 当前练习视口可容纳的总结卡高度；由 ResizeObserver 随容器更新 */
@@ -78,10 +82,6 @@ const stageSummary = computed(() => {
   }
 })
 
-function setRowEl(el: Element | null, index: number): void {
-  if (el instanceof HTMLElement) rowEls.value[index] = el
-}
-
 function cellView(wordIndex: number, charIndex: number, capKeys: readonly string[], wordState: SessionState['words'][number]): CellView {
   const session = props.session
   const finished = session.phase === 'finished'
@@ -93,30 +93,63 @@ function cellView(wordIndex: number, charIndex: number, capKeys: readonly string
   const active = !finished && wordIndex === session.index && charIndex === currentChar
   const wrong = active ? props.wrongInputs.get(key) : undefined
   const historyInput = wordState.charInputs?.[charIndex]
-  const input = wrong ?? (active ? (currentWord?.input ?? []) : completed ? (historyInput ? [...historyInput] : [...capKeys]) : [])
+  const input = wrong ?? (active ? (currentWord?.input ?? []) : completed ? (historyInput ?? capKeys) : [])
   const inputState: CellView['inputState'] = wrong ? 'wrong' : completed ? 'correct' : 'idle'
   return {
     active,
     completed,
-    input,
+    input: input.length > 0 ? [...input] : EMPTY_INPUT_KEYS,
     revealed: props.revealed.has(key),
     inputState,
   }
 }
 
-/** 预先计算每个字的展示状态，避免模板里重复调用 cellView。 */
-const cellRows = computed<CellView[][]>(() =>
-  props.session.words.map((wordState, wordIndex) =>
-    wordState.word.syllables.map((syllable, charIndex) =>
-      cellView(wordIndex, charIndex, syllable.caps.map((cap) => cap.key), wordState),
-    ),
-  ),
-)
+function sameCellView(left: CellView, right: CellView): boolean {
+  return (
+    left.active === right.active &&
+    left.completed === right.completed &&
+    left.inputState === right.inputState &&
+    left.revealed === right.revealed &&
+    sameStringList(left.input, right.input)
+  )
+}
+
+/** 上一帧的单元/行视图缓存：内容未变的字与行复用旧引用，按键时只有真正变化的字卡重渲染。 */
+let previousCells = new Map<string, CellView>()
+let previousRows: CellView[][] = []
+
+/**
+ * 预先计算每个字的展示状态，避免模板里重复调用 cellView。
+ * 每次按键 session 都是新对象，这里按内容比较后复用旧视图，
+ * 让 CharacterCard 的 props 保持稳定，整条练习流只重渲染当前字。
+ */
+const cellRows = computed<CellView[][]>(() => {
+  const nextCells = new Map<string, CellView>()
+  const rows = props.session.words.map((wordState, wordIndex) =>
+    wordState.word.syllables.map((syllable, charIndex) => {
+      const key = `${wordIndex}:${charIndex}`
+      const candidate = cellView(
+        wordIndex,
+        charIndex,
+        syllable.caps.map((cap) => cap.key),
+        wordState,
+      )
+      const cell = reuseIfEqual(previousCells.get(key), candidate, sameCellView)
+      nextCells.set(key, cell)
+      return cell
+    }),
+  )
+  // 整行内容不变时复用行数组，供模板的 v-memo 命中。
+  const stableRows = rows.map((cells, index) => reuseRowIfEqual(previousRows[index], cells))
+  previousCells = nextCells
+  previousRows = stableRows
+  return stableRows
+})
 
 /** 把活动行滚到视口垂直居中（上下边界 clamp） */
 function centerRow(index: number): void {
   const root = viewport.value
-  const el = rowEls.value[index]
+  const el = streamInner.value?.children[index] as HTMLElement | undefined
   if (!root || !el) return
   const max = Math.max(0, root.scrollHeight - root.clientHeight)
   const target = el.offsetTop - (root.clientHeight - el.offsetHeight) / 2
@@ -149,9 +182,9 @@ function revealPrompt(): void {
   revealElement(promptEl.value)
 }
 
-/** 仅在当前行变化（或追加批次）时滚动，避免逐字抖动 */
+/** 仅在当前行变化（或追加批次）时滚动，避免逐字抖动（数组监听按值比较，不因 session 更新而重复触发） */
 watch(
-  () => [currentWordIndex.value, props.session.words.length] as const,
+  [currentWordIndex, () => props.session.words.length],
   async ([index]) => {
     await nextTick()
     if (props.prompt) {
@@ -199,11 +232,11 @@ onBeforeUnmount(() => promptResizeObserver?.disconnect())
   <div class="stream-shell">
     <p class="sr-only" aria-live="polite">{{ liveMessage }}</p>
     <div ref="viewport" class="stream-viewport thin-scroll scroll-y">
-      <div class="stream-inner" :class="`is-${mode}`">
+      <div ref="streamInner" class="stream-inner" :class="`is-${mode}`">
         <div
           v-for="(wordState, wordIndex) in session.words"
           :key="wordIndex"
-          :ref="(el) => setRowEl(el as Element | null, wordIndex)"
+          v-memo="[cellRows[wordIndex], wordState, focusAtoms, focusBadge, tier, hiddenAtoms, hideZero]"
           class="stream-word"
           :class="{
             'is-active': wordIndex === session.index,

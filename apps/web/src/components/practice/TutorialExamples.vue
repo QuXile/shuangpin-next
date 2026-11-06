@@ -63,6 +63,9 @@ const padBottom = computed(() => {
   if (!windowed.value || rowHeight.value <= 0) return 0
   return Math.max(0, (rowCount.value - windowEndRow.value) * rowHeight.value)
 })
+/** 占位块样式：高度只在窗口变化时重建，模板不再每次渲染创建 style 对象。 */
+const padTopStyle = computed(() => ({ height: `${Math.max(0, padTop.value - GRID_GAP)}px` }))
+const padBottomStyle = computed(() => ({ height: `${Math.max(0, padBottom.value - GRID_GAP)}px` }))
 
 function syncWidth(): void {
   const el = gridRef.value
@@ -134,7 +137,7 @@ watch(
       <div
         v-if="padTop > 0"
         class="example-spacer"
-        :style="{ height: `${Math.max(0, padTop - GRID_GAP)}px` }"
+        :style="padTopStyle"
         aria-hidden="true"
       />
       <CharacterCard
@@ -154,7 +157,7 @@ watch(
       <div
         v-if="padBottom > 0"
         class="example-spacer"
-        :style="{ height: `${Math.max(0, padBottom - GRID_GAP)}px` }"
+        :style="padBottomStyle"
         aria-hidden="true"
       />
     </div>

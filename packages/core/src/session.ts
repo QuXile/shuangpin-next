@@ -20,6 +20,7 @@
  */
 import type {
   AtomId,
+  ExtendWordsOptions,
   KeyErrorDetail,
   KeyErrorEntry,
   KeyResult,
@@ -39,12 +40,12 @@ import type {
   WordEntry,
   WordSyllable,
 } from './types.ts'
-import { detectTone, normalizePinyin, splitPinyin, toToneMarks } from './pinyin.ts'
+import { detectTone, isZeroSyllable, normalizePinyin, splitPinyin, toToneMarks } from './pinyin.ts'
 
 // ── 展示模型（原 practice.ts） ────────────────────────────────
 
 function buildCaps(syllable: SyllableSpec, primary: readonly string[]): PracticeCap[] {
-  const zeroInitial = syllable.zeroInitial === true || syllable.initial === ''
+  const zeroInitial = isZeroSyllable(syllable)
   return primary.map((key, index) => ({
     key,
     role: !zeroInitial && index === 0 ? 'initial' : 'final',
@@ -314,11 +315,6 @@ export function createSession(options: SessionOptions): SessionState {
     keyErrors: new Map(),
     keyErrorDetails: new Map(),
   }
-}
-
-/** 延伸批次选项：批次末词完成后调用，返回空数组表示结束延伸（会话结束） */
-export interface ExtendWordsOptions {
-  extendWords?: () => PracticeWord[]
 }
 
 /** 应用一次按键（key 归一化为小写单字符；非法输入忽略） */

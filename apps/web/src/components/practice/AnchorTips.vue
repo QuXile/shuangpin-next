@@ -1,29 +1,42 @@
 <script setup lang="ts">
 /** 课程技巧的记忆锚点行：声母/韵母/零声母 + 主键/兼用键 + 助记 + 同键示例字。 */
+import { computed } from 'vue'
 import type { AnchorView } from '@/lib/lessonView'
 
-defineProps<{ rows: readonly AnchorView[] }>()
+const props = defineProps<{ rows: readonly AnchorView[] }>()
+
+interface AnchorRowView extends AnchorView {
+  /** 展示用：标签/主键/兼用键一次性算好，模板不再每次渲染重新分配字符串与数组 */
+  labelText: string
+  primaryKey: string
+  altKeysText: string
+  showAnchors: boolean
+}
+
+const viewRows = computed<AnchorRowView[]>(() =>
+  props.rows.map((row) => ({
+    ...row,
+    labelText: row.label.toUpperCase(),
+    primaryKey: row.keys[0]?.toUpperCase() ?? '',
+    altKeysText: row.keys.length > 1 ? row.keys.slice(1).map((key) => key.toUpperCase()).join(' / ') : '',
+    showAnchors:
+      row.anchors.length > 0 &&
+      !row.mnemonic?.startsWith('同键韵母字：') &&
+      !row.mnemonic?.startsWith('同键声母字：'),
+  })),
+)
 </script>
 
 <template>
   <div class="anchors-list">
-    <div v-for="row in rows" :key="row.atomId" class="anchor-row">
-      <span class="anchor-label" :class="`is-${row.type}`">{{ row.label.toUpperCase() }}</span>
+    <div v-for="row in viewRows" :key="row.atomId" class="anchor-row">
+      <span class="anchor-label" :class="`is-${row.type}`">{{ row.labelText }}</span>
       <span v-if="row.keys.length" class="anchor-key">
-        <b>{{ row.keys[0]?.toUpperCase() }}</b> 键
-        <span v-if="row.keys.length > 1" class="anchor-alt">
-          兼用 {{ row.keys.slice(1).map((key) => key.toUpperCase()).join(' / ') }}
-        </span>
+        <b>{{ row.primaryKey }}</b> 键
+        <span v-if="row.keys.length > 1" class="anchor-alt">兼用 {{ row.altKeysText }}</span>
       </span>
       <span v-if="row.mnemonic" class="anchor-mnemonic">{{ row.mnemonic }}</span>
-      <span
-        v-if="
-          row.anchors.length &&
-          !row.mnemonic?.startsWith('同键韵母字：') &&
-          !row.mnemonic?.startsWith('同键声母字：')
-        "
-        class="anchor-chips"
-      >
+      <span v-if="row.showAnchors" class="anchor-chips">
         <span v-for="anchor in row.anchors" :key="anchor" class="anchor-chip">{{ anchor }}</span>
       </span>
     </div>
