@@ -29,6 +29,12 @@ watch(
   },
 )
 
+/** 只有快捷键列表内部允许原生滚轮；面板空白处与外层遮罩捕获滚轮，避免穿透页面。 */
+function onWheel(event: WheelEvent): void {
+  if (groupsEl.value?.contains(event.target as Node)) return
+  event.preventDefault()
+}
+
 function onKeydown(event: KeyboardEvent): void {
   if (!layout.shortcutHelpVisible) return
   if (event.key === 'Escape' || event.key === '?') {
@@ -83,6 +89,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown, true))
       v-if="layout.shortcutHelpVisible"
       class="shortcut-overlay"
       @click.self="close"
+      @wheel="onWheel"
     >
       <section
         class="shortcut-dialog"
@@ -186,6 +193,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown, true))
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
   scrollbar-gutter: stable;
   padding: 18px 24px 10px;
   display: flex;
