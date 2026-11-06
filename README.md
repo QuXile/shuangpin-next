@@ -2,7 +2,7 @@
 
 给已经熟练全拼、想学双拼的人：一条从「认识键位」到「能真的打字」的完整学习路线。
 
-在线体验：<https://quxile.github.io/shuangpin-next/> · 版本 1.6.4
+在线体验：<https://quxile.github.io/shuangpin-next/> · 版本 1.6.5
 
 如果这个项目对你有帮助，欢迎在 [GitHub](https://github.com/QuXile/shuangpin-next) 点一个 **Star**；遇到问题或有课程 / 键位上的建议，欢迎直接开 [Issue](https://github.com/QuXile/shuangpin-next/issues)。
 
