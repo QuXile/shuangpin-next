@@ -74,7 +74,7 @@ progress  (5)  lessonState canStartLesson nextLessonId currentLessonId passedLes
 - 23 个声母、33 个韵母（ü 记 v，`ue` / `ve` 并存）、12 个零声母音节；
 - `AtomId = initial:<声母> | final:<韵母> | zero:<零声母音节>`；
 - 知识点严格按类型命中：`final:ao` 只命中带声母的 ao，`zero:ao` 只命中零声母 ao；
-- 全拼沿用（free）按原子类型统一派生：声母 / 韵母 / 零声母都可能 free；free 原子始终已学，不单独出课，也不进入隐藏 / 焦点候选；
+- 全拼沿用（free）按原子类型统一派生：声母 / 韵母 / 零声母都可能 free；free 原子始终已学，不单独出课，也不作为焦点候选；隐藏卡通过「全拼沿用」胶囊整体选择（新增出现原子时胶囊随专项隐藏一起选中）；
 - 兼容编码（compatCodes）是音节的额外合法键序列，不是 `AtomId`，不可选择 / 隐藏 / 作为焦点，只参与判题、键位图与编码 tips；
 - `j/q/x/y + ü` 的主键取 `finals[u]`，其它 ü 键作为兼容码由方案数据给出；`n/l` 后的 ü 取方案 ü 键。
 

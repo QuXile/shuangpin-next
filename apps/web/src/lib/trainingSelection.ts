@@ -650,29 +650,37 @@ export function isEmptyAtomSet(set: AtomSet): boolean {
 }
 
 /**
- * 出现范围「新增的可选普通原子」：所有主动扩大出现范围的入口（单项勾选、组内全选、
- * 「已学」）都经这里计算——只统计新出现在范围里的非全拼沿用原子，作为联动焦点 /
- * 专项隐藏的唯一口径。全拼沿用（胶囊）不参与联动。
+ * 出现范围「新增的原子」（含全拼沿用）：所有主动扩大出现范围的入口（单项勾选、组内全选、
+ * 全拼沿用胶囊、「已学」）都用这一份 diff 作为联动唯一口径。
+ * - 专项隐藏：新增项全部同步（全拼沿用胶囊也算「新增的映射」）；
+ * - 焦点：只取其中的普通键位（全拼沿用不能作为焦点，见 selectableSubsetOfAtoms）。
  */
-export function addedAppearanceAtoms(input: {
-  previous: AtomSet
-  next: AtomSet
-  options: AtomOptions
-  common: TrainingCommonAtoms
-}): AtomSet {
-  const selectable = selectableAtomsOf(input.options, input.common)
+export function addedAppearanceAtoms(input: { previous: AtomSet; next: AtomSet }): AtomSet {
   const addedIn = (
     previous: ReadonlySet<string>,
     next: ReadonlySet<string>,
-    candidates: readonly string[],
-  ): ReadonlySet<string> => {
-    const allowed = new Set(candidates)
-    return new Set([...next].filter((item) => !previous.has(item) && allowed.has(item)))
-  }
+  ): ReadonlySet<string> => new Set([...next].filter((item) => !previous.has(item)))
   return {
-    initials: addedIn(input.previous.initials, input.next.initials, selectable.initials),
-    finals: addedIn(input.previous.finals, input.next.finals, selectable.finals),
-    zeroFinals: addedIn(input.previous.zeroFinals, input.next.zeroFinals, selectable.zeroFinals),
+    initials: addedIn(input.previous.initials, input.next.initials),
+    finals: addedIn(input.previous.finals, input.next.finals),
+    zeroFinals: addedIn(input.previous.zeroFinals, input.next.zeroFinals),
+  }
+}
+
+/** 把集合裁剪为「可选普通原子」（去掉全拼沿用），用于焦点方向的联动。 */
+export function selectableSubsetOfAtoms(
+  set: AtomSet,
+  options: AtomOptions,
+  common: TrainingCommonAtoms,
+): AtomSet {
+  const selectable = selectableAtomsOf(options, common)
+  const initials = new Set(selectable.initials)
+  const finals = new Set(selectable.finals)
+  const zeroFinals = new Set(selectable.zeroFinals)
+  return {
+    initials: new Set([...set.initials].filter((item) => initials.has(item))),
+    finals: new Set([...set.finals].filter((item) => finals.has(item))),
+    zeroFinals: new Set([...set.zeroFinals].filter((item) => zeroFinals.has(item))),
   }
 }
 
@@ -877,7 +885,8 @@ export function clearGroupSets(current: ScopedSets, group: SelectionGroup): Scop
 /**
  * 「选中已学」：把出现范围与已学集合对齐。
  * - 移除已选但未学的原子；
- * - 加入已学但未选的原子，并把新增的普通原子同步选中到焦点 / 专项隐藏；
+ * - 加入已学但未选的原子，并把新增项同步选中到专项隐藏（含全拼沿用）、
+ *   其中普通键位同时同步到焦点；
  * - 仍在出现范围内的焦点 / 隐藏保留，范围外的由 shrink 自动收缩。
  */
 export function learnedSelectionSets(input: {
@@ -898,14 +907,13 @@ export function learnedSelectionSets(input: {
     finals: new Set(learned.selectedFinals),
     zeroFinals: new Set(learned.selectedZeroFinals),
   }
-  // 与所有其它「新增出现原子」入口共用 same 口径：只镜像普通原子，全拼沿用在胶囊里，不参与焦点 / 隐藏。
-  const added = addedAppearanceAtoms({
-    previous: input.current.appear,
-    next: nextAppear,
-    options: input.options,
-    common: input.common,
-  })
-  const focus = withAddedAtoms(input.current.focus, added)
+  // 与所有「新增出现原子」入口共用同一口径：专项隐藏镜像全部新增项（含全拼沿用），
+  // 焦点只接收其中的普通键位。
+  const added = addedAppearanceAtoms({ previous: input.current.appear, next: nextAppear })
+  const focus = withAddedAtoms(
+    input.current.focus,
+    selectableSubsetOfAtoms(added, input.options, input.common),
+  )
   const drill = withAddedAtoms(input.current.drill, added)
   return shrinkScopedSets(
     { appear: nextAppear, focus, drill, article: input.current.article },

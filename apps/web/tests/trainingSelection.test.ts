@@ -28,6 +28,7 @@ import {
   selectableAtomsOf,
   setsOfConfig,
   isEmptyAtomSet,
+  selectableSubsetOfAtoms,
   shrinkScopedSets,
   withAddedAtoms,
   type AtomOptions,
@@ -491,25 +492,35 @@ describe('trainingSelection · 出现新增联动口径', () => {
     }
   }
 
-  it('addedAppearanceAtoms 只统计新增的可选普通原子（全拼沿用除外）', () => {
+  it('addedAppearanceAtoms 统计全部新增原子（含全拼沿用）', () => {
     const next = atomSet(options.initials, options.finals, options.zeroFinals)
-    const added = addedAppearanceAtoms({ previous: empty, next, options, common })
-    expect([...added.initials]).toEqual([...selectableAtomsOf(options, common).initials])
-    expect([...added.finals]).toEqual([...selectableAtomsOf(options, common).finals])
-    expect([...added.zeroFinals]).toEqual([...selectableAtomsOf(options, common).zeroFinals])
-    // 全拼沿用集合本身不应出现在新增项里
-    for (const key of common.initials) expect(added.initials.has(key)).toBe(false)
-    for (const key of common.finals) expect(added.finals.has(key)).toBe(false)
-    for (const key of common.zeroFinals) expect(added.zeroFinals.has(key)).toBe(false)
+    const added = addedAppearanceAtoms({ previous: empty, next })
+    expect([...added.initials].sort()).toEqual([...options.initials].sort())
+    expect([...added.finals].sort()).toEqual([...options.finals].sort())
+    expect([...added.zeroFinals].sort()).toEqual([...options.zeroFinals].sort())
+    // 全拼沿用同样属于新增的映射：隐藏卡里的胶囊要跟着选中
+    for (const key of common.initials) expect(added.initials.has(key)).toBe(true)
+    for (const key of common.finals) expect(added.finals.has(key)).toBe(true)
+    for (const key of common.zeroFinals) expect(added.zeroFinals.has(key)).toBe(true)
+  })
+
+  it('selectableSubsetOfAtoms 把新增项裁剪为焦点可用的普通键位', () => {
+    const all = atomSet(options.initials, options.finals, options.zeroFinals)
+    const focusable = selectableSubsetOfAtoms(all, options, common)
+    const selectable = selectableAtomsOf(options, common)
+    expect([...focusable.initials].sort()).toEqual([...selectable.initials].sort())
+    expect([...focusable.finals].sort()).toEqual([...selectable.finals].sort())
+    expect([...focusable.zeroFinals].sort()).toEqual([...selectable.zeroFinals].sort())
+    for (const key of common.initials) expect(focusable.initials.has(key)).toBe(false)
   })
 
   it('addedAppearanceAtoms 忽略移除项，取消勾选不会产生联动', () => {
-    const previous = atomSet(['zh'], ['a'], [])
-    const next = atomSet([], [], [])
-    const added = addedAppearanceAtoms({ previous, next, options, common })
+    const previous = atomSet(['zh', 'b'], ['a'], [])
+    const next = atomSet(['b'], ['a'], [])
+    const added = addedAppearanceAtoms({ previous, next })
     expect(isEmptyAtomSet(added)).toBe(true)
     // 已存在项也不会重复计入
-    const stable = addedAppearanceAtoms({ previous, next: previous, options, common })
+    const stable = addedAppearanceAtoms({ previous, next: previous })
     expect(isEmptyAtomSet(stable)).toBe(true)
   })
 
@@ -545,14 +556,12 @@ describe('trainingSelection · 出现新增联动口径', () => {
       options,
       current: base,
     })
-    const expected = addedAppearanceAtoms({
-      previous: empty,
-      next: next.appear,
-      options,
-      common,
-    })
-    expect([...next.focus.initials].sort()).toEqual([...expected.initials].sort())
-    expect([...next.focus.finals].sort()).toEqual([...expected.finals].sort())
-    expect([...next.drill.initials].sort()).toEqual([...expected.initials].sort())
+    const added = addedAppearanceAtoms({ previous: empty, next: next.appear })
+    const focusable = selectableSubsetOfAtoms(added, options, common)
+    // 焦点只接受普通键位，专项隐藏镜像全部新增（含全拼沿用）
+    expect([...next.focus.initials].sort()).toEqual([...focusable.initials].sort())
+    expect([...next.focus.finals].sort()).toEqual([...focusable.finals].sort())
+    expect([...next.drill.initials].sort()).toEqual([...added.initials].sort())
+    for (const key of common.initials) expect(next.drill.initials.has(key)).toBe(true)
   })
 })

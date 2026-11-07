@@ -33,6 +33,7 @@ import {
   selectAllSets,
   selectGroupSets,
   selectableAtomsOf,
+  selectableSubsetOfAtoms,
   setsOfConfig,
   setsOfPreset,
   shrinkScopedSets,
@@ -140,20 +141,23 @@ export function useTrainingSelection() {
   }
 
   /**
-   * 用户扩大出现范围的唯一写入口：新增的普通原子（非全拼沿用）同步选中到焦点与专项隐藏，
+   * 用户扩大出现范围的唯一写入口：新增项同步选中到焦点与专项隐藏，
    * 与「已学」共用 lib.addedAppearanceAtoms 的同一口径。
+   * - 专项隐藏镜像全部新增项（含全拼沿用：隐藏卡里的胶囊同样要跟着选中）；
+   * - 焦点只接收新增项中的普通键位（全拼沿用不能作为焦点）。
    * 先写出现、再以收缩后的焦点 / 隐藏为基准并入新增项，保证取消勾选时不会被重新写回。
    */
   function writeAppearance(next: AtomSet): void {
     const previous = scopedSets.value.appear
     writeAppear(next)
-    const added = addedAppearanceAtoms({
-      previous,
-      next,
-      options: atomOptions.value ?? EMPTY_ATOMS,
-      common: commonAtoms.value,
-    })
-    writeFocus(withAddedAtoms(scopedSets.value.focus, added))
+    const added = addedAppearanceAtoms({ previous, next })
+    const options = atomOptions.value ?? EMPTY_ATOMS
+    writeFocus(
+      withAddedAtoms(
+        scopedSets.value.focus,
+        selectableSubsetOfAtoms(added, options, commonAtoms.value),
+      ),
+    )
     writeHidden('drill', withAddedAtoms(scopedSets.value.drill, added))
   }
 
@@ -281,7 +285,7 @@ export function useTrainingSelection() {
       common: commonAtoms.value,
       sets: scopedSets.value,
     })
-    // 全拼沿用胶囊只增删公共原子，不会产生普通原子，联动结果为空；仍统一经出现写入口。
+    // 全拼沿用胶囊增删的公共原子同样经出现写入口联动：专项隐藏跟随选中，焦点自动排除。
     if (scopeKind === 'appear') writeAppearance(next.appear)
     else applySets(next)
   }

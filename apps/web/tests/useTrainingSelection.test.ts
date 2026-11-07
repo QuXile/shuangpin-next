@@ -232,7 +232,7 @@ describe('useTrainingSelection', () => {
     expect(atomSetOf(selection, 'hiddenZeroFinals')).toEqual([])
   })
 
-  it('组内全选：新增普通原子同步选中到焦点与专项隐藏，全拼沿用除外', async () => {
+  it('组内全选：普通键位同步到焦点，专项隐藏镜像全部新增（含全拼沿用胶囊）', async () => {
     const selection = await setup()
     // 先清空声母组，再点「全选」重新加入
     selection.toggleAppearAll('initial')
@@ -241,13 +241,30 @@ describe('useTrainingSelection', () => {
 
     const selectable = [...selection.selectableInitials.value].sort()
     expect(selectable.length).toBeGreaterThan(0)
+    // 焦点只接普通键位
     expect(atomSetOf(selection, 'focusInitials')).toEqual(selectable)
-    expect(atomSetOf(selection, 'hiddenInitials')).toEqual(selectable)
-    // 全拼沿用（胶囊）不参与联动
+    // 专项隐藏镜像全部新增项：与出现范围一致（全拼沿用胶囊跟随选中）
+    expect(atomSetOf(selection, 'hiddenInitials')).toEqual(
+      [...selection.selectedInitials.value].sort(),
+    )
     for (const commonInitial of selection.commonAtoms.value.initials) {
+      expect(selection.hiddenInitials.value.has(commonInitial)).toBe(true)
       expect(selection.focusInitials.value.has(commonInitial)).toBe(false)
-      expect(selection.hiddenInitials.value.has(commonInitial)).toBe(false)
     }
+    // 隐藏组态：普通键位 + 全拼沿用胶囊全部选中
+    expect(selection.hiddenGroupAllChecked('drill', 'initial')).toBe(true)
+  })
+
+  it('清空后点全选：隐藏卡的全拼沿用胶囊跟随选中（用户报障场景）', async () => {
+    const selection = await setup()
+    selection.toggleAppearAll('initial') // 清空声母组
+    selection.toggleAppearAll('initial') // 重新全选
+    const group = selection.hiddenGroupState('drill', 'initial')
+    expect(group.all).toBe(true)
+    expect(group.selected).toBe(group.total)
+    expect(atomSetOf(selection, 'hiddenInitials')).toEqual(
+      [...selection.selectedInitials.value].sort(),
+    )
   })
 
   it('组内全选同样覆盖韵母组与零声母组', async () => {
@@ -258,7 +275,7 @@ describe('useTrainingSelection', () => {
       [...selection.selectableFinals.value].sort(),
     )
     expect(atomSetOf(selection, 'hiddenFinals')).toEqual(
-      [...selection.selectableFinals.value].sort(),
+      [...selection.selectedFinals.value].sort(),
     )
 
     selection.toggleAppearAll('zero')
@@ -267,7 +284,7 @@ describe('useTrainingSelection', () => {
       [...selection.selectableZeroFinals.value].sort(),
     )
     expect(atomSetOf(selection, 'hiddenZeroFinals')).toEqual(
-      [...selection.selectableZeroFinals.value].sort(),
+      [...selection.selectedZeroFinals.value].sort(),
     )
   })
 
@@ -289,14 +306,17 @@ describe('useTrainingSelection', () => {
     expect(selection.focusInitials.value.has(second as string)).toBe(false)
   })
 
-  it('全拼沿用胶囊切换不会联动焦点/隐藏', async () => {
+  it('全拼沿用胶囊切换只联动专项隐藏，不进入焦点', async () => {
     const selection = await setup()
     selection.toggleAppearAll('initial') // 清空声母组
     expect(atomSetOf(selection, 'focusInitials')).toEqual([])
     selection.toggleCommonAll('appear', 'initial') // 只加回全拼沿用胶囊
+    const commonInitials = [...selection.commonAtoms.value.initials].sort()
     expect(selection.selectedInitials.value.size).toBeGreaterThan(0)
+    // 焦点仍然只接普通键位；隐藏卡里的胶囊同步选中
     expect(atomSetOf(selection, 'focusInitials')).toEqual([])
-    expect(atomSetOf(selection, 'hiddenInitials')).toEqual([])
+    expect(atomSetOf(selection, 'hiddenInitials')).toEqual(commonInitials)
+    expect(selection.hiddenGroupAllChecked('drill', 'initial')).toBe(true)
   })
 
   it('清空出现范围后焦点与专项隐藏同步清空', async () => {
