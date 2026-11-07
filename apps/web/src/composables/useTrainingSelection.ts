@@ -7,6 +7,7 @@ import { atomOptionsOf, freeTrainingAtoms } from '@shuangpin/core'
 import { getStorage } from '@/lib/storage'
 import { useCourseStore } from '@/stores/course'
 import {
+  addedAppearanceAtoms,
   applyHiddenGroupSelection,
   appearGroupStateOf,
   atomSetOf,
@@ -39,6 +40,7 @@ import {
   toggleAtomSet,
   toggleCommonSelection,
   trainingScopeOf,
+  withAddedAtoms,
   writeStoredTrainingConfig,
   type AtomOptions, type AtomSet, type GroupState,
   type HiddenSnapshot, type ScopedSets, type SelectionGroup,
@@ -129,9 +131,30 @@ export function useTrainingSelection() {
   const passedLessonCount = computed(
     () => course.lessons.filter((lesson) => course.progress[lesson.id]?.passed).length,
   )
-  /** 出现集合写回；隐藏集合由收缩 watch 统一维护 */
+  /**
+   * 出现集合写回（不联动）。只用于「非用户新增」路径：初始化 / 恢复配置 / 清空 / 课程预设；
+   * 用户主动新增原子的路径必须走 writeAppearance，避免再次出现某个入口漏联动的 bug。
+   */
   function writeAppear(next: AtomSet): void {
     selectedInitials.value = next.initials; selectedFinals.value = next.finals; selectedZeroFinals.value = next.zeroFinals
+  }
+
+  /**
+   * 用户扩大出现范围的唯一写入口：新增的普通原子（非全拼沿用）同步选中到焦点与专项隐藏，
+   * 与「已学」共用 lib.addedAppearanceAtoms 的同一口径。
+   * 先写出现、再以收缩后的焦点 / 隐藏为基准并入新增项，保证取消勾选时不会被重新写回。
+   */
+  function writeAppearance(next: AtomSet): void {
+    const previous = scopedSets.value.appear
+    writeAppear(next)
+    const added = addedAppearanceAtoms({
+      previous,
+      next,
+      options: atomOptions.value ?? EMPTY_ATOMS,
+      common: commonAtoms.value,
+    })
+    writeFocus(withAddedAtoms(scopedSets.value.focus, added))
+    writeHidden('drill', withAddedAtoms(scopedSets.value.drill, added))
   }
 
   /** 焦点集合写回；结构不变时不触发 ref 更新。 */
@@ -165,62 +188,39 @@ export function useTrainingSelection() {
     writeHidden('article', next.article)
   }
 
-  function groupSetOf(set: AtomSet, group: SelectionGroup): ReadonlySet<string> {
-    return group === 'initial' ? set.initials : group === 'final' ? set.finals : set.zeroFinals
-  }
-
-  function isSelectableGroupValue(group: SelectionGroup, value: string): boolean {
-    const list =
-      group === 'initial'
-        ? selectable.value.initials
-        : group === 'final'
-          ? selectable.value.finals
-          : selectable.value.zeroFinals
-    return list.includes(value)
-  }
-
-  /** 出现中新增一个可选原子时，同步选中到焦点与专项隐藏。 */
-  function mirrorAppearanceAdd(group: SelectionGroup, value: string): void {
-    if (!isSelectableGroupValue(group, value)) return
-    const focus = scopedSets.value.focus
-    if (!groupSetOf(focus, group).has(value)) {
-      writeFocus(toggleAtomSet(focus, group, value))
-    }
-    const hidden = scopedSets.value.drill
-    if (!groupSetOf(hidden, group).has(value)) {
-      writeHidden('drill', toggleAtomSet(hidden, group, value))
-    }
-  }
-
   function toggleInitial(value: string): void {
-    const adding = !selectedInitials.value.has(value)
-    writeAppear(toggleAtomSet(appearSet.value, 'initial', value))
-    if (adding) mirrorAppearanceAdd('initial', value)
+    writeAppearance(toggleAtomSet(appearSet.value, 'initial', value))
   }
   function toggleFinal(value: string): void {
-    const adding = !selectedFinals.value.has(value)
-    writeAppear(toggleAtomSet(appearSet.value, 'final', value))
-    if (adding) mirrorAppearanceAdd('final', value)
+    writeAppearance(toggleAtomSet(appearSet.value, 'final', value))
   }
   function toggleZeroFinal(value: string): void {
-    const adding = !selectedZeroFinals.value.has(value)
-    writeAppear(toggleAtomSet(appearSet.value, 'zero', value))
-    if (adding) mirrorAppearanceAdd('zero', value)
+    writeAppearance(toggleAtomSet(appearSet.value, 'zero', value))
   }
 
+  /**
+   * 默认全选 / 初始化专用：直接写四份集合，不联动焦点与隐藏。
+   * 若默认全选也联动，新方案会一进来就「焦点=全部键位、隐藏全部映射」，不符合预期；
+   * 用户主动全选某一组请走 selectGroup（内部经 writeAppearance 联动）。
+   */
   function selectAll(): void {
     if (atomOptions.value) applySets(selectAllSets(scopedSets.value, atomOptions.value))
   }
 
   function selectGroup(group: SelectionGroup): void {
     const options = atomOptions.value
-    if (options) {
-      applySets(selectGroupSets({ group, options, common: commonAtoms.value, current: scopedSets.value }))
-    }
+    if (!options) return
+    const next = selectGroupSets({
+      group,
+      options,
+      common: commonAtoms.value,
+      current: scopedSets.value,
+    })
+    writeAppearance(next.appear)
   }
 
   function clearGroup(group: SelectionGroup): void {
-    applySets(clearGroupSets(scopedSets.value, group))
+    writeAppear(clearGroupSets(scopedSets.value, group).appear)
   }
 
   function clearAppear(): void {
@@ -274,15 +274,17 @@ export function useTrainingSelection() {
       [commonAtoms.value, scopedSets.value],
       () => commonAllCheckedPure(commonAtoms.value, scopeKind, group, scopedSets.value),
     )
-  const toggleCommonAll = (scopeKind: SelectionScope, group: SelectionGroup): void =>
-    applySets(
-      toggleCommonSelection({
-        scope: scopeKind,
-        group,
-        common: commonAtoms.value,
-        sets: scopedSets.value,
-      }),
-    )
+  const toggleCommonAll = (scopeKind: SelectionScope, group: SelectionGroup): void => {
+    const next = toggleCommonSelection({
+      scope: scopeKind,
+      group,
+      common: commonAtoms.value,
+      sets: scopedSets.value,
+    })
+    // 全拼沿用胶囊只增删公共原子，不会产生普通原子，联动结果为空；仍统一经出现写入口。
+    if (scopeKind === 'appear') writeAppearance(next.appear)
+    else applySets(next)
+  }
 
   const appearGroup = (group: SelectionGroup): GroupState =>
     atomOptions.value

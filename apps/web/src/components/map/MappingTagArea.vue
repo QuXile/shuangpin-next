@@ -1,16 +1,50 @@
 <script setup lang="ts">
-/** 映射标签区：继续学习与学习路线共用的溢出 / 截断 / 浮层逻辑。 */
-import { nextTick, onMounted, ref, watch } from 'vue'
+/**
+ * 映射标签区：继续学习与学习路线共用的溢出 / 截断 / 浮层逻辑。
+ *
+ * 浮层统一走 useHoverPopover：Teleport 到 body + position: fixed，脱离卡片的
+ * stacking context（卡片 hover transform）与滚动容器裁剪；悬停/焦点状态由 JS 管理，
+ * 鼠标离开触发区后有一段宽限期可以移入浮层。
+ */
+import { nextTick, onMounted, ref, watch, type ComponentPublicInstance } from 'vue'
 import { useResizeObserver } from '@/composables/useResizeObserver'
+import { useHoverPopover } from '@/composables/useHoverPopover'
 import type { FocusAtomView } from '@/lib/lessonView'
 import FocusTagList from '@/components/FocusTagList.vue'
 
 const props = defineProps<{ items: readonly FocusAtomView[] }>()
 
-const areaRef = ref<HTMLElement | null>(null)
 const scrollRef = ref<HTMLElement | null>(null)
 const overflowing = ref(false)
-const popupDown = ref(false)
+
+/** 与原有视觉一致：浮层左右各外扩 10px、向上优先、最大高度 260 */
+const {
+  triggerRef,
+  popupRef,
+  open: popoverOpen,
+  popupStyle,
+  onTriggerPointerEnter,
+  onTriggerPointerLeave,
+  onTriggerFocusIn,
+  onTriggerFocusOut,
+  onPopupPointerEnter,
+  onPopupPointerLeave,
+  onPopupFocusIn,
+  onPopupFocusOut,
+  close: closePopover,
+} = useHoverPopover({
+  maxHeight: 260,
+  horizontalOverflow: 20,
+  enabled: () => overflowing.value,
+})
+
+/** 模板 ref 的稳定 setter：显式写回 composable 的 ref（模板字符串 ref 不会被静态检查识别为读取）。 */
+function setTriggerEl(el: Element | ComponentPublicInstance | null): void {
+  triggerRef.value = el instanceof HTMLElement ? el : null
+}
+function setPopupEl(el: Element | ComponentPublicInstance | null): void {
+  popupRef.value = el instanceof HTMLElement ? el : null
+}
 
 function measure(): void {
   const el = scrollRef.value
@@ -23,40 +57,48 @@ function measure(): void {
 
 useResizeObserver(scrollRef, () => measure())
 
-function updatePopupPlacement(): void {
-  const rect = areaRef.value?.getBoundingClientRect()
-  if (!rect) return
-  const spaceAbove = rect.top
-  const spaceBelow = window.innerHeight - rect.bottom
-  popupDown.value = spaceBelow > spaceAbove
-}
-
 watch(
   () => props.items,
   () => { void nextTick(measure) },
   { immediate: true, deep: true, flush: 'post' },
 )
 onMounted(() => { void nextTick(measure) })
-
+/** 内容收缩到不再溢出时立即收起浮层，避免留下看不见的全局监听。 */
+watch(overflowing, (value) => {
+  if (!value) closePopover()
+})
 </script>
 
 <template>
   <div
-    ref="areaRef"
+    :ref="setTriggerEl"
     class="mapping-tag-area"
     role="group"
     :tabindex="overflowing ? 0 : undefined"
     :aria-label="`${items.length} 个映射`"
-    @mouseenter="updatePopupPlacement"
-    @focusin="updatePopupPlacement"
+    @pointerenter="onTriggerPointerEnter"
+    @pointerleave="onTriggerPointerLeave"
+    @focusin="onTriggerFocusIn"
+    @focusout="onTriggerFocusOut"
   >
     <div ref="scrollRef" class="mapping-tag-scroll" :class="{ 'has-overflow': overflowing }">
       <FocusTagList :items="items" />
     </div>
     <span v-if="overflowing" class="mapping-more">… 共 {{ items.length }} 个映射</span>
-    <div v-if="overflowing" class="mapping-popup" :class="{ 'is-down': popupDown }">
-      <FocusTagList :items="items" />
-    </div>
+    <Teleport to="body">
+      <div
+        v-if="overflowing && popoverOpen"
+        :ref="setPopupEl"
+        class="mapping-popup"
+        :style="popupStyle"
+        @pointerenter="onPopupPointerEnter"
+        @pointerleave="onPopupPointerLeave"
+        @focusin="onPopupFocusIn"
+        @focusout="onPopupFocusOut"
+      >
+        <FocusTagList :items="items" />
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -91,14 +133,10 @@ onMounted(() => { void nextTick(measure) })
   line-height: 1.4;
   pointer-events: none;
 }
+/* Teleport 到 body 的 fixed 浮层：层级约定与旧实现一致（z-index 50，低于 modal 100） */
 .mapping-popup {
-  position: absolute;
-  bottom: calc(100% + 8px);
-  left: -10px;
-  right: -10px;
-  display: none;
+  position: fixed;
   z-index: 50;
-  max-height: 260px;
   overflow-y: auto;
   scrollbar-gutter: stable;
   padding: 14px;
@@ -108,13 +146,5 @@ onMounted(() => { void nextTick(measure) })
   box-shadow: var(--shadow-pop);
   pointer-events: auto;
   animation: ui-pop-in var(--dur-mid) var(--ease);
-}
-.mapping-popup.is-down {
-  top: calc(100% + 8px);
-  bottom: auto;
-}
-.mapping-tag-area:hover .mapping-popup,
-.mapping-tag-area:focus-within .mapping-popup {
-  display: block;
 }
 </style>

@@ -97,7 +97,7 @@ interface TrainingPreset {
 
 // ── 集合构造 ─────────────────────────────────────────────────
 
-function emptyAtomSet(): AtomSet {
+export function emptyAtomSet(): AtomSet {
   return { initials: new Set(), finals: new Set(), zeroFinals: new Set() }
 }
 
@@ -645,6 +645,49 @@ export function toggleAtomSet(set: AtomSet, kind: AtomKind, value: string): Atom
   return withKind(set, kind, toggleSetValue(selectedSetOf(set, kind), value))
 }
 
+export function isEmptyAtomSet(set: AtomSet): boolean {
+  return set.initials.size === 0 && set.finals.size === 0 && set.zeroFinals.size === 0
+}
+
+/**
+ * 出现范围「新增的可选普通原子」：所有主动扩大出现范围的入口（单项勾选、组内全选、
+ * 「已学」）都经这里计算——只统计新出现在范围里的非全拼沿用原子，作为联动焦点 /
+ * 专项隐藏的唯一口径。全拼沿用（胶囊）不参与联动。
+ */
+export function addedAppearanceAtoms(input: {
+  previous: AtomSet
+  next: AtomSet
+  options: AtomOptions
+  common: TrainingCommonAtoms
+}): AtomSet {
+  const selectable = selectableAtomsOf(input.options, input.common)
+  const addedIn = (
+    previous: ReadonlySet<string>,
+    next: ReadonlySet<string>,
+    candidates: readonly string[],
+  ): ReadonlySet<string> => {
+    const allowed = new Set(candidates)
+    return new Set([...next].filter((item) => !previous.has(item) && allowed.has(item)))
+  }
+  return {
+    initials: addedIn(input.previous.initials, input.next.initials, selectable.initials),
+    finals: addedIn(input.previous.finals, input.next.finals, selectable.finals),
+    zeroFinals: addedIn(input.previous.zeroFinals, input.next.zeroFinals, selectable.zeroFinals),
+  }
+}
+
+/** 把新增原子并入集合；没有任何新增时返回原对象，保持下游派生引用稳定。 */
+export function withAddedAtoms(current: AtomSet, added: AtomSet): AtomSet {
+  if (isEmptyAtomSet(added)) return current
+  const merge = (base: ReadonlySet<string>, extra: ReadonlySet<string>): ReadonlySet<string> =>
+    extra.size === 0 ? base : new Set([...base, ...extra])
+  return {
+    initials: merge(current.initials, added.initials),
+    finals: merge(current.finals, added.finals),
+    zeroFinals: merge(current.zeroFinals, added.zeroFinals),
+  }
+}
+
 /** 出现组「全选 / 清除」：整组原子（普通 + 全拼沿用）一次写回。 */
 function selectGroupSet(input: {
   group: SelectionGroup
@@ -855,38 +898,15 @@ export function learnedSelectionSets(input: {
     finals: new Set(learned.selectedFinals),
     zeroFinals: new Set(learned.selectedZeroFinals),
   }
-  const selectable = selectableAtomsOf(input.options, input.common)
-  const selectableInitials = new Set(selectable.initials)
-  const selectableFinals = new Set(selectable.finals)
-  const selectableZeros = new Set(selectable.zeroFinals)
-  // 与单个勾选联动一致：只镜像普通原子；全拼沿用属于胶囊，不参与焦点 / 隐藏。
-  const added: AtomSet = {
-    initials: new Set(
-      [...nextAppear.initials].filter(
-        (item) => !input.current.appear.initials.has(item) && selectableInitials.has(item),
-      ),
-    ),
-    finals: new Set(
-      [...nextAppear.finals].filter(
-        (item) => !input.current.appear.finals.has(item) && selectableFinals.has(item),
-      ),
-    ),
-    zeroFinals: new Set(
-      [...nextAppear.zeroFinals].filter(
-        (item) => !input.current.appear.zeroFinals.has(item) && selectableZeros.has(item),
-      ),
-    ),
-  }
-  const focus = {
-    initials: new Set([...input.current.focus.initials, ...added.initials]),
-    finals: new Set([...input.current.focus.finals, ...added.finals]),
-    zeroFinals: new Set([...input.current.focus.zeroFinals, ...added.zeroFinals]),
-  }
-  const drill = {
-    initials: new Set([...input.current.drill.initials, ...added.initials]),
-    finals: new Set([...input.current.drill.finals, ...added.finals]),
-    zeroFinals: new Set([...input.current.drill.zeroFinals, ...added.zeroFinals]),
-  }
+  // 与所有其它「新增出现原子」入口共用 same 口径：只镜像普通原子，全拼沿用在胶囊里，不参与焦点 / 隐藏。
+  const added = addedAppearanceAtoms({
+    previous: input.current.appear,
+    next: nextAppear,
+    options: input.options,
+    common: input.common,
+  })
+  const focus = withAddedAtoms(input.current.focus, added)
+  const drill = withAddedAtoms(input.current.drill, added)
   return shrinkScopedSets(
     { appear: nextAppear, focus, drill, article: input.current.article },
     input.options,

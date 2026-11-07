@@ -9,6 +9,8 @@ import {
   type SchemeDef,
 } from '@shuangpin/core'
 import {
+  addedAppearanceAtoms,
+  emptyAtomSet,
   focusAtomIdsOf,
   focusCandidatesOf,
   focusGroupStateOf,
@@ -25,7 +27,9 @@ import {
   sanitizeTrainingConfig,
   selectableAtomsOf,
   setsOfConfig,
+  isEmptyAtomSet,
   shrinkScopedSets,
+  withAddedAtoms,
   type AtomOptions,
   type AtomSet,
   type ScopedSets,
@@ -473,5 +477,82 @@ describe('trainingSelection · 原子集合派生', () => {
       stage: 'word',
       scheme: 'xiaohe',
     })
+  })
+})
+
+describe('trainingSelection · 出现新增联动口径', () => {
+  const empty = emptyAtomSet()
+
+  function atomSet(initials: string[], finals: string[], zeroFinals: string[]): AtomSet {
+    return {
+      initials: new Set(initials),
+      finals: new Set(finals),
+      zeroFinals: new Set(zeroFinals),
+    }
+  }
+
+  it('addedAppearanceAtoms 只统计新增的可选普通原子（全拼沿用除外）', () => {
+    const next = atomSet(options.initials, options.finals, options.zeroFinals)
+    const added = addedAppearanceAtoms({ previous: empty, next, options, common })
+    expect([...added.initials]).toEqual([...selectableAtomsOf(options, common).initials])
+    expect([...added.finals]).toEqual([...selectableAtomsOf(options, common).finals])
+    expect([...added.zeroFinals]).toEqual([...selectableAtomsOf(options, common).zeroFinals])
+    // 全拼沿用集合本身不应出现在新增项里
+    for (const key of common.initials) expect(added.initials.has(key)).toBe(false)
+    for (const key of common.finals) expect(added.finals.has(key)).toBe(false)
+    for (const key of common.zeroFinals) expect(added.zeroFinals.has(key)).toBe(false)
+  })
+
+  it('addedAppearanceAtoms 忽略移除项，取消勾选不会产生联动', () => {
+    const previous = atomSet(['zh'], ['a'], [])
+    const next = atomSet([], [], [])
+    const added = addedAppearanceAtoms({ previous, next, options, common })
+    expect(isEmptyAtomSet(added)).toBe(true)
+    // 已存在项也不会重复计入
+    const stable = addedAppearanceAtoms({ previous, next: previous, options, common })
+    expect(isEmptyAtomSet(stable)).toBe(true)
+  })
+
+  it('withAddedAtoms 无新增时返回原对象，有新增时只并入新增项', () => {
+    const current = atomSet(['b'], ['a'], [])
+    expect(withAddedAtoms(current, empty)).toBe(current)
+
+    const added = atomSet(['zh'], ['ang'], ['零'])
+    const merged = withAddedAtoms(current, added)
+    expect(merged).not.toBe(current)
+    expect([...merged.initials].sort()).toEqual(['b', 'zh'])
+    expect([...merged.finals].sort()).toEqual(['a', 'ang'])
+    expect([...merged.zeroFinals]).toEqual(['零'])
+    // 未新增的组保持原引用
+    expect(merged.initials).not.toBe(current.initials)
+  })
+
+  it('learnedSelectionSets 与通用联动口径一致：新增项只镜像普通原子', () => {
+    const base: ScopedSets = {
+      appear: empty,
+      focus: empty,
+      drill: empty,
+      article: empty,
+    }
+    const progress: Record<string, LessonProgress> = {
+      'L1.1': { passed: true, stars: 3, bestAccuracy: 1, attempts: 1, updatedAt: 0 },
+      'L2.1': { passed: true, stars: 3, bestAccuracy: 1, attempts: 1, updatedAt: 0 },
+    }
+    const next = learnedSelectionSets({
+      lessons: curriculum.lessons,
+      progress,
+      common,
+      options,
+      current: base,
+    })
+    const expected = addedAppearanceAtoms({
+      previous: empty,
+      next: next.appear,
+      options,
+      common,
+    })
+    expect([...next.focus.initials].sort()).toEqual([...expected.initials].sort())
+    expect([...next.focus.finals].sort()).toEqual([...expected.finals].sort())
+    expect([...next.drill.initials].sort()).toEqual([...expected.initials].sort())
   })
 })

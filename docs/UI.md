@@ -22,7 +22,7 @@
 | 圆角 | `--r-xs` `--r-control` `--r-card` `--r-panel` `--r-pill` `--r-keycap` `--r-keycap-xs` | 4 / 9 / 14 / 20 / 999px；键帽按尺寸等比圆角 |
 | 字号 | `--text-2xs` … `--text-xl` + `--text-display*` | 10–24px 固定档 + 流体展示字号 |
 | 动效 / 控件高度 | `--dur-press` `--dur-fast` `--dur-mid` `--dur-slow` `--ease`；`--h-control-xs` … `--h-control-lg` | 90 / 120 / 220 / 380ms；26–42px 控件 |
-| 层级 | 字面量约定 | 内容 0/1、sticky 20、浮层 40、modal 100 |
+| 层级 | 字面量约定 | 内容 0/1、sticky 20、浮层 40–50、modal 100 |
 
 ## 共享原语
 
@@ -70,6 +70,17 @@
 - 与全拼一致的 free 映射不显示；隐藏映射以「?」占位。
 - 无提示模式隐藏全部映射、图例、零声母与兼容编码；字卡标答键帽显示「?」，拼音始终显示。
 - 底部「零声母」「兼容编码」由 `MappingStrip` 渲染，含溢出计数与浮层。
+
+**映射浮层（溢出映射）**
+
+- `MappingTagArea`（卡片映射区）与 `MappingStrip`（底栏零声母 / 兼容编码行）共用 `composables/useHoverPopover`：
+  `Teleport to body` + `position: fixed` 渲染，脱离卡片 hover transform 形成的 stacking context 与
+  `DockReveal` 等滚动 / 高度容器的 `overflow: hidden` 裁剪；
+- 打开由 JS 状态管理：指针或焦点进入触发区即打开，离开后有 240ms 宽限期（可移入浮层）；移入浮层保持，
+  离开浮层 / 失焦 / `Esc` 关闭；`Esc` 只关闭浮层，不再触发页面级返回快捷键；
+- 定位由 `lib/popoverPosition.ts` 纯函数计算：优先方向放不下时翻转、水平夹在 8px 视口安全边距内、
+  `max-height = min(上限, 可用空间)`（超出内部滚动），滚动 / 缩放时 rAF 节流重定位；
+- 新增同类浮层请复用以上两个能力，不要再在组件内部用 `absolute` + CSS `:hover` 实现。
 
 **键帽层级**
 

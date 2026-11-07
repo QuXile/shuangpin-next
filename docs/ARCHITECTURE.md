@@ -21,7 +21,8 @@ apps/web/src/            App.vue / main.ts / router.ts
   components/            common / keyboard / layout / map / practice / intro / training
   stores/                course / progress / settings / sound / layout
   lib/                   data / lexicon / article / storage / dom / sessionSummary /
-                         keyboardView / lessonView / trainingSelection / viewCache / audio / shortcuts
+                         keyboardView / lessonView / trainingSelection / viewCache / popoverPosition /
+                         audio / shortcuts
   styles/                tokens.css + base.css
 packages/core/src/       types / pinyin / scheme / session / lesson / selector / training / progress / curriculum / index
 packages/core/tests/     领域单元测试 + data/ 契约测试
@@ -167,11 +168,12 @@ lexicon/lexicon.json    运行时预编译词表（schemaVersion 3：meta + syll
 | `useKeyInput` | 应用级唯一字符输入管线 |
 | `useGlobalKeys` | 页面快捷键注册与清理 |
 | `useBottomDockContent` | 底栏键位图内容注册 |
+| `useHoverPopover` | 溢出映射浮层：Teleport + fixed 定位、悬停宽限期、Esc、滚动/缩放重定位 |
 | `usePointerBlur` / `useResizeObserver` | 指针失焦与尺寸观察 |
 
 ### lib 与页面
 
-`lib/` 无渲染纯函数：`data` / `lexicon`（运行时词表解码 + 文章拼音 token）/ `article` / `storage` / `dom` / `sessionSummary` / `keyboardView` / `lessonView` / `trainingSelection` / `viewCache`（按内容复用渲染视图）/ `audio` / `shortcuts`。
+`lib/` 无渲染纯函数：`data` / `lexicon`（运行时词表解码 + 文章拼音 token）/ `article` / `storage` / `dom` / `sessionSummary` / `keyboardView` / `lessonView` / `trainingSelection` / `viewCache`（按内容复用渲染视图）/ `popoverPosition`（浮层定位）/ `audio` / `shortcuts`。
 
 - `lessonView`：focus 视图、记忆锚点、本课技巧、章节课程视图；记忆锚点由 `core.buildAtomMemory` 实时派生，编码 tips 由 `core.buildLessonCodeTips` 实时合并；
 - 页面：`LearnMapPage`（Hero、继续学习、进度、键位图、章节路线）、`PracticePage`（教学 / 练习阶段编排）、`TrainingPage`（专项与文章练习）；

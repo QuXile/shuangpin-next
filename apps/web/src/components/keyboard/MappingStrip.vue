@@ -2,9 +2,14 @@
 /**
  * 键位图底部的统一映射行：零声母与兼容编码共用同一套显示逻辑。
  * 标签、内容、溢出计数、hover/focus 浮层和滚动行为都由这里统一决定。
+ *
+ * 浮层统一走 useHoverPopover：Teleport 到 body + position: fixed，
+ * 不再被底栏 DockReveal 的 overflow:hidden 裁剪；悬停/焦点状态由 JS 管理，
+ * 离开触发区后有一段宽限期可以移入浮层。
  */
-import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { nextTick, onBeforeUnmount, onMounted, ref, watch, type ComponentPublicInstance } from 'vue'
 import { useResizeObserver } from '@/composables/useResizeObserver'
+import { useHoverPopover } from '@/composables/useHoverPopover'
 import type { MappingItemView, MappingTogglePayload } from '@/lib/keyboardView'
 
 const props = withDefaults(
@@ -27,6 +32,31 @@ function toggle(item: MappingItemView, event: Event): void {
 const contentRef = ref<HTMLElement | null>(null)
 const overflow = ref(false)
 
+/** 与原有视觉一致：浮层与触发区无间距、宽度同整条映射行、向上优先、最大高度 240 */
+const {
+  triggerRef,
+  popupRef,
+  open: popoverOpen,
+  popupStyle,
+  onTriggerPointerEnter,
+  onTriggerPointerLeave,
+  onTriggerFocusIn,
+  onTriggerFocusOut,
+  onPopupPointerEnter,
+  onPopupPointerLeave,
+  onPopupFocusIn,
+  onPopupFocusOut,
+  close: closePopover,
+} = useHoverPopover({ maxHeight: 240, gap: 0, enabled: () => overflow.value })
+
+/** 模板 ref 的稳定 setter：显式写回 composable 的 ref（模板字符串 ref 不会被静态检查识别为读取）。 */
+function setTriggerEl(el: Element | ComponentPublicInstance | null): void {
+  triggerRef.value = el instanceof HTMLElement ? el : null
+}
+function setPopupEl(el: Element | ComponentPublicInstance | null): void {
+  popupRef.value = el instanceof HTMLElement ? el : null
+}
+
 function measure(): void {
   const el = contentRef.value
   overflow.value = Boolean(el && el.scrollWidth > el.clientWidth + 1)
@@ -39,6 +69,10 @@ watch(
   () => { void nextTick(measure) },
   { immediate: true, deep: true, flush: 'post' },
 )
+/** 内容收缩到不再溢出时立即收起浮层，避免留下看不见的全局监听。 */
+watch(overflow, (value) => {
+  if (!value) closePopover()
+})
 onMounted(() => {
   measure()
   window.addEventListener('resize', measure)
@@ -50,10 +84,15 @@ onBeforeUnmount(() => {
 
 <template>
   <div
+    :ref="setTriggerEl"
     class="mapping-strip"
     :tabindex="overflow ? 0 : undefined"
     role="group"
     :aria-label="label"
+    @pointerenter="onTriggerPointerEnter"
+    @pointerleave="onTriggerPointerLeave"
+    @focusin="onTriggerFocusIn"
+    @focusout="onTriggerFocusOut"
   >
     <span class="mapping-title">{{ label }}</span>
     <span ref="contentRef" class="mapping-content">
@@ -79,31 +118,43 @@ onBeforeUnmount(() => {
       </span>
     </span>
     <span v-if="overflow" class="mapping-count">共 {{ items.length }} 个</span>
-    <span v-if="overflow" class="mapping-popup" aria-hidden="true">
+    <!-- 浮层 Teleport 到 body：内容与原实现一致（aria-hidden 的重复映射），仅用于指针悬停浏览 -->
+    <Teleport to="body">
       <span
-        v-for="item in items"
-        :key="item.label"
-        class="mapping-chip"
-        :class="{ 'is-emphasized': item.emphasized, 'is-tappable': interactive }"
-        :role="interactive ? 'button' : undefined"
-        :tabindex="interactive ? 0 : undefined"
-        :aria-pressed="interactive ? Boolean(item.emphasized) : undefined"
-        @click="toggle(item, $event)"
-        @keydown.enter.stop.prevent="toggle(item, $event)"
-        @keydown.space.stop.prevent="toggle(item, $event)"
+        v-if="overflow && popoverOpen"
+        :ref="setPopupEl"
+        class="mapping-popup"
+        aria-hidden="true"
+        :style="popupStyle"
+        @pointerenter="onPopupPointerEnter"
+        @pointerleave="onPopupPointerLeave"
+        @focusin="onPopupFocusIn"
+        @focusout="onPopupFocusOut"
       >
-        <b>{{ item.label }}</b>
-        <span class="mapping-keys">
-          <template v-for="(code, codeIndex) in item.codes" :key="codeIndex"><span v-if="codeIndex > 0" class="mapping-sep">/</span><kbd class="mapping-key" :class="{ 'is-emphasized': item.emphasized }">{{ code.join('') }}</kbd></template>
+        <span
+          v-for="item in items"
+          :key="item.label"
+          class="mapping-chip"
+          :class="{ 'is-emphasized': item.emphasized, 'is-tappable': interactive }"
+          :role="interactive ? 'button' : undefined"
+          :tabindex="interactive ? 0 : undefined"
+          :aria-pressed="interactive ? Boolean(item.emphasized) : undefined"
+          @click="toggle(item, $event)"
+          @keydown.enter.stop.prevent="toggle(item, $event)"
+          @keydown.space.stop.prevent="toggle(item, $event)"
+        >
+          <b>{{ item.label }}</b>
+          <span class="mapping-keys">
+            <template v-for="(code, codeIndex) in item.codes" :key="codeIndex"><span v-if="codeIndex > 0" class="mapping-sep">/</span><kbd class="mapping-key" :class="{ 'is-emphasized': item.emphasized }">{{ code.join('') }}</kbd></template>
+          </span>
         </span>
       </span>
-    </span>
+    </Teleport>
   </div>
 </template>
 
 <style scoped>
 .mapping-strip {
-  position: relative;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -218,13 +269,17 @@ onBeforeUnmount(() => {
   font-size: var(--text-2xs);
   white-space: nowrap;
 }
+/* Teleport 到 body 的 fixed 浮层：层级约定与旧实现一致（z-index 50，低于 modal 100） */
 .mapping-popup {
-  position: absolute;
-  bottom: 100%;
-  left: 0;
-  right: 0;
-  display: none;
+  position: fixed;
   z-index: 50;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 12px;
+  align-content: flex-start;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
   padding: 12px;
   background: var(--surface);
   border: 1px solid var(--line);
@@ -232,17 +287,6 @@ onBeforeUnmount(() => {
   box-shadow: var(--shadow-pop);
   pointer-events: auto;
   overscroll-behavior: contain;
-}
-.mapping-strip:hover .mapping-popup,
-.mapping-strip:focus-within .mapping-popup {
-  display: flex;
   animation: ui-fade-in var(--dur-fast) var(--ease);
-  flex-wrap: wrap;
-  gap: 5px 12px;
-  align-content: flex-start;
-  max-height: 240px;
-  overflow-y: auto;
-  scrollbar-gutter: stable;
-  scrollbar-width: thin;
 }
 </style>
